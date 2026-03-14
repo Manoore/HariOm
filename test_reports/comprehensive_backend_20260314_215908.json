@@ -1,0 +1,163 @@
+{
+  "total": 22,
+  "passed": 22,
+  "failed": 0,
+  "success_rate": 100.0,
+  "results": [
+    {
+      "test": "Health Check API",
+      "success": true,
+      "details": "Status: healthy",
+      "response_code": 200,
+      "timestamp": "2026-03-14T21:59:07.312082"
+    },
+    {
+      "test": "Admin Login",
+      "success": true,
+      "details": "Role: admin, Name: Admin",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:07.536539"
+    },
+    {
+      "test": "Priest Login",
+      "success": true,
+      "details": "Role: priest, Name: Pandit Ramesh Sharma",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:07.767137"
+    },
+    {
+      "test": "Devotee Registration",
+      "success": true,
+      "details": "Email: devotee_215907@divine.com",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:07.997120"
+    },
+    {
+      "test": "Get Current User",
+      "success": true,
+      "details": "Name: Admin, Role: admin",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.002273"
+    },
+    {
+      "test": "Get Priests List",
+      "success": true,
+      "details": "Found 3 priests",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.007440"
+    },
+    {
+      "test": "Get Priest Detail",
+      "success": true,
+      "details": "Services: 3, Rating: 4.8",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.010268"
+    },
+    {
+      "test": "Get Products List",
+      "success": true,
+      "details": "Found 8 products",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.013755"
+    },
+    {
+      "test": "Get Product Categories",
+      "success": true,
+      "details": "Categories: 6",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.016107"
+    },
+    {
+      "test": "Get Product Detail",
+      "success": true,
+      "details": "Price: \u20b9599.0, Stock: 50",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.018057"
+    },
+    {
+      "test": "Get Zodiac Signs",
+      "success": true,
+      "details": "Signs: 12",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.019306"
+    },
+    {
+      "test": "Daily Horoscope (aries)",
+      "success": true,
+      "details": "Prediction length: 160 chars",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.020368"
+    },
+    {
+      "test": "Daily Horoscope (cancer)",
+      "success": true,
+      "details": "Prediction length: 116 chars",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.021437"
+    },
+    {
+      "test": "Daily Horoscope (libra)",
+      "success": true,
+      "details": "Prediction length: 125 chars",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.022505"
+    },
+    {
+      "test": "Get Festivals",
+      "success": true,
+      "details": "Festivals: 10",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.024677"
+    },
+    {
+      "test": "Get Temples",
+      "success": true,
+      "details": "Temples: 5",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.026989"
+    },
+    {
+      "test": "Get Empty Cart",
+      "success": true,
+      "details": "Items: 0",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.029551"
+    },
+    {
+      "test": "Add to Cart",
+      "success": true,
+      "details": "Added product 69b5d3e21a231afe519666a6",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.043327"
+    },
+    {
+      "test": "Get Cart with Items",
+      "success": true,
+      "details": "Total: \u20b91198.0",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.046557"
+    },
+    {
+      "test": "Clear Cart",
+      "success": true,
+      "details": "Cart cleared successfully",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.049159"
+    },
+    {
+      "test": "Create Booking",
+      "success": true,
+      "details": "Service: Satyanarayana Pooja, Price: \u20b92100.0",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.055351"
+    },
+    {
+      "test": "Get User Bookings",
+      "success": true,
+      "details": "Total bookings: 1",
+      "response_code": null,
+      "timestamp": "2026-03-14T21:59:08.058207"
+    }
+  ],
+  "failed_tests": []
+}
