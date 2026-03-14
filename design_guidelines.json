@@ -1,0 +1,159 @@
+{
+  "project_name": "Divine App",
+  "version": "1.0",
+  "description": "A spiritual ecosystem connecting devotees with priests, astrology, and pooja marketplace.",
+  "design_philosophy": {
+    "core_concept": "Sacred Digitalism",
+    "emotional_tone": "Serene, Authentic, Auspicious, Cosmic",
+    "visual_metaphor": "The Virtual Temple - Entering a space of sanctity and clarity.",
+    "key_principles": [
+      "Authenticity over Trend: Use traditional motifs (mandalas, lotus) but simplify them for digital consumption.",
+      "Warmth is Welcoming: Avoid sterile white. Use cream, parchment, and warm greys.",
+      "Cosmic Depth: For astrology, switch to deep indigos and starry backgrounds.",
+      "Ritualistic Motion: Interactions should feel deliberate and smooth, not snappy."
+    ]
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Cinzel, serif",
+      "body": "Manrope, sans-serif",
+      "special": "Rozha One, serif (for Mantras/Sanskrit)"
+    },
+    "scale": {
+      "h1": "text-5xl md:text-7xl font-bold tracking-tight",
+      "h2": "text-4xl md:text-5xl font-semibold tracking-wide",
+      "h3": "text-2xl md:text-3xl font-medium",
+      "body_lg": "text-lg leading-relaxed",
+      "body_base": "text-base leading-relaxed text-gray-700",
+      "caption": "text-xs uppercase tracking-widest text-gray-500"
+    },
+    "guidelines": "Use 'Cinzel' for all major section headers to evoke a sense of inscription. Use 'Manrope' for all functional text. Ensure 'special' font is used for any Sanskrit shlokas."
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "main": "#FF9933",
+        "light": "#FFB366",
+        "dark": "#CC7000",
+        "name": "Saffron Blaze"
+      },
+      "secondary": {
+        "main": "#800000",
+        "light": "#A52A2A",
+        "dark": "#500000",
+        "name": "Maroon Tradition"
+      },
+      "accent": {
+        "main": "#FFD700",
+        "light": "#FFE44D",
+        "dark": "#B8860B",
+        "name": "Vedic Gold"
+      },
+      "neutral": {
+        "background": "#FFFDD0",
+        "surface": "#FFFAF0",
+        "text_primary": "#2D2424",
+        "text_secondary": "#5D5454",
+        "border": "#E6DCCA"
+      },
+      "astrology_mode": {
+        "background": "#0F172A",
+        "surface": "#1E293B",
+        "text": "#F8FAFC",
+        "accent": "#818CF8"
+      }
+    },
+    "usage_rules": "Use Saffron for primary actions (Book, Buy). Use Maroon for headers/footers. Use Gold sparingly for icons or highlights. Backgrounds should generally be 'Cream Parchment' (#FFFDD0) to avoid eye strain and feel organic. Astrology section MUST use 'Cosmic Indigo' theme."
+  },
+  "layout": {
+    "grid_system": "The 'Mandala' Grid. Central focus with radiating elements.",
+    "spacing": {
+      "container_padding": "p-6 md:p-12 lg:p-24",
+      "section_gap": "gap-16 md:gap-24",
+      "item_gap": "gap-6"
+    },
+    "container_styles": {
+      "card": "bg-white/80 backdrop-blur-sm border border-orange-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300",
+      "glass_panel": "bg-white/60 backdrop-blur-md border border-white/40 shadow-lg"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#FF9933] text-white hover:bg-[#CC7000] rounded-full px-8 py-3 font-semibold shadow-lg hover:shadow-xl transition-transform active:scale-95",
+      "secondary": "border-2 border-[#800000] text-[#800000] hover:bg-[#800000] hover:text-white rounded-full px-8 py-3 font-medium transition-colors",
+      "ghost": "text-[#800000] hover:bg-orange-50 rounded-lg px-4 py-2"
+    },
+    "cards": {
+      "service_card": "relative overflow-hidden rounded-xl border border-orange-100 bg-gradient-to-br from-white to-orange-50 p-6 hover:-translate-y-1 transition-transform",
+      "product_card": "group relative rounded-2xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md border border-gray-100"
+    },
+    "inputs": {
+      "default": "border-orange-200 focus:border-[#FF9933] focus:ring-[#FF9933] rounded-lg bg-white/50"
+    }
+  },
+  "visual_enhancers": {
+    "textures": [
+      "Subtle paper noise overlay (opacity 0.05)",
+      "Faint mandala patterns in negative space (SVG)",
+      "Gold foil gradients for premium text"
+    ],
+    "icons": {
+      "library": "Lucide React",
+      "style": "Stroke width 1.5px. Use gold or maroon colors.",
+      "custom": "Use SVG paths for Diyas, Om, Swastika (sacred symbol), and Lotus."
+    },
+    "motion": {
+      "page_transition": "Fade in with slight upward drift (duration 0.5s)",
+      "hover": "Scale 1.02 + Glow",
+      "loading": "Spinning Chakra or pulsing Om symbol"
+    }
+  },
+  "assets": {
+    "images": {
+      "hero_bg": {
+        "url": "https://images.unsplash.com/photo-1768921325234-30b896e9b6c8",
+        "alt": "Intricate temple architecture background",
+        "usage": "Hero section background with dark overlay for text readability."
+      },
+      "priest_ritual": {
+        "url": "https://images.unsplash.com/photo-1768122735840-8f0a04cbfef6",
+        "alt": "Priest performing fire ritual",
+        "usage": "Priest booking section or 'About Us'."
+      },
+      "astrology_bg": {
+        "url": "https://images.unsplash.com/photo-1748722445984-04d7908bbc6a",
+        "alt": "Abstract cosmic pattern",
+        "usage": "Background for Astrology/Horoscope section."
+      },
+      "marketplace_items": {
+        "url": "https://images.unsplash.com/photo-1652960018678-1f19799996c5",
+        "alt": "Brass pooja items",
+        "usage": "Marketplace category header."
+      }
+    }
+  },
+  "tech_stack_specifics": {
+    "frontend": "React + Vite",
+    "styling": "Tailwind CSS + Shadcn/UI",
+    "state_management": "Zustand or React Context",
+    "routing": "React Router DOM",
+    "animations": "Framer Motion"
+  },
+  "universal_guidelines": [
+    "Do not use generic 'Inter' font for headings. Use 'Cinzel'.",
+    "Ensure high contrast for accessibility, especially with gold text on light backgrounds.",
+    "Mobile-first approach is critical. Navigation should be bottom-bar for mobile.",
+    "Use 'Sonner' for toast notifications.",
+    "All interactive elements must have `data-testid`."
+  ],
+  "instructions_to_main_agent": [
+    "1. Initialize the React project with Vite if not present.",
+    "2. Install Tailwind CSS and Shadcn/UI.",
+    "3. Configure `tailwind.config.js` with the custom color palette.",
+    "4. Create the folder structure: `/src/components`, `/src/pages`, `/src/layouts`.",
+    "5. Implement the `Cinzel` and `Manrope` fonts via Google Fonts.",
+    "6. Build the 'Auth' pages first using Firebase UI components styled to match the theme.",
+    "7. Develop the 'Devotee Dashboard' with the 'Mandala Grid' layout.",
+    "8. Ensure the Astrology section triggers a theme switch to 'Cosmic Mode'."
+  ]
+}
