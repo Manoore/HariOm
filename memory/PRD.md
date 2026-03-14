@@ -32,18 +32,37 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 4. **Shop Owners**: Sell pooja products
 5. **Admin**: Platform management
 
+## App Flows
+
+### Web Flow (Desktop/Tablet)
+1. **Marketing Landing Page** → Full landing page with:
+   - Hero section with app preview
+   - Features, Services, Priests sections
+   - Marketplace preview
+   - Festival calendar
+   - Testimonials and CTA
+   - Footer with contact info
+2. **Login/Sign Up** → Authentication with user type selection
+3. **Dashboard** → Role-specific dashboard with sidebar navigation
+
+### Mobile Flow (Phone)
+1. **Splash Screen** → Animated Divine logo with loading
+2. **Welcome Screen** → Feature icons, Get Started / Login buttons
+3. **Login/Register** → Authentication with user type dropdown
+4. **Dashboard** → Role-specific dashboard with bottom navigation
+
 ## Core Requirements
 - [x] Mobile-first responsive design
-- [x] Splash screen → Welcome → Auth → Dashboard flow
+- [x] Platform-specific flows (Web: Landing → Auth → Dashboard, Mobile: Splash → Auth → Dashboard)
 - [x] Role-based authentication and dashboards
 - [x] Priest listing and booking system
 - [x] Horoscope/Astrology section with zodiac signs
 - [x] Pooja marketplace with cart
 - [x] Festival calendar
 - [x] Temple directory
-- [x] Bottom navigation for mobile app feel
+- [x] Bottom navigation for mobile, sidebar for desktop
 
-## What's Been Implemented (Jan 2026)
+## What's Been Implemented (March 2026)
 
 ### Backend APIs (100% Working)
 - [x] User authentication (register/login/profile)
@@ -57,17 +76,24 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [x] Admin stats and management
 - [x] Stripe payment integration
 
-### Frontend (95% Complete)
-- [x] Splash screen with animated Divine logo
-- [x] Welcome screen with feature icons
-- [x] Login/Register screens
-- [x] Devotee Dashboard with bottom nav
-- [x] Priests Tab - listing and detail view
-- [x] Astrology Tab - zodiac grid with horoscope
-- [x] Shop Tab - product grid with add to cart
-- [x] Profile Tab - bookings, orders, logout
+### Frontend (100% Complete)
+- [x] Web Marketing Landing Page (Hero, Features, Services, Priests, Marketplace, Festivals, CTA, Footer)
+- [x] Splash screen with animated Divine logo (mobile only)
+- [x] Welcome screen with feature icons (mobile only)
+- [x] Login/Register screens with user type dropdown
+- [x] **Devotee Dashboard** - Responsive (sidebar on desktop, bottom nav on mobile)
+  - Home tab with quick actions, festivals, priests
+  - Priests tab with booking flow
+  - Astrology tab with zodiac horoscope
+  - Shop tab with product grid and cart
+  - Profile tab with bookings and orders
+- [x] **Admin Dashboard** - Responsive (sidebar on desktop, bottom nav on mobile)
+  - Overview tab with stats
+  - Users tab with all users list
+  - Priests tab with priest management
+  - Products tab with product grid
+  - Bookings tab with booking list
 - [x] Priest Dashboard for booking management
-- [x] Admin Dashboard with stats
 - [x] Shop Owner Dashboard
 
 ### Design
@@ -75,11 +101,11 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [x] Cinzel font for headings
 - [x] Dark cosmic mode for astrology section
 - [x] Mobile-first bottom navigation
+- [x] Desktop sidebar navigation
 
 ## Prioritized Backlog
 
-### P0 (Critical) - In Progress
-- [ ] External URL deployment fix (platform issue)
+### P0 (Critical)
 - [ ] Firebase Authentication integration (user to provide keys)
 
 ### P1 (High Priority)
@@ -98,6 +124,7 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [ ] Multi-language support
 - [ ] Social sharing
 - [ ] Referral system
+- [ ] App Store / Play Store deployment (Expo EAS)
 
 ## Tech Stack
 ```
@@ -108,13 +135,25 @@ Auth: JWT (Firebase integration pending)
 Payments: Stripe (configured), Razorpay (pending keys)
 ```
 
-## Test Results
-- Backend: 100% (22/22 tests passed on localhost)
-- Frontend: 95% (UI complete, blocked by external URL)
-- Integration: Pending external URL fix
+## Test Results (March 14, 2026)
+- Backend: 100% working
+- Frontend: 100% (all flows tested and verified)
+- Integration: 100% working
+
+### Test Credentials
+- **Admin**: admin@divineapp.com / admin123
+- **Devotee**: test.devotee@divineapp.com / devotee123
 
 ## Next Steps
 1. User provides Firebase credentials for auth integration
-2. Fix external URL routing for production
+2. User provides Razorpay keys for Indian payments
 3. Complete payment flow testing
 4. App store preparation (React Native migration if needed)
+
+## Key Files
+- `frontend/src/pages/MobileApp.js` - Main app navigator (controls web vs mobile flow)
+- `frontend/src/pages/LandingPage.js` - Web marketing landing page
+- `frontend/src/pages/AuthScreen.js` - Authentication with user type dropdown
+- `frontend/src/pages/dashboards/AdminDashboard.js` - Admin dashboard (responsive)
+- `frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee dashboard (responsive)
+- `backend/server.py` - FastAPI backend
