@@ -1,0 +1,31 @@
+from motor.motor_asyncio import AsyncIOMotorClient
+from config import settings
+
+client = AsyncIOMotorClient(settings.MONGO_URL)
+db = client[settings.DB_NAME]
+
+# Collections
+users_collection = db["users"]
+priests_collection = db["priests"]
+astrologers_collection = db["astrologers"]
+shops_collection = db["shops"]
+products_collection = db["products"]
+bookings_collection = db["bookings"]
+orders_collection = db["orders"]
+payment_transactions_collection = db["payment_transactions"]
+horoscopes_collection = db["horoscopes"]
+festivals_collection = db["festivals"]
+temples_collection = db["temples"]
+reviews_collection = db["reviews"]
+cart_collection = db["carts"]
+
+async def init_db():
+    """Initialize database indexes"""
+    await users_collection.create_index("email", unique=True)
+    await users_collection.create_index("firebase_uid", unique=True, sparse=True)
+    await priests_collection.create_index("user_id")
+    await astrologers_collection.create_index("user_id")
+    await shops_collection.create_index("owner_id")
+    await products_collection.create_index("shop_id")
+    await bookings_collection.create_index([("user_id", 1), ("status", 1)])
+    await orders_collection.create_index([("user_id", 1), ("created_at", -1)])

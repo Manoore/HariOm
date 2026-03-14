@@ -1,0 +1,88 @@
+{
+  "summary": {
+    "total_tests": 12,
+    "passed_tests": 0,
+    "success_rate": 0.0,
+    "timestamp": "2026-03-14T21:35:51.719257"
+  },
+  "critical_tests": {
+    "Health Check": false,
+    "User Registration": false,
+    "Admin Login": false,
+    "Priest Login": false,
+    "Get Priests": false,
+    "Get Products": false,
+    "Get Zodiac Signs": false,
+    "Get Daily Horoscope": false,
+    "Get Festivals": false,
+    "Get Temples": false
+  },
+  "detailed_results": {
+    "Health Check": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:50.209069"
+    },
+    "User Registration": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:50.311751"
+    },
+    "User Login": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:50.630951"
+    },
+    "Get Current User": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:50.746649"
+    },
+    "Get Priests List": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:50.853825"
+    },
+    "Get Products List": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:50.988979"
+    },
+    "Get Product Categories": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:51.177174"
+    },
+    "Get Zodiac Signs": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:51.385561"
+    },
+    "Get Daily Horoscope": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:51.516599"
+    },
+    "Get Festivals": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:51.620658"
+    },
+    "Get Temples": {
+      "status": "FAIL",
+      "response_code": 404,
+      "details": "404 page not found\n",
+      "timestamp": "2026-03-14T21:35:51.718272"
+    }
+  }
+}

@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-orange-100;
+  }
+  
+  body {
+    @apply font-manrope bg-cream text-gray-800 antialiased;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-cinzel;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-saffron text-white hover:bg-saffron-dark rounded-full px-8 py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply border-2 border-maroon text-maroon hover:bg-maroon hover:text-white rounded-full px-8 py-3 font-medium transition-colors duration-300;
+  }
+  
+  .btn-ghost {
+    @apply text-maroon hover:bg-orange-50 rounded-lg px-4 py-2 transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-white/80 backdrop-blur-sm border border-orange-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  
+  .card-service {
+    @apply relative overflow-hidden rounded-xl border border-orange-100 bg-gradient-to-br from-white to-orange-50 p-6 hover:-translate-y-1 transition-transform duration-300;
+  }
+  
+  .card-product {
+    @apply relative rounded-2xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md border border-gray-100;
+  }
+  
+  .input-field {
+    @apply border-orange-200 focus:border-saffron focus:ring-saffron rounded-lg bg-white/50 px-4 py-3 w-full outline-none transition-all duration-200;
+  }
+  
+  .glass-panel {
+    @apply bg-white/60 backdrop-blur-md border border-white/40 shadow-lg rounded-2xl;
+  }
+  
+  /* Cosmic mode for astrology section */
+  .cosmic-mode {
+    @apply bg-cosmic-bg text-cosmic-text;
+  }
+  
+  .cosmic-card {
+    @apply bg-cosmic-surface border border-cosmic-accent/30 rounded-2xl shadow-lg;
+  }
+  
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-orange-50 rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-saffron/50 rounded-full hover:bg-saffron;
+  }
+  
+  /* Mobile bottom navigation */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-orange-100 py-2 px-4 z-50 md:hidden;
+  }
+  
+  /* Diya loader animation */
+  .diya-loader {
+    @apply relative w-12 h-12;
+  }
+  
+  .diya-loader::before {
+    content: '';
+    @apply absolute inset-0 bg-saffron rounded-full animate-ping opacity-30;
+  }
+  
+  .diya-loader::after {
+    content: '🪔';
+    @apply absolute inset-0 flex items-center justify-center text-2xl animate-pulse;
+  }
+}
+
+@layer utilities {
+  .text-shadow-gold {
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  }
+  
+  .gradient-gold {
+    background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .gradient-saffron {
+    background: linear-gradient(135deg, #FF9933 0%, #CC7000 100%);
+  }
+  
+  .border-gradient {
+    border-image: linear-gradient(135deg, #FF9933, #FFD700) 1;
+  }
+}
