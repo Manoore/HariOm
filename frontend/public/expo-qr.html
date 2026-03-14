@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Divine App - Expo QR Code</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #FFF8E7 0%, #FFEDD5 100%);
+    }
+    .container {
+      text-align: center;
+      background: white;
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(114, 47, 55, 0.15);
+      max-width: 400px;
+    }
+    h1 {
+      color: #722F37;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 24px;
+    }
+    .qr-code {
+      margin: 20px 0;
+    }
+    .instructions {
+      background: #FFF7ED;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+      text-align: left;
+    }
+    .instructions h3 {
+      color: #722F37;
+      margin: 0 0 12px 0;
+      font-size: 16px;
+    }
+    .instructions ol {
+      margin: 0;
+      padding-left: 20px;
+      color: #666;
+    }
+    .instructions li {
+      margin-bottom: 8px;
+    }
+    .url-box {
+      background: #F3F4F6;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      margin-top: 16px;
+      color: #374151;
+    }
+    .badge {
+      display: inline-block;
+      background: #FF9933;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">📱 Mobile Preview</div>
+    <h1>Divine App</h1>
+    <p class="subtitle">Scan with Expo Go to preview</p>
+    
+    <div class="qr-code">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAAAAklEQVR4AewaftIAAAi1SURBVO3BwY0kwQ1FwT9EG8Qj/aId9ItHejRaB6RsQIlCcfdF/Pz+IQBYwAQAS5gAYAkTACxhAoAlTACwhAkAljABwBImAFjCBABLmABgCRMALGECgCVMALCECQCWMAHAEiYAWMIEAEuYAGCJjy5KD/2ralon6aFv1LRuSA+d1LTeJD10UtO6IT10S03rJD30r6pp3WACgCVMALCECQCWMAHAEiYAWMIEAEuYAGAJEwAs8dHDalrbpIfeJj30N6ppPaWm9TY1rW3SQ08xAcASJgBYwgQAS5gAYAkTACxhAoAlTACwhAkAlvjohdJDT6lpPaWm9aSa1g3poTepaZ2kh55U03pKeugpNa03MQHAEiYAWMIEAEuYAGAJEwAsYQKAJUwAsIQJAJb4CI9JDz0pPXRS09omPXRDTesb6SG8gwkAljABwBImAFjCBABLmABgCRMALGECgCVMALDER3hMTesb6aGTmtYN6aGTmtZJeugpNa0b0kPfqGnhHUwAsIQJAJYwAcASJgBYwgQAS5gAYAkTACxhAoAlPnqhmhb+f+mhp9S03iQ9dEt66KSm9ZSa1r/KBABLmABgCRMALGECgCVMALCECQCWMAHAEiYAWOKjh6WH/lXpoW/UtE7SQyc1rZP00A3poZOa1kl66KSmdUNN6xvpoaekh/DfmQBgCRMALGECgCVMALCECQCWMAHAEiYAWMIEAEv8/P4hPCI9dEtN61+VHnpSTQvvYAKAJUwAsIQJAJYwAcASJgBYwgQAS5gAYAkTACzx0UXpoZOa1kl66Iaa1kl66Ck1rVvSQzfUtG5ID71JTett0kMnNa0b0kMnNa2T9NANNa0bTACwhAkAljABwBImAFjCBABLmABgCRMALGECgCVMALDERw9LD91Q03pKTeskPfSkmtZJeuhNalon6aGnpIfeJj10Q03rJD10UtM6SQ89xQQAS5gAYAkTACxhAoAlTACwhAkAljABwBImAFji5/cPXZIeOqlpnaSHTmpaJ+mhk5rWSXropKZ1S3ropKZ1Q3ropKb1Jumhk5rWk9JDJzWtk/TQDTWtv5EJAJYwAcASJgBYwgQAS5gAYAkTACxhAoAlTACwxM/vH7okPXRS03pKeuiGmtYN6aFv1LRuSA+d1LRO0kMnNa1t0kP/sprWDemhk5rWDSYAWMIEAEuYAGAJEwAsYQKAJUwAsIQJAJYwAcASH71QeuikpvWU9NANNa1vpIeekh46qWndkB46qWmdpIeeVNM6SQ+d1LTeJD10Q03rKSYAWMIEAEuYAGAJEwAsYQKAJUwAsIQJAJYwAcASP79/6JL00ElN64b00A01raekh75R03pKegj/W03rhvTQSU3rhvTQSU3rJD10Q03rBhMALGECgCVMALCECQCWMAHAEiYAWMIEAEuYAGCJn98/dEl66Iaa1lPSQ0+paf2t0kMnNa2T9NBJTeuG9NCTalpvkh56Sk3rBhMALGECgCVMALCECQCWMAHAEiYAWMIEAEuYAGCJj/5i6aGTmtZT0kPfqGmdpIduqGmdpIdOalpvkh46qWm9TXrohprWSU3rJD10UtN6igkAljABwBImAFjCBABLmABgCRMALGECgCVMALDEz+8fuiQ99CY1rRvSQyc1rVvSQzfUtN4kPXRS03pKeugbNa2T9NBJTeskPXRDTesp6aGTmtYNJgBYwgQAS5gAYAkTACxhAoAlTACwhAkAljABwBIfXVTTOkkPvUl66KSmdUN66Jaa1g3poRtqWjekh55S0/pGeuikpvWUmtYN6aEbalpPMQHAEiYAWMIEAEuYAGAJEwAsYQKAJUwAsIQJAJb46KL00ElN6yQ9dEN66Ib00JNqWm9S03pKTeuG9NAtNa2T9NBJTeukpnWSHnpKTetNTACwhAkAljABwBImAFjCBABLmABgCRMALGECgCU+uqim9SY1rZP00ElN6yQ9dFLTepua1lNqWjekh05qWifpoW/UtJ6SHjqpad2QHjpJD53UtJ5iAoAlTACwhAkAljABwBImAFjCBABLmABgCRMALGECgCV+fv/Qg9JDJzWtG9JDJzWtk/TQ29S0bkgP3VDTekp66KSmdUt6aJua1kl66Ck1rRtMALCECQCWMAHAEiYAWMIEAEuYAGAJEwAsYQKAJX5+/xAekR76Rk3rJD10UtO6IT10Q03rJD10UtN6UnropKb1lPTQSU3rhvTQDTWtG0wAsIQJAJYwAcASJgBYwgQAS5gAYAkTACxhAoAlProoPfSvqmltlB66oaZ1Q03rKemhJ6WHTmpaT0kP3VDTeooJAJYwAcASJgBYwgQAS5gAYAkTACxhAoAlTACwxEcPq2ltkx56m5rWDTWtN0kPndS0bqhpfSM9dENN6ynpoZOa1kl66E1MALCECQCWMAHAEiYAWMIEAEuYAGAJEwAsYQKAJT56ofTQU2paT6lpfSM99CY1rZP00ElN64b00A01rVvSQ9ukh05qWm9iAoAlTACwhAkAljABwBImAFjCBABLmABgCRMALPERHpMe+kZN64b00ElN6yQ9dEN66Iaa1g3poW/UtE7SQyc1rRvSQyc1raekh05qWjeYAGAJEwAsYQKAJUwAsIQJAJYwAcASJgBYwgQAS3yE10kPndS0nlLTepP00A01rW+kh05qWjekh05qWifpoZOa1jYmAFjCBABLmABgCRMALGECgCVMALCECQCWMAHAEh+9UE3rb1TTepv00DY1rZP00Nukh25IDz0lPXRS03qKCQCWMAHAEiYAWMIEAEuYAGAJEwAsYQKAJUwAsMRHD0sP/avSQ9+oaZ2kh96kprVNemijmtZJeuhvZAKAJUwAsIQJAJYwAcASJgBYwgQAS5gAYAkTACzx8/uHAGABEwAsYQKAJUwAsIQJAJYwAcASJgBYwgQAS5gAYAkTACxhAoAlTACwhAkAljABwBImAFjCBABLmABgCRMALPEfErY+uWuQemsAAAAASUVORK5CYII=" alt="QR Code" width="250" height="250" />
+    </div>
+    
+    <div class="instructions">
+      <h3>📋 Instructions:</h3>
+      <ol>
+        <li><strong>Download Expo Go</strong> on your phone
+          <br><small>iOS: App Store | Android: Play Store</small></li>
+        <li><strong>Open camera</strong> and scan QR code</li>
+        <li><strong>Tap notification</strong> to open in Expo Go</li>
+      </ol>
+    </div>
+    
+    <div class="url-box">
+      exp://08qpdne-anonymous-8082.exp.direct
+    </div>
+  </div>
+</body>
+</html>
