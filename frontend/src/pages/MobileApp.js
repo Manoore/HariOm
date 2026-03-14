@@ -2,12 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import AuthScreen from './AuthScreen';
+import LandingPage from './LandingPage';
 import DevoteeDashboard from './dashboards/DevoteeDashboard';
 import PriestDashboard from './dashboards/PriestDashboard';
 import AdminDashboard from './dashboards/AdminDashboard';
 import ShopOwnerDashboard from './dashboards/ShopOwnerDashboard';
 
-// Splash Screen Component
+// Check if mobile device
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  return isMobile;
+};
+
+// Splash Screen Component for Mobile
 function SplashScreen({ onComplete }) {
   useEffect(() => {
     const timer = setTimeout(onComplete, 2500);
@@ -127,16 +139,45 @@ function SplashScreen({ onComplete }) {
 // Main App Entry Point
 export default function MobileApp() {
   const [showSplash, setShowSplash] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   const { user, loading } = useAuth();
+  const isMobile = useIsMobile();
 
-  if (showSplash) {
-    return (
-      <AnimatePresence>
-        <SplashScreen onComplete={() => setShowSplash(false)} />
-      </AnimatePresence>
-    );
+  // Handle get started from landing page
+  const handleGetStarted = (mode = 'register') => {
+    setAuthMode(mode);
+    setShowAuth(true);
+  };
+
+  // Mobile flow: Splash → Auth/Welcome → Dashboard
+  if (isMobile) {
+    if (showSplash) {
+      return (
+        <AnimatePresence>
+          <SplashScreen onComplete={() => setShowSplash(false)} />
+        </AnimatePresence>
+      );
+    }
+
+    if (loading) {
+      return (
+        <div className="fixed inset-0 bg-cream flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-saffron border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
+
+    // Not logged in - show auth screen
+    if (!user) {
+      return <AuthScreen />;
+    }
+
+    // Logged in - show appropriate dashboard based on role
+    return renderDashboard(user.role);
   }
 
+  // Desktop/Web flow: Landing Page → Auth → Dashboard
   if (loading) {
     return (
       <div className="fixed inset-0 bg-cream flex items-center justify-center">
@@ -145,13 +186,29 @@ export default function MobileApp() {
     );
   }
 
-  // Not logged in - show auth screen
-  if (!user) {
-    return <AuthScreen />;
+  // Logged in user on web - show dashboard
+  if (user) {
+    return renderDashboard(user.role);
   }
 
-  // Logged in - show appropriate dashboard based on role
-  switch (user.role) {
+  // Not logged in on web
+  if (showAuth) {
+    return (
+      <AuthScreen 
+        initialMode={authMode} 
+        onBack={() => setShowAuth(false)} 
+        showBackButton={true}
+      />
+    );
+  }
+
+  // Show landing page
+  return <LandingPage onGetStarted={handleGetStarted} />;
+}
+
+// Helper function to render dashboard based on role
+function renderDashboard(role) {
+  switch (role) {
     case 'admin':
       return <AdminDashboard />;
     case 'priest':

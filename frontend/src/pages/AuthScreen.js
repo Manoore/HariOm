@@ -4,8 +4,8 @@ import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Loader2, ChevronLeft 
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 
-export default function AuthScreen() {
-  const [mode, setMode] = useState('welcome'); // welcome, login, register
+export default function AuthScreen({ initialMode = 'welcome', onBack, showBackButton = false }) {
+  const [mode, setMode] = useState(initialMode === 'login' ? 'login' : initialMode === 'register' ? 'register' : 'welcome'); // welcome, login, register
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
@@ -50,7 +50,9 @@ export default function AuthScreen() {
           <WelcomeScreen 
             key="welcome"
             onLogin={() => setMode('login')} 
-            onRegister={() => setMode('register')} 
+            onRegister={() => setMode('register')}
+            onBack={onBack}
+            showBackButton={showBackButton}
           />
         )}
         
@@ -63,7 +65,7 @@ export default function AuthScreen() {
             loading={loading}
             showPassword={showPassword}
             setShowPassword={setShowPassword}
-            onBack={() => setMode('welcome')}
+            onBack={showBackButton ? onBack : () => setMode('welcome')}
             onSwitch={() => setMode('register')}
           />
         )}
@@ -77,7 +79,7 @@ export default function AuthScreen() {
             loading={loading}
             showPassword={showPassword}
             setShowPassword={setShowPassword}
-            onBack={() => setMode('welcome')}
+            onBack={showBackButton ? onBack : () => setMode('welcome')}
             onSwitch={() => setMode('login')}
           />
         )}
@@ -86,7 +88,7 @@ export default function AuthScreen() {
   );
 }
 
-function WelcomeScreen({ onLogin, onRegister }) {
+function WelcomeScreen({ onLogin, onRegister, onBack, showBackButton }) {
   return (
     <motion.div
       className="min-h-screen flex flex-col"
@@ -95,6 +97,16 @@ function WelcomeScreen({ onLogin, onRegister }) {
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.3 }}
     >
+      {/* Back button for web */}
+      {showBackButton && (
+        <div className="px-4 pt-4">
+          <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-maroon">
+            <ChevronLeft className="w-5 h-5" />
+            <span>Back to Home</span>
+          </button>
+        </div>
+      )}
+      
       {/* Top Section with Logo */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 pt-16">
         {/* Logo */}
