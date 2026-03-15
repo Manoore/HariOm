@@ -235,14 +235,11 @@ export function AuthProvider({ children }) {
 
   // ==================== PHONE AUTHENTICATION ====================
   
-  // Initialize reCAPTCHA for phone auth
+  // Initialize reCAPTCHA for phone auth (no longer needed - handled in sendPhoneOTP)
   const initPhoneAuth = (containerId = 'recaptcha-container') => {
-    try {
-      return setupRecaptcha(containerId);
-    } catch (error) {
-      console.error('Error initializing phone auth:', error);
-      throw error;
-    }
+    // This is now a no-op as reCAPTCHA is created fresh for each OTP request
+    console.log('Phone auth initialized for container:', containerId);
+    return true;
   };
 
   // Send OTP to phone number

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Loader2, ChevronLeft, Bell, Sparkles, Building2, ShoppingCart, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -117,7 +117,6 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
-  const recaptchaInitialized = useRef(false);
   
   // Country code state
   const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]); // Default to India
@@ -173,12 +172,6 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   const handleSendOTP = async (phoneNumber, isRegister = false) => {
     setOtpLoading(true);
     try {
-      // Initialize reCAPTCHA if not already done
-      if (!recaptchaInitialized.current) {
-        initPhoneAuth('recaptcha-container');
-        recaptchaInitialized.current = true;
-      }
-      
       // Prepend country code to phone number
       const fullPhoneNumber = `${selectedCountry.code}${phoneNumber}`;
       await sendOTP(fullPhoneNumber);
@@ -197,7 +190,6 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
       }
       
       toast.error(errorMessage);
-      recaptchaInitialized.current = false; // Reset for retry
     } finally {
       setOtpLoading(false);
     }
