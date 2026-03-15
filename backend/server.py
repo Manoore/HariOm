@@ -1874,7 +1874,7 @@ async def update_booking_status(booking_id: str, status: BookingStatus, user: di
     return {"message": "Booking status updated"}
 
 # ===================== PRIEST DASHBOARD - CLASSES =====================
-from database import priest_classes_collection, priest_availability_collection, priest_content_collection, priest_streams_collection, priest_portfolio_collection, priest_services_collection, priest_posts_collection
+from database import priest_classes_collection, priest_availability_collection, priest_content_collection, priest_streams_collection, priest_portfolio_collection, priest_services_collection, priest_posts_collection, post_comments_collection, post_likes_collection
 
 @app.get("/api/priest/classes")
 async def get_priest_classes(user: dict = Depends(require_role([UserRole.PRIEST]))):
@@ -2641,6 +2641,134 @@ async def get_posts_feed(skip: int = 0, limit: int = 50):
             "created_at": post["created_at"].isoformat() if isinstance(post["created_at"], datetime) else post["created_at"]
         })
     return {"posts": posts, "total": len(posts)}
+
+
+# ===================== POST COMMENTS & LIKES =====================
+@app.get("/api/posts/{post_id}/comments")
+async def get_post_comments(post_id: str, skip: int = 0, limit: int = 50):
+    """Get comments for a post"""
+    cursor = post_comments_collection.find({"post_id": post_id}).skip(skip).limit(limit).sort("created_at", -1)
+    comments = []
+    async for comment in cursor:
+        comments.append({
+            "id": str(comment["_id"]),
+            "post_id": comment["post_id"],
+            "user_id": comment["user_id"],
+            "user_name": comment.get("user_name", "Anonymous"),
+            "user_photo": comment.get("user_photo", ""),
+            "content": comment.get("content", ""),
+            "image_url": comment.get("image_url", ""),
+            "created_at": comment["created_at"].isoformat() if isinstance(comment["created_at"], datetime) else comment["created_at"]
+        })
+    return {"comments": comments, "total": len(comments)}
+
+@app.post("/api/posts/{post_id}/comments")
+async def add_post_comment(post_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Add a comment to a post"""
+    # Verify post exists
+    post = await priest_posts_collection.find_one({"_id": ObjectId(post_id)})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    data = await request.json()
+    
+    if not data.get("content") and not data.get("image_url"):
+        raise HTTPException(status_code=400, detail="Comment must have text or image")
+    
+    comment_dict = {
+        "post_id": post_id,
+        "user_id": str(user["_id"]),
+        "user_name": user.get("name", "Anonymous"),
+        "user_photo": user.get("profile_photo", ""),
+        "content": data.get("content", ""),
+        "image_url": data.get("image_url", ""),
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await post_comments_collection.insert_one(comment_dict)
+    
+    # Update comment count on post
+    await priest_posts_collection.update_one(
+        {"_id": ObjectId(post_id)},
+        {"$inc": {"comments_count": 1}}
+    )
+    
+    return {
+        "message": "Comment added",
+        "comment_id": str(result.inserted_id),
+        "comment": {
+            "id": str(result.inserted_id),
+            "user_name": user.get("name", "Anonymous"),
+            "user_photo": user.get("profile_photo", ""),
+            "content": data.get("content", ""),
+            "image_url": data.get("image_url", ""),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+    }
+
+@app.delete("/api/posts/{post_id}/comments/{comment_id}")
+async def delete_post_comment(post_id: str, comment_id: str, user: dict = Depends(get_current_user)):
+    """Delete a comment (only by comment author or post author)"""
+    comment = await post_comments_collection.find_one({"_id": ObjectId(comment_id)})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Check if user is comment author
+    if comment["user_id"] != str(user["_id"]):
+        # Check if user is post author (priest)
+        post = await priest_posts_collection.find_one({"_id": ObjectId(post_id)})
+        priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+        if not post or not priest or post["priest_id"] != str(priest["_id"]):
+            raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
+    
+    await post_comments_collection.delete_one({"_id": ObjectId(comment_id)})
+    
+    # Update comment count on post
+    await priest_posts_collection.update_one(
+        {"_id": ObjectId(post_id)},
+        {"$inc": {"comments_count": -1}}
+    )
+    
+    return {"message": "Comment deleted"}
+
+@app.post("/api/posts/{post_id}/like")
+async def like_post(post_id: str, user: dict = Depends(get_current_user)):
+    """Like or unlike a post"""
+    # Check if already liked
+    existing_like = await post_likes_collection.find_one({
+        "post_id": post_id,
+        "user_id": str(user["_id"])
+    })
+    
+    if existing_like:
+        # Unlike - remove the like
+        await post_likes_collection.delete_one({"_id": existing_like["_id"]})
+        await priest_posts_collection.update_one(
+            {"_id": ObjectId(post_id)},
+            {"$inc": {"likes": -1}}
+        )
+        return {"message": "Post unliked", "liked": False}
+    else:
+        # Like - add the like
+        await post_likes_collection.insert_one({
+            "post_id": post_id,
+            "user_id": str(user["_id"]),
+            "created_at": datetime.now(timezone.utc)
+        })
+        await priest_posts_collection.update_one(
+            {"_id": ObjectId(post_id)},
+            {"$inc": {"likes": 1}}
+        )
+        return {"message": "Post liked", "liked": True}
+
+@app.get("/api/posts/{post_id}/like-status")
+async def get_like_status(post_id: str, user: dict = Depends(get_current_user)):
+    """Check if user has liked a post"""
+    existing_like = await post_likes_collection.find_one({
+        "post_id": post_id,
+        "user_id": str(user["_id"])
+    })
+    return {"liked": existing_like is not None}
 
 
 # ===================== PUBLIC - VIEW PRIEST CONTENT =====================
