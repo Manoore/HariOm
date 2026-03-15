@@ -3415,23 +3415,273 @@ function AstrologyTab({ isDesktop }) {
   );
 }
 
+// Product Detail View Component
+function ProductDetailView({ product, productId, isDesktop, onBack, onAddToCart, ReviewComponents, cartCount, onOpenCart }) {
+  const [productDetail, setProductDetail] = useState(product);
+  const [loading, setLoading] = useState(!product);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [showVideo, setShowVideo] = useState(false);
+
+  useEffect(() => {
+    if (!product) {
+      fetchProductDetail();
+    }
+  }, [productId]);
+
+  const fetchProductDetail = async () => {
+    try {
+      const res = await api.get(`/api/products/${productId}`);
+      setProductDetail(res.data);
+    } catch (error) {
+      toast.error('Failed to load product');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    for (let i = 0; i < quantity; i++) {
+      await onAddToCart(productId);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'} flex justify-center items-center py-20`}>
+        <Loader2 className="w-8 h-8 text-saffron animate-spin" />
+      </div>
+    );
+  }
+
+  if (!productDetail) {
+    return (
+      <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'} text-center py-20`}>
+        <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+        <p className="text-gray-500">Product not found</p>
+        <button onClick={onBack} className="mt-4 text-saffron hover:underline">
+          Back to Shop
+        </button>
+      </div>
+    );
+  }
+
+  const images = productDetail.images || [];
+  const hasVideo = productDetail.video_url;
+
+  return (
+    <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between py-4 mb-4">
+        <button 
+          onClick={onBack}
+          className="flex items-center gap-2 text-gray-600 hover:text-saffron transition-colors"
+          data-testid="back-to-shop"
+        >
+          <ArrowRight className="w-5 h-5 rotate-180" />
+          <span>Back to Shop</span>
+        </button>
+        <button 
+          onClick={onOpenCart}
+          className="relative p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow"
+        >
+          <ShoppingCart className="w-6 h-6 text-saffron" />
+          {cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              {cartCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      <div className={`${isDesktop ? 'grid grid-cols-2 gap-12' : ''}`}>
+        {/* Product Images */}
+        <div className="mb-6 lg:mb-0">
+          {/* Main Image/Video */}
+          <div className="aspect-square bg-orange-50 rounded-2xl overflow-hidden mb-4 relative">
+            {showVideo && hasVideo ? (
+              <video 
+                src={productDetail.video_url} 
+                controls 
+                autoPlay
+                className="w-full h-full object-cover"
+              />
+            ) : images[selectedImage] ? (
+              <img 
+                src={images[selectedImage]} 
+                alt={productDetail.name} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <ShoppingBag className="w-20 h-20 text-saffron/30" />
+              </div>
+            )}
+            
+            {/* Video Toggle */}
+            {hasVideo && (
+              <button
+                onClick={() => setShowVideo(!showVideo)}
+                className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2 hover:bg-white transition-colors"
+              >
+                {showVideo ? (
+                  <>
+                    <Camera className="w-4 h-4 text-saffron" />
+                    <span className="text-sm">Photos</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 text-saffron" />
+                    <span className="text-sm">Video</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+          
+          {/* Thumbnail Images */}
+          {images.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => { setSelectedImage(idx); setShowVideo(false); }}
+                  className={`w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all ${
+                    selectedImage === idx && !showVideo ? 'border-saffron' : 'border-transparent'
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Product Info */}
+        <div>
+          <p className="text-sm text-saffron mb-1">{productDetail.category}</p>
+          <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon mb-2">
+            {productDetail.name}
+          </h1>
+          
+          {/* Rating */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star 
+                  key={star}
+                  className={`w-5 h-5 ${
+                    star <= Math.round(productDetail.rating || 0)
+                      ? 'fill-gold text-gold'
+                      : 'text-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-sm text-gray-500">
+              {productDetail.rating?.toFixed(1) || '0.0'} ({productDetail.total_reviews || 0} reviews)
+            </span>
+          </div>
+          
+          {/* Shop */}
+          <p className="text-sm text-gray-500 mb-4">
+            Sold by <span className="font-medium text-gray-700">{productDetail.shop_name}</span>
+          </p>
+          
+          {/* Price */}
+          <div className="flex items-baseline gap-2 mb-6">
+            <span className="text-3xl font-bold text-saffron">₹{productDetail.price}</span>
+            {productDetail.stock > 0 ? (
+              <span className="text-sm text-green-600">In Stock ({productDetail.stock} available)</span>
+            ) : (
+              <span className="text-sm text-red-500">Out of Stock</span>
+            )}
+          </div>
+          
+          {/* Description */}
+          <div className="mb-6">
+            <h3 className="font-medium text-gray-800 mb-2">Description</h3>
+            <p className="text-gray-600 leading-relaxed">{productDetail.description}</p>
+          </div>
+          
+          {/* Quantity & Add to Cart */}
+          {productDetail.stock > 0 && (
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-2 bg-orange-50 rounded-full p-1">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-gray-50"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-12 text-center font-medium">{quantity}</span>
+                <button
+                  onClick={() => setQuantity(Math.min(productDetail.stock, quantity + 1))}
+                  className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-gray-50"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 py-4 bg-saffron text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+                data-testid="add-to-cart-detail"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Add to Cart
+              </button>
+            </div>
+          )}
+          
+          {/* Stock Warning */}
+          {productDetail.stock > 0 && productDetail.stock < 10 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
+              <p className="text-amber-700 text-sm flex items-center gap-2">
+                <Bell className="w-4 h-4" />
+                Only {productDetail.stock} items left - order soon!
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Reviews Section */}
+      {ReviewComponents && (
+        <div className="mt-12 pt-8 border-t border-orange-100">
+          <ReviewComponents.default 
+            productId={productId} 
+            productName={productDetail.name}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Shop Tab
 function ShopTab({ isDesktop }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showCart, setShowCart] = useState(false);
-  const [view, setView] = useState('shop'); // shop, checkout, success, orders, order-detail
+  const [view, setView] = useState('shop'); // shop, product-detail, checkout, success, orders, order-detail
   const [orderData, setOrderData] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [selectedProductId, setSelectedProductId] = useState(null);
   const { addToCart, cartCount } = useCart();
 
   // Lazy load checkout components
   const [CheckoutComponents, setCheckoutComponents] = useState(null);
+  // Lazy load reviews components
+  const [ReviewComponents, setReviewComponents] = useState(null);
   
   useEffect(() => {
     import('../../components/Checkout/CheckoutComponents').then(module => {
       setCheckoutComponents(module);
+    });
+    import('../../components/Reviews/ProductReviews').then(module => {
+      setReviewComponents(module);
     });
   }, []);
 
@@ -3518,6 +3768,27 @@ function ShopTab({ isDesktop }) {
     );
   }
 
+  // Product Detail View
+  if (view === 'product-detail' && selectedProductId) {
+    const selectedProduct = products.find(p => p.id === selectedProductId);
+    
+    return (
+      <ProductDetailView 
+        product={selectedProduct}
+        productId={selectedProductId}
+        isDesktop={isDesktop}
+        onBack={() => {
+          setSelectedProductId(null);
+          setView('shop');
+        }}
+        onAddToCart={handleAddToCart}
+        ReviewComponents={ReviewComponents}
+        cartCount={cartCount}
+        onOpenCart={() => setShowCart(true)}
+      />
+    );
+  }
+
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       {/* Cart Sidebar */}
@@ -3580,9 +3851,14 @@ function ShopTab({ isDesktop }) {
           {filteredProducts.map((product) => (
             <motion.div
               key={product.id}
-              className="bg-white rounded-2xl p-3 lg:p-4 shadow-sm border border-orange-50 hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl p-3 lg:p-4 shadow-sm border border-orange-50 hover:shadow-md transition-shadow cursor-pointer"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
+              onClick={() => {
+                setSelectedProductId(product.id);
+                setView('product-detail');
+              }}
+              data-testid={`product-card-${product.id}`}
             >
               <div className={`aspect-square bg-orange-50 rounded-xl mb-3 flex items-center justify-center overflow-hidden`}>
                 {product.images?.[0] ? (
@@ -3595,7 +3871,8 @@ function ShopTab({ isDesktop }) {
               <p className="text-xs text-gray-500 mb-1">{product.shop_name}</p>
               <div className="flex items-center gap-1 mb-2">
                 <Star className="w-3 h-3 text-gold fill-gold" />
-                <span className="text-xs text-gray-500">{product.rating}</span>
+                <span className="text-xs text-gray-500">{product.rating || 0}</span>
+                <span className="text-xs text-gray-400">({product.total_reviews || 0})</span>
                 {product.stock < 10 && product.stock > 0 && (
                   <span className="text-xs text-amber-600 ml-auto">Only {product.stock} left</span>
                 )}
@@ -3606,7 +3883,10 @@ function ShopTab({ isDesktop }) {
               <div className="flex items-center justify-between">
                 <p className="text-saffron font-bold">₹{product.price}</p>
                 <button
-                  onClick={() => handleAddToCart(product.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToCart(product.id);
+                  }}
                   disabled={product.stock === 0}
                   className="w-8 h-8 lg:w-10 lg:h-10 bg-saffron hover:bg-saffron-dark text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid={`add-to-cart-${product.id}`}

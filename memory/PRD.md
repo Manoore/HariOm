@@ -316,6 +316,14 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Product rating auto-updates on new reviews
   - [x] Backend APIs: POST/GET /api/products/{id}/reviews, GET /api/products/{id}/can-review
   - [x] Frontend: ProductReviews component with WriteReviewModal
+  - [x] **Product Detail Page** integrated into DevoteeDashboard ShopTab
+    - [x] Full product info with images/video gallery
+    - [x] Thumbnail image selector
+    - [x] Quantity selector (+/-)
+    - [x] Add to Cart button
+    - [x] Stock status and low-stock warnings
+    - [x] Integrated CustomerReviews section
+    - [x] Back to Shop navigation
 
 - [x] **Backend Refactoring** (March 15, 2026)
   - [x] Created modular routes directory structure
@@ -485,4 +493,4 @@ Icons: Custom 3D animated SVGs
 - `backend/routes/reviews.py` - Product reviews API (NEW)
 
 ## Preview URLs
-- **Web App**: https://priest-hub-1.preview.emergentagent.com
+- **Web App**: https://aarti-platform.preview.emergentagent.com
