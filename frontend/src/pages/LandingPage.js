@@ -1,15 +1,152 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Star, Calendar, ShoppingBag, Sun, ChevronRight, Users, Award, Clock, 
   ArrowRight, Check, Play, Quote, MapPin, Phone, Mail,
-  Facebook, Twitter, Instagram, Youtube, ChevronDown, Menu, X
+  Facebook, Twitter, Instagram, Youtube, ChevronDown, Menu, X, ChevronLeft
 } from 'lucide-react';
 import api from '../lib/api';
 
 // Scroll to top function
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// Divine/Spiritual images for carousel
+const CAROUSEL_IMAGES = [
+  {
+    url: 'https://images.unsplash.com/photo-1750405704388-1416715c359c?w=1920&q=80',
+    title: 'Sacred Temple Shrine',
+    subtitle: 'Experience divine blessings'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1765873042338-5276f5eb54d0?w=1920&q=80',
+    title: 'Traditional Puja Ceremony',
+    subtitle: 'Connect with ancient rituals'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1757308530438-4e2340a6475f?w=1920&q=80',
+    title: 'Sacred Aarti Flames',
+    subtitle: 'Illuminate your spiritual path'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1734455937991-01f528d6b633?w=1920&q=80',
+    title: 'Golden Temple Architecture',
+    subtitle: 'Discover sacred places'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1761658883717-2e8e1f0ff66b?w=1920&q=80',
+    title: 'Devotional Offerings',
+    subtitle: 'Embrace Hindu traditions'
+  }
+];
+
+// Temple Logo SVG Component
+const TempleLogo = ({ className = "", onClick }) => (
+  <motion.svg 
+    viewBox="0 0 60 60" 
+    className={`cursor-pointer ${className}`}
+    onClick={onClick}
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+  >
+    <defs>
+      <linearGradient id="templeLogoGold" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#FFD700" />
+        <stop offset="50%" stopColor="#FFA500" />
+        <stop offset="100%" stopColor="#B8860B" />
+      </linearGradient>
+      <linearGradient id="templeLogoStone" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#DEB887" />
+        <stop offset="100%" stopColor="#CD853F" />
+      </linearGradient>
+    </defs>
+    {/* Temple base */}
+    <rect x="8" y="45" width="44" height="10" rx="2" fill="url(#templeLogoStone)" />
+    {/* Temple body */}
+    <rect x="12" y="28" width="36" height="17" fill="url(#templeLogoStone)" />
+    {/* Temple pillars */}
+    <rect x="15" y="30" width="4" height="13" fill="#8B4513" />
+    <rect x="41" y="30" width="4" height="13" fill="#8B4513" />
+    {/* Temple door */}
+    <rect x="25" y="33" width="10" height="12" rx="5" fill="#4A3728" />
+    {/* Temple roof tier 1 */}
+    <polygon points="30,20 48,28 12,28" fill="url(#templeLogoGold)" />
+    {/* Temple roof tier 2 */}
+    <polygon points="30,12 42,20 18,20" fill="url(#templeLogoGold)" />
+    {/* Temple spire */}
+    <polygon points="30,3 35,12 25,12" fill="url(#templeLogoGold)" />
+    {/* Kalash on top */}
+    <circle cx="30" cy="5" r="3" fill="#FFD700" />
+    {/* Om symbol */}
+    <text x="30" y="41" fontSize="8" fill="#FFD700" textAnchor="middle" fontWeight="bold">ॐ</text>
+  </motion.svg>
+);
+
+// Image Carousel Component
+const ImageCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % CAROUSEL_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const goToSlide = (index) => setCurrentIndex(index);
+  const goPrev = () => setCurrentIndex((prev) => (prev - 1 + CAROUSEL_IMAGES.length) % CAROUSEL_IMAGES.length);
+  const goNext = () => setCurrentIndex((prev) => (prev + 1) % CAROUSEL_IMAGES.length);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 1 }}
+          className="absolute inset-0"
+        >
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${CAROUSEL_IMAGES[currentIndex].url})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-maroon/90 via-maroon/70 to-maroon/50" />
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Navigation Arrows */}
+      <button 
+        onClick={goPrev}
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all"
+      >
+        <ChevronLeft className="w-6 h-6 text-white" />
+      </button>
+      <button 
+        onClick={goNext}
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all"
+      >
+        <ChevronRight className="w-6 h-6 text-white" />
+      </button>
+
+      {/* Dots Indicator */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+        {CAROUSEL_IMAGES.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`w-3 h-3 rounded-full transition-all ${
+              index === currentIndex 
+                ? 'bg-gold w-8' 
+                : 'bg-white/50 hover:bg-white/70'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 };
 
 // Animated Aarti/Harathi Component
@@ -383,21 +520,21 @@ export default function LandingPage({ onGetStarted }) {
   };
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-cream overflow-x-hidden">
       {/* Animated Aarti */}
       <AartiAnimation />
       
-      {/* Navigation */}
+      {/* Navigation - Full Width */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-orange-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 lg:h-20">
-            {/* Logo - Clickable to scroll to top */}
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 lg:h-20 max-w-[1920px] mx-auto">
+            {/* Logo - Temple Symbol - Clickable to scroll to top */}
             <button 
               onClick={scrollToTop}
               className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
               data-testid="logo-scroll-top"
             >
-              <DiyaIcon className="w-10 h-10" animate={false} />
+              <TempleLogo className="w-12 h-12" onClick={scrollToTop} />
               <span className="font-cinzel text-2xl font-bold text-maroon">DIVINE</span>
             </button>
 
@@ -452,67 +589,64 @@ export default function LandingPage({ onGetStarted }) {
         )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center pt-20">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1545126898-06fae8e63289?w=1920)' }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-maroon/90 via-maroon/80 to-maroon/60"></div>
-        </div>
+      {/* Hero Section - Full Width with Image Carousel */}
+      <section className="relative min-h-screen flex items-center pt-20 w-full">
+        {/* Image Carousel Background */}
+        <ImageCarousel />
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-                <OmIcon className="w-5 h-5" animate={false} />
-                <span className="text-white/90 text-sm">Your Complete Spiritual Ecosystem</span>
-              </div>
-              
-              <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                Connect with the <span className="text-gold">Divine</span> from Anywhere
-              </h1>
-              
-              <p className="text-lg text-white/80 mb-8 max-w-xl">
-                Book verified priests for poojas, explore your horoscope, shop for sacred items, 
-                and embrace Hindu traditions — all in one platform designed for the modern devotee.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button 
-                  onClick={() => onGetStarted('register')}
-                  className="bg-gold hover:bg-gold-dark text-maroon px-8 py-4 rounded-full font-semibold inline-flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl"
-                >
-                  Start Your Journey <ArrowRight className="w-5 h-5" />
-                </button>
-                <a 
-                  href="#how-it-works"
-                  className="border-2 border-white/50 text-white hover:bg-white/10 px-8 py-4 rounded-full font-medium inline-flex items-center justify-center gap-2 transition-all"
-                >
-                  <Play className="w-5 h-5" /> See How It Works
-                </a>
-              </div>
+        <div className="relative z-10 w-full px-4 sm:px-8 lg:px-16 py-20">
+          <div className="max-w-[1920px] mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
+                  <OmIcon className="w-5 h-5" animate={false} />
+                  <span className="text-white/90 text-sm">Your Complete Spiritual Ecosystem</span>
+                </div>
+                
+                <h1 className="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                  Connect with the <span className="text-gold">Divine</span> from Anywhere
+                </h1>
+                
+                <p className="text-lg text-white/80 mb-8 max-w-xl">
+                  Book verified priests for poojas, explore your horoscope, shop for sacred items, 
+                  and embrace Hindu traditions — all in one platform designed for the modern devotee.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button 
+                    onClick={() => onGetStarted('register')}
+                    className="bg-gold hover:bg-gold-dark text-maroon px-8 py-4 rounded-full font-semibold inline-flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl"
+                  >
+                    Start Your Journey <ArrowRight className="w-5 h-5" />
+                  </button>
+                  <a 
+                    href="#how-it-works"
+                    className="border-2 border-white/50 text-white hover:bg-white/10 px-8 py-4 rounded-full font-medium inline-flex items-center justify-center gap-2 transition-all"
+                  >
+                    <Play className="w-5 h-5" /> See How It Works
+                  </a>
+                </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-white/20">
-                <div>
-                  <p className="text-3xl font-bold text-gold">500+</p>
-                  <p className="text-white/70 text-sm">Verified Priests</p>
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-white/20">
+                  <div>
+                    <p className="text-3xl font-bold text-gold">500+</p>
+                    <p className="text-white/70 text-sm">Verified Priests</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-gold">10K+</p>
+                    <p className="text-white/70 text-sm">Poojas Completed</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-gold">50K+</p>
+                    <p className="text-white/70 text-sm">Happy Devotees</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-3xl font-bold text-gold">10K+</p>
-                  <p className="text-white/70 text-sm">Poojas Completed</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-gold">50K+</p>
-                  <p className="text-white/70 text-sm">Happy Devotees</p>
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
             <motion.div
               initial={{ opacity: 0, x: 30 }}
@@ -572,12 +706,13 @@ export default function LandingPage({ onGetStarted }) {
                 </div>
               </div>
             </motion.div>
+            </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
         <motion.div 
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20"
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >
@@ -585,84 +720,87 @@ export default function LandingPage({ onGetStarted }) {
         </motion.div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <span className="text-saffron font-medium">WHY CHOOSE DIVINE</span>
-            <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-4">
-              Everything You Need for Your Spiritual Journey
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              From booking priests to checking your daily horoscope, we've brought all spiritual services together in one beautiful, easy-to-use platform.
-            </p>
-          </motion.div>
+      {/* Features Section - Full Width */}
+      <section id="features" className="py-24 bg-white w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <motion.div 
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="text-saffron font-medium">WHY CHOOSE DIVINE</span>
+              <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-4">
+                Everything You Need for Your Spiritual Journey
+              </h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                From booking priests to checking your daily horoscope, we've brought all spiritual services together in one beautiful, easy-to-use platform.
+              </p>
+            </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { 
-                icon: BellIcon, 
-                title: 'Verified Priests', 
-                desc: 'All priests are thoroughly verified with experience validation and background checks.',
-                color: 'bg-gradient-to-br from-saffron to-orange-400'
-              },
-              { 
-                icon: ZodiacIcon, 
-                title: 'Personalized Astrology', 
-                desc: 'Get daily horoscopes, birth chart analysis, and personalized cosmic insights.',
-                color: 'bg-gradient-to-br from-indigo-500 to-purple-500'
-              },
-              { 
-                icon: CartIcon, 
-                title: 'Authentic Products', 
-                desc: 'Shop quality pooja items, idols, and spiritual products from trusted sellers.',
-                color: 'bg-gradient-to-br from-gold to-amber-500'
-              },
-              { 
-                icon: TempleIcon, 
-                title: 'Temple Directory', 
-                desc: 'Discover temples near you and plan your spiritual pilgrimages.',
-                color: 'bg-gradient-to-br from-maroon to-red-700'
-              },
-            ].map((feature, index) => (
-              <motion.div 
-                key={index}
-                className="text-center p-6 rounded-2xl hover:bg-cream/50 transition-colors"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div className={`${feature.color} w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}>
-                  <feature.icon className="w-10 h-10" animate={true} />
-                </div>
-                <h3 className="font-cinzel text-xl font-semibold text-maroon mb-2">{feature.title}</h3>
-                <p className="text-gray-600 text-sm">{feature.desc}</p>
-              </motion.div>
-            ))}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                { 
+                  icon: BellIcon, 
+                  title: 'Verified Priests', 
+                  desc: 'All priests are thoroughly verified with experience validation and background checks.',
+                  color: 'bg-gradient-to-br from-saffron to-orange-400'
+                },
+                { 
+                  icon: ZodiacIcon, 
+                  title: 'Personalized Astrology', 
+                  desc: 'Get daily horoscopes, birth chart analysis, and personalized cosmic insights.',
+                  color: 'bg-gradient-to-br from-indigo-500 to-purple-500'
+                },
+                { 
+                  icon: CartIcon, 
+                  title: 'Authentic Products', 
+                  desc: 'Shop quality pooja items, idols, and spiritual products from trusted sellers.',
+                  color: 'bg-gradient-to-br from-gold to-amber-500'
+                },
+                { 
+                  icon: TempleIcon, 
+                  title: 'Temple Directory', 
+                  desc: 'Discover temples near you and plan your spiritual pilgrimages.',
+                  color: 'bg-gradient-to-br from-maroon to-red-700'
+                },
+              ].map((feature, index) => (
+                <motion.div 
+                  key={index}
+                  className="text-center p-6 rounded-2xl hover:bg-cream/50 transition-colors"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className={`${feature.color} w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                    <feature.icon className="w-10 h-10" animate={true} />
+                  </div>
+                  <h3 className="font-cinzel text-xl font-semibold text-maroon mb-2">{feature.title}</h3>
+                  <p className="text-gray-600 text-sm">{feature.desc}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section id="services" className="py-24 bg-gradient-to-b from-cream to-parchment">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="text-saffron font-medium">OUR SERVICES</span>
-              <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-6">
-                Complete Spiritual Services at Your Fingertips
-              </h2>
-              <p className="text-gray-600 mb-8">
+      {/* Services Section - Full Width */}
+      <section id="services" className="py-24 bg-gradient-to-b from-cream to-parchment w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+              >
+                <span className="text-saffron font-medium">OUR SERVICES</span>
+                <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-6">
+                  Complete Spiritual Services at Your Fingertips
+                </h2>
+                <p className="text-gray-600 mb-8">
                 Whether you're performing a Griha Pravesh, Satyanarayana Pooja, or seeking astrological guidance, 
                 our platform connects you with the right services and experts.
               </p>
@@ -716,196 +854,204 @@ export default function LandingPage({ onGetStarted }) {
                 </div>
               ))}
             </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-24 bg-maroon">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <span className="text-gold font-medium">HOW IT WORKS</span>
-            <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-white mt-2 mb-4">
-              Simple Steps to Spiritual Services
-            </h2>
-          </motion.div>
+      {/* How It Works - Full Width */}
+      <section id="how-it-works" className="py-24 bg-maroon w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <motion.div 
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="text-gold font-medium">HOW IT WORKS</span>
+              <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-white mt-2 mb-4">
+                Simple Steps to Spiritual Services
+              </h2>
+            </motion.div>
 
-          <div className="grid md:grid-cols-4 gap-8">
-            {[
-              { step: '01', title: 'Create Account', desc: 'Sign up in seconds with your email or phone number', Icon: Users },
-              { step: '02', title: 'Choose Service', desc: 'Browse priests, select pooja type, or shop products', Icon: BellIcon },
-              { step: '03', title: 'Book & Pay', desc: 'Select date, time and complete secure payment', Icon: Calendar },
-              { step: '04', title: 'Get Blessed', desc: 'Attend pooja in person or join online video session', Icon: DiyaIcon },
-            ].map((item, i) => (
-              <motion.div 
-                key={i}
-                className="text-center relative"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-2xl flex items-center justify-center">
-                  {typeof item.Icon === 'function' && item.Icon.name.includes('Icon') ? 
-                    <item.Icon className="w-8 h-8" animate={false} /> : 
-                    <item.Icon className="w-8 h-8 text-gold" />
-                  }
-                </div>
-                <div className="text-6xl font-bold text-white/10 font-cinzel mb-2">{item.step}</div>
-                <h4 className="font-cinzel text-xl font-semibold text-white mb-2">{item.title}</h4>
-                <p className="text-white/70 text-sm">{item.desc}</p>
-                {i < 3 && (
+            <div className="grid md:grid-cols-4 gap-8">
+              {[
+                { step: '01', title: 'Create Account', desc: 'Sign up in seconds with your email or phone number', Icon: Users },
+                { step: '02', title: 'Choose Service', desc: 'Browse priests, select pooja type, or shop products', Icon: BellIcon },
+                { step: '03', title: 'Book & Pay', desc: 'Select date, time and complete secure payment', Icon: Calendar },
+                { step: '04', title: 'Get Blessed', desc: 'Attend pooja in person or join online video session', Icon: DiyaIcon },
+              ].map((item, i) => (
+                <motion.div 
+                  key={i}
+                  className="text-center relative"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <div className="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-2xl flex items-center justify-center">
+                    {typeof item.Icon === 'function' && item.Icon.name.includes('Icon') ? 
+                      <item.Icon className="w-8 h-8" animate={false} /> : 
+                      <item.Icon className="w-8 h-8 text-gold" />
+                    }
+                  </div>
+                  <div className="text-6xl font-bold text-white/10 font-cinzel mb-2">{item.step}</div>
+                  <h4 className="font-cinzel text-xl font-semibold text-white mb-2">{item.title}</h4>
+                  <p className="text-white/70 text-sm">{item.desc}</p>
+                  {i < 3 && (
                   <div className="hidden md:block absolute top-8 right-0 translate-x-1/2">
                     <ArrowRight className="w-6 h-6 text-white/30" />
                   </div>
                 )}
               </motion.div>
             ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Featured Priests */}
-      <section id="priests" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <span className="text-saffron font-medium">MEET OUR PRIESTS</span>
-            <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-4">
-              Verified & Experienced Pandits
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Our priests are carefully verified with years of experience in Vedic rituals, ensuring authentic and meaningful ceremonies.
-            </p>
-          </motion.div>
+      {/* Featured Priests - Full Width */}
+      <section id="priests" className="py-24 bg-white w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <motion.div 
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="text-saffron font-medium">MEET OUR PRIESTS</span>
+              <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-4">
+                Verified & Experienced Pandits
+              </h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Our priests are carefully verified with years of experience in Vedic rituals, ensuring authentic and meaningful ceremonies.
+              </p>
+            </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {priests.map((priest, index) => (
-              <motion.div 
-                key={priest.id}
-                className="bg-cream rounded-2xl p-6 border border-orange-100"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-20 h-20 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white text-3xl font-cinzel">
-                    {priest.user_name?.charAt(0)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-cinzel font-semibold text-maroon">{priest.user_name}</h4>
-                      {priest.is_verified && <Award className="w-4 h-4 text-green-500" />}
+            <div className="grid md:grid-cols-3 gap-8">
+              {priests.map((priest, index) => (
+                <motion.div 
+                  key={priest.id}
+                  className="bg-cream rounded-2xl p-6 border border-orange-100"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-20 h-20 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white text-3xl font-cinzel">
+                      {priest.user_name?.charAt(0)}
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
-                      <Star className="w-4 h-4 text-gold fill-gold" />
-                      <span>{priest.rating} ({priest.total_reviews} reviews)</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-cinzel font-semibold text-maroon">{priest.user_name}</h4>
+                        {priest.is_verified && <Award className="w-4 h-4 text-green-500" />}
+                      </div>
+                      <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
+                        <Star className="w-4 h-4 text-gold fill-gold" />
+                        <span>{priest.rating} ({priest.total_reviews} reviews)</span>
+                      </div>
+                      <p className="text-sm text-gray-500">{priest.experience_years} years experience</p>
                     </div>
-                    <p className="text-sm text-gray-500">{priest.experience_years} years experience</p>
                   </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {priest.specializations?.slice(0, 3).map((spec, i) => (
-                    <span key={i} className="bg-orange-100 text-saffron-dark text-xs px-3 py-1 rounded-full">
-                      {spec}
-                    </span>
-                  ))}
-                </div>
-                
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{priest.bio}</p>
-                
-                <button 
-                  onClick={() => onGetStarted('register')}
-                  className="w-full bg-saffron hover:bg-saffron-dark text-white py-3 rounded-full font-medium transition-colors"
+                  
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {priest.specializations?.slice(0, 3).map((spec, i) => (
+                      <span key={i} className="bg-orange-100 text-saffron-dark text-xs px-3 py-1 rounded-full">
+                        {spec}
+                      </span>
+                    ))}
+                  </div>
+                  
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{priest.bio}</p>
+                  
+                  <button 
+                    onClick={() => onGetStarted('register')}
+                    className="w-full bg-saffron hover:bg-saffron-dark text-white py-3 rounded-full font-medium transition-colors"
                 >
                   Book Now
                 </button>
               </motion.div>
             ))}
-          </div>
+            </div>
 
-          <div className="text-center mt-12">
-            <button 
-              onClick={() => onGetStarted('register')}
-              className="border-2 border-maroon text-maroon hover:bg-maroon hover:text-white px-8 py-3 rounded-full font-medium transition-colors inline-flex items-center gap-2"
-            >
-              View All Priests <ArrowRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Marketplace Preview */}
-      <section id="marketplace" className="py-24 bg-gradient-to-b from-cream to-parchment">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <span className="text-saffron font-medium">POOJA MARKETPLACE</span>
-            <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-4">
-              Authentic Pooja Essentials
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Shop quality pooja items, idols, incense, and spiritual products from verified sellers.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {products.map((product, index) => (
-              <motion.div 
-                key={product.id}
-                className="bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition-shadow"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+            <div className="text-center mt-12">
+              <button 
+                onClick={() => onGetStarted('register')}
+                className="border-2 border-maroon text-maroon hover:bg-maroon hover:text-white px-8 py-3 rounded-full font-medium transition-colors inline-flex items-center gap-2"
               >
-                <div className="aspect-square bg-orange-50 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
-                  {product.images?.[0] ? (
-                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <CartIcon className="w-12 h-12" animate={false} />
-                  )}
-                </div>
-                <h4 className="font-medium text-gray-800 text-sm mb-1 line-clamp-2">{product.name}</h4>
-                <div className="flex items-center gap-1 mb-2">
-                  <Star className="w-3 h-3 text-gold fill-gold" />
-                  <span className="text-xs text-gray-500">{product.rating}</span>
-                </div>
-                <p className="text-saffron font-bold">₹{product.price}</p>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <button 
-              onClick={() => onGetStarted('register')}
-              className="bg-saffron hover:bg-saffron-dark text-white px-8 py-3 rounded-full font-medium transition-colors inline-flex items-center gap-2"
-            >
-              Browse All Products <ArrowRight className="w-5 h-5" />
-            </button>
+                View All Priests <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Upcoming Festivals */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
+      {/* Marketplace Preview - Full Width */}
+      <section id="marketplace" className="py-24 bg-gradient-to-b from-cream to-parchment w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <motion.div 
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="text-saffron font-medium">POOJA MARKETPLACE</span>
+              <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-4">
+                Authentic Pooja Essentials
+              </h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Shop quality pooja items, idols, incense, and spiritual products from verified sellers.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {products.map((product, index) => (
+                <motion.div 
+                  key={product.id}
+                  className="bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition-shadow"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className="aspect-square bg-orange-50 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
+                    {product.images?.[0] ? (
+                      <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <CartIcon className="w-12 h-12" animate={false} />
+                    )}
+                  </div>
+                  <h4 className="font-medium text-gray-800 text-sm mb-1 line-clamp-2">{product.name}</h4>
+                  <div className="flex items-center gap-1 mb-2">
+                    <Star className="w-3 h-3 text-gold fill-gold" />
+                    <span className="text-xs text-gray-500">{product.rating}</span>
+                  </div>
+                  <p className="text-saffron font-bold">₹{product.price}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <button 
+                onClick={() => onGetStarted('register')}
+                className="bg-saffron hover:bg-saffron-dark text-white px-8 py-3 rounded-full font-medium transition-colors inline-flex items-center gap-2"
+              >
+                Browse All Products <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Upcoming Festivals - Full Width */}
+      <section className="py-24 bg-white w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <motion.div 
             className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -917,82 +1063,85 @@ export default function LandingPage({ onGetStarted }) {
             </h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-4 gap-6">
-            {festivals.map((festival, index) => (
-              <motion.div 
-                key={festival.id}
-                className="bg-gradient-to-br from-saffron to-gold rounded-2xl p-6 text-white relative overflow-hidden"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div className="absolute top-2 right-2 opacity-20">
-                  <DiyaIcon className="w-16 h-16" animate={false} />
-                </div>
-                <Calendar className="w-8 h-8 mb-4 opacity-80" />
-                <h4 className="font-cinzel text-lg font-semibold mb-1">{festival.name}</h4>
-                <p className="text-white/80 text-sm mb-2">{festival.date}</p>
-                <p className="text-white/70 text-xs line-clamp-2">{festival.description}</p>
-              </motion.div>
-            ))}
+            <div className="grid md:grid-cols-4 gap-6">
+              {festivals.map((festival, index) => (
+                <motion.div 
+                  key={festival.id}
+                  className="bg-gradient-to-br from-saffron to-gold rounded-2xl p-6 text-white relative overflow-hidden"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className="absolute top-2 right-2 opacity-20">
+                    <DiyaIcon className="w-16 h-16" animate={false} />
+                  </div>
+                  <Calendar className="w-8 h-8 mb-4 opacity-80" />
+                  <h4 className="font-cinzel text-lg font-semibold mb-1">{festival.name}</h4>
+                  <p className="text-white/80 text-sm mb-2">{festival.date}</p>
+                  <p className="text-white/70 text-xs line-clamp-2">{festival.description}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-24 bg-cream">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <span className="text-saffron font-medium">TESTIMONIALS</span>
-            <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-4">
-              What Our Devotees Say
-            </h2>
-          </motion.div>
+      {/* Testimonials - Full Width */}
+      <section className="py-24 bg-cream w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <motion.div 
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="text-saffron font-medium">TESTIMONIALS</span>
+              <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-4">
+                What Our Devotees Say
+              </h2>
+            </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { name: 'Priya Sharma', location: 'Mumbai', text: 'Divine App made it so easy to book a pandit for my house warming ceremony. The priest was knowledgeable and the entire process was seamless.' },
-              { name: 'Rajesh Kumar', location: 'Delhi', text: 'I\'ve been using Divine for daily horoscopes and pooja bookings. The astrology section is incredibly accurate and the priests are all verified.' },
-              { name: 'Anita Patel', location: 'USA', text: 'Living abroad, I thought I\'d miss out on proper poojas. Divine connected me with priests who conducted online ceremonies beautifully.' },
-            ].map((testimonial, i) => (
-              <motion.div 
-                key={i}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Quote className="w-10 h-10 text-saffron/20 mb-4" />
-                <p className="text-gray-600 mb-6">{testimonial.text}</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white font-semibold">
-                    {testimonial.name.charAt(0)}
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { name: 'Priya Sharma', location: 'Mumbai', text: 'Divine App made it so easy to book a pandit for my house warming ceremony. The priest was knowledgeable and the entire process was seamless.' },
+                { name: 'Rajesh Kumar', location: 'Delhi', text: 'I\'ve been using Divine for daily horoscopes and pooja bookings. The astrology section is incredibly accurate and the priests are all verified.' },
+                { name: 'Anita Patel', location: 'USA', text: 'Living abroad, I thought I\'d miss out on proper poojas. Divine connected me with priests who conducted online ceremonies beautifully.' },
+              ].map((testimonial, i) => (
+                <motion.div 
+                  key={i}
+                  className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <Quote className="w-10 h-10 text-saffron/20 mb-4" />
+                  <p className="text-gray-600 mb-6">{testimonial.text}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white font-semibold">
+                      {testimonial.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">{testimonial.name}</p>
+                      <p className="text-sm text-gray-500">{testimonial.location}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-800">{testimonial.name}</p>
-                    <p className="text-sm text-gray-500">{testimonial.location}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 bg-maroon relative overflow-hidden">
+      {/* CTA Section - Full Width */}
+      <section className="py-24 bg-maroon relative overflow-hidden w-full">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10"><OmIcon className="w-32 h-32" animate={false} /></div>
           <div className="absolute bottom-10 right-10"><DiyaIcon className="w-32 h-32" animate={false} /></div>
         </div>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        <div className="w-full px-4 sm:px-8 lg:px-16 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1015,70 +1164,72 @@ export default function LandingPage({ onGetStarted }) {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer id="contact" className="bg-gray-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-12">
-            <div>
-              <button 
-                onClick={scrollToTop}
-                className="flex items-center gap-3 mb-4 hover:opacity-80 transition-opacity cursor-pointer"
-              >
-                <DiyaIcon className="w-10 h-10" animate={false} />
-                <span className="font-cinzel text-xl font-bold">DIVINE</span>
-              </button>
-              <p className="text-gray-400 text-sm mb-4">
-                Your complete spiritual ecosystem for Hindu rituals, astrology, and sacred services.
-              </p>
-              <div className="flex gap-4">
-                <a href="#" className="text-gray-400 hover:text-white"><Facebook className="w-5 h-5" /></a>
-                <a href="#" className="text-gray-400 hover:text-white"><Twitter className="w-5 h-5" /></a>
-                <a href="#" className="text-gray-400 hover:text-white"><Instagram className="w-5 h-5" /></a>
-                <a href="#" className="text-gray-400 hover:text-white"><Youtube className="w-5 h-5" /></a>
+      {/* Footer - Full Width */}
+      <footer id="contact" className="bg-gray-900 text-white py-16 w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <div className="grid md:grid-cols-4 gap-12">
+              <div>
+                <button 
+                  onClick={scrollToTop}
+                  className="flex items-center gap-3 mb-4 hover:opacity-80 transition-opacity cursor-pointer"
+                >
+                  <TempleLogo className="w-12 h-12" onClick={scrollToTop} />
+                  <span className="font-cinzel text-xl font-bold">DIVINE</span>
+                </button>
+                <p className="text-gray-400 text-sm mb-4">
+                  Your complete spiritual ecosystem for Hindu rituals, astrology, and sacred services.
+                </p>
+                <div className="flex gap-4">
+                  <a href="#" className="text-gray-400 hover:text-white"><Facebook className="w-5 h-5" /></a>
+                  <a href="#" className="text-gray-400 hover:text-white"><Twitter className="w-5 h-5" /></a>
+                  <a href="#" className="text-gray-400 hover:text-white"><Instagram className="w-5 h-5" /></a>
+                  <a href="#" className="text-gray-400 hover:text-white"><Youtube className="w-5 h-5" /></a>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-4">Services</h4>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><a href="#" className="hover:text-white">Book Priests</a></li>
+                  <li><a href="#" className="hover:text-white">Astrology</a></li>
+                  <li><a href="#" className="hover:text-white">Pooja Store</a></li>
+                  <li><a href="#" className="hover:text-white">Festival Calendar</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-4">Company</h4>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><a href="#" className="hover:text-white">About Us</a></li>
+                  <li><a href="#" className="hover:text-white">Careers</a></li>
+                  <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
+                  <li><a href="#" className="hover:text-white">Terms of Service</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-4">Contact</h4>
+                <ul className="space-y-3 text-sm text-gray-400">
+                  <li className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    support@divineapp.com
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    +91 98765 43210
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 mt-0.5" />
+                    Mumbai, Maharashtra, India
+                  </li>
+                </ul>
               </div>
             </div>
 
-            <div>
-              <h4 className="font-semibold mb-4">Services</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Book Priests</a></li>
-                <li><a href="#" className="hover:text-white">Astrology</a></li>
-                <li><a href="#" className="hover:text-white">Pooja Store</a></li>
-                <li><a href="#" className="hover:text-white">Festival Calendar</a></li>
-              </ul>
+            <div className="border-t border-gray-800 mt-12 pt-8 text-center text-sm text-gray-500">
+              <p>© 2025 Divine App. All rights reserved. Made with devotion in India</p>
             </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">About Us</a></li>
-                <li><a href="#" className="hover:text-white">Careers</a></li>
-                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Contact</h4>
-              <ul className="space-y-3 text-sm text-gray-400">
-                <li className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  support@divineapp.com
-                </li>
-                <li className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  +91 98765 43210
-                </li>
-                <li className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 mt-0.5" />
-                  Mumbai, Maharashtra, India
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-sm text-gray-500">
-            <p>© 2025 Divine App. All rights reserved. Made with devotion in India</p>
           </div>
         </div>
       </footer>
