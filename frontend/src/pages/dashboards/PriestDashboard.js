@@ -1362,9 +1362,11 @@ function ServicesTab({ services, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
 
-  const handleAddClick = () => {
+  const handleAddClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log('Add button clicked!');
-    toast.info('Opening add service form...');
+    alert('Add button clicked! Modal will open now.');
     setEditingService(null);
     setShowModal(true);
   };
@@ -1380,8 +1382,6 @@ function ServicesTab({ services, onRefresh }) {
     }
   };
 
-  console.log('ServicesTab render - showModal:', showModal);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -1390,7 +1390,9 @@ function ServicesTab({ services, onRefresh }) {
           type="button"
           data-testid="add-service-btn"
           onClick={handleAddClick}
-          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer"
+          onTouchEnd={handleAddClick}
+          style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
+          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer select-none"
         >
           <Plus className="w-4 h-4" /> Add
         </button>
@@ -1664,9 +1666,11 @@ function StreamsTab({ streams, onRefresh }) {
   const live = streams.filter(s => s.status === 'live');
   const past = streams.filter(s => s.status === 'ended');
 
-  const handleScheduleClick = () => {
+  const handleScheduleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log('Schedule button clicked!');
-    toast.info('Opening schedule form...');
+    alert('Schedule button clicked! Modal will open now.');
     setShowModal(true);
   };
 
@@ -1691,8 +1695,6 @@ function StreamsTab({ streams, onRefresh }) {
     }
   };
 
-  console.log('StreamsTab render - showModal:', showModal);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -1701,7 +1703,9 @@ function StreamsTab({ streams, onRefresh }) {
           type="button"
           data-testid="schedule-stream-btn"
           onClick={handleScheduleClick}
-          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer"
+          onTouchEnd={handleScheduleClick}
+          style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
+          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer select-none"
         >
           <Plus className="w-4 h-4" /> Schedule
         </button>
