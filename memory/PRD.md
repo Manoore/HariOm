@@ -191,14 +191,20 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
     - Upcoming Festivals preview
     - Pending Booking Requests with Accept/Decline buttons
     - Upcoming Bookings list
+    - **Recent Posts preview** (NEW)
   - [x] **Profile Tab** - Complete profile management
-    - Profile photo and basic info
+    - **Profile photo upload with camera icon** (NEW)
     - Bio/About Me section (editable)
     - Specializations selection (16 options)
     - Languages selection (10 options)
     - Work Locations management
     - Contact & Pricing settings (phone, email, base price, experience)
     - Verified Priest badge display
+  - [x] **Posts Tab** (NEW) - Daily updates for devotees
+    - Create new posts with content and optional image
+    - View existing posts with likes, comments, views
+    - Delete posts functionality
+    - Public feed available at /api/posts/feed
   - [x] **Bookings Tab** - Enhanced booking management
     - Search and filter bookings by status
     - Status tabs (All, Pending, Confirmed, Completed, Cancelled)
@@ -225,17 +231,30 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
     - Recent Transactions list
   - [x] **Classes Tab** - Spiritual class management
     - Add/Edit/Delete classes
-    - Schedule management
+    - **Advanced scheduling with frequency options** (NEW):
+      - One Time
+      - Daily
+      - Weekly (with day selection)
+      - Bi-Weekly (with day selection)
+      - Monthly
+    - Schedule time picker
   - [x] **Live Tab** - Stream management
     - Schedule streams
     - Go Live / End Stream
     - Past streams history
+  - [x] **Mobile Responsive Design** (NEW)
+    - Bottom navigation bar: Home, Posts, Bookings, Profile, More
+    - "More" menu popup with: Services, Reviews, Portfolio, Panchang, Earnings, Classes, Live
+    - Compact mobile stats and cards
+    - Touch-friendly navigation
   - [x] **Backend APIs** - All endpoints working
-    - Profile: GET/PUT /api/priest/profile
+    - Profile: GET/PUT /api/priest/profile (with profile_photo field)
     - Reviews: GET /api/priest/reviews
     - Portfolio: GET/POST/DELETE /api/priest/portfolio
     - Services: GET/POST/PUT/DELETE /api/priest/services
     - Earnings: GET /api/priest/earnings
+    - **Posts: GET/POST/DELETE /api/priest/posts** (NEW)
+    - **Public Feed: GET /api/posts/feed** (NEW)
     - Plus all previous APIs (classes, availability, content, streams, analytics, bookings)
 
 ### P2 (Medium Priority)
