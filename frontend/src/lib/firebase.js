@@ -10,7 +10,11 @@ import {
   signInWithPopup,
   updateProfile,
   browserLocalPersistence,
-  setPersistence
+  setPersistence,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  PhoneAuthProvider,
+  signInWithCredential
 } from 'firebase/auth';
 
 // Firebase configuration from environment variables
@@ -85,6 +89,99 @@ export const firebaseGoogleSignIn = async () => {
     throw error;
   }
 };
+
+// ==================== PHONE AUTHENTICATION ====================
+
+// Setup invisible reCAPTCHA verifier
+export const setupRecaptcha = (containerId) => {
+  if (!auth) {
+    throw new Error('Firebase not configured');
+  }
+  
+  // Clear any existing verifier
+  if (window.recaptchaVerifier) {
+    try {
+      window.recaptchaVerifier.clear();
+    } catch (e) {
+      console.log('Could not clear existing verifier');
+    }
+  }
+  
+  window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+    size: 'invisible',
+    callback: () => {
+      console.log('reCAPTCHA verified');
+    },
+    'expired-callback': () => {
+      console.log('reCAPTCHA expired');
+    }
+  });
+  
+  return window.recaptchaVerifier;
+};
+
+// Send OTP to phone number
+export const sendPhoneOTP = async (phoneNumber) => {
+  if (!auth) {
+    throw new Error('Firebase not configured');
+  }
+  
+  try {
+    // Ensure phone number is in E.164 format (+91XXXXXXXXXX for India)
+    const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
+    
+    console.log('Sending OTP to:', formattedPhone);
+    
+    if (!window.recaptchaVerifier) {
+      throw new Error('reCAPTCHA not initialized. Please refresh the page.');
+    }
+    
+    const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+    
+    // Store confirmation result for OTP verification
+    window.confirmationResult = confirmationResult;
+    
+    console.log('OTP sent successfully');
+    return { success: true, confirmationResult };
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    
+    // Reset reCAPTCHA on error
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      } catch (e) {
+        console.log('Could not clear verifier');
+      }
+    }
+    
+    throw error;
+  }
+};
+
+// Verify OTP and sign in
+export const verifyPhoneOTP = async (otp) => {
+  if (!window.confirmationResult) {
+    throw new Error('No OTP verification in progress. Please request a new OTP.');
+  }
+  
+  try {
+    console.log('Verifying OTP...');
+    const result = await window.confirmationResult.confirm(otp);
+    console.log('OTP verified, user signed in:', result.user.phoneNumber);
+    
+    // Clear confirmation result after successful verification
+    window.confirmationResult = null;
+    
+    return result;
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    throw error;
+  }
+};
+
+// ==================== END PHONE AUTHENTICATION ====================
 
 export const onFirebaseAuthStateChanged = (callback) => {
   if (!auth) {

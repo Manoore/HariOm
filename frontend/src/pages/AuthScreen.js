@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Loader2, ChevronLeft, Bell, Sparkles, Building2, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -76,16 +76,23 @@ const CartIcon3D = () => (
 );
 
 export default function AuthScreen({ initialMode = 'welcome', onBack, showBackButton = false }) {
-  const [mode, setMode] = useState(initialMode === 'login' ? 'login' : initialMode === 'register' ? 'register' : 'welcome'); // welcome, login, register
+  const [mode, setMode] = useState(initialMode === 'login' ? 'login' : initialMode === 'register' ? 'register' : 'welcome');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const { login, register, loginWithGoogle } = useAuth();
+  const { login, register, loginWithGoogle, initPhoneAuth, sendOTP, verifyOTPAndSignIn } = useAuth();
 
-  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [loginData, setLoginData] = useState({ email: '', password: '', phone: '' });
   const [registerData, setRegisterData] = useState({
     name: '', email: '', phone: '', password: '', role: 'devotee'
   });
+  
+  // Phone auth states
+  const [authMethod, setAuthMethod] = useState('email'); // 'email' or 'phone'
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const recaptchaInitialized = useRef(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -122,7 +129,6 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   const handleGoogleSignIn = async (selectedRole = null) => {
     setGoogleLoading(true);
     try {
-      // Pass the role if registering with Google (from register screen)
       await loginWithGoogle(selectedRole);
       toast.success('Welcome!');
     } catch (error) {
@@ -134,9 +140,71 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
     }
   };
 
+  // Phone authentication handlers
+  const handleSendOTP = async (phoneNumber, isRegister = false) => {
+    setOtpLoading(true);
+    try {
+      // Initialize reCAPTCHA if not already done
+      if (!recaptchaInitialized.current) {
+        initPhoneAuth('recaptcha-container');
+        recaptchaInitialized.current = true;
+      }
+      
+      await sendOTP(phoneNumber);
+      setOtpSent(true);
+      toast.success('OTP sent to your phone!');
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      let errorMessage = 'Failed to send OTP. Please try again.';
+      
+      if (error.code === 'auth/invalid-phone-number') {
+        errorMessage = 'Invalid phone number. Please check and try again.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many attempts. Please try again later.';
+      } else if (error.code === 'auth/quota-exceeded') {
+        errorMessage = 'SMS quota exceeded. Please try again later.';
+      }
+      
+      toast.error(errorMessage);
+      recaptchaInitialized.current = false; // Reset for retry
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (userData = {}) => {
+    setOtpLoading(true);
+    try {
+      await verifyOTPAndSignIn(otp, userData);
+      toast.success('Phone verified successfully!');
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      let errorMessage = 'Invalid OTP. Please try again.';
+      
+      if (error.code === 'auth/invalid-verification-code') {
+        errorMessage = 'Invalid OTP. Please check and try again.';
+      } else if (error.code === 'auth/code-expired') {
+        errorMessage = 'OTP expired. Please request a new one.';
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const resetPhoneAuth = () => {
+    setOtpSent(false);
+    setOtp('');
+    recaptchaInitialized.current = false;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream to-parchment flex items-center justify-center">
       <Toaster position="top-center" richColors />
+      
+      {/* Hidden reCAPTCHA container */}
+      <div id="recaptcha-container"></div>
       
       <AnimatePresence mode="wait">
         {mode === 'welcome' && (
@@ -161,9 +229,18 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
             showPassword={showPassword}
             setShowPassword={setShowPassword}
             onBack={showBackButton ? onBack : () => setMode('welcome')}
-            onSwitch={() => setMode('register')}
+            onSwitch={() => { setMode('register'); resetPhoneAuth(); }}
             onGoogleSignIn={handleGoogleSignIn}
             googleLoading={googleLoading}
+            authMethod={authMethod}
+            setAuthMethod={setAuthMethod}
+            otpSent={otpSent}
+            otp={otp}
+            setOtp={setOtp}
+            otpLoading={otpLoading}
+            onSendOTP={handleSendOTP}
+            onVerifyOTP={handleVerifyOTP}
+            resetPhoneAuth={resetPhoneAuth}
           />
         )}
         
@@ -177,9 +254,18 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
             showPassword={showPassword}
             setShowPassword={setShowPassword}
             onBack={showBackButton ? onBack : () => setMode('welcome')}
-            onSwitch={() => setMode('login')}
+            onSwitch={() => { setMode('login'); resetPhoneAuth(); }}
             onGoogleSignIn={handleGoogleSignIn}
             googleLoading={googleLoading}
+            authMethod={authMethod}
+            setAuthMethod={setAuthMethod}
+            otpSent={otpSent}
+            otp={otp}
+            setOtp={setOtp}
+            otpLoading={otpLoading}
+            onSendOTP={handleSendOTP}
+            onVerifyOTP={handleVerifyOTP}
+            resetPhoneAuth={resetPhoneAuth}
           />
         )}
       </AnimatePresence>
@@ -196,7 +282,6 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Back button for web */}
       {showBackButton && (
         <div className="px-6 pt-4">
           <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-maroon">
@@ -206,9 +291,7 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
         </div>
       )}
       
-      {/* Top Section with Logo */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 pt-16">
-        {/* Logo */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -244,7 +327,6 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
           Your complete spiritual ecosystem for rituals, astrology & sacred services
         </motion.p>
 
-        {/* Features with 3D Icons */}
         <motion.div 
           className="grid grid-cols-2 gap-4 w-full max-w-xs"
           initial={{ y: 20, opacity: 0 }}
@@ -265,7 +347,6 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
         </motion.div>
       </div>
 
-      {/* Bottom Section with Buttons */}
       <motion.div 
         className="px-8 pb-12"
         initial={{ y: 30, opacity: 0 }}
@@ -288,9 +369,8 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
           I already have an account
         </button>
 
-        {/* Google Sign In */}
         <button
-          onClick={onGoogleSignIn}
+          onClick={() => onGoogleSignIn()}
           disabled={googleLoading}
           className="w-full bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 rounded-full py-4 font-semibold flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-70"
           data-testid="google-signin"
@@ -318,7 +398,11 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
   );
 }
 
-function LoginScreen({ data, setData, onSubmit, loading, showPassword, setShowPassword, onBack, onSwitch, onGoogleSignIn, googleLoading }) {
+function LoginScreen({ 
+  data, setData, onSubmit, loading, showPassword, setShowPassword, 
+  onBack, onSwitch, onGoogleSignIn, googleLoading,
+  authMethod, setAuthMethod, otpSent, otp, setOtp, otpLoading, onSendOTP, onVerifyOTP, resetPhoneAuth
+}) {
   return (
     <motion.div
       className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-sm md:rounded-2xl md:shadow-xl md:border md:border-orange-100 min-h-screen md:min-h-0 md:my-8 flex flex-col"
@@ -327,9 +411,8 @@ function LoginScreen({ data, setData, onSubmit, loading, showPassword, setShowPa
       exit={{ opacity: 0, x: 50 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Header */}
       <div className="px-6 pt-6">
-        <button onClick={onBack} className="p-2 -ml-2 text-gray-600 hover:text-maroon transition-colors" data-testid="login-back">
+        <button onClick={() => { onBack(); resetPhoneAuth(); }} className="p-2 -ml-2 text-gray-600 hover:text-maroon transition-colors" data-testid="login-back">
           <ChevronLeft className="w-6 h-6" />
         </button>
       </div>
@@ -340,14 +423,39 @@ function LoginScreen({ data, setData, onSubmit, loading, showPassword, setShowPa
           <p className="text-gray-600 mb-6">Sign in to continue your spiritual journey</p>
         </motion.div>
 
+        {/* Auth Method Toggle */}
+        <motion.div 
+          className="flex bg-gray-100 rounded-xl p-1 mb-6"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.05 }}
+        >
+          <button
+            onClick={() => { setAuthMethod('email'); resetPhoneAuth(); }}
+            className={`flex-1 py-3 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+              authMethod === 'email' ? 'bg-white text-maroon shadow-sm' : 'text-gray-500'
+            }`}
+          >
+            <Mail className="w-4 h-4" /> Email
+          </button>
+          <button
+            onClick={() => { setAuthMethod('phone'); resetPhoneAuth(); }}
+            className={`flex-1 py-3 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+              authMethod === 'phone' ? 'bg-white text-maroon shadow-sm' : 'text-gray-500'
+            }`}
+          >
+            <Phone className="w-4 h-4" /> Phone
+          </button>
+        </motion.div>
+
         {/* Google Sign In */}
         <motion.button
-          onClick={onGoogleSignIn}
+          onClick={() => onGoogleSignIn()}
           disabled={googleLoading}
           className="w-full bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl py-4 font-medium flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-70 mb-6"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.05 }}
+          transition={{ delay: 0.1 }}
           data-testid="login-google"
         >
           {googleLoading ? (
@@ -368,73 +476,160 @@ function LoginScreen({ data, setData, onSubmit, loading, showPassword, setShowPa
         {/* Divider */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1 h-px bg-gray-200"></div>
-          <span className="text-sm text-gray-400">or sign in with email</span>
+          <span className="text-sm text-gray-400">or sign in with {authMethod}</span>
           <div className="flex-1 h-px bg-gray-200"></div>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-5">
-          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="email"
-                value={data.email}
-                onChange={(e) => setData({ ...data, email: e.target.value })}
-                className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                placeholder="your@email.com"
-                required
-                data-testid="login-email"
-              />
-            </div>
-          </motion.div>
+        {authMethod === 'email' ? (
+          <form onSubmit={onSubmit} className="space-y-5">
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  value={data.email}
+                  onChange={(e) => setData({ ...data, email: e.target.value })}
+                  className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                  placeholder="your@email.com"
+                  required
+                  data-testid="login-email"
+                />
+              </div>
+            </motion.div>
 
-          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={data.password}
-                onChange={(e) => setData({ ...data, password: e.target.value })}
-                className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-12 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                placeholder="Enter your password"
-                required
-                data-testid="login-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-          </motion.div>
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={data.password}
+                  onChange={(e) => setData({ ...data, password: e.target.value })}
+                  className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-12 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                  placeholder="Enter your password"
+                  required
+                  data-testid="login-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </motion.div>
 
-          <motion.button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-70"
+            <motion.button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-70"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.25 }}
+              data-testid="login-submit"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Sign In <ArrowRight className="w-5 h-5" /></>}
+            </motion.button>
+          </form>
+        ) : (
+          // Phone Login
+          <div className="space-y-5">
+            {!otpSent ? (
+              <>
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-500">
+                      <span className="text-sm font-medium">+91</span>
+                    </div>
+                    <input
+                      type="tel"
+                      value={data.phone}
+                      onChange={(e) => setData({ ...data, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      className="w-full bg-white border border-orange-200 rounded-xl pl-16 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                      placeholder="98765 43210"
+                      maxLength={10}
+                      data-testid="login-phone"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">We'll send a 6-digit OTP to this number</p>
+                </motion.div>
+
+                <motion.button
+                  type="button"
+                  onClick={() => onSendOTP(data.phone)}
+                  disabled={otpLoading || data.phone.length !== 10}
+                  className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-70"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  data-testid="send-otp"
+                >
+                  {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Send OTP <ArrowRight className="w-5 h-5" /></>}
+                </motion.button>
+              </>
+            ) : (
+              <>
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Enter OTP</label>
+                    <button 
+                      onClick={resetPhoneAuth} 
+                      className="text-xs text-saffron hover:underline"
+                    >
+                      Change number
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-3">OTP sent to +91 {data.phone}</p>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="w-full bg-white border border-orange-200 rounded-xl px-4 py-4 text-center text-2xl tracking-[0.5em] focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                    placeholder="------"
+                    maxLength={6}
+                    data-testid="otp-input"
+                  />
+                </motion.div>
+
+                <motion.button
+                  type="button"
+                  onClick={() => onVerifyOTP()}
+                  disabled={otpLoading || otp.length !== 6}
+                  className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-70"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  data-testid="verify-otp"
+                >
+                  {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verify & Sign In <ArrowRight className="w-5 h-5" /></>}
+                </motion.button>
+
+                <button
+                  onClick={() => onSendOTP(data.phone)}
+                  disabled={otpLoading}
+                  className="w-full text-saffron text-sm hover:underline disabled:opacity-50"
+                >
+                  Resend OTP
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Demo Credentials */}
+        {authMethod === 'email' && (
+          <motion.div 
+            className="mt-6 p-4 bg-orange-50 rounded-xl"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
-            data-testid="login-submit"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Sign In <ArrowRight className="w-5 h-5" /></>}
-          </motion.button>
-        </form>
-
-        {/* Demo Credentials */}
-        <motion.div 
-          className="mt-6 p-4 bg-orange-50 rounded-xl"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <p className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</p>
-          <p className="text-xs text-gray-500">Admin: admin@divineapp.com / admin123</p>
-        </motion.div>
+            <p className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</p>
+            <p className="text-xs text-gray-500">Admin: admin@divineapp.com / admin123</p>
+          </motion.div>
+        )}
       </div>
 
       <div className="px-6 md:px-8 pb-6 text-center">
@@ -449,11 +644,14 @@ function LoginScreen({ data, setData, onSubmit, loading, showPassword, setShowPa
   );
 }
 
-function RegisterScreen({ data, setData, onSubmit, loading, showPassword, setShowPassword, onBack, onSwitch, onGoogleSignIn, googleLoading }) {
+function RegisterScreen({ 
+  data, setData, onSubmit, loading, showPassword, setShowPassword, 
+  onBack, onSwitch, onGoogleSignIn, googleLoading,
+  authMethod, setAuthMethod, otpSent, otp, setOtp, otpLoading, onSendOTP, onVerifyOTP, resetPhoneAuth
+}) {
   const [showRoleSelect, setShowRoleSelect] = useState(false);
   
   const handleGoogleClick = () => {
-    // Show role selection before Google Sign-In
     setShowRoleSelect(true);
   };
   
@@ -522,9 +720,8 @@ function RegisterScreen({ data, setData, onSubmit, loading, showPassword, setSho
         )}
       </AnimatePresence>
 
-      {/* Header */}
       <div className="px-6 pt-6">
-        <button onClick={onBack} className="p-2 -ml-2 text-gray-600 hover:text-maroon transition-colors" data-testid="register-back">
+        <button onClick={() => { onBack(); resetPhoneAuth(); }} className="p-2 -ml-2 text-gray-600 hover:text-maroon transition-colors" data-testid="register-back">
           <ChevronLeft className="w-6 h-6" />
         </button>
       </div>
@@ -535,6 +732,31 @@ function RegisterScreen({ data, setData, onSubmit, loading, showPassword, setSho
           <p className="text-gray-600 mb-6">Join our spiritual community</p>
         </motion.div>
 
+        {/* Auth Method Toggle */}
+        <motion.div 
+          className="flex bg-gray-100 rounded-xl p-1 mb-6"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.05 }}
+        >
+          <button
+            onClick={() => { setAuthMethod('email'); resetPhoneAuth(); }}
+            className={`flex-1 py-3 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+              authMethod === 'email' ? 'bg-white text-maroon shadow-sm' : 'text-gray-500'
+            }`}
+          >
+            <Mail className="w-4 h-4" /> Email
+          </button>
+          <button
+            onClick={() => { setAuthMethod('phone'); resetPhoneAuth(); }}
+            className={`flex-1 py-3 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+              authMethod === 'phone' ? 'bg-white text-maroon shadow-sm' : 'text-gray-500'
+            }`}
+          >
+            <Phone className="w-4 h-4" /> Phone
+          </button>
+        </motion.div>
+
         {/* Google Sign Up */}
         <motion.button
           onClick={handleGoogleClick}
@@ -542,7 +764,7 @@ function RegisterScreen({ data, setData, onSubmit, loading, showPassword, setSho
           className="w-full bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl py-4 font-medium flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-70 mb-6"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.05 }}
+          transition={{ delay: 0.1 }}
           data-testid="register-google"
         >
           {googleLoading ? (
@@ -563,109 +785,209 @@ function RegisterScreen({ data, setData, onSubmit, loading, showPassword, setSho
         {/* Divider */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1 h-px bg-gray-200"></div>
-          <span className="text-sm text-gray-400">or sign up with email</span>
+          <span className="text-sm text-gray-400">or sign up with {authMethod}</span>
           <div className="flex-1 h-px bg-gray-200"></div>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-            <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={data.name}
-                onChange={(e) => setData({ ...data, name: e.target.value })}
-                className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                placeholder="Your full name"
-                required
-                data-testid="register-name"
-              />
-            </div>
-          </motion.div>
+        {authMethod === 'email' ? (
+          <form onSubmit={onSubmit} className="space-y-4">
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={data.name}
+                  onChange={(e) => setData({ ...data, name: e.target.value })}
+                  className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                  placeholder="Your full name"
+                  required
+                  data-testid="register-name"
+                />
+              </div>
+            </motion.div>
 
-          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="email"
-                value={data.email}
-                onChange={(e) => setData({ ...data, email: e.target.value })}
-                className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                placeholder="your@email.com"
-                required
-                data-testid="register-email"
-              />
-            </div>
-          </motion.div>
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  value={data.email}
+                  onChange={(e) => setData({ ...data, email: e.target.value })}
+                  className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                  placeholder="your@email.com"
+                  required
+                  data-testid="register-email"
+                />
+              </div>
+            </motion.div>
 
-          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Phone (Optional)</label>
-            <div className="relative">
-              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="tel"
-                value={data.phone}
-                onChange={(e) => setData({ ...data, phone: e.target.value })}
-                className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                placeholder="+91 98765 43210"
-                data-testid="register-phone"
-              />
-            </div>
-          </motion.div>
-
-          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.25 }}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">I want to join as</label>
-            <select
-              value={data.role}
-              onChange={(e) => setData({ ...data, role: e.target.value })}
-              className="w-full bg-white border border-orange-200 rounded-xl px-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-              data-testid="register-role"
-            >
-              <option value="devotee">Devotee (Book services)</option>
-              <option value="priest">Priest (Offer services)</option>
-              <option value="astrologer">Astrologer (Consultations)</option>
-              <option value="shop_owner">Shop Owner (Sell products)</option>
-            </select>
-          </motion.div>
-
-          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={data.password}
-                onChange={(e) => setData({ ...data, password: e.target.value })}
-                className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-12 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                placeholder="••••••••"
-                required
-                minLength={6}
-                data-testid="register-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.25 }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">I want to join as</label>
+              <select
+                value={data.role}
+                onChange={(e) => setData({ ...data, role: e.target.value })}
+                className="w-full bg-white border border-orange-200 rounded-xl px-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                data-testid="register-role"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-          </motion.div>
+                <option value="devotee">Devotee (Book services)</option>
+                <option value="priest">Priest (Offer services)</option>
+                <option value="astrologer">Astrologer (Consultations)</option>
+                <option value="shop_owner">Shop Owner (Sell products)</option>
+              </select>
+            </motion.div>
 
-          <motion.button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-70 mt-6"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.35 }}
-            data-testid="register-submit"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Create Account <ArrowRight className="w-5 h-5" /></>}
-          </motion.button>
-        </form>
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={data.password}
+                  onChange={(e) => setData({ ...data, password: e.target.value })}
+                  className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-12 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                  placeholder="Create a password"
+                  required
+                  minLength={6}
+                  data-testid="register-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </motion.div>
+
+            <motion.button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-70 mt-6"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.35 }}
+              data-testid="register-submit"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Create Account <ArrowRight className="w-5 h-5" /></>}
+            </motion.button>
+          </form>
+        ) : (
+          // Phone Registration
+          <div className="space-y-4">
+            {!otpSent ? (
+              <>
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={data.name}
+                      onChange={(e) => setData({ ...data, name: e.target.value })}
+                      className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                      placeholder="Your full name"
+                      required
+                      data-testid="register-name-phone"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-500">
+                      <span className="text-sm font-medium">+91</span>
+                    </div>
+                    <input
+                      type="tel"
+                      value={data.phone}
+                      onChange={(e) => setData({ ...data, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      className="w-full bg-white border border-orange-200 rounded-xl pl-16 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                      placeholder="98765 43210"
+                      maxLength={10}
+                      data-testid="register-phone"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.25 }}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">I want to join as</label>
+                  <select
+                    value={data.role}
+                    onChange={(e) => setData({ ...data, role: e.target.value })}
+                    className="w-full bg-white border border-orange-200 rounded-xl px-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                    data-testid="register-role-phone"
+                  >
+                    <option value="devotee">Devotee (Book services)</option>
+                    <option value="priest">Priest (Offer services)</option>
+                    <option value="astrologer">Astrologer (Consultations)</option>
+                    <option value="shop_owner">Shop Owner (Sell products)</option>
+                  </select>
+                </motion.div>
+
+                <motion.button
+                  type="button"
+                  onClick={() => onSendOTP(data.phone, true)}
+                  disabled={otpLoading || data.phone.length !== 10 || !data.name}
+                  className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-70 mt-6"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  data-testid="send-otp-register"
+                >
+                  {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Send OTP <ArrowRight className="w-5 h-5" /></>}
+                </motion.button>
+              </>
+            ) : (
+              <>
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Enter OTP</label>
+                    <button 
+                      onClick={resetPhoneAuth} 
+                      className="text-xs text-saffron hover:underline"
+                    >
+                      Change number
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-3">OTP sent to +91 {data.phone}</p>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="w-full bg-white border border-orange-200 rounded-xl px-4 py-4 text-center text-2xl tracking-[0.5em] focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                    placeholder="------"
+                    maxLength={6}
+                    data-testid="otp-input-register"
+                  />
+                </motion.div>
+
+                <motion.button
+                  type="button"
+                  onClick={() => onVerifyOTP({ name: data.name, role: data.role })}
+                  disabled={otpLoading || otp.length !== 6}
+                  className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-70"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  data-testid="verify-otp-register"
+                >
+                  {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verify & Create Account <ArrowRight className="w-5 h-5" /></>}
+                </motion.button>
+
+                <button
+                  onClick={() => onSendOTP(data.phone, true)}
+                  disabled={otpLoading}
+                  className="w-full text-saffron text-sm hover:underline disabled:opacity-50"
+                >
+                  Resend OTP
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="px-6 md:px-8 pb-6 text-center">

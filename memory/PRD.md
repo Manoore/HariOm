@@ -53,6 +53,13 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [x] Token-based API authentication
 - [x] Centered, card-style auth screens on desktop
 - [x] **First-time Google user onboarding screen** (NEW - March 15, 2026)
+- [x] **Phone Number (OTP) Authentication** (NEW - March 15, 2026)
+  - Email/Phone toggle on login and register screens
+  - Firebase Phone Auth with invisible reCAPTCHA
+  - +91 prefix for Indian phone numbers
+  - 6-digit OTP verification flow
+  - Role selection during phone registration
+  - Backend support for phone-based users (auth_type field)
 
 ### User Profile (NEW - March 15, 2026)
 - [x] Editable profile section for devotees

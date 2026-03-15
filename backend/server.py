@@ -1469,54 +1469,68 @@ async def update_profile(data: ProfileUpdateRequest, user: dict = Depends(get_cu
 
 class FirebaseSyncRequest(BaseModel):
     firebase_uid: str
-    email: str
+    email: Optional[str] = None  # Optional for phone auth
     name: str
     photo_url: Optional[str] = None
     role: Optional[str] = None  # Optional role for new user registration
+    phone: Optional[str] = None  # Phone number for phone auth
+    auth_type: Optional[str] = None  # 'email', 'google', or 'phone'
 
 class FirebaseRegisterRequest(BaseModel):
     firebase_uid: str
-    email: str
+    email: Optional[str] = None  # Optional for phone auth
     name: str
     phone: Optional[str] = None
     role: str = "devotee"
+    auth_type: Optional[str] = None  # 'email', 'google', or 'phone'
 
 @app.post("/api/auth/firebase-sync")
 async def firebase_sync(data: FirebaseSyncRequest):
     """Sync Firebase user with backend - create if not exists, return existing if found"""
     try:
-        # Check if user already exists by firebase_uid or email
-        user = await users_collection.find_one({
-            "$or": [
-                {"firebase_uid": data.firebase_uid},
-                {"email": data.email}
-            ]
-        })
+        # Build query to find existing user
+        query_conditions = [{"firebase_uid": data.firebase_uid}]
+        if data.email:
+            query_conditions.append({"email": data.email})
+        if data.phone:
+            query_conditions.append({"phone": data.phone})
+        
+        # Check if user already exists by firebase_uid, email, or phone
+        user = await users_collection.find_one({"$or": query_conditions})
         
         if user:
-            # Update firebase_uid if not set
-            if not user.get("firebase_uid") or user.get("firebase_uid") != data.firebase_uid:
+            # Update firebase_uid and phone if not set
+            update_fields = {"firebase_uid": data.firebase_uid}
+            if data.photo_url:
+                update_fields["photo_url"] = data.photo_url
+            if data.phone and not user.get("phone"):
+                update_fields["phone"] = data.phone
+            if data.auth_type:
+                update_fields["auth_type"] = data.auth_type
+            
+            if not user.get("firebase_uid") or user.get("firebase_uid") != data.firebase_uid or update_fields:
                 await users_collection.update_one(
                     {"_id": user["_id"]},
-                    {"$set": {"firebase_uid": data.firebase_uid, "photo_url": data.photo_url}}
+                    {"$set": update_fields}
                 )
             
             return {
                 "user": {
                     "id": str(user["_id"]),
-                    "email": user["email"],
+                    "email": user.get("email"),
                     "name": user["name"],
                     "role": user["role"],
                     "firebase_uid": data.firebase_uid,
                     "is_verified": user.get("is_verified", False),
-                    "phone": user.get("phone"),
+                    "phone": user.get("phone") or data.phone,
                     "address": user.get("address"),
                     "city": user.get("city"),
                     "pincode": user.get("pincode"),
                     "date_of_birth": user.get("date_of_birth"),
                     "gotra": user.get("gotra"),
                     "nakshatra": user.get("nakshatra"),
-                    "profile_completed": user.get("profile_completed", False)
+                    "profile_completed": user.get("profile_completed", False),
+                    "auth_type": user.get("auth_type") or data.auth_type
                 }
             }
         
@@ -1530,10 +1544,12 @@ async def firebase_sync(data: FirebaseSyncRequest):
         
         user_dict = {
             "firebase_uid": data.firebase_uid,
-            "email": data.email,
+            "email": data.email,  # Can be None for phone auth
+            "phone": data.phone,  # Phone number for phone auth
             "name": data.name,
             "photo_url": data.photo_url,
             "role": selected_role,
+            "auth_type": data.auth_type or ("phone" if data.phone and not data.email else "email"),
             "is_verified": True,  # Firebase users are pre-verified
             "profile_completed": False,
             "created_at": datetime.now(timezone.utc)
@@ -1562,30 +1578,39 @@ async def firebase_sync(data: FirebaseSyncRequest):
             "user": {
                 "id": str(result.inserted_id),
                 "email": data.email,
+                "phone": data.phone,
                 "name": data.name,
                 "role": selected_role,
                 "firebase_uid": data.firebase_uid,
-                "profile_completed": False
+                "profile_completed": False,
+                "auth_type": user_dict["auth_type"]
             }
         }
     except Exception as e:
         # Handle duplicate key error - user was created by another request
         if "duplicate key" in str(e).lower() or "E11000" in str(e):
             # Retry finding the user
-            user = await users_collection.find_one({"email": data.email})
-            if user:
-                return {
-                    "user": {
-                        "id": str(user["_id"]),
-                        "email": user["email"],
-                        "name": user["name"],
-                        "role": user["role"],
-                        "firebase_uid": data.firebase_uid,
-                        "is_verified": user.get("is_verified", False),
-                        "phone": user.get("phone"),
-                        "profile_completed": user.get("profile_completed", False)
+            query_conditions = []
+            if data.email:
+                query_conditions.append({"email": data.email})
+            if data.phone:
+                query_conditions.append({"phone": data.phone})
+            if query_conditions:
+                user = await users_collection.find_one({"$or": query_conditions})
+                if user:
+                    return {
+                        "user": {
+                            "id": str(user["_id"]),
+                            "email": user.get("email"),
+                            "name": user["name"],
+                            "role": user["role"],
+                            "firebase_uid": data.firebase_uid,
+                            "is_verified": user.get("is_verified", False),
+                            "phone": user.get("phone"),
+                            "profile_completed": user.get("profile_completed", False),
+                            "auth_type": user.get("auth_type")
+                        }
                     }
-                }
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/auth/firebase-register")

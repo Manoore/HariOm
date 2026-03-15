@@ -7,7 +7,10 @@ import {
   firebaseSignOut,
   firebaseGoogleSignIn,
   getIdToken,
-  isFirebaseConfigured
+  isFirebaseConfigured,
+  setupRecaptcha,
+  sendPhoneOTP,
+  verifyPhoneOTP
 } from '../lib/firebase';
 
 const AuthContext = createContext(null);
@@ -230,6 +233,78 @@ export function AuthProvider({ children }) {
     return null;
   };
 
+  // ==================== PHONE AUTHENTICATION ====================
+  
+  // Initialize reCAPTCHA for phone auth
+  const initPhoneAuth = (containerId = 'recaptcha-container') => {
+    try {
+      return setupRecaptcha(containerId);
+    } catch (error) {
+      console.error('Error initializing phone auth:', error);
+      throw error;
+    }
+  };
+
+  // Send OTP to phone number
+  const sendOTP = async (phoneNumber) => {
+    try {
+      const result = await sendPhoneOTP(phoneNumber);
+      return result;
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      throw error;
+    }
+  };
+
+  // Verify OTP and sign in with phone
+  const verifyOTPAndSignIn = async (otp, userData = {}) => {
+    try {
+      const result = await verifyPhoneOTP(otp);
+      
+      if (result.user) {
+        const idToken = await result.user.getIdToken();
+        localStorage.setItem('divine_token', idToken);
+        
+        try {
+          // Sync with backend - phone number as identifier
+          const res = await api.post('/api/auth/firebase-sync', {
+            firebase_uid: result.user.uid,
+            email: result.user.phoneNumber, // Use phone as email placeholder
+            name: userData.name || result.user.phoneNumber,
+            phone: result.user.phoneNumber,
+            role: userData.role || 'devotee',
+            auth_type: 'phone' // Mark as phone auth
+          });
+          
+          setFirebaseUser(result.user);
+          setUser(res.data.user);
+          localStorage.setItem('divine_user', JSON.stringify(res.data.user));
+          hasProcessedInitialState.current = true;
+        } catch (syncError) {
+          console.error('Backend sync failed:', syncError);
+          const basicUser = {
+            phone: result.user.phoneNumber,
+            name: userData.name || result.user.phoneNumber,
+            role: userData.role || 'devotee',
+            firebase_uid: result.user.uid
+          };
+          setFirebaseUser(result.user);
+          setUser(basicUser);
+          localStorage.setItem('divine_user', JSON.stringify(basicUser));
+          hasProcessedInitialState.current = true;
+        }
+      }
+      
+      setLoading(false);
+      return { user: result.user };
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      throw error;
+    }
+  };
+
+  // ==================== END PHONE AUTHENTICATION ====================
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -240,7 +315,11 @@ export function AuthProvider({ children }) {
       loginWithGoogle,
       updateUser,
       refreshToken,
-      firebaseUser 
+      firebaseUser,
+      // Phone auth methods
+      initPhoneAuth,
+      sendOTP,
+      verifyOTPAndSignIn
     }}>
       {children}
     </AuthContext.Provider>
