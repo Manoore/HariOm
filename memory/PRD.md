@@ -159,7 +159,7 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Stotras section (Hanuman Chalisa, etc.)
   - [x] Connected to devotional_content MongoDB database
   - [x] **Multi-language Translation** (English, Hindi, Telugu, Tamil, Kannada, Malayalam) - Works across ALL sections
-  - [x] **Sarvam AI Text-to-Speech** - Integrated but has compatibility issues with some voices
+  - [x] ~~Sarvam AI Text-to-Speech~~ - **REMOVED** (March 15, 2026) - User requested removal
   - [x] **Audio Library** - Internet Archive integration for streaming mantras/shlokas
     - Curated collection of 8 popular mantras (Gayatri, Hanuman Chalisa, Ganesh, Vishnu, Devi, Shiva)
     - **Simplified single-line list UI** with Play button, title, deity, Karaoke button, duration
@@ -424,11 +424,10 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 ## Tech Stack
 ```
 Frontend: React 18, Tailwind CSS, Framer Motion, Firebase SDK
-Backend: FastAPI, Motor (MongoDB async driver), Stripe SDK, Sarvam AI SDK
+Backend: FastAPI, Motor (MongoDB async driver), Stripe SDK
 Database: MongoDB Atlas
 Auth: Firebase Auth (Google + Email/Password)
 Payments: Stripe (test keys active), Razorpay (placeholder)
-TTS: Sarvam AI (Indian voices - Hindi, Telugu, Tamil, Kannada, Malayalam)
 Translation: Google Translate API with MyMemory fallback
 Mobile: React Native with Expo
 Icons: Custom 3D animated SVGs

@@ -1063,13 +1063,6 @@ function MantrasTab({ isDesktop }) {
   const [activeSection, setActiveSection] = useState('today');
   const [expandedMantra, setExpandedMantra] = useState(null);
   
-  // Text-to-Speech states
-  const [voices, setVoices] = useState([]);
-  const [selectedVoice, setSelectedVoice] = useState(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
-  const [showVoiceSelector, setShowVoiceSelector] = useState(false);
-  
   // Translation states
   const [selectedLanguage, setSelectedLanguage] = useState('english');
   const [translations, setTranslations] = useState({});
@@ -1086,7 +1079,6 @@ function MantrasTab({ isDesktop }) {
 
   useEffect(() => {
     fetchData();
-    loadVoices();
   }, []);
   
   // Translate text
@@ -1150,149 +1142,6 @@ function MantrasTab({ isDesktop }) {
     }
     const cacheKey = `${mantra.name}_${selectedLanguage}`;
     return translations[cacheKey] || mantra.meaning_english;
-  };
-  
-  // Load available voices from Sarvam AI (Indian voices)
-  const loadVoices = async () => {
-    try {
-      const res = await api.get('/api/tts/voices');
-      if (res.data.status === 'ok' && res.data.voices.length > 0) {
-        setVoices(res.data.voices);
-        // Default to a recommended Indian voice if available
-        const recommendedVoice = res.data.voices.find(v => v.recommended);
-        setSelectedVoice(recommendedVoice || res.data.voices[0]);
-      } else {
-        // Fallback to browser voices
-        loadBrowserVoices();
-      }
-    } catch (error) {
-      console.error('Error loading Sarvam AI voices:', error);
-      loadBrowserVoices();
-    }
-  };
-  
-  // Fallback to browser TTS voices
-  const loadBrowserVoices = () => {
-    const loadAvailableVoices = () => {
-      const availableVoices = window.speechSynthesis.getVoices();
-      const relevantVoices = availableVoices.filter(v => 
-        v.lang.includes('hi') || v.lang.includes('en') || v.lang.includes('sa')
-      );
-      const voiceList = (relevantVoices.length > 0 ? relevantVoices : availableVoices).map((v, idx) => ({
-        voice_id: `browser_${idx}`,
-        name: v.name,
-        category: 'browser',
-        browserVoice: v
-      }));
-      setVoices(voiceList);
-      const hindiVoice = voiceList.find(v => v.name?.toLowerCase().includes('hindi'));
-      setSelectedVoice(hindiVoice || voiceList[0]);
-    };
-    
-    loadAvailableVoices();
-    window.speechSynthesis.onvoiceschanged = loadAvailableVoices;
-  };
-  
-  // Audio element ref for Sarvam AI playback
-  const audioRef = React.useRef(null);
-  
-  // Speak mantra text using Sarvam AI or browser fallback
-  const speakMantra = async (mantra, textType = 'transliteration') => {
-    if (isSpeaking) {
-      // Stop current playback
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      setCurrentlyPlaying(null);
-      return;
-    }
-    
-    const text = textType === 'sanskrit' ? mantra.sanskrit : mantra.transliteration;
-    if (!text) {
-      toast.error('No text available to read');
-      return;
-    }
-    
-    // Check if using Sarvam AI voice
-    if (selectedVoice && selectedVoice.voice_id && !selectedVoice.voice_id.startsWith('browser_')) {
-      // Use Sarvam AI API
-      setIsSpeaking(true);
-      setCurrentlyPlaying(mantra.name);
-      
-      try {
-        const res = await api.post('/api/tts/speak', {
-          text: text,
-          voice_id: selectedVoice.voice_id
-        });
-        
-        if (res.data.status === 'ok' && res.data.audio) {
-          const audio = new Audio(res.data.audio);
-          audioRef.current = audio;
-          
-          audio.onended = () => {
-            setIsSpeaking(false);
-            setCurrentlyPlaying(null);
-            audioRef.current = null;
-          };
-          
-          audio.onerror = () => {
-            setIsSpeaking(false);
-            setCurrentlyPlaying(null);
-            audioRef.current = null;
-            toast.error('Audio playback failed');
-          };
-          
-          audio.play();
-        } else {
-          throw new Error('Invalid audio response');
-        }
-      } catch (error) {
-        console.error('Sarvam AI TTS error:', error);
-        setIsSpeaking(false);
-        setCurrentlyPlaying(null);
-        toast.error('Voice generation failed. Try again.');
-      }
-    } else {
-      // Fallback to browser TTS
-      const utterance = new SpeechSynthesisUtterance(text);
-      if (selectedVoice?.browserVoice) {
-        utterance.voice = selectedVoice.browserVoice;
-      }
-      utterance.rate = 0.8;
-      utterance.pitch = 1;
-      
-      utterance.onstart = () => {
-        setIsSpeaking(true);
-        setCurrentlyPlaying(mantra.name);
-      };
-      
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        setCurrentlyPlaying(null);
-      };
-      
-      utterance.onerror = () => {
-        setIsSpeaking(false);
-        setCurrentlyPlaying(null);
-        toast.error('Speech synthesis failed');
-      };
-      
-      window.speechSynthesis.speak(utterance);
-    }
-  };
-  
-  // Stop speaking
-  const stopSpeaking = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-    setCurrentlyPlaying(null);
   };
 
   const fetchData = async () => {
@@ -1401,40 +1250,6 @@ function MantrasTab({ isDesktop }) {
             </select>
             <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-maroon rotate-90 pointer-events-none" />
           </div>
-          
-          {/* Voice Selector Button */}
-          <div className="relative">
-            <button
-              onClick={() => setShowVoiceSelector(!showVoiceSelector)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-cream text-maroon hover:bg-saffron/20 transition-all"
-            >
-              <Volume2 className="w-4 h-4" />
-              <span className="text-sm hidden md:inline">Voice</span>
-            </button>
-            
-            {showVoiceSelector && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-saffron/20 z-20 p-3">
-                <p className="text-xs text-gray-500 mb-2">Select Voice for Reading</p>
-                <select
-                  value={selectedVoice?.name || ''}
-                  onChange={(e) => {
-                    const voice = voices.find(v => v.name === e.target.value);
-                    setSelectedVoice(voice);
-                  }}
-                  className="w-full bg-cream rounded-lg px-3 py-2 text-sm text-maroon focus:ring-2 focus:ring-saffron outline-none"
-                >
-                  {voices.map((voice, idx) => (
-                    <option key={idx} value={voice.name}>
-                      {voice.name} {voice.recommended ? '★' : ''} {voice.category === 'browser' ? '(Browser)' : ''}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-400 mt-2">
-                  {selectedVoice?.category !== 'browser' ? '🎙️ Using Sarvam AI (Indian Voice)' : 'Using browser voice'}
-                </p>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -1485,28 +1300,11 @@ function MantrasTab({ isDesktop }) {
                       <h4 className="font-semibold text-maroon">{mantra.name}</h4>
                       <p className="text-gray-500 text-xs">{mantra.name_hindi}</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => speakMantra(mantra)}
-                        className={`p-2 rounded-full transition-all ${
-                          currentlyPlaying === mantra.name 
-                            ? 'bg-saffron text-white' 
-                            : 'bg-saffron/10 text-saffron hover:bg-saffron/20'
-                        }`}
-                        title={currentlyPlaying === mantra.name ? 'Stop' : 'Listen'}
-                      >
-                        {currentlyPlaying === mantra.name ? (
-                          <X className="w-4 h-4" />
-                        ) : (
-                          <Play className="w-4 h-4" />
-                        )}
-                      </button>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        mantra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
-                      }`}>
-                        {mantra.tier === 'free' ? 'Free' : 'Premium'}
-                      </span>
-                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      mantra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
+                    }`}>
+                      {mantra.tier === 'free' ? 'Free' : 'Premium'}
+                    </span>
                   </div>
                   
                   {/* Sanskrit Text */}
@@ -1625,28 +1423,11 @@ function MantrasTab({ isDesktop }) {
                         <p className="font-semibold text-maroon">{mantra.name}</p>
                         <p className="text-xs text-gray-500">{mantra.type?.replace('_', ' ')}</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => speakMantra(mantra)}
-                          className={`p-1.5 rounded-full transition-all ${
-                            currentlyPlaying === mantra.name 
-                              ? 'bg-saffron text-white' 
-                              : 'bg-saffron/10 text-saffron hover:bg-saffron/20'
-                          }`}
-                          title={currentlyPlaying === mantra.name ? 'Stop' : 'Listen'}
-                        >
-                          {currentlyPlaying === mantra.name ? (
-                            <X className="w-3 h-3" />
-                          ) : (
-                            <Play className="w-3 h-3" />
-                          )}
-                        </button>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          mantra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
-                        }`}>
-                          {mantra.tier}
-                        </span>
-                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        mantra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
+                      }`}>
+                        {mantra.tier}
+                      </span>
                     </div>
                     <div className="bg-cream rounded-lg p-3 my-2">
                       <p className="text-maroon text-center">{mantra.sanskrit}</p>
@@ -1705,8 +1486,6 @@ function MantrasTab({ isDesktop }) {
       {activeSection === 'all' && (
         <AllMantrasSection 
           isDesktop={isDesktop} 
-          speakMantra={speakMantra} 
-          currentlyPlaying={currentlyPlaying}
           selectedLanguage={selectedLanguage}
           languages={languages}
           translations={translations}
@@ -1723,7 +1502,7 @@ function MantrasTab({ isDesktop }) {
 }
 
 // All Mantras Sub-component
-function AllMantrasSection({ isDesktop, speakMantra, currentlyPlaying, selectedLanguage, languages, translations, translateText }) {
+function AllMantrasSection({ isDesktop, selectedLanguage, languages, translations, translateText }) {
   const [mantras, setMantras] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
@@ -1835,28 +1614,11 @@ function AllMantrasSection({ isDesktop, speakMantra, currentlyPlaying, selectedL
                 <p className="font-semibold text-maroon">{mantra.name}</p>
                 <p className="text-xs text-gray-500 capitalize">{mantra.deity_id} • {mantra.type?.replace('_', ' ')}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => speakMantra(mantra)}
-                  className={`p-1.5 rounded-full transition-all ${
-                    currentlyPlaying === mantra.name 
-                      ? 'bg-saffron text-white' 
-                      : 'bg-saffron/10 text-saffron hover:bg-saffron/20'
-                  }`}
-                  title={currentlyPlaying === mantra.name ? 'Stop' : 'Listen'}
-                >
-                  {currentlyPlaying === mantra.name ? (
-                    <X className="w-3 h-3" />
-                  ) : (
-                    <Play className="w-3 h-3" />
-                  )}
-                </button>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  mantra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
-                }`}>
-                  {mantra.tier}
-                </span>
-              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                mantra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
+              }`}>
+                {mantra.tier}
+              </span>
             </div>
             <div className="bg-white rounded-lg p-3 my-2">
               <p className="text-maroon text-center text-sm">{mantra.sanskrit}</p>
