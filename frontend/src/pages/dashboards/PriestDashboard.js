@@ -1695,20 +1695,232 @@ function ReviewsTab({ reviews }) {
 }
 
 function PortfolioTab({ portfolio, onRefresh }) {
+  const [showModal, setShowModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [newItem, setNewItem] = useState({ title: '', description: '', type: 'image', url: '' });
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload a valid image or video file');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File too large. Maximum size is 10MB.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post('/api/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setNewItem({ 
+        ...newItem, 
+        url: response.data.url,
+        type: file.type.startsWith('video') ? 'video' : 'image'
+      });
+      toast.success('File uploaded!');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload file');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleAddItem = async () => {
+    if (!newItem.url) {
+      toast.error('Please upload an image or video');
+      return;
+    }
+
+    try {
+      await api.post('/api/priest/portfolio', {
+        title: newItem.title || 'Untitled',
+        description: newItem.description,
+        type: newItem.type,
+        url: newItem.url
+      });
+      toast.success('Portfolio item added!');
+      setNewItem({ title: '', description: '', type: 'image', url: '' });
+      setShowModal(false);
+      onRefresh();
+    } catch (error) {
+      toast.error('Failed to add item');
+    }
+  };
+
+  const handleDelete = async (itemId) => {
+    if (!window.confirm('Delete this portfolio item?')) return;
+    try {
+      await api.delete(`/api/priest/portfolio/${itemId}`);
+      toast.success('Item deleted');
+      onRefresh();
+    } catch (error) {
+      toast.error('Failed to delete');
+    }
+  };
+
+  const handleAddClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowModal(true);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg font-semibold text-maroon">Portfolio</h2>
-        <button className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm"><Upload className="w-4 h-4" /> Add</button>
+        <button 
+          type="button"
+          onClick={handleAddClick}
+          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer"
+        >
+          <Upload className="w-4 h-4" /> Add
+        </button>
       </div>
       {portfolio.length === 0 ? (
-        <div className="bg-white rounded-xl p-8 text-center"><Image className="w-12 h-12 text-gray-300 mx-auto mb-4" /><p className="text-gray-400">No portfolio items</p></div>
+        <div className="bg-white rounded-xl p-8 text-center">
+          <Image className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-400">No portfolio items</p>
+          <p className="text-sm text-gray-300 mt-1">Add photos and videos of your work</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{portfolio.map(p => (
-          <div key={p.id} className="aspect-square rounded-xl bg-gray-100 overflow-hidden">
-            <img src={p.url} alt={p.title} className="w-full h-full object-cover" />
-          </div>
-        ))}</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {portfolio.map(p => (
+            <div key={p.id} className="aspect-square rounded-xl bg-gray-100 overflow-hidden relative group">
+              {p.type === 'video' ? (
+                <video src={p.url} className="w-full h-full object-cover" />
+              ) : (
+                <img src={p.url} alt={p.title} className="w-full h-full object-cover" />
+              )}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              {p.title && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                  <p className="text-white text-xs truncate">{p.title}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add Portfolio Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl max-w-lg w-full"
+          >
+            <div className="p-4 border-b flex items-center justify-between">
+              <h2 className="font-cinzel text-lg font-semibold text-maroon">Add Portfolio Item</h2>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              {/* File Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Upload Image/Video*</label>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm"
+                  className="hidden"
+                />
+                
+                {newItem.url ? (
+                  <div className="relative">
+                    {newItem.type === 'video' ? (
+                      <video src={newItem.url} className="w-full h-48 object-cover rounded-xl" controls />
+                    ) : (
+                      <img src={newItem.url} alt="Preview" className="w-full h-48 object-cover rounded-xl" />
+                    )}
+                    <button
+                      onClick={() => setNewItem({ ...newItem, url: '' })}
+                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="w-full p-8 border-2 border-dashed border-gray-300 rounded-xl hover:border-saffron hover:bg-orange-50 transition-colors flex flex-col items-center gap-2"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-8 h-8 animate-spin text-saffron" />
+                        <span className="text-sm text-gray-500">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-8 h-8 text-gray-400" />
+                        <span className="text-sm text-gray-500">Click to upload</span>
+                        <span className="text-xs text-gray-400">Images or Videos (max 10MB)</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title (optional)</label>
+                <input
+                  type="text"
+                  value={newItem.title}
+                  onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                  placeholder="e.g., Satyanarayan Pooja at Mumbai"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+                <textarea
+                  value={newItem.description}
+                  onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                  placeholder="Add details about this work..."
+                />
+              </div>
+            </div>
+            
+            <div className="p-4 border-t flex justify-end gap-3">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600">Cancel</button>
+              <button
+                onClick={handleAddItem}
+                disabled={!newItem.url || uploading}
+                className="px-6 py-2 bg-saffron text-white rounded-xl disabled:opacity-50 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> Add to Portfolio
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );
