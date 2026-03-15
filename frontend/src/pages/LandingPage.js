@@ -7,6 +7,116 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 
+// Scroll to top function
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// Animated Aarti/Harathi Component
+const AartiAnimation = ({ className = "" }) => (
+  <motion.div 
+    className={`fixed bottom-8 right-8 z-40 ${className}`}
+    initial={{ opacity: 0, scale: 0 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay: 2, duration: 0.5 }}
+  >
+    <motion.div
+      animate={{ rotate: [0, 15, 0, -15, 0] }}
+      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      className="relative"
+    >
+      <svg viewBox="0 0 150 180" className="w-24 h-28 drop-shadow-2xl">
+        <defs>
+          <linearGradient id="aartiPlate" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFD700" />
+            <stop offset="50%" stopColor="#FFA500" />
+            <stop offset="100%" stopColor="#CD853F" />
+          </linearGradient>
+          <linearGradient id="aartiFlame1" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#FF4500" />
+            <stop offset="40%" stopColor="#FF8C00" />
+            <stop offset="70%" stopColor="#FFD700" />
+            <stop offset="100%" stopColor="#FFFACD" />
+          </linearGradient>
+          <linearGradient id="aartiFlame2" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#FF6347" />
+            <stop offset="50%" stopColor="#FFA500" />
+            <stop offset="100%" stopColor="#FFFFE0" />
+          </linearGradient>
+          <filter id="aartiGlow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <radialGradient id="glowEffect" cx="50%" cy="30%" r="60%">
+            <stop offset="0%" stopColor="#FFD700" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#FFD700" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        
+        {/* Glow effect behind flames */}
+        <ellipse cx="75" cy="50" rx="50" ry="40" fill="url(#glowEffect)" />
+        
+        {/* Aarti plate (thali) */}
+        <ellipse cx="75" cy="140" rx="55" ry="12" fill="#8B4513" />
+        <ellipse cx="75" cy="135" rx="50" ry="10" fill="url(#aartiPlate)" />
+        <ellipse cx="75" cy="132" rx="45" ry="8" fill="#FFE4B5" opacity="0.3" />
+        
+        {/* Small diyas on the plate */}
+        {[30, 55, 75, 95, 120].map((x, i) => (
+          <g key={i}>
+            {/* Diya base */}
+            <ellipse cx={x} cy="130" rx="8" ry="3" fill="#CD853F" />
+            <path d={`M${x-6} 130 Q${x-6} 122 ${x} 122 Q${x+6} 122 ${x+6} 130`} fill="#FFD700" />
+            
+            {/* Animated flame */}
+            <motion.path
+              d={`M${x} 120 Q${x-4} 108 ${x} ${95 - i*2} Q${x+4} 108 ${x} 120`}
+              fill="url(#aartiFlame1)"
+              filter="url(#aartiGlow)"
+              animate={{
+                d: [
+                  `M${x} 120 Q${x-4} 108 ${x} ${95 - i*2} Q${x+4} 108 ${x} 120`,
+                  `M${x} 120 Q${x-5} 106 ${x} ${92 - i*2} Q${x+3} 106 ${x} 120`,
+                  `M${x} 120 Q${x-3} 110 ${x} ${97 - i*2} Q${x+5} 110 ${x} 120`,
+                  `M${x} 120 Q${x-4} 108 ${x} ${95 - i*2} Q${x+4} 108 ${x} 120`,
+                ]
+              }}
+              transition={{ duration: 0.3 + i * 0.1, repeat: Infinity }}
+            />
+            {/* Inner flame */}
+            <motion.ellipse
+              cx={x}
+              cy={105 - i*2}
+              rx="3"
+              ry="5"
+              fill="#FFFACD"
+              opacity="0.9"
+              animate={{ ry: [5, 6, 4, 5], opacity: [0.9, 1, 0.8, 0.9] }}
+              transition={{ duration: 0.4, repeat: Infinity }}
+            />
+          </g>
+        ))}
+        
+        {/* Handle */}
+        <path d="M75 145 L75 170" stroke="#8B4513" strokeWidth="8" strokeLinecap="round" />
+        <ellipse cx="75" cy="172" rx="10" ry="6" fill="#8B4513" />
+      </svg>
+    </motion.div>
+    
+    {/* Label */}
+    <motion.p 
+      className="text-center text-xs text-maroon font-cinzel mt-1 opacity-80"
+      animate={{ opacity: [0.6, 1, 0.6] }}
+      transition={{ duration: 2, repeat: Infinity }}
+    >
+      Aarti
+    </motion.p>
+  </motion.div>
+);
+
 // 3D Animated Devotional Icons
 const DiyaIcon = ({ className = "", animate = true }) => (
   <motion.div 
@@ -274,15 +384,22 @@ export default function LandingPage({ onGetStarted }) {
 
   return (
     <div className="min-h-screen bg-cream">
+      {/* Animated Aarti */}
+      <AartiAnimation />
+      
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-orange-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 lg:h-20">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
+            {/* Logo - Clickable to scroll to top */}
+            <button 
+              onClick={scrollToTop}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+              data-testid="logo-scroll-top"
+            >
               <DiyaIcon className="w-10 h-10" animate={false} />
               <span className="font-cinzel text-2xl font-bold text-maroon">DIVINE</span>
-            </div>
+            </button>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">
@@ -903,10 +1020,13 @@ export default function LandingPage({ onGetStarted }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-12">
             <div>
-              <div className="flex items-center gap-3 mb-4">
+              <button 
+                onClick={scrollToTop}
+                className="flex items-center gap-3 mb-4 hover:opacity-80 transition-opacity cursor-pointer"
+              >
                 <DiyaIcon className="w-10 h-10" animate={false} />
                 <span className="font-cinzel text-xl font-bold">DIVINE</span>
-              </div>
+              </button>
               <p className="text-gray-400 text-sm mb-4">
                 Your complete spiritual ecosystem for Hindu rituals, astrology, and sacred services.
               </p>
