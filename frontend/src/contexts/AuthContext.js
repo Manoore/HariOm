@@ -66,16 +66,18 @@ export function AuthProvider({ children }) {
       // Auth state listener will handle the rest
       return { user: userCredential.user };
     } catch (error) {
-      // If Firebase login fails, try legacy backend login
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-        // Try backend login for existing users not in Firebase
+      // If Firebase login fails for any reason, try legacy backend login
+      console.log('Firebase login failed, trying backend:', error.code);
+      try {
         const res = await api.post('/api/auth/login', { email, password });
         localStorage.setItem('divine_token', res.data.token);
         localStorage.setItem('divine_user', JSON.stringify(res.data.user));
         setUser(res.data.user);
         return res.data;
+      } catch (backendError) {
+        // If both fail, throw the original Firebase error or backend error
+        throw backendError.response?.data?.detail ? backendError : error;
       }
-      throw error;
     }
   };
 

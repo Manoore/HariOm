@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Loader2, ChevronLeft, Bell, Sparkles, Building2, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
+import { isFirebaseConfigured } from '../lib/firebase';
 
 // 3D Animated Devotional Icons
 const BellIcon3D = () => (
