@@ -1350,11 +1350,24 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
 // ==================== Simplified remaining tabs ====================
 function ServicesTab({ services, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
+  const [editingService, setEditingService] = useState(null);
+
+  const deleteService = async (serviceId) => {
+    if (!window.confirm('Delete this service?')) return;
+    try {
+      await api.delete(`/api/priest/services/${serviceId}`);
+      toast.success('Service deleted');
+      onRefresh();
+    } catch (error) {
+      toast.error('Failed to delete');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg font-semibold text-maroon">Services</h2>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm">
+        <button onClick={() => { setEditingService(null); setShowModal(true); }} className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm">
           <Plus className="w-4 h-4" /> Add
         </button>
       </div>
@@ -1364,8 +1377,21 @@ function ServicesTab({ services, onRefresh }) {
         <div className="grid md:grid-cols-2 gap-4">
           {services.map(s => (
             <div key={s.id} className="bg-white rounded-xl p-4 border-l-4 border-saffron">
-              <h3 className="font-semibold">{s.name}</h3>
-              <p className="text-sm text-gray-500">{s.description}</p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold">{s.name}</h3>
+                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{s.category}</span>
+                </div>
+                <div className="flex gap-1">
+                  <button onClick={() => { setEditingService(s); setShowModal(true); }} className="p-1.5 hover:bg-gray-100 rounded">
+                    <Edit className="w-4 h-4 text-gray-500" />
+                  </button>
+                  <button onClick={() => deleteService(s.id)} className="p-1.5 hover:bg-red-50 rounded">
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">{s.description}</p>
               <div className="flex gap-3 mt-2 text-sm">
                 <span><Clock className="w-3 h-3 inline" /> {s.duration_minutes}min</span>
                 <span className="text-saffron font-medium">₹{s.price}</span>
@@ -1374,6 +1400,143 @@ function ServicesTab({ services, onRefresh }) {
           ))}
         </div>
       )}
+
+      <ServiceModal 
+        isOpen={showModal}
+        onClose={() => { setShowModal(false); setEditingService(null); }}
+        editData={editingService}
+        onSuccess={onRefresh}
+      />
+    </div>
+  );
+}
+
+// Service Modal Component
+function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
+  const [form, setForm] = useState({
+    name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (editData) {
+      setForm({
+        name: editData.name || '',
+        description: editData.description || '',
+        category: editData.category || 'Pooja',
+        duration_minutes: editData.duration_minutes || 60,
+        price: editData.price || 1100
+      });
+    } else {
+      setForm({ name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100 });
+    }
+  }, [editData, isOpen]);
+
+  const handleSubmit = async () => {
+    if (!form.name) { toast.error('Enter service name'); return; }
+    setSaving(true);
+    try {
+      if (editData) {
+        await api.put(`/api/priest/services/${editData.id}`, form);
+      } else {
+        await api.post('/api/priest/services', form);
+      }
+      toast.success(editData ? 'Service updated!' : 'Service added!');
+      onSuccess();
+      onClose();
+    } catch (error) {
+      toast.error('Failed to save service');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+      >
+        <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white">
+          <h2 className="font-cinzel text-lg font-semibold text-maroon">{editData ? 'Edit Service' : 'Add Service'}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+        </div>
+        
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Service Name*</label>
+            <input 
+              type="text" 
+              value={form.name} 
+              onChange={(e) => setForm({ ...form, name: e.target.value })} 
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
+              placeholder="e.g., Satyanarayan Pooja" 
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea 
+              value={form.description} 
+              onChange={(e) => setForm({ ...form, description: e.target.value })} 
+              rows={3} 
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
+              placeholder="Describe the service..."
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select 
+              value={form.category} 
+              onChange={(e) => setForm({ ...form, category: e.target.value })} 
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+            >
+              <option value="Pooja">Pooja</option>
+              <option value="Homam">Homam/Havan</option>
+              <option value="Ceremony">Ceremony</option>
+              <option value="Consultation">Consultation</option>
+              <option value="Online">Online Service</option>
+            </select>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
+              <input 
+                type="number" 
+                value={form.duration_minutes} 
+                onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) || 60 })} 
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+              <input 
+                type="number" 
+                value={form.price} 
+                onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })} 
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
+          <button onClick={onClose} className="px-4 py-2 text-gray-600">Cancel</button>
+          <button 
+            onClick={handleSubmit} 
+            disabled={saving} 
+            className="px-6 py-2 bg-saffron text-white rounded-xl disabled:opacity-50 flex items-center gap-2"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {editData ? 'Update' : 'Add Service'}
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }
@@ -1472,31 +1635,225 @@ function EarningsTab({ earnings, analytics }) {
 }
 
 function StreamsTab({ streams, onRefresh }) {
+  const [showModal, setShowModal] = useState(false);
   const scheduled = streams.filter(s => s.status === 'scheduled');
   const live = streams.filter(s => s.status === 'live');
+  const past = streams.filter(s => s.status === 'ended');
+
+  const startStream = async (streamId) => {
+    try {
+      await api.put(`/api/priest/streams/${streamId}/start`);
+      toast.success('Stream started! You are now live.');
+      onRefresh();
+    } catch (error) {
+      toast.error('Failed to start stream');
+    }
+  };
+
+  const endStream = async (streamId) => {
+    if (!window.confirm('End this stream?')) return;
+    try {
+      await api.put(`/api/priest/streams/${streamId}/end`);
+      toast.success('Stream ended');
+      onRefresh();
+    } catch (error) {
+      toast.error('Failed to end stream');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg font-semibold text-maroon">Live Streams</h2>
-        <button className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm"><Plus className="w-4 h-4" /> Schedule</button>
+        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm">
+          <Plus className="w-4 h-4" /> Schedule
+        </button>
       </div>
+
       {live.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <h3 className="font-semibold text-red-700 flex items-center gap-2 mb-3"><span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>Live Now</h3>
-          {live.map(s => <div key={s.id} className="bg-white rounded-xl p-3"><p className="font-medium">{s.title}</p><p className="text-sm text-gray-500">{s.viewer_count} watching</p></div>)}
+          <h3 className="font-semibold text-red-700 flex items-center gap-2 mb-3">
+            <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>Live Now
+          </h3>
+          {live.map(s => (
+            <div key={s.id} className="bg-white rounded-xl p-3 flex justify-between items-center">
+              <div>
+                <p className="font-medium">{s.title}</p>
+                <p className="text-sm text-gray-500">{s.viewer_count || 0} watching</p>
+              </div>
+              <button onClick={() => endStream(s.id)} className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm flex items-center gap-1">
+                <Square className="w-4 h-4" /> End
+              </button>
+            </div>
+          ))}
         </div>
       )}
+
       <div className="bg-white rounded-xl p-4">
         <h3 className="font-semibold mb-3">Scheduled ({scheduled.length})</h3>
-        {scheduled.length === 0 ? <p className="text-center text-gray-400 py-4">No scheduled streams</p> : (
-          <div className="space-y-2">{scheduled.map(s => (
-            <div key={s.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl">
-              <div><p className="font-medium">{s.title}</p><p className="text-xs text-gray-400">{new Date(s.scheduled_at).toLocaleString()}</p></div>
-              <button className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm flex items-center gap-1"><Play className="w-4 h-4" />Go Live</button>
-            </div>
-          ))}</div>
+        {scheduled.length === 0 ? (
+          <p className="text-center text-gray-400 py-4">No scheduled streams</p>
+        ) : (
+          <div className="space-y-2">
+            {scheduled.map(s => (
+              <div key={s.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl">
+                <div>
+                  <p className="font-medium">{s.title}</p>
+                  <p className="text-xs text-gray-400">{new Date(s.scheduled_at).toLocaleString()}</p>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{s.stream_type}</span>
+                </div>
+                <button onClick={() => startStream(s.id)} className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm flex items-center gap-1">
+                  <Play className="w-4 h-4" /> Go Live
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
+
+      {past.length > 0 && (
+        <div className="bg-white rounded-xl p-4">
+          <h3 className="font-semibold mb-3">Past Streams ({past.length})</h3>
+          <div className="space-y-2">
+            {past.slice(0, 5).map(s => (
+              <div key={s.id} className="p-3 border border-gray-100 rounded-xl">
+                <p className="font-medium">{s.title}</p>
+                <div className="flex gap-3 text-xs text-gray-400 mt-1">
+                  <span>{new Date(s.ended_at).toLocaleDateString()}</span>
+                  <span>{s.max_viewers || 0} max viewers</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <StreamModal 
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={onRefresh}
+      />
+    </div>
+  );
+}
+
+// Stream Modal Component
+function StreamModal({ isOpen, onClose, onSuccess }) {
+  const [form, setForm] = useState({
+    title: '', description: '', stream_type: 'puja', scheduled_at: ''
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Set default scheduled time to 1 hour from now
+      const defaultTime = new Date();
+      defaultTime.setHours(defaultTime.getHours() + 1);
+      setForm({
+        title: '',
+        description: '',
+        stream_type: 'puja',
+        scheduled_at: defaultTime.toISOString().slice(0, 16)
+      });
+    }
+  }, [isOpen]);
+
+  const handleSubmit = async () => {
+    if (!form.title) { toast.error('Enter stream title'); return; }
+    if (!form.scheduled_at) { toast.error('Select schedule time'); return; }
+    
+    setSaving(true);
+    try {
+      await api.post('/api/priest/streams', {
+        ...form,
+        scheduled_at: new Date(form.scheduled_at).toISOString()
+      });
+      toast.success('Stream scheduled!');
+      onSuccess();
+      onClose();
+    } catch (error) {
+      toast.error('Failed to schedule stream');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl max-w-lg w-full"
+      >
+        <div className="p-4 border-b flex items-center justify-between">
+          <h2 className="font-cinzel text-lg font-semibold text-maroon">Schedule Live Stream</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+        </div>
+        
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Stream Title*</label>
+            <input 
+              type="text" 
+              value={form.title} 
+              onChange={(e) => setForm({ ...form, title: e.target.value })} 
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
+              placeholder="e.g., Morning Aarti Live" 
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea 
+              value={form.description} 
+              onChange={(e) => setForm({ ...form, description: e.target.value })} 
+              rows={2} 
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
+              placeholder="What will you stream?"
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Stream Type</label>
+              <select 
+                value={form.stream_type} 
+                onChange={(e) => setForm({ ...form, stream_type: e.target.value })} 
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+              >
+                <option value="puja">Pooja</option>
+                <option value="aarti">Aarti</option>
+                <option value="discourse">Discourse</option>
+                <option value="class">Class</option>
+                <option value="qa">Q&A Session</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Schedule Time*</label>
+              <input 
+                type="datetime-local" 
+                value={form.scheduled_at} 
+                onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} 
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-4 border-t flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-gray-600">Cancel</button>
+          <button 
+            onClick={handleSubmit} 
+            disabled={saving} 
+            className="px-6 py-2 bg-saffron text-white rounded-xl disabled:opacity-50 flex items-center gap-2"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
+            Schedule Stream
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }
