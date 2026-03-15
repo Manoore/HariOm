@@ -1,0 +1,11 @@
+.gcloudignore
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+venv/
+.venv/
+.env.local
+.env.development
+node_modules/
