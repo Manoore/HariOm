@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Home, Star, Sun, ShoppingBag, User, Calendar, MapPin,
   Bell, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
-  CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack
+  CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
+  Camera
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -231,6 +232,7 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const [bookings, setBookings] = useState([]);
   const [orders, setOrders] = useState([]);
   const [horoscope, setHoroscope] = useState(null);
+  const [priestPosts, setPriestPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -243,7 +245,8 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
         api.get('/api/priests?limit=3'),
         api.get('/api/festivals/upcoming?limit=3'),
         api.get('/api/bookings'),
-        api.get('/api/orders')
+        api.get('/api/orders'),
+        api.get('/api/posts/feed?limit=5')
       ];
       
       // Fetch personalized horoscope if user has nakshatra or DOB
@@ -257,9 +260,10 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       setFestivals(results[1].data.festivals || []);
       setBookings((results[2].data.bookings || []).slice(0, 3));
       setOrders((results[3].data.orders || []).slice(0, 3));
+      setPriestPosts(results[4].data.posts || []);
       
-      if (results[4]) {
-        setHoroscope(results[4].data);
+      if (results[5]) {
+        setHoroscope(results[5].data);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -452,6 +456,68 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
           )}
         </div>
       </div>
+
+      {/* Priest Feed - Spiritual Updates */}
+      {priestPosts.length > 0 && (
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="font-cinzel text-lg font-semibold text-maroon">Spiritual Updates</h2>
+            <button onClick={() => setActiveTab('feed')} className="text-saffron text-sm">
+              View all
+            </button>
+          </div>
+          <div className="space-y-4">
+            {priestPosts.slice(0, 3).map((post) => (
+              <div 
+                key={post.id}
+                className="bg-white rounded-2xl p-4 shadow-sm border border-orange-50"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white font-cinzel flex-shrink-0">
+                    {post.priest_name?.charAt(0) || 'P'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-800">{post.priest_name || 'Priest'}</p>
+                      <span className="text-xs bg-orange-100 text-saffron px-2 py-0.5 rounded-full">Priest</span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      {new Date(post.created_at).toLocaleDateString('en-IN', { 
+                        day: 'numeric', 
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+                
+                <p className="mt-3 text-gray-700 text-sm leading-relaxed">
+                  {post.content}
+                </p>
+                
+                {post.image_url && (
+                  <img 
+                    src={post.image_url} 
+                    alt="Post" 
+                    className="mt-3 w-full h-48 object-cover rounded-xl"
+                  />
+                )}
+                
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+                  <button className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
+                    <Heart className="w-4 h-4" />
+                    <span className="text-xs">{post.likes || 0}</span>
+                  </button>
+                  <span className="flex items-center gap-1 text-gray-400">
+                    <span className="text-xs">{post.views || 0} views</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* My Bookings & My Orders Row - At Bottom */}
       <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''} mt-4`}>
@@ -3012,6 +3078,8 @@ function ProfileTab({ isDesktop }) {
   const { user, logout, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
   const [editForm, setEditForm] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
@@ -3020,7 +3088,8 @@ function ProfileTab({ isDesktop }) {
     pincode: user?.pincode || '',
     date_of_birth: user?.date_of_birth || '',
     gotra: user?.gotra || '',
-    nakshatra: user?.nakshatra || ''
+    nakshatra: user?.nakshatra || '',
+    profile_photo: user?.profile_photo || ''
   });
 
   useEffect(() => {
@@ -3033,10 +3102,45 @@ function ProfileTab({ isDesktop }) {
         pincode: user.pincode || '',
         date_of_birth: user.date_of_birth || '',
         gotra: user.gotra || '',
-        nakshatra: user.nakshatra || ''
+        nakshatra: user.nakshatra || '',
+        profile_photo: user.profile_photo || ''
       });
     }
   }, [user]);
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload a valid image (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image too large. Maximum size is 5MB.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post('/api/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setEditForm({ ...editForm, profile_photo: response.data.url });
+      toast.success('Photo uploaded!');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload photo');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -3059,8 +3163,41 @@ function ProfileTab({ isDesktop }) {
         {/* Profile Header */}
         <div className={`${isDesktop ? 'flex items-center justify-between' : ''} mb-6`}>
           <div className={`${isDesktop ? 'flex items-center gap-6' : 'flex items-center gap-4'}`}>
-            <div className={`${isDesktop ? 'w-20 h-20' : 'w-16 h-16'} bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white text-2xl lg:text-3xl font-cinzel`}>
-              {user?.name?.charAt(0)}
+            {/* Profile Photo with Upload */}
+            <div className="relative">
+              {user?.profile_photo || editForm.profile_photo ? (
+                <img 
+                  src={editForm.profile_photo || user?.profile_photo} 
+                  alt="Profile" 
+                  className={`${isDesktop ? 'w-20 h-20' : 'w-16 h-16'} rounded-full object-cover border-2 border-saffron`}
+                />
+              ) : (
+                <div className={`${isDesktop ? 'w-20 h-20' : 'w-16 h-16'} bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white text-2xl lg:text-3xl font-cinzel`}>
+                  {user?.name?.charAt(0)}
+                </div>
+              )}
+              {isEditing && (
+                <>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handlePhotoUpload}
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="absolute -bottom-1 -right-1 w-8 h-8 bg-saffron text-white rounded-full flex items-center justify-center shadow-lg hover:bg-saffron-dark transition-colors"
+                  >
+                    {uploading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
+                  </button>
+                </>
+              )}
             </div>
             <div>
               <h1 className="font-cinzel text-xl lg:text-2xl font-bold text-maroon">{user?.name}</h1>

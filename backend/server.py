@@ -1443,6 +1443,7 @@ class ProfileUpdateRequest(BaseModel):
     date_of_birth: Optional[str] = None
     gotra: Optional[str] = None
     nakshatra: Optional[str] = None
+    profile_photo: Optional[str] = None
 
 @app.put("/api/users/profile")
 async def update_profile(data: ProfileUpdateRequest, user: dict = Depends(get_current_user)):
@@ -1465,6 +1466,8 @@ async def update_profile(data: ProfileUpdateRequest, user: dict = Depends(get_cu
         update_data["gotra"] = data.gotra
     if data.nakshatra is not None:
         update_data["nakshatra"] = data.nakshatra
+    if data.profile_photo is not None:
+        update_data["profile_photo"] = data.profile_photo
     
     # Mark profile as completed if key fields are filled
     if data.phone and data.city:
@@ -1494,6 +1497,7 @@ async def update_profile(data: ProfileUpdateRequest, user: dict = Depends(get_cu
             "date_of_birth": updated_user.get("date_of_birth"),
             "gotra": updated_user.get("gotra"),
             "nakshatra": updated_user.get("nakshatra"),
+            "profile_photo": updated_user.get("profile_photo"),
             "profile_completed": updated_user.get("profile_completed", False),
             "firebase_uid": updated_user.get("firebase_uid")
         }
