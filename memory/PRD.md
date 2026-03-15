@@ -255,6 +255,25 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Backend APIs: dashboard, earnings, calls
   - [x] Responsive design for mobile and desktop
 
+- [x] **Admin System Settings - Dynamic Configuration** (NEW - March 15, 2026)
+  - [x] Secure management of all API keys from Admin Dashboard
+  - [x] System Settings tab in Admin sidebar
+  - [x] 7 configuration categories:
+    - Video (100ms) - Access Key & Secret
+    - Payment Gateway Keys - Stripe & Razorpay
+    - Payment Settings - Gateway mode, currencies
+    - Firebase - API Key, Auth Domain, Project ID
+    - Branding - App name, tagline, support contact
+    - Maintenance - Maintenance mode toggle, message
+    - Notifications - Email/SMS/Push settings
+  - [x] Encrypted storage for sensitive values (Fernet encryption)
+  - [x] Masked display with eye toggle for secrets
+  - [x] Dynamic credential loading from DB (with env fallback)
+  - [x] Backend refactored: Stripe, Razorpay, 100ms use database config
+  - [x] Public branding endpoint for app settings
+  - [x] Backend APIs: GET/PUT /api/admin/system-config
+  - [x] SystemSettingsAdmin component with collapsible categories
+
 - [x] **Priest Dashboard - FULLY IMPLEMENTED**
   - [x] **Home Tab** - Analytics overview with cards
     - Total Bookings, Completed, Classes, Content Posts stats
@@ -369,15 +388,20 @@ Icons: Custom 3D animated SVGs
 - `frontend/src/contexts/PaymentContext.js` - IP-based payment gateway selection
 - `frontend/src/components/PaymentComponents.js` - Stripe/Razorpay components
 - `frontend/src/components/Chat/ChatTab.js` - Real-time chat UI components (NEW)
+- `frontend/src/components/Admin/SystemSettingsAdmin.js` - Admin system configuration UI (NEW)
 - `frontend/src/pages/AuthScreen.js` - Centered auth screens
 - `frontend/src/pages/dashboards/PriestDashboard.js` - Complete Priest Dashboard with all features
 - `frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee Dashboard with Feed tab, PostCard, Chat
+- `frontend/src/pages/dashboards/AdminDashboard.js` - Admin Dashboard with System Settings tab (UPDATED)
 - `backend/server.py` - Backend with Firebase sync + Stripe + Priest APIs + Comments/Likes + Chat APIs
+- `backend/system_config.py` - Encrypted admin-editable configuration system (NEW)
+- `backend/video_consultation.py` - 100ms integration with dynamic credentials (UPDATED)
 - `backend/config.py` - Configuration with Stripe keys
-- `backend/database.py` - MongoDB collections including chat_rooms, chat_messages
+- `backend/database.py` - MongoDB collections including chat_rooms, chat_messages, system_config
 - `backend/tests/test_priest_dashboard.py` - Pytest tests for Priest Dashboard
 - `backend/tests/test_post_comments_likes.py` - Pytest tests for Comments & Likes feature
-- `backend/tests/test_chat_feature.py` - Pytest tests for Chat feature (NEW)
+- `backend/tests/test_chat_feature.py` - Pytest tests for Chat feature
+- `backend/tests/test_system_config.py` - Pytest tests for System Config APIs (NEW)
 
 ## Preview URLs
 - **Web App**: https://priest-hub-1.preview.emergentagent.com
