@@ -1364,6 +1364,13 @@ function AudioLibrarySection({ isDesktop }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState(null);
   const [activeTab, setActiveTab] = useState('curated'); // 'curated' or 'search'
+  
+  // Karaoke mode states
+  const [karaokeMode, setKaraokeMode] = useState(false);
+  const [transcription, setTranscription] = useState(null);
+  const [transcribing, setTranscribing] = useState(false);
+  const [currentWordIndex, setCurrentWordIndex] = useState(-1);
+  const [audioProgress, setAudioProgress] = useState(0);
 
   useEffect(() => {
     fetchCuratedShlokas();
@@ -1433,6 +1440,23 @@ function AudioLibrarySection({ isDesktop }) {
     setAudioElement(audio);
     setCurrentAudio({ url, title });
     setIsPlaying(true);
+    setCurrentWordIndex(-1);
+    
+    // Track time for karaoke sync
+    audio.ontimeupdate = () => {
+      setAudioProgress(audio.currentTime);
+      
+      // Update highlighted word based on transcription
+      if (transcription?.words?.length > 0) {
+        const currentTime = audio.currentTime;
+        const wordIdx = transcription.words.findIndex(
+          (w, idx) => currentTime >= w.start && currentTime < w.end
+        );
+        if (wordIdx !== -1) {
+          setCurrentWordIndex(wordIdx);
+        }
+      }
+    };
     
     audio.play().catch(() => {
       toast.error('Failed to play audio');
@@ -1441,12 +1465,49 @@ function AudioLibrarySection({ isDesktop }) {
     
     audio.onended = () => {
       setIsPlaying(false);
+      setCurrentWordIndex(-1);
     };
     
     audio.onerror = () => {
       toast.error('Audio playback error');
       setIsPlaying(false);
     };
+  };
+  
+  // Start karaoke mode - transcribe and play
+  const startKaraokeMode = async (url, title) => {
+    setTranscribing(true);
+    setKaraokeMode(true);
+    setTranscription(null);
+    
+    try {
+      // Transcribe the audio
+      const res = await api.post('/api/transcribe/karaoke', { audio_url: url });
+      
+      if (res.data.status === 'ok') {
+        setTranscription(res.data);
+        toast.success('Transcription ready! Starting playback...');
+        
+        // Start playing
+        playAudio(url, title);
+      } else {
+        throw new Error('Transcription failed');
+      }
+    } catch (error) {
+      console.error('Karaoke error:', error);
+      toast.error('Failed to transcribe audio. Playing without lyrics.');
+      setKaraokeMode(false);
+      playAudio(url, title);
+    } finally {
+      setTranscribing(false);
+    }
+  };
+  
+  const exitKaraokeMode = () => {
+    setKaraokeMode(false);
+    setTranscription(null);
+    setCurrentWordIndex(-1);
+    stopAudio();
   };
 
   const togglePlayPause = () => {
@@ -1513,8 +1574,81 @@ function AudioLibrarySection({ isDesktop }) {
         </form>
       </div>
 
-      {/* Now Playing Bar */}
-      {currentAudio && (
+      {/* Karaoke Mode Display */}
+      {karaokeMode && transcription && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-gradient-to-br from-maroon via-maroon/95 to-maroon/90 rounded-2xl p-6 text-white"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-sm font-medium">Karaoke Mode</span>
+            </div>
+            <button
+              onClick={exitKaraokeMode}
+              className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-all"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Lyrics Display */}
+          <div className="bg-black/30 rounded-xl p-6 min-h-[120px] flex items-center justify-center">
+            <p className="text-xl md:text-2xl font-medium leading-relaxed text-center">
+              {transcription.words?.map((word, idx) => (
+                <span
+                  key={idx}
+                  className={`transition-all duration-200 ${
+                    idx === currentWordIndex 
+                      ? 'text-gold font-bold scale-110 inline-block' 
+                      : idx < currentWordIndex 
+                        ? 'text-white/60' 
+                        : 'text-white/90'
+                  }`}
+                >
+                  {word.word}{' '}
+                </span>
+              ))}
+            </p>
+          </div>
+          
+          {/* Audio Controls */}
+          <div className="flex items-center justify-center gap-4 mt-4">
+            <button
+              onClick={togglePlayPause}
+              className="p-4 bg-gold text-maroon rounded-full hover:bg-gold/90 transition-all"
+            >
+              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+            </button>
+          </div>
+          
+          {/* Full Text (scrollable) */}
+          {transcription.text && (
+            <div className="mt-4 pt-4 border-t border-white/20">
+              <p className="text-xs text-white/60 mb-2">Full Transcription:</p>
+              <p className="text-sm text-white/80 max-h-20 overflow-y-auto">{transcription.text}</p>
+            </div>
+          )}
+        </motion.div>
+      )}
+      
+      {/* Transcribing Indicator */}
+      {transcribing && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="bg-gradient-to-r from-maroon/20 to-saffron/20 rounded-xl p-6 flex flex-col items-center gap-3"
+        >
+          <Loader2 className="w-8 h-8 text-saffron animate-spin" />
+          <p className="text-maroon font-medium">Transcribing audio for karaoke...</p>
+          <p className="text-sm text-gray-500">This may take a moment</p>
+        </motion.div>
+      )}
+
+      {/* Now Playing Bar (when not in karaoke mode) */}
+      {currentAudio && !karaokeMode && !transcribing && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1566,91 +1700,88 @@ function AudioLibrarySection({ isDesktop }) {
         )}
       </div>
 
-      {/* Curated Shlokas Grid */}
+      {/* Curated Shlokas - Simple List */}
       {activeTab === 'curated' && (
-        <div className={`grid ${isDesktop ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-4`}>
+        <div className="space-y-2">
           {curatedShlokas.map((shloka) => (
             <motion.div
               key={shloka.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.02 }}
-              className="bg-white rounded-xl overflow-hidden border border-saffron/10 shadow-sm hover:shadow-md transition-all cursor-pointer"
-              onClick={() => loadItemDetails(shloka.identifier)}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white rounded-lg border border-saffron/10 p-3 flex items-center gap-3 hover:bg-saffron/5 transition-all"
             >
-              <div className="relative h-32 bg-gradient-to-br from-saffron/30 to-gold/30">
-                <img
-                  src={shloka.thumbnail}
-                  alt={shloka.title}
-                  className="w-full h-full object-cover opacity-80"
-                  onError={(e) => e.target.style.display = 'none'}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-2 left-3 right-3">
-                  <p className="text-white font-semibold text-sm truncate">{shloka.title}</p>
-                  <p className="text-white/80 text-xs">{shloka.deity}</p>
-                </div>
-                <span className="absolute top-2 right-2 bg-gold/90 text-maroon text-xs px-2 py-0.5 rounded-full">
-                  {shloka.category}
-                </span>
+              <button
+                onClick={() => loadItemDetails(shloka.identifier)}
+                className="p-2 bg-saffron text-white rounded-full hover:bg-saffron/90 transition-all flex-shrink-0"
+                title="Play"
+              >
+                <Play className="w-4 h-4" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-maroon text-sm truncate">{shloka.title}</p>
+                <p className="text-xs text-gray-500">{shloka.deity} • {shloka.category}</p>
               </div>
-              <div className="p-3">
-                <p className="text-xs text-gray-600 line-clamp-2">{shloka.description}</p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-gray-400">{shloka.duration}</span>
-                  <button className="flex items-center gap-1 text-saffron text-xs font-medium hover:underline">
-                    <Play className="w-3 h-3" /> Play
-                  </button>
-                </div>
-              </div>
+              <button
+                onClick={async () => {
+                  const res = await api.get(`/api/archive/metadata/${shloka.identifier}`);
+                  if (res.data.audio_files?.length > 0) {
+                    startKaraokeMode(res.data.audio_files[0].url, shloka.title);
+                  }
+                }}
+                className="px-3 py-1 bg-maroon/10 text-maroon text-xs font-medium rounded-full hover:bg-maroon/20 transition-all flex-shrink-0"
+                title="Karaoke Mode"
+              >
+                🎤 Karaoke
+              </button>
+              <span className="text-xs text-gray-400 flex-shrink-0">{shloka.duration}</span>
             </motion.div>
           ))}
         </div>
       )}
 
-      {/* Search Results Grid */}
+      {/* Search Results - Simple List */}
       {activeTab === 'search' && (
-        <div className={`grid ${isDesktop ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-4`}>
+        <div className="space-y-2">
           {searchResults.map((result, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              whileHover={{ scale: 1.02 }}
-              className="bg-white rounded-xl overflow-hidden border border-saffron/10 shadow-sm hover:shadow-md transition-all cursor-pointer"
-              onClick={() => loadItemDetails(result.identifier)}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.02 }}
+              className="bg-white rounded-lg border border-saffron/10 p-3 flex items-center gap-3 hover:bg-saffron/5 transition-all"
             >
-              <div className="relative h-32 bg-gradient-to-br from-maroon/30 to-saffron/30">
-                <img
-                  src={result.thumbnail}
-                  alt={result.title}
-                  className="w-full h-full object-cover opacity-80"
-                  onError={(e) => e.target.style.display = 'none'}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-2 left-3 right-3">
-                  <p className="text-white font-semibold text-sm truncate">{result.title}</p>
-                  <p className="text-white/80 text-xs truncate">{result.creator}</p>
-                </div>
+              <button
+                onClick={() => loadItemDetails(result.identifier)}
+                className="p-2 bg-maroon text-white rounded-full hover:bg-maroon/90 transition-all flex-shrink-0"
+                title="Play"
+              >
+                <Play className="w-4 h-4" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-maroon text-sm truncate">{result.title}</p>
+                <p className="text-xs text-gray-500 truncate">{result.creator || 'Unknown artist'}</p>
               </div>
-              <div className="p-3">
-                <p className="text-xs text-gray-600 line-clamp-2">{result.description || 'Audio from Internet Archive'}</p>
-                <div className="flex items-center justify-between mt-2">
-                  <a
-                    href={result.page_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-gray-400 hover:text-saffron"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    View on Archive →
-                  </a>
-                  <button className="flex items-center gap-1 text-saffron text-xs font-medium hover:underline">
-                    <Play className="w-3 h-3" /> Play
-                  </button>
-                </div>
-              </div>
+              <button
+                onClick={async () => {
+                  const res = await api.get(`/api/archive/metadata/${result.identifier}`);
+                  if (res.data.audio_files?.length > 0) {
+                    startKaraokeMode(res.data.audio_files[0].url, result.title);
+                  }
+                }}
+                className="px-3 py-1 bg-maroon/10 text-maroon text-xs font-medium rounded-full hover:bg-maroon/20 transition-all flex-shrink-0"
+                title="Karaoke Mode"
+              >
+                🎤 Karaoke
+              </button>
+              <a
+                href={result.page_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-saffron hover:underline flex-shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Archive →
+              </a>
             </motion.div>
           ))}
         </div>

@@ -160,12 +160,17 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Connected to devotional_content MongoDB database
   - [x] **Multi-language Translation** (English, Hindi, Telugu, Tamil, Kannada, Malayalam) - Works across ALL sections
   - [x] **Sarvam AI Text-to-Speech** - Integrated but has compatibility issues with some voices
-  - [x] **Audio Library** - NEW! Internet Archive integration for streaming mantras/shlokas
+  - [x] **Audio Library** - Internet Archive integration for streaming mantras/shlokas
     - Curated collection of 8 popular mantras (Gayatri, Hanuman Chalisa, Ganesh, Vishnu, Devi, Shiva)
+    - **Simplified single-line list UI** with Play button, title, deity, Karaoke button, duration
     - Free text search to find any mantra/bhajan from millions of audio files
     - Audio player with play/pause controls and "Now Playing" bar
-    - Modal view showing all audio tracks in an item
-    - Direct streaming from Internet Archive (truly free, no API key needed)
+  - [x] **Karaoke Mode** - NEW! Whisper-powered synchronized lyrics
+    - Click "🎤 Karaoke" button on any audio
+    - Audio transcribed using OpenAI Whisper (via Emergent Universal Key)
+    - Word-by-word highlighting as audio plays
+    - Full transcription displayed at bottom
+    - Play/Pause controls and close button
 
 ### P2 (Medium Priority)
 - [ ] Astrologer/Priest/Shop Owner complete dashboards
