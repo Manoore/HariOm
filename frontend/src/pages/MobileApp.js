@@ -144,73 +144,67 @@ export default function MobileApp() {
   const { user, loading } = useAuth();
   const isMobile = useIsMobile();
 
-  // Check if we have cached user to avoid loading flash
-  const hasCachedUser = localStorage.getItem('divine_user');
-
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
     setAuthMode(mode);
     setShowAuth(true);
   };
 
-  // Mobile flow: Splash → Auth/Welcome → Dashboard
-  if (isMobile) {
-    if (showSplash) {
-      return (
-        <AnimatePresence>
-          <SplashScreen onComplete={() => setShowSplash(false)} />
-        </AnimatePresence>
-      );
+  // Determine what to render
+  const renderContent = () => {
+    // Mobile flow: Splash → Auth/Welcome → Dashboard
+    if (isMobile) {
+      if (showSplash) {
+        return <SplashScreen key="splash" onComplete={() => setShowSplash(false)} />;
+      }
+
+      if (loading && !user) {
+        return (
+          <div key="loading" className="fixed inset-0 bg-cream flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-saffron border-t-transparent rounded-full animate-spin" />
+          </div>
+        );
+      }
+
+      if (!user) {
+        return <AuthScreen key="auth" />;
+      }
+
+      return <div key="dashboard">{renderDashboard(user.role)}</div>;
     }
 
-    // Show loading only if no cached user AND still loading
-    if (loading && !hasCachedUser) {
+    // Desktop/Web flow
+    if (loading && !user) {
       return (
-        <div className="fixed inset-0 bg-cream flex items-center justify-center">
+        <div key="loading" className="fixed inset-0 bg-cream flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-saffron border-t-transparent rounded-full animate-spin" />
         </div>
       );
     }
 
-    // Not logged in - show auth screen
-    if (!user && !hasCachedUser) {
-      return <AuthScreen />;
+    if (user) {
+      return <div key="dashboard">{renderDashboard(user.role)}</div>;
     }
 
-    // Logged in (or have cached user) - show appropriate dashboard based on role
-    const userRole = user?.role || (hasCachedUser ? JSON.parse(hasCachedUser)?.role : 'devotee');
-    return renderDashboard(userRole);
-  }
+    if (showAuth) {
+      return (
+        <AuthScreen 
+          key="auth"
+          initialMode={authMode} 
+          onBack={() => setShowAuth(false)} 
+          showBackButton={true}
+        />
+      );
+    }
 
-  // Desktop/Web flow: Landing Page → Auth → Dashboard
-  // Show loading only if no cached user AND still loading
-  if (loading && !hasCachedUser) {
-    return (
-      <div className="fixed inset-0 bg-cream flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-saffron border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+    return <LandingPage key="landing" onGetStarted={handleGetStarted} />;
+  };
 
-  // Logged in user on web (or have cached user) - show dashboard
-  if (user || hasCachedUser) {
-    const userRole = user?.role || (hasCachedUser ? JSON.parse(hasCachedUser)?.role : 'devotee');
-    return renderDashboard(userRole);
-  }
-
-  // Not logged in on web
-  if (showAuth) {
-    return (
-      <AuthScreen 
-        initialMode={authMode} 
-        onBack={() => setShowAuth(false)} 
-        showBackButton={true}
-      />
-    );
-  }
-
-  // Show landing page
-  return <LandingPage onGetStarted={handleGetStarted} />;
+  return (
+    <div className="min-h-screen">
+      {renderContent()}
+    </div>
+  );
 }
 
 // Helper function to render dashboard based on role

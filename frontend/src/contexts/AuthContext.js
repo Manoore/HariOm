@@ -12,24 +12,25 @@ import {
 
 const AuthContext = createContext(null);
 
+// Get initial user from localStorage synchronously
+const getInitialUser = () => {
+  try {
+    const cached = localStorage.getItem('divine_user');
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+};
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Initialize with cached user to prevent flash
+  const [user, setUser] = useState(getInitialUser);
+  const [loading, setLoading] = useState(!getInitialUser()); // Only show loading if no cached user
   const [firebaseUser, setFirebaseUser] = useState(null);
   const syncInProgress = useRef(false);
   const initialLoadDone = useRef(false);
 
   useEffect(() => {
-    // First, check for cached user to prevent flash
-    const cachedUser = localStorage.getItem('divine_user');
-    if (cachedUser) {
-      try {
-        setUser(JSON.parse(cachedUser));
-      } catch (e) {
-        localStorage.removeItem('divine_user');
-      }
-    }
-
     // Listen to Firebase auth state changes
     const unsubscribe = onFirebaseAuthStateChanged(async (fbUser) => {
       // Prevent multiple syncs running simultaneously
@@ -39,7 +40,7 @@ export function AuthProvider({ children }) {
         setFirebaseUser(fbUser);
         
         // Only sync if we don't already have user data or it's a different user
-        const currentUser = user || (cachedUser ? JSON.parse(cachedUser) : null);
+        const currentUser = user;
         if (!currentUser || currentUser.firebase_uid !== fbUser.uid) {
           syncInProgress.current = true;
           
@@ -70,12 +71,17 @@ export function AuthProvider({ children }) {
             syncInProgress.current = false;
           }
         }
-      } else if (!localStorage.getItem('divine_token')) {
-        // Only clear if no token exists (handles legacy login)
-        setFirebaseUser(null);
-        setUser(null);
-        localStorage.removeItem('divine_token');
-        localStorage.removeItem('divine_user');
+      } else {
+        // Firebase has no user - but DON'T clear if we have a valid legacy token/user
+        // Only clear if there's no token at all (user explicitly logged out)
+        const hasToken = localStorage.getItem('divine_token');
+        const hasUser = localStorage.getItem('divine_user');
+        
+        if (!hasToken && !hasUser) {
+          setFirebaseUser(null);
+          setUser(null);
+        }
+        // If we have token/user but no Firebase user, keep the legacy session
       }
       
       if (!initialLoadDone.current) {
@@ -85,7 +91,7 @@ export function AuthProvider({ children }) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   // Login with email/password using Firebase
   const login = async (email, password) => {
