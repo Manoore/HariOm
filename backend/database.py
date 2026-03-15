@@ -44,6 +44,9 @@ wallet_transactions_collection = db["wallet_transactions"]
 consultation_calls_collection = db["consultation_calls"]
 astrologer_profiles_collection = db["astrologer_profiles"]
 
+# System Configuration Collection (for admin-editable settings)
+system_config_collection = db["system_config"]
+
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]
 mantras_collection = devotional_db["mantras"]

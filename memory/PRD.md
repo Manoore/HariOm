@@ -380,4 +380,4 @@ Icons: Custom 3D animated SVGs
 - `backend/tests/test_chat_feature.py` - Pytest tests for Chat feature (NEW)
 
 ## Preview URLs
-- **Web App**: https://divine-engage-1.preview.emergentagent.com
+- **Web App**: https://priest-hub-1.preview.emergentagent.com

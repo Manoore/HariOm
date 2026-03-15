@@ -3,12 +3,13 @@ import { motion } from 'framer-motion';
 import { 
   Users, Star, ShoppingBag, Calendar, Settings, LogOut,
   ChevronRight, CheckCircle, AlertCircle, Loader2, TrendingUp,
-  Home, BarChart3, UserCheck, Package, Bell, Video
+  Home, BarChart3, UserCheck, Package, Bell, Video, Key
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 import ConsultationSettingsAdmin from '../../components/Admin/ConsultationSettingsAdmin';
+import SystemSettingsAdmin from '../../components/Admin/SystemSettingsAdmin';
 
 // Check if desktop
 const useIsDesktop = () => {
@@ -32,6 +33,7 @@ function AdminSidebar({ activeTab, setActiveTab, user }) {
     { id: 'products', icon: Package, label: 'Products' },
     { id: 'bookings', icon: Calendar, label: 'Bookings' },
     { id: 'consultation', icon: Video, label: 'Consultation Settings' },
+    { id: 'system', icon: Key, label: 'System Settings' },
   ];
 
   return (
@@ -458,6 +460,7 @@ export default function AdminDashboard() {
       {activeTab === 'products' && <ProductsTab products={products} isDesktop={isDesktop} loading={loading} />}
       {activeTab === 'bookings' && <BookingsTab bookings={bookings} isDesktop={isDesktop} loading={loading} />}
       {activeTab === 'consultation' && <ConsultationSettingsAdmin />}
+      {activeTab === 'system' && <SystemSettingsAdmin />}
 
       {/* Mobile Logout - shown only on overview */}
       {!isDesktop && activeTab === 'overview' && (

@@ -14,9 +14,8 @@ from database import (
 )
 from bson import ObjectId
 
-# 100ms Configuration
-HMS_ACCESS_KEY = os.environ.get("HMS_ACCESS_KEY")
-HMS_SECRET = os.environ.get("HMS_SECRET")
+# Note: 100ms credentials are now fetched dynamically from system_config
+# to allow admin to update them without code changes
 
 # Default System Settings
 DEFAULT_SETTINGS = {
@@ -192,13 +191,30 @@ async def get_wallet_transactions(user_id: str, limit: int = 50, skip: int = 0):
 
 # ===================== 100MS INTEGRATION =====================
 
-def generate_100ms_token(room_id: str, user_id: str, role: str = "guest") -> str:
+async def get_100ms_credentials() -> Dict[str, str]:
+    """Get 100ms credentials from system config or environment"""
+    from system_config import get_config_value
+    
+    access_key = await get_config_value("hms_access_key")
+    secret = await get_config_value("hms_secret")
+    
+    # Fall back to env if not set in DB
+    if not access_key:
+        access_key = os.environ.get("HMS_ACCESS_KEY", "")
+    if not secret:
+        secret = os.environ.get("HMS_SECRET", "")
+    
+    return {"access_key": access_key, "secret": secret}
+
+async def generate_100ms_token(room_id: str, user_id: str, role: str = "guest") -> str:
     """Generate 100ms authentication token"""
+    credentials = await get_100ms_credentials()
+    
     now = datetime.utcnow()
     exp = now + timedelta(hours=24)
     
     payload = {
-        "access_key": HMS_ACCESS_KEY,
+        "access_key": credentials["access_key"],
         "room_id": room_id,
         "user_id": user_id,
         "role": role,
@@ -209,16 +225,18 @@ def generate_100ms_token(room_id: str, user_id: str, role: str = "guest") -> str
         "jti": str(uuid.uuid4())
     }
     
-    token = jwt.encode(payload, HMS_SECRET, algorithm="HS256")
+    token = jwt.encode(payload, credentials["secret"], algorithm="HS256")
     return token
 
-def generate_100ms_management_token() -> str:
+async def generate_100ms_management_token() -> str:
     """Generate 100ms management token for server-side operations"""
+    credentials = await get_100ms_credentials()
+    
     now = datetime.utcnow()
     exp = now + timedelta(hours=24)
     
     payload = {
-        "access_key": HMS_ACCESS_KEY,
+        "access_key": credentials["access_key"],
         "type": "management",
         "version": 2,
         "iat": int(now.timestamp()),
@@ -226,14 +244,14 @@ def generate_100ms_management_token() -> str:
         "jti": str(uuid.uuid4())
     }
     
-    token = jwt.encode(payload, HMS_SECRET, algorithm="HS256")
+    token = jwt.encode(payload, credentials["secret"], algorithm="HS256")
     return token
 
 async def create_100ms_room(title: str) -> Dict[str, Any]:
     """Create a new 100ms room"""
     import httpx
     
-    management_token = generate_100ms_management_token()
+    management_token = await generate_100ms_management_token()
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
@@ -261,7 +279,7 @@ async def end_100ms_room(room_id: str, reason: str = "Call ended") -> bool:
     """End a 100ms room (kicks all participants)"""
     import httpx
     
-    management_token = generate_100ms_management_token()
+    management_token = await generate_100ms_management_token()
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
@@ -366,8 +384,8 @@ async def start_consultation_call(user_id: str, astrologer_user_id: str) -> Dict
     room_id = room_data.get("id")
     
     # Generate tokens for both participants
-    user_token = generate_100ms_token(room_id, user_id, "guest")
-    astrologer_token = generate_100ms_token(room_id, astrologer_user_id, "host")
+    user_token = await generate_100ms_token(room_id, user_id, "guest")
+    astrologer_token = await generate_100ms_token(room_id, astrologer_user_id, "host")
     
     # Create call record
     call_record = {

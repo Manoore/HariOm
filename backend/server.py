@@ -97,7 +97,7 @@ async def upload_image(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://divine-engage-1.preview.emergentagent.com"
+        backend_url = "https://priest-hub-1.preview.emergentagent.com"
     
     # Return the URL
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -3367,7 +3367,13 @@ class RazorpayOrderRequest(BaseModel):
 async def create_stripe_payment_intent(data: StripeIntentRequest, user: dict = Depends(get_current_user)):
     """Create a Stripe payment intent"""
     import stripe
-    stripe.api_key = settings.STRIPE_API_KEY
+    
+    # Get Stripe credentials from system config or env
+    stripe_creds = await get_stripe_credentials()
+    stripe.api_key = stripe_creds["secret_key"]
+    
+    if not stripe.api_key:
+        raise HTTPException(status_code=500, detail="Stripe API key not configured")
     
     try:
         intent = stripe.PaymentIntent.create(
@@ -3403,8 +3409,14 @@ async def create_razorpay_order(data: RazorpayOrderRequest, user: dict = Depends
     """Create a Razorpay order"""
     import razorpay
     
+    # Get Razorpay credentials from system config or env
+    razorpay_creds = await get_razorpay_credentials()
+    
+    if not razorpay_creds["key_id"] or not razorpay_creds["key_secret"]:
+        raise HTTPException(status_code=500, detail="Razorpay credentials not configured")
+    
     try:
-        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        client = razorpay.Client(auth=(razorpay_creds["key_id"], razorpay_creds["key_secret"]))
         
         order_data = {
             "amount": data.amount,
@@ -3431,7 +3443,7 @@ async def create_razorpay_order(data: RazorpayOrderRequest, user: dict = Depends
         
         return {
             "order_id": order["id"],
-            "razorpay_key": settings.RAZORPAY_KEY_ID,
+            "razorpay_key": razorpay_creds["key_id"],
             "amount": data.amount,
             "currency": data.currency
         }
@@ -3443,8 +3455,14 @@ async def create_stripe_checkout(request: Request, payment: PaymentCreate, user:
     host_url = str(request.base_url).rstrip('/')
     webhook_url = f"{host_url}/api/webhook/stripe"
     
+    # Get Stripe credentials from system config or env
+    stripe_creds = await get_stripe_credentials()
+    
+    if not stripe_creds["secret_key"]:
+        raise HTTPException(status_code=500, detail="Stripe API key not configured")
+    
     stripe_checkout = StripeCheckout(
-        api_key=settings.STRIPE_API_KEY,
+        api_key=stripe_creds["secret_key"],
         webhook_url=webhook_url
     )
     
@@ -3487,8 +3505,14 @@ async def get_payment_status(session_id: str, request: Request):
     host_url = str(request.base_url).rstrip('/')
     webhook_url = f"{host_url}/api/webhook/stripe"
     
+    # Get Stripe credentials from system config or env
+    stripe_creds = await get_stripe_credentials()
+    
+    if not stripe_creds["secret_key"]:
+        raise HTTPException(status_code=500, detail="Stripe API key not configured")
+    
     stripe_checkout = StripeCheckout(
-        api_key=settings.STRIPE_API_KEY,
+        api_key=stripe_creds["secret_key"],
         webhook_url=webhook_url
     )
     
@@ -4053,6 +4077,92 @@ async def update_consultation_settings(request: Request, user: dict = Depends(ge
     data = await request.json()
     settings = await update_system_settings(data)
     return {k: v for k, v in settings.items() if k != "_id"}
+
+# System Configuration Endpoints (API Keys, App Settings, etc.)
+from system_config import (
+    get_all_config, get_config_value, update_config, update_multiple_configs,
+    get_config_by_category, CONFIG_CATEGORIES, init_system_config,
+    is_maintenance_mode, get_app_branding,
+    get_stripe_credentials, get_razorpay_credentials
+)
+
+@app.get("/api/admin/system-config")
+async def get_system_config(user: dict = Depends(get_current_user)):
+    """Get all system configuration (admin only)"""
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    config = await get_all_config(include_sensitive=False)
+    return {
+        "config": config,
+        "categories": CONFIG_CATEGORIES
+    }
+
+@app.get("/api/admin/system-config/{category}")
+async def get_system_config_by_category(category: str, user: dict = Depends(get_current_user)):
+    """Get system config by category (admin only)"""
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if category not in CONFIG_CATEGORIES:
+        raise HTTPException(status_code=400, detail="Invalid category")
+    
+    config = await get_config_by_category(category, include_sensitive=False)
+    return {
+        "category": category,
+        "category_info": CONFIG_CATEGORIES[category],
+        "config": config
+    }
+
+@app.put("/api/admin/system-config")
+async def update_system_config(request: Request, user: dict = Depends(get_current_user)):
+    """Update system configuration (admin only)"""
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    data = await request.json()
+    result = await update_multiple_configs(data)
+    return {"message": "Configuration updated", **result}
+
+@app.put("/api/admin/system-config/{key}")
+async def update_single_config(key: str, request: Request, user: dict = Depends(get_current_user)):
+    """Update a single config value (admin only)"""
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    data = await request.json()
+    value = data.get("value")
+    
+    try:
+        result = await update_config(key, value)
+        return {"message": "Configuration updated", **result}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/admin/system-config/init")
+async def initialize_system_config(user: dict = Depends(get_current_user)):
+    """Initialize system config from env variables (admin only)"""
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await init_system_config()
+    return {"message": "System configuration initialized"}
+
+# Public endpoints for app settings
+@app.get("/api/app/branding")
+async def get_branding():
+    """Get public app branding info"""
+    return await get_app_branding()
+
+@app.get("/api/app/status")
+async def get_app_status():
+    """Check if app is in maintenance mode"""
+    maintenance = await is_maintenance_mode()
+    if maintenance:
+        from system_config import get_config_value
+        message = await get_config_value("maintenance_message", "We are currently performing scheduled maintenance.")
+        return {"maintenance": True, "message": message}
+    return {"maintenance": False}
 
 # Wallet Endpoints
 @app.get("/api/wallet")
