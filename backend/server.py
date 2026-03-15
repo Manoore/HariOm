@@ -907,6 +907,93 @@ async def get_temples(city: Optional[str] = None, state: Optional[str] = None):
     return {"temples": temples}
 
 # ===================== PAYMENT ROUTES (STRIPE) =====================
+class StripeIntentRequest(BaseModel):
+    amount: int  # in cents
+    currency: str = "usd"
+    description: Optional[str] = None
+    metadata: Optional[dict] = None
+
+class RazorpayOrderRequest(BaseModel):
+    amount: int  # in paise
+    currency: str = "INR"
+    description: Optional[str] = None
+    metadata: Optional[dict] = None
+
+@app.post("/api/payments/stripe/create-intent")
+async def create_stripe_payment_intent(data: StripeIntentRequest, user: dict = Depends(get_current_user)):
+    """Create a Stripe payment intent"""
+    import stripe
+    stripe.api_key = settings.STRIPE_API_KEY
+    
+    try:
+        intent = stripe.PaymentIntent.create(
+            amount=data.amount,
+            currency=data.currency,
+            metadata={
+                "user_id": str(user["_id"]),
+                **(data.metadata or {})
+            }
+        )
+        
+        # Record the transaction
+        await payment_transactions_collection.insert_one({
+            "user_id": str(user["_id"]),
+            "payment_intent_id": intent.id,
+            "amount": data.amount / 100,  # Convert back to dollars
+            "currency": data.currency.upper(),
+            "payment_method": "stripe",
+            "payment_status": "pending",
+            "description": data.description,
+            "created_at": datetime.now(timezone.utc)
+        })
+        
+        return {
+            "client_secret": intent.client_secret,
+            "payment_intent_id": intent.id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/payments/razorpay/create-order")
+async def create_razorpay_order(data: RazorpayOrderRequest, user: dict = Depends(get_current_user)):
+    """Create a Razorpay order"""
+    import razorpay
+    
+    try:
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        
+        order_data = {
+            "amount": data.amount,
+            "currency": data.currency,
+            "notes": {
+                "user_id": str(user["_id"]),
+                **(data.metadata or {})
+            }
+        }
+        
+        order = client.order.create(data=order_data)
+        
+        # Record the transaction
+        await payment_transactions_collection.insert_one({
+            "user_id": str(user["_id"]),
+            "order_id": order["id"],
+            "amount": data.amount / 100,  # Convert back to rupees
+            "currency": data.currency,
+            "payment_method": "razorpay",
+            "payment_status": "pending",
+            "description": data.description,
+            "created_at": datetime.now(timezone.utc)
+        })
+        
+        return {
+            "order_id": order["id"],
+            "razorpay_key": settings.RAZORPAY_KEY_ID,
+            "amount": data.amount,
+            "currency": data.currency
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.post("/api/payments/create-checkout")
 async def create_stripe_checkout(request: Request, payment: PaymentCreate, user: dict = Depends(get_current_user)):
     host_url = str(request.base_url).rstrip('/')

@@ -112,11 +112,45 @@ export function AuthProvider({ children }) {
   // Google Sign In
   const loginWithGoogle = async () => {
     try {
+      console.log('Starting Google Sign-In...');
       const result = await firebaseGoogleSignIn();
-      // Auth state listener will handle the rest
+      console.log('Google Sign-In result received:', result.user?.email);
+      
+      // Manually sync with backend immediately after successful Google sign-in
+      // (auth state listener might have timing issues)
+      if (result.user) {
+        console.log('Manually syncing user with backend...');
+        const idToken = await result.user.getIdToken();
+        localStorage.setItem('divine_token', idToken);
+        
+        try {
+          const res = await api.post('/api/auth/firebase-sync', {
+            firebase_uid: result.user.uid,
+            email: result.user.email,
+            name: result.user.displayName || result.user.email?.split('@')[0] || 'User',
+            photo_url: result.user.photoURL
+          });
+          
+          console.log('Backend sync successful:', res.data);
+          setUser(res.data.user);
+          localStorage.setItem('divine_user', JSON.stringify(res.data.user));
+        } catch (syncError) {
+          console.error('Backend sync failed:', syncError);
+          // Fallback to basic user info
+          const basicUser = {
+            email: result.user.email,
+            name: result.user.displayName || 'User',
+            role: 'devotee',
+            firebase_uid: result.user.uid
+          };
+          setUser(basicUser);
+          localStorage.setItem('divine_user', JSON.stringify(basicUser));
+        }
+      }
+      
       return { user: result.user };
     } catch (error) {
-      console.error('Google sign in error:', error);
+      console.error('Google sign in error:', error.code, error.message);
       throw error;
     }
   };

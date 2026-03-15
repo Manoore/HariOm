@@ -67,9 +67,19 @@ export const firebaseSignOut = async () => {
 
 export const firebaseGoogleSignIn = async () => {
   if (!auth || !googleProvider) {
+    console.error('Firebase Google Sign-In not configured:', { auth: !!auth, googleProvider: !!googleProvider });
     throw new Error('Google Sign-In not configured');
   }
-  return signInWithPopup(auth, googleProvider);
+  
+  try {
+    console.log('Initiating Google Sign-In popup...');
+    const result = await signInWithPopup(auth, googleProvider);
+    console.log('Google Sign-In successful:', result.user.email);
+    return result;
+  } catch (error) {
+    console.error('Google Sign-In error:', error.code, error.message);
+    throw error;
+  }
 };
 
 export const onFirebaseAuthStateChanged = (callback) => {
