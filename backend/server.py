@@ -418,6 +418,118 @@ async def translate_text(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Translation error: {str(e)}")
 
+# ===================== TEXT-TO-SPEECH (ELEVENLABS) =====================
+from elevenlabs import ElevenLabs
+from elevenlabs.types import VoiceSettings
+import base64
+
+ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
+
+@app.get("/api/tts/voices")
+async def get_tts_voices():
+    """Get available ElevenLabs voices"""
+    if not ELEVENLABS_API_KEY:
+        return {"status": "error", "message": "TTS service not configured", "voices": [], "use_browser": True}
+    
+    try:
+        client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+        voices_response = client.voices.get_all()
+        
+        # Filter and format voices, prioritizing Indian/Hindi voices
+        voices = []
+        for voice in voices_response.voices:
+            voice_info = {
+                "voice_id": voice.voice_id,
+                "name": voice.name,
+                "category": voice.category if hasattr(voice, 'category') else "general",
+                "description": voice.description if hasattr(voice, 'description') else "",
+                "labels": voice.labels if hasattr(voice, 'labels') else {}
+            }
+            # Check if it's a Hindi/Indian voice
+            labels = voice.labels if hasattr(voice, 'labels') else {}
+            if isinstance(labels, dict):
+                accent = labels.get("accent", "").lower()
+                language = labels.get("language", "").lower()
+                if "indian" in accent or "hindi" in language or "indian" in language:
+                    voice_info["recommended"] = True
+            voices.append(voice_info)
+        
+        # Sort to put recommended voices first
+        voices.sort(key=lambda x: (not x.get("recommended", False), x["name"]))
+        
+        return {"status": "ok", "voices": voices, "use_browser": False}
+    except Exception as e:
+        error_msg = str(e)
+        print(f"Error fetching voices: {error_msg}")
+        # Return fallback voices for common issues
+        if "401" in error_msg or "permissions" in error_msg.lower() or "unusual_activity" in error_msg.lower():
+            return {
+                "status": "limited", 
+                "message": "ElevenLabs API requires upgraded permissions. Using built-in voices.",
+                "voices": [
+                    {"voice_id": "21m00Tcm4TlvDq8ikWAM", "name": "Rachel (ElevenLabs)", "category": "elevenlabs"},
+                    {"voice_id": "AZnzlk1XvdvUeBnXmlld", "name": "Domi (ElevenLabs)", "category": "elevenlabs"},
+                    {"voice_id": "EXAVITQu4vr4xnSDxMaL", "name": "Bella (ElevenLabs)", "category": "elevenlabs"},
+                    {"voice_id": "MF3mGyEYCl7XYWbV9V6O", "name": "Elli (ElevenLabs)", "category": "elevenlabs"},
+                ],
+                "use_browser": True
+            }
+        return {"status": "error", "message": str(e), "voices": [], "use_browser": True}
+
+@app.post("/api/tts/speak")
+async def text_to_speech(request: Request):
+    """Convert text to speech using ElevenLabs"""
+    if not ELEVENLABS_API_KEY:
+        raise HTTPException(status_code=503, detail="TTS service not configured")
+    
+    try:
+        body = await request.json()
+        text = body.get("text", "")
+        voice_id = body.get("voice_id", "pNInz6obpgDQGcFmaJgB")  # Default: Adam voice
+        
+        if not text:
+            raise HTTPException(status_code=400, detail="No text provided")
+        
+        # Limit text length for API efficiency
+        if len(text) > 1000:
+            text = text[:1000]
+        
+        client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+        
+        # Generate speech with optimized settings for mantras
+        voice_settings = VoiceSettings(
+            stability=0.75,  # Higher stability for clearer pronunciation
+            similarity_boost=0.75,
+            style=0.3,  # Subtle style for reverent tone
+            use_speaker_boost=True
+        )
+        
+        audio_generator = client.text_to_speech.convert(
+            text=text,
+            voice_id=voice_id,
+            model_id="eleven_multilingual_v2",  # Best for Hindi/Sanskrit
+            voice_settings=voice_settings
+        )
+        
+        # Collect audio data
+        audio_data = b""
+        for chunk in audio_generator:
+            audio_data += chunk
+        
+        # Convert to base64
+        audio_b64 = base64.b64encode(audio_data).decode()
+        
+        return {
+            "status": "ok",
+            "audio": f"data:audio/mpeg;base64,{audio_b64}",
+            "text": text,
+            "voice_id": voice_id
+        }
+        
+    except Exception as e:
+        print(f"TTS Error: {e}")
+        raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
+
 # ===================== DEVOTIONAL CONTENT ROUTES =====================
 @app.get("/api/devotional/deities")
 async def get_deities():

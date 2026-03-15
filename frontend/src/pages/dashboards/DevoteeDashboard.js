@@ -625,27 +625,58 @@ function MantrasTab({ isDesktop }) {
     return translations[cacheKey] || mantra.meaning_english;
   };
   
-  // Load available voices for TTS
-  const loadVoices = () => {
+  // Load available voices from ElevenLabs
+  const loadVoices = async () => {
+    try {
+      const res = await api.get('/api/tts/voices');
+      if (res.data.status === 'ok' && res.data.voices.length > 0) {
+        setVoices(res.data.voices);
+        // Default to a recommended Indian voice if available
+        const recommendedVoice = res.data.voices.find(v => v.recommended);
+        setSelectedVoice(recommendedVoice || res.data.voices[0]);
+      } else {
+        // Fallback to browser voices
+        loadBrowserVoices();
+      }
+    } catch (error) {
+      console.error('Error loading ElevenLabs voices:', error);
+      loadBrowserVoices();
+    }
+  };
+  
+  // Fallback to browser TTS voices
+  const loadBrowserVoices = () => {
     const loadAvailableVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
-      // Filter for Hindi, Sanskrit, or English voices
       const relevantVoices = availableVoices.filter(v => 
         v.lang.includes('hi') || v.lang.includes('en') || v.lang.includes('sa')
       );
-      setVoices(relevantVoices.length > 0 ? relevantVoices : availableVoices);
-      // Default to Hindi voice if available, otherwise first voice
-      const hindiVoice = availableVoices.find(v => v.lang.includes('hi'));
-      setSelectedVoice(hindiVoice || availableVoices[0]);
+      const voiceList = (relevantVoices.length > 0 ? relevantVoices : availableVoices).map((v, idx) => ({
+        voice_id: `browser_${idx}`,
+        name: v.name,
+        category: 'browser',
+        browserVoice: v
+      }));
+      setVoices(voiceList);
+      const hindiVoice = voiceList.find(v => v.name?.toLowerCase().includes('hindi'));
+      setSelectedVoice(hindiVoice || voiceList[0]);
     };
     
     loadAvailableVoices();
     window.speechSynthesis.onvoiceschanged = loadAvailableVoices;
   };
   
-  // Speak mantra text
-  const speakMantra = (mantra, textType = 'transliteration') => {
+  // Audio element ref for ElevenLabs playback
+  const audioRef = React.useRef(null);
+  
+  // Speak mantra text using ElevenLabs or browser fallback
+  const speakMantra = async (mantra, textType = 'transliteration') => {
     if (isSpeaking) {
+      // Stop current playback
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
       setCurrentlyPlaying(null);
@@ -658,32 +689,80 @@ function MantrasTab({ isDesktop }) {
       return;
     }
     
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = selectedVoice;
-    utterance.rate = 0.8; // Slower for mantras
-    utterance.pitch = 1;
-    
-    utterance.onstart = () => {
+    // Check if using ElevenLabs voice
+    if (selectedVoice && selectedVoice.voice_id && !selectedVoice.voice_id.startsWith('browser_')) {
+      // Use ElevenLabs API
       setIsSpeaking(true);
       setCurrentlyPlaying(mantra.name);
-    };
-    
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setCurrentlyPlaying(null);
-    };
-    
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      setCurrentlyPlaying(null);
-      toast.error('Speech synthesis failed');
-    };
-    
-    window.speechSynthesis.speak(utterance);
+      
+      try {
+        const res = await api.post('/api/tts/speak', {
+          text: text,
+          voice_id: selectedVoice.voice_id
+        });
+        
+        if (res.data.status === 'ok' && res.data.audio) {
+          const audio = new Audio(res.data.audio);
+          audioRef.current = audio;
+          
+          audio.onended = () => {
+            setIsSpeaking(false);
+            setCurrentlyPlaying(null);
+            audioRef.current = null;
+          };
+          
+          audio.onerror = () => {
+            setIsSpeaking(false);
+            setCurrentlyPlaying(null);
+            audioRef.current = null;
+            toast.error('Audio playback failed');
+          };
+          
+          audio.play();
+        } else {
+          throw new Error('Invalid audio response');
+        }
+      } catch (error) {
+        console.error('ElevenLabs TTS error:', error);
+        setIsSpeaking(false);
+        setCurrentlyPlaying(null);
+        toast.error('Voice generation failed. Try again.');
+      }
+    } else {
+      // Fallback to browser TTS
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (selectedVoice?.browserVoice) {
+        utterance.voice = selectedVoice.browserVoice;
+      }
+      utterance.rate = 0.8;
+      utterance.pitch = 1;
+      
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        setCurrentlyPlaying(mantra.name);
+      };
+      
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        setCurrentlyPlaying(null);
+      };
+      
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        setCurrentlyPlaying(null);
+        toast.error('Speech synthesis failed');
+      };
+      
+      window.speechSynthesis.speak(utterance);
+    }
   };
   
   // Stop speaking
   const stopSpeaking = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
     window.speechSynthesis.cancel();
     setIsSpeaking(false);
     setCurrentlyPlaying(null);
@@ -818,12 +897,12 @@ function MantrasTab({ isDesktop }) {
                 >
                   {voices.map((voice, idx) => (
                     <option key={idx} value={voice.name}>
-                      {voice.name} ({voice.lang})
+                      {voice.name} {voice.recommended ? '★' : ''} {voice.category === 'browser' ? '(Browser)' : ''}
                     </option>
                   ))}
                 </select>
                 <p className="text-xs text-gray-400 mt-2">
-                  Tip: Hindi voices work best for mantras
+                  {selectedVoice?.category !== 'browser' ? '✨ Using ElevenLabs AI voice' : 'Using browser voice'}
                 </p>
               </div>
             )}
