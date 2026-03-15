@@ -8,9 +8,13 @@ from bson import ObjectId
 from pydantic import BaseModel
 import os
 import httpx
+import stripe
 
 from dotenv import load_dotenv
 load_dotenv()
+
+# Initialize Stripe
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
 
 from database import (
     init_db, users_collection, priests_collection, astrologers_collection,
@@ -3968,22 +3972,22 @@ class CheckoutData(BaseModel):
 
 @app.post("/api/checkout")
 async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_user)):
-    """Create order with full checkout flow"""
+    """Create order with Stripe checkout flow"""
     cart = await cart_collection.find_one({"user_id": str(user["_id"])})
     if not cart or not cart.get("items"):
         raise HTTPException(status_code=400, detail="Cart is empty")
     
     items = []
     subtotal = 0
-    shop_shipping = {}  # Track shipping per shop
+    shop_shipping = {}
     shop_names = {}
+    stripe_line_items = []
     
     for cart_item in cart["items"]:
         product = await products_collection.find_one({"_id": ObjectId(cart_item["product_id"])})
         if not product:
             continue
         
-        # Check stock
         if product["stock"] < cart_item["quantity"]:
             raise HTTPException(
                 status_code=400, 
@@ -4001,10 +4005,22 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
             "quantity": cart_item["quantity"],
             "subtotal": item_total,
             "shop_id": shop_id,
-            "image": product.get("images", [None])[0]
+            "image": product.get("images", [None])[0] if product.get("images") else None
         })
         
-        # Get shop shipping info
+        # Create Stripe line item
+        stripe_line_items.append({
+            "price_data": {
+                "currency": "inr",
+                "product_data": {
+                    "name": product["name"],
+                    "images": product.get("images", [])[:1] if product.get("images") else [],
+                },
+                "unit_amount": int(product["price"] * 100),  # Stripe uses paise
+            },
+            "quantity": cart_item["quantity"],
+        })
+        
         if shop_id and shop_id not in shop_shipping:
             shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
             if shop:
@@ -4019,14 +4035,26 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     for shop_id, shipping_info in shop_shipping.items():
         shop_subtotal = sum(item["subtotal"] for item in items if item.get("shop_id") == shop_id)
         if shipping_info["free_above"] > 0 and shop_subtotal >= shipping_info["free_above"]:
-            # Free shipping
             pass
         else:
             total_shipping += shipping_info["cost"]
     
+    # Add shipping as a line item if applicable
+    if total_shipping > 0:
+        stripe_line_items.append({
+            "price_data": {
+                "currency": "inr",
+                "product_data": {
+                    "name": "Shipping",
+                },
+                "unit_amount": int(total_shipping * 100),
+            },
+            "quantity": 1,
+        })
+    
     total_amount = subtotal + total_shipping
     
-    # Create order
+    # Create order in pending state
     order_dict = {
         "user_id": str(user["_id"]),
         "user_name": user.get("name"),
@@ -4050,20 +4078,97 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     result = await orders_collection.insert_one(order_dict)
     order_id = str(result.inserted_id)
     
-    # Reduce stock for all items
-    for item in items:
+    # Get frontend URL for redirect
+    frontend_url = os.environ.get("FRONTEND_URL", "https://aarti-platform.preview.emergentagent.com")
+    
+    # Create Stripe checkout session
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=stripe_line_items,
+            mode="payment",
+            success_url=f"{frontend_url}?payment=success&order_id={order_id}",
+            cancel_url=f"{frontend_url}?payment=cancelled&order_id={order_id}",
+            metadata={
+                "order_id": order_id,
+                "user_id": str(user["_id"])
+            },
+            customer_email=user.get("email"),
+        )
+        
+        # Store stripe session id
+        await orders_collection.update_one(
+            {"_id": ObjectId(order_id)},
+            {"$set": {"stripe_session_id": checkout_session.id}}
+        )
+        
+        return {
+            "message": "Checkout session created",
+            "order_id": order_id,
+            "order_number": order_id[-8:].upper(),
+            "subtotal": subtotal,
+            "shipping": total_shipping,
+            "total": total_amount,
+            "payment_method": data.payment_method,
+            "checkout_url": checkout_session.url,
+            "session_id": checkout_session.id
+        }
+        
+    except stripe.error.StripeError as e:
+        # If Stripe fails, delete the order
+        await orders_collection.delete_one({"_id": ObjectId(order_id)})
+        raise HTTPException(status_code=500, detail=f"Payment processing failed: {str(e)}")
+
+
+@app.post("/api/payment/confirm/{order_id}")
+async def confirm_payment(order_id: str, user: dict = Depends(get_current_user)):
+    """Confirm payment was successful and finalize order"""
+    order = await orders_collection.find_one({"_id": ObjectId(order_id)})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if order["user_id"] != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    if order.get("payment_status") == "paid":
+        return {"message": "Payment already confirmed", "order_id": order_id}
+    
+    # Verify with Stripe if session exists
+    session_id = order.get("stripe_session_id")
+    if session_id:
+        try:
+            session = stripe.checkout.Session.retrieve(session_id)
+            if session.payment_status != "paid":
+                raise HTTPException(status_code=400, detail="Payment not completed")
+        except stripe.error.StripeError as e:
+            raise HTTPException(status_code=500, detail=f"Could not verify payment: {str(e)}")
+    
+    # Update order status
+    await orders_collection.update_one(
+        {"_id": ObjectId(order_id)},
+        {
+            "$set": {
+                "payment_status": "paid",
+                "status": OrderStatus.CONFIRMED,
+                "paid_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    # Reduce stock (only after successful payment)
+    for item in order["items"]:
         await products_collection.update_one(
             {"_id": ObjectId(item["product_id"])},
             {"$inc": {"stock": -item["quantity"]}}
         )
     
-    # Create chat rooms with each shop owner
-    for shop_id in shop_shipping.keys():
+    # Create chat rooms with shop owners
+    for shop_id in order.get("shop_ids", []):
         shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
         if shop:
             shop_owner = await users_collection.find_one({"_id": ObjectId(shop["owner_id"])})
             if shop_owner:
-                shop_items_count = len([i for i in items if i.get("shop_id") == shop_id])
+                shop_items_count = len([i for i in order["items"] if i.get("shop_id") == shop_id])
                 context = f"Order #{order_id[-8:].upper()} - {shop_items_count} item(s)"
                 await create_chat_room(
                     room_type="order",
@@ -4079,14 +4184,12 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     await cart_collection.delete_one({"user_id": str(user["_id"])})
     
     return {
-        "message": "Order created",
+        "message": "Payment confirmed",
         "order_id": order_id,
         "order_number": order_id[-8:].upper(),
-        "subtotal": subtotal,
-        "shipping": total_shipping,
-        "total": total_amount,
-        "payment_method": data.payment_method
+        "status": "confirmed"
     }
+
 
 @app.get("/api/orders/{order_id}")
 async def get_order_details(order_id: str, user: dict = Depends(get_current_user)):
@@ -4177,7 +4280,7 @@ async def get_cart_summary(user: dict = Depends(get_current_user)):
             "stock": product["stock"],
             "shop_id": shop_id,
             "shop_name": product.get("shop_name", "Shop"),
-            "image": product.get("images", [None])[0]
+            "image": product.get("images", [None])[0] if product.get("images") else None
         })
         
         if shop_id and shop_id not in shop_shipping:

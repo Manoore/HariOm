@@ -42,7 +42,7 @@ async def get_cart(user: dict = Depends(get_current_user)):
                 "price": product["price"],
                 "quantity": cart_item["quantity"],
                 "subtotal": item_total,
-                "image": product.get("images", [None])[0],
+                "image": product.get("images", [None])[0] if product.get("images") else None,
                 "stock": product["stock"]
             })
     
@@ -146,7 +146,7 @@ async def get_cart_summary(user: dict = Depends(get_current_user)):
             "stock": product["stock"],
             "shop_id": shop_id,
             "shop_name": product.get("shop_name", "Shop"),
-            "image": product.get("images", [None])[0]
+            "image": product.get("images", [None])[0] if product.get("images") else None
         })
         
         if shop_id and shop_id not in shop_shipping:

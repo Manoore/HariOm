@@ -244,11 +244,25 @@ export function CheckoutPage({ onBack, onComplete }) {
     setSubmitting(true);
     try {
       const res = await api.post('/api/checkout', formData);
-      toast.success('Order placed successfully!');
-      onComplete(res.data);
+      
+      // If checkout_url is returned (Stripe), redirect to Stripe checkout
+      if (res.data.checkout_url) {
+        toast.success('Redirecting to payment...');
+        // Store order info before redirect
+        localStorage.setItem('pending_order', JSON.stringify({
+          order_id: res.data.order_id,
+          order_number: res.data.order_number,
+          total: res.data.total
+        }));
+        // Redirect to Stripe checkout page
+        window.location.href = res.data.checkout_url;
+      } else {
+        // Non-Stripe flow (if needed in future)
+        toast.success('Order placed successfully!');
+        onComplete(res.data);
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to place order');
-    } finally {
       setSubmitting(false);
     }
   };
