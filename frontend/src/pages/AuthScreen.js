@@ -1,9 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Loader2, ChevronLeft, Bell, Sparkles, Building2, ShoppingCart } from 'lucide-react';
+import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Loader2, ChevronLeft, Bell, Sparkles, Building2, ShoppingCart, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 import { isFirebaseConfigured } from '../lib/firebase';
+
+// Popular country codes for phone auth
+const COUNTRY_CODES = [
+  { code: '+91', country: 'India', flag: '🇮🇳', maxLength: 10 },
+  { code: '+1', country: 'USA/Canada', flag: '🇺🇸', maxLength: 10 },
+  { code: '+44', country: 'UK', flag: '🇬🇧', maxLength: 10 },
+  { code: '+61', country: 'Australia', flag: '🇦🇺', maxLength: 9 },
+  { code: '+971', country: 'UAE', flag: '🇦🇪', maxLength: 9 },
+  { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦', maxLength: 9 },
+  { code: '+65', country: 'Singapore', flag: '🇸🇬', maxLength: 8 },
+  { code: '+60', country: 'Malaysia', flag: '🇲🇾', maxLength: 10 },
+  { code: '+977', country: 'Nepal', flag: '🇳🇵', maxLength: 10 },
+  { code: '+94', country: 'Sri Lanka', flag: '🇱🇰', maxLength: 9 },
+  { code: '+880', country: 'Bangladesh', flag: '🇧🇩', maxLength: 10 },
+  { code: '+92', country: 'Pakistan', flag: '🇵🇰', maxLength: 10 },
+  { code: '+63', country: 'Philippines', flag: '🇵🇭', maxLength: 10 },
+  { code: '+49', country: 'Germany', flag: '🇩🇪', maxLength: 11 },
+  { code: '+33', country: 'France', flag: '🇫🇷', maxLength: 9 },
+  { code: '+81', country: 'Japan', flag: '🇯🇵', maxLength: 10 },
+  { code: '+82', country: 'South Korea', flag: '🇰🇷', maxLength: 10 },
+  { code: '+86', country: 'China', flag: '🇨🇳', maxLength: 11 },
+  { code: '+27', country: 'South Africa', flag: '🇿🇦', maxLength: 9 },
+  { code: '+234', country: 'Nigeria', flag: '🇳🇬', maxLength: 10 },
+  { code: '+254', country: 'Kenya', flag: '🇰🇪', maxLength: 9 },
+];
 
 // 3D Animated Devotional Icons
 const BellIcon3D = () => (
@@ -93,6 +118,10 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   const [otp, setOtp] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
   const recaptchaInitialized = useRef(false);
+  
+  // Country code state
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]); // Default to India
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -150,9 +179,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
         recaptchaInitialized.current = true;
       }
       
-      await sendOTP(phoneNumber);
+      // Prepend country code to phone number
+      const fullPhoneNumber = `${selectedCountry.code}${phoneNumber}`;
+      await sendOTP(fullPhoneNumber);
       setOtpSent(true);
-      toast.success('OTP sent to your phone!');
+      toast.success(`OTP sent to ${selectedCountry.code} ${phoneNumber}!`);
     } catch (error) {
       console.error('Error sending OTP:', error);
       let errorMessage = 'Failed to send OTP. Please try again.';
@@ -241,6 +272,10 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
             onSendOTP={handleSendOTP}
             onVerifyOTP={handleVerifyOTP}
             resetPhoneAuth={resetPhoneAuth}
+            selectedCountry={selectedCountry}
+            setSelectedCountry={setSelectedCountry}
+            showCountryDropdown={showCountryDropdown}
+            setShowCountryDropdown={setShowCountryDropdown}
           />
         )}
         
@@ -266,6 +301,10 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
             onSendOTP={handleSendOTP}
             onVerifyOTP={handleVerifyOTP}
             resetPhoneAuth={resetPhoneAuth}
+            selectedCountry={selectedCountry}
+            setSelectedCountry={setSelectedCountry}
+            showCountryDropdown={showCountryDropdown}
+            setShowCountryDropdown={setShowCountryDropdown}
           />
         )}
       </AnimatePresence>
@@ -401,7 +440,8 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
 function LoginScreen({ 
   data, setData, onSubmit, loading, showPassword, setShowPassword, 
   onBack, onSwitch, onGoogleSignIn, googleLoading,
-  authMethod, setAuthMethod, otpSent, otp, setOtp, otpLoading, onSendOTP, onVerifyOTP, resetPhoneAuth
+  authMethod, setAuthMethod, otpSent, otp, setOtp, otpLoading, onSendOTP, onVerifyOTP, resetPhoneAuth,
+  selectedCountry, setSelectedCountry, showCountryDropdown, setShowCountryDropdown
 }) {
   return (
     <motion.div
@@ -540,27 +580,60 @@ function LoginScreen({
               <>
                 <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-500">
-                      <span className="text-sm font-medium">+91</span>
+                  <div className="relative flex gap-2">
+                    {/* Country Code Selector */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                        className="flex items-center gap-1 bg-white border border-orange-200 rounded-xl px-3 py-4 hover:border-saffron transition-all min-w-[100px]"
+                      >
+                        <span className="text-lg">{selectedCountry.flag}</span>
+                        <span className="text-sm font-medium text-gray-700">{selectedCountry.code}</span>
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      </button>
+                      
+                      {showCountryDropdown && (
+                        <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-orange-200 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
+                          {COUNTRY_CODES.map((country) => (
+                            <button
+                              key={country.code}
+                              onClick={() => {
+                                setSelectedCountry(country);
+                                setShowCountryDropdown(false);
+                                setData({ ...data, phone: '' }); // Clear phone on country change
+                              }}
+                              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 text-left ${
+                                selectedCountry.code === country.code ? 'bg-orange-50' : ''
+                              }`}
+                            >
+                              <span className="text-lg">{country.flag}</span>
+                              <span className="text-sm font-medium">{country.code}</span>
+                              <span className="text-sm text-gray-500">{country.country}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
+                    
+                    {/* Phone Input */}
                     <input
                       type="tel"
                       value={data.phone}
-                      onChange={(e) => setData({ ...data, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                      className="w-full bg-white border border-orange-200 rounded-xl pl-16 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                      placeholder="98765 43210"
-                      maxLength={10}
+                      onChange={(e) => setData({ ...data, phone: e.target.value.replace(/\D/g, '').slice(0, selectedCountry.maxLength) })}
+                      className="flex-1 bg-white border border-orange-200 rounded-xl px-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                      placeholder="Enter phone number"
+                      maxLength={selectedCountry.maxLength}
                       data-testid="login-phone"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">We'll send a 6-digit OTP to this number</p>
+                  <p className="text-xs text-gray-500 mt-2">We'll send a 6-digit OTP to {selectedCountry.code} {data.phone || 'your number'}</p>
                 </motion.div>
 
                 <motion.button
                   type="button"
                   onClick={() => onSendOTP(data.phone)}
-                  disabled={otpLoading || data.phone.length !== 10}
+                  disabled={otpLoading || data.phone.length < 6}
                   className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-70"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -582,7 +655,7 @@ function LoginScreen({
                       Change number
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mb-3">OTP sent to +91 {data.phone}</p>
+                  <p className="text-xs text-gray-500 mb-3">OTP sent to {selectedCountry.code} {data.phone}</p>
                   <input
                     type="text"
                     value={otp}
@@ -647,7 +720,8 @@ function LoginScreen({
 function RegisterScreen({ 
   data, setData, onSubmit, loading, showPassword, setShowPassword, 
   onBack, onSwitch, onGoogleSignIn, googleLoading,
-  authMethod, setAuthMethod, otpSent, otp, setOtp, otpLoading, onSendOTP, onVerifyOTP, resetPhoneAuth
+  authMethod, setAuthMethod, otpSent, otp, setOtp, otpLoading, onSendOTP, onVerifyOTP, resetPhoneAuth,
+  selectedCountry, setSelectedCountry, showCountryDropdown, setShowCountryDropdown
 }) {
   const [showRoleSelect, setShowRoleSelect] = useState(false);
   
@@ -897,17 +971,50 @@ function RegisterScreen({
 
                 <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-500">
-                      <span className="text-sm font-medium">+91</span>
+                  <div className="relative flex gap-2">
+                    {/* Country Code Selector */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                        className="flex items-center gap-1 bg-white border border-orange-200 rounded-xl px-3 py-4 hover:border-saffron transition-all min-w-[100px]"
+                      >
+                        <span className="text-lg">{selectedCountry.flag}</span>
+                        <span className="text-sm font-medium text-gray-700">{selectedCountry.code}</span>
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      </button>
+                      
+                      {showCountryDropdown && (
+                        <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-orange-200 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
+                          {COUNTRY_CODES.map((country) => (
+                            <button
+                              key={country.code}
+                              onClick={() => {
+                                setSelectedCountry(country);
+                                setShowCountryDropdown(false);
+                                setData({ ...data, phone: '' }); // Clear phone on country change
+                              }}
+                              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 text-left ${
+                                selectedCountry.code === country.code ? 'bg-orange-50' : ''
+                              }`}
+                            >
+                              <span className="text-lg">{country.flag}</span>
+                              <span className="text-sm font-medium">{country.code}</span>
+                              <span className="text-sm text-gray-500">{country.country}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
+                    
+                    {/* Phone Input */}
                     <input
                       type="tel"
                       value={data.phone}
-                      onChange={(e) => setData({ ...data, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                      className="w-full bg-white border border-orange-200 rounded-xl pl-16 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                      placeholder="98765 43210"
-                      maxLength={10}
+                      onChange={(e) => setData({ ...data, phone: e.target.value.replace(/\D/g, '').slice(0, selectedCountry.maxLength) })}
+                      className="flex-1 bg-white border border-orange-200 rounded-xl px-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                      placeholder="Enter phone number"
+                      maxLength={selectedCountry.maxLength}
                       data-testid="register-phone"
                     />
                   </div>
@@ -931,7 +1038,7 @@ function RegisterScreen({
                 <motion.button
                   type="button"
                   onClick={() => onSendOTP(data.phone, true)}
-                  disabled={otpLoading || data.phone.length !== 10 || !data.name}
+                  disabled={otpLoading || data.phone.length < 6 || !data.name}
                   className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-70 mt-6"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -953,7 +1060,7 @@ function RegisterScreen({
                       Change number
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mb-3">OTP sent to +91 {data.phone}</p>
+                  <p className="text-xs text-gray-500 mb-3">OTP sent to {selectedCountry.code} {data.phone}</p>
                   <input
                     type="text"
                     value={otp}

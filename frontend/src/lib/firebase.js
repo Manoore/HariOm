@@ -127,8 +127,9 @@ export const sendPhoneOTP = async (phoneNumber) => {
   }
   
   try {
-    // Ensure phone number is in E.164 format (+91XXXXXXXXXX for India)
-    const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
+    // Phone number should already be in E.164 format (e.g., +91XXXXXXXXXX)
+    // If not, assume it's already formatted correctly
+    const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
     
     console.log('Sending OTP to:', formattedPhone);
     
