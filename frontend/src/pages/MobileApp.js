@@ -405,12 +405,15 @@ export default function MobileApp() {
     return user.firebase_uid && !user.profile_completed && !user.phone;
   }, [user?.firebase_uid, user?.profile_completed, user?.phone]);
 
-  // Show profile completion screen for first-time Google users
+  // Show/hide profile completion screen based on needs
   useEffect(() => {
     if (needsProfileCompletion && !showProfileCompletion) {
       setShowProfileCompletion(true);
+    } else if (!needsProfileCompletion && showProfileCompletion) {
+      // Profile was completed, hide the screen
+      setShowProfileCompletion(false);
     }
-  }, [needsProfileCompletion]);
+  }, [needsProfileCompletion, showProfileCompletion]);
 
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
@@ -420,7 +423,12 @@ export default function MobileApp() {
 
   // Handle profile completion
   const handleProfileComplete = (updatedUser) => {
-    updateUser(updatedUser);
+    // Ensure profile_completed is set
+    const userWithProfileComplete = {
+      ...updatedUser,
+      profile_completed: true
+    };
+    updateUser(userWithProfileComplete);
     setShowProfileCompletion(false);
   };
 

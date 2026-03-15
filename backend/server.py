@@ -373,7 +373,8 @@ async def update_profile(data: ProfileUpdateRequest, user: dict = Depends(get_cu
             "date_of_birth": updated_user.get("date_of_birth"),
             "gotra": updated_user.get("gotra"),
             "nakshatra": updated_user.get("nakshatra"),
-            "profile_completed": updated_user.get("profile_completed", False)
+            "profile_completed": updated_user.get("profile_completed", False),
+            "firebase_uid": updated_user.get("firebase_uid")
         }
     }
 
