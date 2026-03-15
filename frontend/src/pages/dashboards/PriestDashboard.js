@@ -1365,8 +1365,6 @@ function ServicesTab({ services, onRefresh }) {
   const handleAddClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Add button clicked!');
-    alert('Add button clicked! Modal will open now.');
     setEditingService(null);
     setShowModal(true);
   };
@@ -1669,8 +1667,6 @@ function StreamsTab({ streams, onRefresh }) {
   const handleScheduleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Schedule button clicked!');
-    alert('Schedule button clicked! Modal will open now.');
     setShowModal(true);
   };
 
