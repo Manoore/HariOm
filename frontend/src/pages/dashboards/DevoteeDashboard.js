@@ -4,7 +4,7 @@ import {
   Home, Star, Sun, ShoppingBag, User, Calendar, MapPin,
   Bell, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
-  CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2
+  CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -820,6 +820,7 @@ function MantrasTab({ isDesktop }) {
     { id: 'today', name: "Today's Worship", icon: Calendar },
     { id: 'deities', name: 'By Deity', icon: Star },
     { id: 'all', name: 'All Mantras', icon: BookOpen },
+    { id: 'audio', name: 'Audio Library', icon: Music },
   ];
 
   if (loading) {
@@ -1185,6 +1186,11 @@ function MantrasTab({ isDesktop }) {
           translateText={translateText}
         />
       )}
+
+      {/* Audio Library Section - Internet Archive */}
+      {activeSection === 'audio' && (
+        <AudioLibrarySection isDesktop={isDesktop} />
+      )}
     </div>
   );
 }
@@ -1341,6 +1347,390 @@ function AllMantrasSection({ isDesktop, speakMantra, currentlyPlaying, selectedL
           </motion.div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// Audio Library Section - Internet Archive Integration
+function AudioLibrarySection({ isDesktop }) {
+  const [curatedShlokas, setCuratedShlokas] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [audioFiles, setAudioFiles] = useState([]);
+  const [currentAudio, setCurrentAudio] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioElement, setAudioElement] = useState(null);
+  const [activeTab, setActiveTab] = useState('curated'); // 'curated' or 'search'
+
+  useEffect(() => {
+    fetchCuratedShlokas();
+    return () => {
+      // Cleanup audio on unmount
+      if (audioElement) {
+        audioElement.pause();
+      }
+    };
+  }, []);
+
+  const fetchCuratedShlokas = async () => {
+    try {
+      const res = await api.get('/api/archive/curated');
+      setCuratedShlokas(res.data.data || []);
+    } catch (error) {
+      toast.error('Failed to load curated shlokas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim() || searchQuery.length < 2) {
+      toast.error('Please enter at least 2 characters');
+      return;
+    }
+    
+    setSearching(true);
+    setActiveTab('search');
+    try {
+      const res = await api.get(`/api/archive/search?q=${encodeURIComponent(searchQuery)}&rows=15`);
+      setSearchResults(res.data.data || []);
+      if (res.data.data?.length === 0) {
+        toast.info('No results found. Try different keywords.');
+      }
+    } catch (error) {
+      toast.error('Search failed');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const loadItemDetails = async (identifier) => {
+    try {
+      const res = await api.get(`/api/archive/metadata/${identifier}`);
+      setSelectedItem(res.data);
+      setAudioFiles(res.data.audio_files || []);
+      
+      // Auto-play first audio file if available
+      if (res.data.audio_files?.length > 0) {
+        playAudio(res.data.audio_files[0].url, res.data.title);
+      }
+    } catch (error) {
+      toast.error('Failed to load audio details');
+    }
+  };
+
+  const playAudio = (url, title) => {
+    // Stop current audio if playing
+    if (audioElement) {
+      audioElement.pause();
+    }
+    
+    const audio = new Audio(url);
+    setAudioElement(audio);
+    setCurrentAudio({ url, title });
+    setIsPlaying(true);
+    
+    audio.play().catch(() => {
+      toast.error('Failed to play audio');
+      setIsPlaying(false);
+    });
+    
+    audio.onended = () => {
+      setIsPlaying(false);
+    };
+    
+    audio.onerror = () => {
+      toast.error('Audio playback error');
+      setIsPlaying(false);
+    };
+  };
+
+  const togglePlayPause = () => {
+    if (audioElement) {
+      if (isPlaying) {
+        audioElement.pause();
+        setIsPlaying(false);
+      } else {
+        audioElement.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  const stopAudio = () => {
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+      setIsPlaying(false);
+      setCurrentAudio(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Loader2 className="w-8 h-8 text-saffron animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Search */}
+      <div className="bg-gradient-to-r from-maroon to-maroon/80 rounded-2xl p-6 text-white">
+        <div className="flex items-center gap-3 mb-4">
+          <Music className="w-8 h-8" />
+          <div>
+            <h2 className="font-cinzel text-xl font-bold">Audio Library</h2>
+            <p className="text-white/80 text-sm">Stream mantras & shlokas from Internet Archive</p>
+          </div>
+        </div>
+        
+        {/* Search Form */}
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search mantras, chalisa, bhajans..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-gold"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={searching}
+            className="px-6 py-3 bg-gold text-maroon font-semibold rounded-xl hover:bg-gold/90 transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            Search
+          </button>
+        </form>
+      </div>
+
+      {/* Now Playing Bar */}
+      {currentAudio && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-saffron/20 to-gold/20 rounded-xl p-4 flex items-center gap-4"
+        >
+          <div className="w-12 h-12 bg-saffron rounded-full flex items-center justify-center">
+            <Music className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-maroon truncate">{currentAudio.title}</p>
+            <p className="text-sm text-gray-500">Now Playing</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={togglePlayPause}
+              className="p-3 bg-saffron text-white rounded-full hover:bg-saffron/90 transition-all"
+            >
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={stopAudio}
+              className="p-3 bg-maroon/10 text-maroon rounded-full hover:bg-maroon/20 transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Tab Switcher */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab('curated')}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            activeTab === 'curated' ? 'bg-saffron text-white' : 'bg-cream text-maroon hover:bg-saffron/20'
+          }`}
+        >
+          Curated Collection
+        </button>
+        {searchResults.length > 0 && (
+          <button
+            onClick={() => setActiveTab('search')}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              activeTab === 'search' ? 'bg-saffron text-white' : 'bg-cream text-maroon hover:bg-saffron/20'
+            }`}
+          >
+            Search Results ({searchResults.length})
+          </button>
+        )}
+      </div>
+
+      {/* Curated Shlokas Grid */}
+      {activeTab === 'curated' && (
+        <div className={`grid ${isDesktop ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-4`}>
+          {curatedShlokas.map((shloka) => (
+            <motion.div
+              key={shloka.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02 }}
+              className="bg-white rounded-xl overflow-hidden border border-saffron/10 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              onClick={() => loadItemDetails(shloka.identifier)}
+            >
+              <div className="relative h-32 bg-gradient-to-br from-saffron/30 to-gold/30">
+                <img
+                  src={shloka.thumbnail}
+                  alt={shloka.title}
+                  className="w-full h-full object-cover opacity-80"
+                  onError={(e) => e.target.style.display = 'none'}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-2 left-3 right-3">
+                  <p className="text-white font-semibold text-sm truncate">{shloka.title}</p>
+                  <p className="text-white/80 text-xs">{shloka.deity}</p>
+                </div>
+                <span className="absolute top-2 right-2 bg-gold/90 text-maroon text-xs px-2 py-0.5 rounded-full">
+                  {shloka.category}
+                </span>
+              </div>
+              <div className="p-3">
+                <p className="text-xs text-gray-600 line-clamp-2">{shloka.description}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-400">{shloka.duration}</span>
+                  <button className="flex items-center gap-1 text-saffron text-xs font-medium hover:underline">
+                    <Play className="w-3 h-3" /> Play
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Search Results Grid */}
+      {activeTab === 'search' && (
+        <div className={`grid ${isDesktop ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-4`}>
+          {searchResults.map((result, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              whileHover={{ scale: 1.02 }}
+              className="bg-white rounded-xl overflow-hidden border border-saffron/10 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              onClick={() => loadItemDetails(result.identifier)}
+            >
+              <div className="relative h-32 bg-gradient-to-br from-maroon/30 to-saffron/30">
+                <img
+                  src={result.thumbnail}
+                  alt={result.title}
+                  className="w-full h-full object-cover opacity-80"
+                  onError={(e) => e.target.style.display = 'none'}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-2 left-3 right-3">
+                  <p className="text-white font-semibold text-sm truncate">{result.title}</p>
+                  <p className="text-white/80 text-xs truncate">{result.creator}</p>
+                </div>
+              </div>
+              <div className="p-3">
+                <p className="text-xs text-gray-600 line-clamp-2">{result.description || 'Audio from Internet Archive'}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <a
+                    href={result.page_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-gray-400 hover:text-saffron"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View on Archive →
+                  </a>
+                  <button className="flex items-center gap-1 text-saffron text-xs font-medium hover:underline">
+                    <Play className="w-3 h-3" /> Play
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Audio Files Modal */}
+      {selectedItem && audioFiles.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedItem(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-saffron to-gold p-4 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-cinzel font-bold">{selectedItem.title}</h3>
+                  <p className="text-sm text-white/80">{selectedItem.creator}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedItem(null)}
+                  className="p-2 bg-white/20 rounded-full hover:bg-white/30"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <p className="text-sm text-gray-600 mb-4">{selectedItem.description}</p>
+              
+              <h4 className="font-semibold text-maroon mb-3">Audio Tracks ({audioFiles.length})</h4>
+              <div className="space-y-2">
+                {audioFiles.map((file, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => playAudio(file.url, file.name)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                      currentAudio?.url === file.url 
+                        ? 'bg-saffron/10 border-saffron' 
+                        : 'bg-gray-50 border-gray-200 hover:bg-saffron/5'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-full ${
+                      currentAudio?.url === file.url ? 'bg-saffron text-white' : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {currentAudio?.url === file.url && isPlaying ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-medium text-maroon truncate">{file.name}</p>
+                      <p className="text-xs text-gray-400">{file.format} {file.length && `• ${file.length}`}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <a
+                  href={selectedItem.page_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-saffron hover:underline flex items-center gap-1"
+                >
+                  View on Internet Archive <ArrowRight className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }

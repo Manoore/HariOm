@@ -501,6 +501,181 @@ async def text_to_speech(request: Request):
         print(f"Sarvam TTS Error: {e}")
         raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
 
+# ===================== INTERNET ARCHIVE SHLOKAS/MANTRAS =====================
+
+# Curated list of popular mantras from Internet Archive
+CURATED_SHLOKAS = [
+    {
+        "id": "gayatri-flute",
+        "identifier": "instrumental-gayatri-mantra-flute-silent-prayer",
+        "title": "Gayatri Mantra (Flute)",
+        "deity": "Savitri",
+        "category": "Mantra",
+        "description": "Peaceful flute rendition of the sacred Gayatri Mantra",
+        "duration": "10:00",
+        "thumbnail": "https://archive.org/services/img/instrumental-gayatri-mantra-flute-silent-prayer"
+    },
+    {
+        "id": "hanuman-chalisa",
+        "identifier": "HanumanChalisa_907",
+        "title": "Hanuman Chalisa",
+        "deity": "Hanuman",
+        "category": "Chalisa",
+        "description": "Complete recitation of Shri Hanuman Chalisa",
+        "duration": "12:00",
+        "thumbnail": "https://archive.org/services/img/HanumanChalisa_907"
+    },
+    {
+        "id": "hanuman-chalisa-hariharan",
+        "identifier": "03.-hanuman-chalisa",
+        "title": "Hanuman Chalisa (Hariharan)",
+        "deity": "Hanuman",
+        "category": "Chalisa",
+        "description": "Hanuman Chalisa by Hari Om Saran",
+        "duration": "8:00",
+        "thumbnail": "https://archive.org/services/img/03.-hanuman-chalisa"
+    },
+    {
+        "id": "ganesh-mantra",
+        "identifier": "GaneshaObstacleRemoverMantraAudioMp3FreeDownload",
+        "title": "Ganesh Obstacle Remover Mantra",
+        "deity": "Ganesh",
+        "category": "Mantra",
+        "description": "Powerful Ganesha mantra for removing obstacles",
+        "duration": "5:00",
+        "thumbnail": "https://archive.org/services/img/GaneshaObstacleRemoverMantraAudioMp3FreeDownload"
+    },
+    {
+        "id": "vishnu-mantra",
+        "identifier": "VishnuPureChitMantraFreeDownload",
+        "title": "Vishnu Pure Chit Mantra",
+        "deity": "Vishnu",
+        "category": "Mantra",
+        "description": "Sacred Vishnu mantra for purification",
+        "duration": "6:00",
+        "thumbnail": "https://archive.org/services/img/VishnuPureChitMantraFreeDownload"
+    },
+    {
+        "id": "vishnu-purifier",
+        "identifier": "VishnuGreatPurifierMantraFreeDownload",
+        "title": "Vishnu Great Purifier Mantra",
+        "deity": "Vishnu",
+        "category": "Mantra",
+        "description": "Vishnu mantra for spiritual cleansing",
+        "duration": "7:00",
+        "thumbnail": "https://archive.org/services/img/VishnuGreatPurifierMantraFreeDownload"
+    },
+    {
+        "id": "devi-mantra",
+        "identifier": "DeviSlothGriefRemovingMantraFreeDownload",
+        "title": "Devi Grief Removing Mantra",
+        "deity": "Devi",
+        "category": "Mantra",
+        "description": "Divine mother mantra for removing sorrow",
+        "duration": "5:30",
+        "thumbnail": "https://archive.org/services/img/DeviSlothGriefRemovingMantraFreeDownload"
+    },
+    {
+        "id": "shiva-stotram",
+        "identifier": "shrIshivapanchAkSharanakShatramAlAstotram",
+        "title": "Shiva Panchakshara Stotram",
+        "deity": "Shiva",
+        "category": "Stotram",
+        "description": "Five-syllable praise of Lord Shiva",
+        "duration": "8:00",
+        "thumbnail": "https://archive.org/services/img/shrIshivapanchAkSharanakShatramAlAstotram"
+    }
+]
+
+@app.get("/api/archive/curated")
+async def get_curated_shlokas():
+    """Get curated list of mantras/shlokas from Internet Archive"""
+    return {"status": "ok", "data": CURATED_SHLOKAS, "count": len(CURATED_SHLOKAS)}
+
+@app.get("/api/archive/search")
+async def search_archive_audio(q: str, rows: int = 10):
+    """Search Internet Archive for mantras/shlokas"""
+    if not q or len(q) < 2:
+        raise HTTPException(status_code=400, detail="Search query too short")
+    
+    try:
+        # Build search URL
+        search_url = f"https://archive.org/advancedsearch.php?q={q}+mediatype:audio&fl=identifier,title,creator,description&rows={rows}&output=json"
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(search_url, timeout=10.0)
+            data = response.json()
+        
+        docs = data.get("response", {}).get("docs", [])
+        
+        # Format results
+        results = []
+        for doc in docs:
+            results.append({
+                "identifier": doc.get("identifier"),
+                "title": doc.get("title", "Unknown"),
+                "creator": doc.get("creator", "Unknown"),
+                "description": doc.get("description", ""),
+                "thumbnail": f"https://archive.org/services/img/{doc.get('identifier')}",
+                "page_url": f"https://archive.org/details/{doc.get('identifier')}"
+            })
+        
+        return {
+            "status": "ok",
+            "query": q,
+            "data": results,
+            "count": len(results),
+            "total_found": data.get("response", {}).get("numFound", 0)
+        }
+    except Exception as e:
+        print(f"Archive search error: {e}")
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+@app.get("/api/archive/metadata/{identifier}")
+async def get_archive_metadata(identifier: str):
+    """Get metadata and audio files for an Internet Archive item"""
+    try:
+        metadata_url = f"https://archive.org/metadata/{identifier}"
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(metadata_url, timeout=10.0)
+            data = response.json()
+        
+        # Extract audio files (MP3 preferred)
+        files = data.get("files", [])
+        audio_files = []
+        
+        for f in files:
+            name = f.get("name", "")
+            format_type = f.get("format", "")
+            
+            # Look for MP3 files
+            if name.endswith(".mp3") or format_type in ["VBR MP3", "MP3", "128Kbps MP3"]:
+                audio_files.append({
+                    "name": name,
+                    "format": format_type,
+                    "size": f.get("size", ""),
+                    "length": f.get("length", ""),
+                    "url": f"https://archive.org/download/{identifier}/{name}"
+                })
+        
+        metadata = data.get("metadata", {})
+        
+        return {
+            "status": "ok",
+            "identifier": identifier,
+            "title": metadata.get("title", "Unknown"),
+            "creator": metadata.get("creator", "Unknown"),
+            "description": metadata.get("description", ""),
+            "thumbnail": f"https://archive.org/services/img/{identifier}",
+            "page_url": f"https://archive.org/details/{identifier}",
+            "embed_url": f"https://archive.org/embed/{identifier}",
+            "audio_files": audio_files
+        }
+    except Exception as e:
+        print(f"Archive metadata error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get metadata: {str(e)}")
+
 # ===================== DEVOTIONAL CONTENT ROUTES =====================
 @app.get("/api/devotional/deities")
 async def get_deities():
