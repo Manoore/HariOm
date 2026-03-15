@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import AuthScreen from './AuthScreen';
@@ -144,11 +144,32 @@ export default function MobileApp() {
   const { user, loading } = useAuth();
   const isMobile = useIsMobile();
 
+  // Memoize the user role to prevent unnecessary re-renders
+  const userRole = useMemo(() => user?.role, [user?.role]);
+  const isLoggedIn = useMemo(() => !!user, [!!user]);
+
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
     setAuthMode(mode);
     setShowAuth(true);
   };
+
+  // Memoize dashboard component based on role
+  const DashboardComponent = useMemo(() => {
+    if (!userRole) return null;
+    switch (userRole) {
+      case 'admin':
+        return AdminDashboard;
+      case 'priest':
+        return PriestDashboard;
+      case 'shop_owner':
+        return ShopOwnerDashboard;
+      case 'astrologer':
+        return DevoteeDashboard;
+      default:
+        return DevoteeDashboard;
+    }
+  }, [userRole]);
 
   // Determine what to render
   const renderContent = () => {
@@ -158,7 +179,7 @@ export default function MobileApp() {
         return <SplashScreen key="splash" onComplete={() => setShowSplash(false)} />;
       }
 
-      if (loading && !user) {
+      if (loading && !isLoggedIn) {
         return (
           <div key="loading" className="fixed inset-0 bg-cream flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-saffron border-t-transparent rounded-full animate-spin" />
@@ -166,15 +187,15 @@ export default function MobileApp() {
         );
       }
 
-      if (!user) {
+      if (!isLoggedIn) {
         return <AuthScreen key="auth" />;
       }
 
-      return <div key="dashboard">{renderDashboard(user.role)}</div>;
+      return DashboardComponent ? <DashboardComponent key={`dashboard-${userRole}`} /> : null;
     }
 
     // Desktop/Web flow
-    if (loading && !user) {
+    if (loading && !isLoggedIn) {
       return (
         <div key="loading" className="fixed inset-0 bg-cream flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-saffron border-t-transparent rounded-full animate-spin" />
@@ -182,8 +203,8 @@ export default function MobileApp() {
       );
     }
 
-    if (user) {
-      return <div key="dashboard">{renderDashboard(user.role)}</div>;
+    if (isLoggedIn && DashboardComponent) {
+      return <DashboardComponent key={`dashboard-${userRole}`} />;
     }
 
     if (showAuth) {
@@ -205,20 +226,4 @@ export default function MobileApp() {
       {renderContent()}
     </div>
   );
-}
-
-// Helper function to render dashboard based on role
-function renderDashboard(role) {
-  switch (role) {
-    case 'admin':
-      return <AdminDashboard />;
-    case 'priest':
-      return <PriestDashboard />;
-    case 'shop_owner':
-      return <ShopOwnerDashboard />;
-    case 'astrologer':
-      return <DevoteeDashboard />; // TODO: Create AstrologerDashboard
-    default:
-      return <DevoteeDashboard />;
-  }
 }
