@@ -25,88 +25,70 @@ const getInitialUser = () => {
 export function AuthProvider({ children }) {
   // Initialize with cached user to prevent flash
   const [user, setUser] = useState(getInitialUser);
-  const [loading, setLoading] = useState(!getInitialUser()); // Only show loading if no cached user
+  const [loading, setLoading] = useState(!getInitialUser());
   const [firebaseUser, setFirebaseUser] = useState(null);
-  const syncInProgress = useRef(false);
-  const initialLoadDone = useRef(false);
-  const lastSyncedUid = useRef(getInitialUser()?.firebase_uid || null); // Initialize from cached user
+  const authListenerActive = useRef(true);
+  const hasProcessedInitialState = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
     
-    // Listen to Firebase auth state changes
     const unsubscribe = onFirebaseAuthStateChanged(async (fbUser) => {
-      if (!isMounted) return;
+      if (!isMounted || !authListenerActive.current) return;
       
-      // Prevent multiple syncs running simultaneously
-      if (syncInProgress.current) {
-        console.log('Sync already in progress, skipping...');
+      // Only process the first auth state change
+      if (hasProcessedInitialState.current) {
+        console.log('Already processed initial state, ignoring subsequent changes');
         return;
       }
       
+      console.log('Processing auth state:', fbUser ? fbUser.email : 'null');
+      
       if (fbUser) {
-        console.log('Firebase user detected:', fbUser.email, 'UID:', fbUser.uid);
-        setFirebaseUser(fbUser);
+        hasProcessedInitialState.current = true;
         
-        // Only sync if this is a NEW Firebase user (different UID than last sync)
-        if (lastSyncedUid.current !== fbUser.uid) {
-          console.log('New user, syncing with backend...');
-          syncInProgress.current = true;
+        try {
+          const idToken = await fbUser.getIdToken();
+          localStorage.setItem('divine_token', idToken);
           
-          try {
-            const idToken = await fbUser.getIdToken();
-            localStorage.setItem('divine_token', idToken);
-            
-            const res = await api.post('/api/auth/firebase-sync', {
-              firebase_uid: fbUser.uid,
-              email: fbUser.email,
-              name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
-              photo_url: fbUser.photoURL
-            });
-            
-            if (isMounted) {
-              console.log('Sync successful, setting user');
-              lastSyncedUid.current = fbUser.uid;
-              setUser(res.data.user);
-              localStorage.setItem('divine_user', JSON.stringify(res.data.user));
-            }
-          } catch (error) {
-            console.error('Error syncing with backend:', error);
-            if (isMounted) {
-              const fallbackUser = {
-                email: fbUser.email,
-                name: fbUser.displayName || 'User',
-                role: 'devotee',
-                firebase_uid: fbUser.uid
-              };
-              lastSyncedUid.current = fbUser.uid;
-              setUser(fallbackUser);
-              localStorage.setItem('divine_user', JSON.stringify(fallbackUser));
-            }
-          } finally {
-            syncInProgress.current = false;
+          const res = await api.post('/api/auth/firebase-sync', {
+            firebase_uid: fbUser.uid,
+            email: fbUser.email,
+            name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
+            photo_url: fbUser.photoURL
+          });
+          
+          if (isMounted) {
+            setFirebaseUser(fbUser);
+            setUser(res.data.user);
+            localStorage.setItem('divine_user', JSON.stringify(res.data.user));
           }
-        } else {
-          console.log('Same user, skipping sync. UID:', fbUser.uid);
+        } catch (error) {
+          console.error('Sync error:', error);
+          if (isMounted) {
+            const fallbackUser = {
+              email: fbUser.email,
+              name: fbUser.displayName || 'User',
+              role: 'devotee',
+              firebase_uid: fbUser.uid
+            };
+            setFirebaseUser(fbUser);
+            setUser(fallbackUser);
+            localStorage.setItem('divine_user', JSON.stringify(fallbackUser));
+          }
         }
       } else {
-        console.log('No Firebase user detected');
-        // Firebase has no user - but DON'T clear if we have a valid legacy token/user
-        const hasToken = localStorage.getItem('divine_token');
-        const hasUser = localStorage.getItem('divine_user');
-        
-        if (!hasToken && !hasUser) {
-          console.log('No cached session, clearing user');
-          setFirebaseUser(null);
+        // No Firebase user - check for cached session
+        const cachedUser = getInitialUser();
+        if (!cachedUser) {
+          hasProcessedInitialState.current = true;
           setUser(null);
-          lastSyncedUid.current = null;
-        } else {
-          console.log('Keeping cached legacy session');
+          setFirebaseUser(null);
         }
+        // If we have cached user, keep it (legacy session)
       }
       
-      if (!initialLoadDone.current && isMounted) {
-        initialLoadDone.current = true;
+      if (isMounted) {
         setLoading(false);
       }
     });
@@ -115,7 +97,7 @@ export function AuthProvider({ children }) {
       isMounted = false;
       unsubscribe();
     };
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
 
   // Login with email/password using Firebase
   const login = async (email, password) => {
@@ -175,8 +157,39 @@ export function AuthProvider({ children }) {
       const result = await firebaseGoogleSignIn();
       console.log('Google Sign-In successful:', result.user?.email);
       
-      // Don't set user state here - let the auth state listener handle it
-      // Just return the result
+      // Handle the sign-in directly here since we're ignoring subsequent auth state changes
+      if (result.user) {
+        const idToken = await result.user.getIdToken();
+        localStorage.setItem('divine_token', idToken);
+        
+        try {
+          const res = await api.post('/api/auth/firebase-sync', {
+            firebase_uid: result.user.uid,
+            email: result.user.email,
+            name: result.user.displayName || result.user.email?.split('@')[0] || 'User',
+            photo_url: result.user.photoURL
+          });
+          
+          setFirebaseUser(result.user);
+          setUser(res.data.user);
+          localStorage.setItem('divine_user', JSON.stringify(res.data.user));
+          hasProcessedInitialState.current = true;
+        } catch (syncError) {
+          console.error('Backend sync failed:', syncError);
+          const basicUser = {
+            email: result.user.email,
+            name: result.user.displayName || 'User',
+            role: 'devotee',
+            firebase_uid: result.user.uid
+          };
+          setFirebaseUser(result.user);
+          setUser(basicUser);
+          localStorage.setItem('divine_user', JSON.stringify(basicUser));
+          hasProcessedInitialState.current = true;
+        }
+      }
+      
+      setLoading(false);
       return { user: result.user };
     } catch (error) {
       console.error('Google sign in error:', error.code, error.message);
@@ -187,6 +200,7 @@ export function AuthProvider({ children }) {
   // Logout
   const logout = async () => {
     try {
+      authListenerActive.current = false; // Disable listener during logout
       await firebaseSignOut();
     } catch (error) {
       console.error('Logout error:', error);
@@ -195,7 +209,8 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('divine_user');
     setUser(null);
     setFirebaseUser(null);
-    lastSyncedUid.current = null;
+    hasProcessedInitialState.current = false; // Reset for next login
+    authListenerActive.current = true; // Re-enable listener
   };
 
   // Update user data
