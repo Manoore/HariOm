@@ -134,7 +134,7 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream to-parchment">
+    <div className="min-h-screen bg-gradient-to-b from-cream to-parchment flex items-center justify-center">
       <Toaster position="top-center" richColors />
       
       <AnimatePresence mode="wait">
@@ -189,15 +189,15 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
 function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onBack, showBackButton }) {
   return (
     <motion.div
-      className="min-h-screen flex flex-col"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-sm md:rounded-2xl md:shadow-xl md:border md:border-orange-100 min-h-screen md:min-h-0 md:my-8 flex flex-col"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.3 }}
     >
       {/* Back button for web */}
       {showBackButton && (
-        <div className="px-4 pt-4">
+        <div className="px-6 pt-4">
           <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-maroon">
             <ChevronLeft className="w-5 h-5" />
             <span>Back to Home</span>
@@ -320,23 +320,23 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
 function LoginScreen({ data, setData, onSubmit, loading, showPassword, setShowPassword, onBack, onSwitch, onGoogleSignIn, googleLoading }) {
   return (
     <motion.div
-      className="min-h-screen flex flex-col"
+      className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-sm md:rounded-2xl md:shadow-xl md:border md:border-orange-100 min-h-screen md:min-h-0 md:my-8 flex flex-col"
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 50 }}
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
-      <div className="px-4 pt-4">
-        <button onClick={onBack} className="p-2 -ml-2 text-gray-600" data-testid="login-back">
+      <div className="px-6 pt-6">
+        <button onClick={onBack} className="p-2 -ml-2 text-gray-600 hover:text-maroon transition-colors" data-testid="login-back">
           <ChevronLeft className="w-6 h-6" />
         </button>
       </div>
 
-      <div className="flex-1 px-8 pt-8">
+      <div className="flex-1 px-6 md:px-8 pt-4 pb-6">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <h1 className="font-cinzel text-2xl font-bold text-maroon mb-2">Welcome Back</h1>
-          <p className="text-gray-600 mb-8">Sign in to continue your spiritual journey</p>
+          <p className="text-gray-600 mb-6">Sign in to continue your spiritual journey</p>
         </motion.div>
 
         {/* Google Sign In */}
@@ -436,10 +436,10 @@ function LoginScreen({ data, setData, onSubmit, loading, showPassword, setShowPa
         </motion.div>
       </div>
 
-      <div className="px-8 pb-8 text-center">
+      <div className="px-6 md:px-8 pb-6 text-center">
         <p className="text-gray-600">
           Don't have an account?{' '}
-          <button onClick={onSwitch} className="text-saffron font-semibold" data-testid="goto-register">
+          <button onClick={onSwitch} className="text-saffron font-semibold hover:underline" data-testid="goto-register">
             Sign up
           </button>
         </p>
@@ -451,20 +451,20 @@ function LoginScreen({ data, setData, onSubmit, loading, showPassword, setShowPa
 function RegisterScreen({ data, setData, onSubmit, loading, showPassword, setShowPassword, onBack, onSwitch, onGoogleSignIn, googleLoading }) {
   return (
     <motion.div
-      className="min-h-screen flex flex-col"
+      className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-sm md:rounded-2xl md:shadow-xl md:border md:border-orange-100 min-h-screen md:min-h-0 md:my-8 flex flex-col"
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 50 }}
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
-      <div className="px-4 pt-4">
-        <button onClick={onBack} className="p-2 -ml-2 text-gray-600" data-testid="register-back">
+      <div className="px-6 pt-6">
+        <button onClick={onBack} className="p-2 -ml-2 text-gray-600 hover:text-maroon transition-colors" data-testid="register-back">
           <ChevronLeft className="w-6 h-6" />
         </button>
       </div>
 
-      <div className="flex-1 px-8 pt-4 pb-8 overflow-y-auto">
+      <div className="flex-1 px-6 md:px-8 pt-4 pb-6 overflow-y-auto">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <h1 className="font-cinzel text-2xl font-bold text-maroon mb-2">Create Account</h1>
           <p className="text-gray-600 mb-6">Join our spiritual community</p>
@@ -603,10 +603,10 @@ function RegisterScreen({ data, setData, onSubmit, loading, showPassword, setSho
         </form>
       </div>
 
-      <div className="px-8 pb-8 text-center">
+      <div className="px-6 md:px-8 pb-6 text-center">
         <p className="text-gray-600">
           Already have an account?{' '}
-          <button onClick={onSwitch} className="text-saffron font-semibold" data-testid="goto-login">
+          <button onClick={onSwitch} className="text-saffron font-semibold hover:underline" data-testid="goto-login">
             Sign in
           </button>
         </p>

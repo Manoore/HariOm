@@ -12,8 +12,8 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - Festival calendar and temple directory
 
 ## User Choices
-- **Authentication**: Firebase (NOW INTEGRATED!)
-- **Payments**: Stripe (international) + Razorpay (India)
+- **Authentication**: Firebase (FULLY INTEGRATED)
+- **Payments**: Stripe (real keys configured) + Razorpay (placeholder)
 - **Video Meetings**: Skipped for MVP
 - **Horoscope**: Local calculation service
 - **Design Theme**: Traditional warm (saffron, gold, maroon)
@@ -23,7 +23,7 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 ## Architecture
 - **Frontend**: React.js (mobile-first responsive)
 - **Backend**: Python FastAPI
-- **Database**: MongoDB
+- **Database**: MongoDB Atlas (user's cloud instance)
 - **Styling**: Tailwind CSS with custom traditional theme
 - **Authentication**: Firebase Auth (email/password + Google Sign-In)
 - **Mobile**: React Native with Expo (separate project at /app/divine-mobile)
@@ -31,31 +31,44 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 ## Firebase Configuration (March 15, 2026)
 - **Project ID**: divine-104d4
 - **Auth Domain**: divine-104d4.firebaseapp.com
+- **Authorized Domain**: bhakti-hub-15.preview.emergentagent.com
 - **Features Enabled**:
   - Email/Password authentication
-  - Google Sign-In
+  - Google Sign-In (WORKING after domain authorization)
   - User sync with backend database
+
+## Stripe Configuration (March 15, 2026)
+- **Publishable Key**: pk_test_51QgI3PHHYDXeQk9Q... (configured in frontend)
+- **Secret Key**: sk_test_51QgI3PHHYDXeQk9Q... (configured in backend)
+- **Integration**: Payment Intent API ready
+- **IP-based Selection**: Stripe for international users, Razorpay for India
 
 ## What's Been Implemented
 
-### Firebase Authentication (COMPLETE)
+### Authentication (COMPLETE)
 - [x] Firebase SDK installed and configured
-- [x] Email/Password authentication
-- [x] Google Sign-In with popup
+- [x] Email/Password authentication (working)
+- [x] Google Sign-In with popup (working - domain authorized)
 - [x] Firebase user sync with backend MongoDB
 - [x] Token-based API authentication
-- [x] Login screen with Google button
-- [x] Register screen with Google button
-- [x] Welcome screen with Google button
-- [x] Legacy login fallback for existing users
+- [x] Centered, card-style auth screens on desktop
 
-### UI Updates
+### Payment Gateway (IN PROGRESS)
+- [x] Stripe keys configured
+- [x] IP-based gateway detection (ipapi.co)
+- [x] Stripe payment intent endpoint
+- [x] Razorpay order creation endpoint (placeholder keys)
+- [x] SmartPayment component with auto-detection
+- [ ] Full checkout flow with confirmation
+
+### UI Updates (March 15, 2026)
+- [x] Auth screens centered and card-styled for desktop
 - [x] Animated Aarti (Harathi) on landing page - bottom-right corner
 - [x] Clickable DIVINE logo scrolls to top (navbar and footer)
 - [x] 3D animated SVG devotional icons throughout the app
 - [x] No emojis used anywhere
 
-### Backend APIs (100% Working)
+### Backend APIs (100% Working - 20/20 Tests)
 - [x] User authentication (register/login/profile)
 - [x] Firebase sync endpoints (/api/auth/firebase-sync, /api/auth/firebase-register)
 - [x] Priests CRUD with services
@@ -66,15 +79,17 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [x] Horoscope/Astrology APIs
 - [x] Festivals and Temples APIs
 - [x] Admin stats and management
+- [x] Stripe payment intent creation
+- [x] Razorpay order creation (placeholder)
 
 ### Frontend (100% Complete)
 - [x] Web Marketing Landing Page with 3D icons and animated Aarti
 - [x] Firebase Auth integration (Google + Email/Password)
 - [x] Splash screen with animated Divine logo
 - [x] Welcome screen with 3D feature icons
-- [x] Login/Register screens with Google Sign-In
+- [x] Login/Register screens with Google Sign-In (centered on desktop)
 - [x] Devotee Dashboard - Responsive
-- [x] Admin Dashboard - Responsive
+- [x] Admin Dashboard - Responsive (9 Users, 3 Priests, 8 Products)
 - [x] Priest Dashboard
 - [x] Shop Owner Dashboard
 
@@ -82,47 +97,56 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 
 ### P0 (Critical) - COMPLETED
 - [x] Firebase Authentication integration ✅
+- [x] Google Sign-In domain authorization ✅
+- [x] Stripe keys configuration ✅
+- [x] Auth screen UI optimization ✅
 
-### P1 (High Priority)
-- [ ] Razorpay payment integration with real keys
+### P1 (High Priority) - NEXT
+- [ ] Complete payment checkout flow
+- [ ] Razorpay real keys integration
 - [ ] Priest booking payment flow
-- [ ] Push notifications for bookings
-- [ ] Expo mobile preview (requires EXPO_TOKEN)
+- [ ] Order confirmation and receipt
 
 ### P2 (Medium Priority)
-- [ ] Astrologer dashboard
+- [ ] Astrologer/Priest/Shop Owner complete dashboards
 - [ ] Product reviews and ratings
 - [ ] Search and filter improvements
 - [ ] Image upload for products/priests
+- [ ] Horoscope API integration (real data)
 
 ### P3 (Future/Nice to Have)
 - [ ] Video consultation integration
 - [ ] Multi-language support
+- [ ] Push notifications
 - [ ] Social sharing
 - [ ] Referral system
-- [ ] App Store / Play Store deployment (Expo EAS)
+- [ ] Mobile App (requires EXPO_TOKEN)
+- [ ] App Store / Play Store deployment
 
 ## Tech Stack
 ```
 Frontend: React 18, Tailwind CSS, Framer Motion, Firebase SDK
-Backend: FastAPI, Motor (MongoDB async driver), firebase-admin
-Database: MongoDB
+Backend: FastAPI, Motor (MongoDB async driver), Stripe SDK
+Database: MongoDB Atlas
 Auth: Firebase Auth (Google + Email/Password)
-Payments: Stripe (configured), Razorpay (pending keys)
+Payments: Stripe (test keys active), Razorpay (placeholder)
 Mobile: React Native with Expo
 Icons: Custom 3D animated SVGs
 ```
 
 ## Test Credentials
-- **Admin**: admin@divineapp.com / admin123 (legacy)
-- **Google Sign-In**: Use any Google account
+- **Admin**: admin@divineapp.com / admin123
+- **Devotee**: devotee@divineapp.com / devotee123
+- **Google Sign-In**: Any Google account
 
 ## Key Files
 - `frontend/src/lib/firebase.js` - Firebase configuration and auth functions
-- `frontend/src/contexts/AuthContext.js` - Auth context with Firebase integration
-- `frontend/src/pages/LandingPage.js` - Landing page with Aarti animation
-- `frontend/src/pages/AuthScreen.js` - Auth screens with Google Sign-In
-- `backend/server.py` - Backend with Firebase sync endpoints
+- `frontend/src/contexts/AuthContext.js` - Auth context with Firebase + manual sync
+- `frontend/src/contexts/PaymentContext.js` - IP-based payment gateway selection
+- `frontend/src/components/PaymentComponents.js` - Stripe/Razorpay components
+- `frontend/src/pages/AuthScreen.js` - Centered auth screens
+- `backend/server.py` - Backend with Firebase sync + Stripe endpoints
+- `backend/config.py` - Configuration with Stripe keys
 
 ## Preview URLs
 - **Web App**: https://bhakti-hub-15.preview.emergentagent.com
