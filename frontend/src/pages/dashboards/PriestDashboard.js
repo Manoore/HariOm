@@ -228,7 +228,10 @@ export default function PriestDashboard() {
         <aside className="w-64 min-h-screen bg-white border-r border-orange-100 fixed left-0 top-0 bottom-0 z-20">
           {/* Sidebar Header */}
           <div className="bg-gradient-to-r from-maroon to-maroon-light p-4">
-            <div className="flex items-center gap-3">
+            <button 
+              onClick={() => handleTabChange('profile')}
+              className="flex items-center gap-3 w-full text-left hover:opacity-90 transition-opacity cursor-pointer"
+            >
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
                 {priestProfile?.profile_photo ? (
                   <img src={priestProfile.profile_photo} alt="Profile" className="w-full h-full object-cover" />
@@ -243,7 +246,7 @@ export default function PriestDashboard() {
                   <span className="text-[10px] text-white capitalize">{user?.role || 'Priest'}</span>
                 </div>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Navigation Menu */}
@@ -354,7 +357,10 @@ export default function PriestDashboard() {
         {/* Compact Icon Sidebar */}
         <aside className="w-20 min-h-screen bg-white border-r border-orange-100 fixed left-0 top-0 bottom-0 z-20 flex flex-col">
           {/* Logo/Avatar */}
-          <div className="bg-gradient-to-r from-maroon to-maroon-light p-3 flex justify-center">
+          <button 
+            onClick={() => handleTabChange('profile')}
+            className="bg-gradient-to-r from-maroon to-maroon-light p-3 flex justify-center hover:opacity-90 transition-opacity cursor-pointer"
+          >
             <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
               {priestProfile?.profile_photo ? (
                 <img src={priestProfile.profile_photo} alt="Profile" className="w-full h-full object-cover" />
@@ -362,7 +368,7 @@ export default function PriestDashboard() {
                 <span className="text-lg font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>
               )}
             </div>
-          </div>
+          </button>
 
           {/* Icon Navigation */}
           <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
@@ -436,7 +442,10 @@ export default function PriestDashboard() {
         {/* Mobile Header */}
         <div className="bg-gradient-to-r from-maroon to-maroon-light px-4 pt-6 pb-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <button 
+              onClick={() => handleTabChange('profile')}
+              className="flex items-center gap-3 text-left hover:opacity-90 transition-opacity cursor-pointer"
+            >
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
                 {priestProfile?.profile_photo ? (
                   <img src={priestProfile.profile_photo} alt="Profile" className="w-full h-full object-cover" />
@@ -452,7 +461,7 @@ export default function PriestDashboard() {
                   <span className="text-[10px] font-medium text-white capitalize">{user?.role || 'Priest'}</span>
                 </div>
               </div>
-            </div>
+            </button>
             <div className="flex items-center gap-2">
               <button className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center relative">
                 <Bell className="w-4 h-4 text-white" />
