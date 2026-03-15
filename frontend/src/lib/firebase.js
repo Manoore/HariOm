@@ -8,7 +8,9 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
-  updateProfile
+  updateProfile,
+  browserLocalPersistence,
+  setPersistence
 } from 'firebase/auth';
 
 // Firebase configuration from environment variables
@@ -34,6 +36,8 @@ if (isFirebaseConfigured) {
   try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     auth = getAuth(app);
+    // Set persistence to local to prevent constant re-authentication
+    setPersistence(auth, browserLocalPersistence).catch(console.error);
     googleProvider = new GoogleAuthProvider();
   } catch (error) {
     console.error('Firebase initialization error:', error);

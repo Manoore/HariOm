@@ -23,9 +23,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('divine_token');
-      localStorage.removeItem('divine_user');
-      window.location.href = '/login';
+      // Only clear auth on actual auth endpoints, not on all 401s
+      const url = error.config?.url || '';
+      if (url.includes('/auth/') || url.includes('/admin/') || url.includes('/bookings') || url.includes('/orders')) {
+        console.log('Auth error on protected route, clearing session');
+        localStorage.removeItem('divine_token');
+        localStorage.removeItem('divine_user');
+        // Don't redirect, let the app handle the auth state
+      }
     }
     return Promise.reject(error);
   }

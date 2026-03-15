@@ -322,53 +322,73 @@ class FirebaseRegisterRequest(BaseModel):
 @app.post("/api/auth/firebase-sync")
 async def firebase_sync(data: FirebaseSyncRequest):
     """Sync Firebase user with backend - create if not exists, return existing if found"""
-    # Check if user already exists by firebase_uid or email
-    user = await users_collection.find_one({
-        "$or": [
-            {"firebase_uid": data.firebase_uid},
-            {"email": data.email}
-        ]
-    })
-    
-    if user:
-        # Update firebase_uid if not set
-        if not user.get("firebase_uid"):
-            await users_collection.update_one(
-                {"_id": user["_id"]},
-                {"$set": {"firebase_uid": data.firebase_uid}}
-            )
+    try:
+        # Check if user already exists by firebase_uid or email
+        user = await users_collection.find_one({
+            "$or": [
+                {"firebase_uid": data.firebase_uid},
+                {"email": data.email}
+            ]
+        })
+        
+        if user:
+            # Update firebase_uid if not set
+            if not user.get("firebase_uid") or user.get("firebase_uid") != data.firebase_uid:
+                await users_collection.update_one(
+                    {"_id": user["_id"]},
+                    {"$set": {"firebase_uid": data.firebase_uid, "photo_url": data.photo_url}}
+                )
+            
+            return {
+                "user": {
+                    "id": str(user["_id"]),
+                    "email": user["email"],
+                    "name": user["name"],
+                    "role": user["role"],
+                    "firebase_uid": data.firebase_uid,
+                    "is_verified": user.get("is_verified", False)
+                }
+            }
+        
+        # Create new user (default role: devotee)
+        user_dict = {
+            "firebase_uid": data.firebase_uid,
+            "email": data.email,
+            "name": data.name,
+            "photo_url": data.photo_url,
+            "role": UserRole.DEVOTEE,
+            "is_verified": True,  # Firebase users are pre-verified
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        result = await users_collection.insert_one(user_dict)
         
         return {
             "user": {
-                "id": str(user["_id"]),
-                "email": user["email"],
-                "name": user["name"],
-                "role": user["role"],
-                "is_verified": user.get("is_verified", False)
+                "id": str(result.inserted_id),
+                "email": data.email,
+                "name": data.name,
+                "role": UserRole.DEVOTEE,
+                "firebase_uid": data.firebase_uid
             }
         }
-    
-    # Create new user (default role: devotee)
-    user_dict = {
-        "firebase_uid": data.firebase_uid,
-        "email": data.email,
-        "name": data.name,
-        "photo_url": data.photo_url,
-        "role": UserRole.DEVOTEE,
-        "is_verified": True,  # Firebase users are pre-verified
-        "created_at": datetime.now(timezone.utc)
-    }
-    
-    result = await users_collection.insert_one(user_dict)
-    
-    return {
-        "user": {
-            "id": str(result.inserted_id),
-            "email": data.email,
-            "name": data.name,
-            "role": UserRole.DEVOTEE
-        }
-    }
+    except Exception as e:
+        # Handle duplicate key error - user was created by another request
+        if "duplicate key" in str(e).lower() or "E11000" in str(e):
+            # Retry finding the user
+            user = await users_collection.find_one({"email": data.email})
+            if user:
+                return {
+                    "user": {
+                        "id": str(user["_id"]),
+                        "email": user["email"],
+                        "name": user["name"],
+                        "role": user["role"],
+                        "firebase_uid": data.firebase_uid,
+                        "is_verified": user.get("is_verified", False)
+                    }
+                }
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/auth/firebase-register")
 async def firebase_register(data: FirebaseRegisterRequest):
