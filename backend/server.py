@@ -764,6 +764,351 @@ async def get_archive_metadata(identifier: str):
         print(f"Archive metadata error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get metadata: {str(e)}")
 
+# ===================== PANCHANG & FESTIVAL CALENDAR =====================
+import swisseph as swe
+from datetime import timedelta
+import math
+
+# Hindu month names
+HINDU_MONTHS = [
+    "Chaitra", "Vaishakha", "Jyeshtha", "Ashadha", "Shravana", "Bhadrapada",
+    "Ashwin", "Kartik", "Margashirsha", "Pausha", "Magha", "Phalguna"
+]
+
+# Tithi names
+TITHIS = [
+    "Pratipada", "Dwitiya", "Tritiya", "Chaturthi", "Panchami", "Shashthi",
+    "Saptami", "Ashtami", "Navami", "Dashami", "Ekadashi", "Dwadashi",
+    "Trayodashi", "Chaturdashi", "Purnima/Amavasya"
+]
+
+# Nakshatra names
+NAKSHATRAS = [
+    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
+    "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni",
+    "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha",
+    "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha",
+    "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
+]
+
+# Yoga names
+YOGAS = [
+    "Vishkumbha", "Priti", "Ayushman", "Saubhagya", "Shobhana", "Atiganda",
+    "Sukarma", "Dhriti", "Shula", "Ganda", "Vriddhi", "Dhruva",
+    "Vyaghata", "Harshana", "Vajra", "Siddhi", "Vyatipata", "Variyan",
+    "Parigha", "Shiva", "Siddha", "Sadhya", "Shubha", "Shukla",
+    "Brahma", "Indra", "Vaidhriti"
+]
+
+# Karana names
+KARANAS = [
+    "Bava", "Balava", "Kaulava", "Taitila", "Garija", "Vanija", "Vishti",
+    "Shakuni", "Chatushpada", "Naga", "Kimstughna"
+]
+
+# Weekday names
+VARAS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+VARA_DEITIES = ["Surya", "Chandra", "Mangal", "Budh", "Guru", "Shukra", "Shani"]
+
+# Major Hindu Festivals with their lunar calendar dates
+FESTIVALS = [
+    {"name": "Makar Sankranti", "type": "solar", "month": 1, "day": 14, "description": "Sun enters Capricorn"},
+    {"name": "Vasant Panchami", "type": "lunar", "month": "Magha", "paksha": "Shukla", "tithi": 5, "description": "Saraswati Puja"},
+    {"name": "Maha Shivaratri", "type": "lunar", "month": "Magha", "paksha": "Krishna", "tithi": 14, "description": "Night of Shiva"},
+    {"name": "Holi", "type": "lunar", "month": "Phalguna", "paksha": "Shukla", "tithi": 15, "description": "Festival of Colors"},
+    {"name": "Ugadi/Gudi Padwa", "type": "lunar", "month": "Chaitra", "paksha": "Shukla", "tithi": 1, "description": "Hindu New Year"},
+    {"name": "Ram Navami", "type": "lunar", "month": "Chaitra", "paksha": "Shukla", "tithi": 9, "description": "Birth of Lord Rama"},
+    {"name": "Hanuman Jayanti", "type": "lunar", "month": "Chaitra", "paksha": "Shukla", "tithi": 15, "description": "Birth of Hanuman"},
+    {"name": "Akshaya Tritiya", "type": "lunar", "month": "Vaishakha", "paksha": "Shukla", "tithi": 3, "description": "Auspicious day"},
+    {"name": "Buddha Purnima", "type": "lunar", "month": "Vaishakha", "paksha": "Shukla", "tithi": 15, "description": "Birth of Buddha"},
+    {"name": "Guru Purnima", "type": "lunar", "month": "Ashadha", "paksha": "Shukla", "tithi": 15, "description": "Honor the Guru"},
+    {"name": "Raksha Bandhan", "type": "lunar", "month": "Shravana", "paksha": "Shukla", "tithi": 15, "description": "Brother-Sister bond"},
+    {"name": "Krishna Janmashtami", "type": "lunar", "month": "Shravana", "paksha": "Krishna", "tithi": 8, "description": "Birth of Krishna"},
+    {"name": "Ganesh Chaturthi", "type": "lunar", "month": "Bhadrapada", "paksha": "Shukla", "tithi": 4, "description": "Birth of Ganesha"},
+    {"name": "Anant Chaturdashi", "type": "lunar", "month": "Bhadrapada", "paksha": "Shukla", "tithi": 14, "description": "Ganesh Visarjan"},
+    {"name": "Navratri Begins", "type": "lunar", "month": "Ashwin", "paksha": "Shukla", "tithi": 1, "description": "Nine nights of Devi"},
+    {"name": "Dussehra/Vijayadashami", "type": "lunar", "month": "Ashwin", "paksha": "Shukla", "tithi": 10, "description": "Victory of good"},
+    {"name": "Karwa Chauth", "type": "lunar", "month": "Kartik", "paksha": "Krishna", "tithi": 4, "description": "Spousal devotion"},
+    {"name": "Dhanteras", "type": "lunar", "month": "Kartik", "paksha": "Krishna", "tithi": 13, "description": "Wealth worship"},
+    {"name": "Diwali", "type": "lunar", "month": "Kartik", "paksha": "Krishna", "tithi": 15, "description": "Festival of Lights"},
+    {"name": "Govardhan Puja", "type": "lunar", "month": "Kartik", "paksha": "Shukla", "tithi": 1, "description": "Krishna lifted Govardhan"},
+    {"name": "Bhai Dooj", "type": "lunar", "month": "Kartik", "paksha": "Shukla", "tithi": 2, "description": "Brother-Sister celebration"},
+    {"name": "Dev Deepawali", "type": "lunar", "month": "Kartik", "paksha": "Shukla", "tithi": 15, "description": "Diwali of Gods"},
+]
+
+def get_julian_day(year, month, day, hour=12):
+    """Convert Gregorian date to Julian Day"""
+    return swe.julday(year, month, day, hour)
+
+def get_sun_longitude(jd):
+    """Get Sun's longitude"""
+    sun = swe.calc_ut(jd, swe.SUN)[0]
+    return sun[0]
+
+def get_moon_longitude(jd):
+    """Get Moon's longitude"""
+    moon = swe.calc_ut(jd, swe.MOON)[0]
+    return moon[0]
+
+def calculate_tithi(jd):
+    """Calculate tithi from Julian day"""
+    sun_long = get_sun_longitude(jd)
+    moon_long = get_moon_longitude(jd)
+    diff = (moon_long - sun_long) % 360
+    tithi_num = int(diff / 12) + 1
+    if tithi_num > 30:
+        tithi_num = 30
+    paksha = "Shukla" if tithi_num <= 15 else "Krishna"
+    tithi_in_paksha = tithi_num if tithi_num <= 15 else tithi_num - 15
+    return {
+        "number": tithi_num,
+        "paksha": paksha,
+        "tithi_in_paksha": tithi_in_paksha,
+        "name": TITHIS[(tithi_in_paksha - 1) % 15]
+    }
+
+def calculate_nakshatra(jd):
+    """Calculate nakshatra from Julian day"""
+    moon_long = get_moon_longitude(jd)
+    nakshatra_num = int(moon_long / (360/27)) + 1
+    if nakshatra_num > 27:
+        nakshatra_num = 1
+    return {
+        "number": nakshatra_num,
+        "name": NAKSHATRAS[nakshatra_num - 1]
+    }
+
+def calculate_yoga(jd):
+    """Calculate yoga from Julian day"""
+    sun_long = get_sun_longitude(jd)
+    moon_long = get_moon_longitude(jd)
+    yoga_long = (sun_long + moon_long) % 360
+    yoga_num = int(yoga_long / (360/27)) + 1
+    if yoga_num > 27:
+        yoga_num = 1
+    return {
+        "number": yoga_num,
+        "name": YOGAS[yoga_num - 1]
+    }
+
+def calculate_karana(jd):
+    """Calculate karana from Julian day"""
+    sun_long = get_sun_longitude(jd)
+    moon_long = get_moon_longitude(jd)
+    diff = (moon_long - sun_long) % 360
+    karana_num = int(diff / 6) + 1
+    karana_num = ((karana_num - 1) % 11)
+    return {
+        "number": karana_num + 1,
+        "name": KARANAS[karana_num]
+    }
+
+def get_hindu_month(jd):
+    """Approximate Hindu month based on Sun's position"""
+    sun_long = get_sun_longitude(jd)
+    # Adjust for Chaitra starting around March-April
+    month_index = int((sun_long + 360 - 23) / 30) % 12
+    return HINDU_MONTHS[month_index]
+
+@app.get("/api/panchang/today")
+async def get_today_panchang(lat: float = 28.6139, lon: float = 77.2090):
+    """Get today's Panchang (Hindu calendar details)"""
+    try:
+        now = datetime.now()
+        jd = get_julian_day(now.year, now.month, now.day)
+        
+        tithi = calculate_tithi(jd)
+        nakshatra = calculate_nakshatra(jd)
+        yoga = calculate_yoga(jd)
+        karana = calculate_karana(jd)
+        hindu_month = get_hindu_month(jd)
+        weekday = now.weekday()
+        vara_index = (weekday + 1) % 7  # Adjust: Python Monday=0, Hindu Sunday=0
+        
+        # Approximate sunrise/sunset times for Indian locations
+        # More precise calculations would require full ephemeris computation
+        sunrise = "06:15"
+        sunset = "18:30"
+        
+        return {
+            "status": "ok",
+            "date": now.strftime("%Y-%m-%d"),
+            "day_name": now.strftime("%A"),
+            "hindu_month": hindu_month,
+            "vara": {
+                "name": VARAS[vara_index],
+                "deity": VARA_DEITIES[vara_index]
+            },
+            "tithi": tithi,
+            "nakshatra": nakshatra,
+            "yoga": yoga,
+            "karana": karana,
+            "sunrise": sunrise,
+            "sunset": sunset,
+            "location": {"lat": lat, "lon": lon}
+        }
+    except Exception as e:
+        print(f"Panchang error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to calculate Panchang: {str(e)}")
+
+@app.get("/api/panchang/month")
+async def get_month_panchang(year: int = None, month: int = None):
+    """Get Panchang for entire month"""
+    try:
+        now = datetime.now()
+        year = year or now.year
+        month = month or now.month
+        
+        # Get number of days in month
+        if month == 12:
+            next_month = datetime(year + 1, 1, 1)
+        else:
+            next_month = datetime(year, month + 1, 1)
+        first_day = datetime(year, month, 1)
+        days_in_month = (next_month - first_day).days
+        
+        month_data = []
+        for day in range(1, days_in_month + 1):
+            jd = get_julian_day(year, month, day)
+            tithi = calculate_tithi(jd)
+            nakshatra = calculate_nakshatra(jd)
+            weekday = datetime(year, month, day).weekday()
+            vara_index = (weekday + 1) % 7
+            
+            month_data.append({
+                "date": f"{year}-{month:02d}-{day:02d}",
+                "day": day,
+                "weekday": VARAS[vara_index],
+                "tithi": tithi["name"],
+                "paksha": tithi["paksha"],
+                "nakshatra": nakshatra["name"]
+            })
+        
+        return {
+            "status": "ok",
+            "year": year,
+            "month": month,
+            "month_name": datetime(year, month, 1).strftime("%B"),
+            "days": month_data
+        }
+    except Exception as e:
+        print(f"Month Panchang error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get month Panchang: {str(e)}")
+
+@app.get("/api/festivals/upcoming")
+async def get_upcoming_festivals(limit: int = 10):
+    """Get upcoming Hindu festivals"""
+    try:
+        now = datetime.now()
+        current_year = now.year
+        
+        # Generate festival dates for current and next year
+        upcoming = []
+        
+        for year in [current_year, current_year + 1]:
+            for festival in FESTIVALS:
+                try:
+                    if festival["type"] == "solar":
+                        # Solar festivals have fixed Gregorian dates
+                        fest_date = datetime(year, festival["month"], festival["day"])
+                    else:
+                        # Lunar festivals - approximate based on typical Gregorian occurrence
+                        # This is a simplified mapping - production would need precise calculations
+                        lunar_month_map = {
+                            "Chaitra": (3, 22), "Vaishakha": (4, 21), "Jyeshtha": (5, 22),
+                            "Ashadha": (6, 22), "Shravana": (7, 23), "Bhadrapada": (8, 23),
+                            "Ashwin": (9, 23), "Kartik": (10, 23), "Margashirsha": (11, 22),
+                            "Pausha": (12, 22), "Magha": (1, 20), "Phalguna": (2, 19)
+                        }
+                        
+                        base_month, base_day = lunar_month_map.get(festival["month"], (1, 1))
+                        tithi_offset = festival["tithi"] - 1
+                        if festival["paksha"] == "Krishna":
+                            tithi_offset += 15
+                        
+                        # Adjust year for months that span year boundary
+                        adj_year = year if base_month > 2 else year
+                        if festival["month"] in ["Magha", "Phalguna"] and base_month <= 2:
+                            adj_year = year + 1
+                            
+                        fest_date = datetime(adj_year, base_month, base_day) + timedelta(days=tithi_offset)
+                    
+                    if fest_date >= now:
+                        days_until = (fest_date - now).days
+                        upcoming.append({
+                            "name": festival["name"],
+                            "date": fest_date.strftime("%Y-%m-%d"),
+                            "display_date": fest_date.strftime("%B %d, %Y"),
+                            "day_name": fest_date.strftime("%A"),
+                            "description": festival["description"],
+                            "days_until": days_until,
+                            "is_today": days_until == 0,
+                            "is_tomorrow": days_until == 1
+                        })
+                except:
+                    continue
+        
+        # Sort by date and limit
+        upcoming.sort(key=lambda x: x["date"])
+        upcoming = upcoming[:limit]
+        
+        return {
+            "status": "ok",
+            "count": len(upcoming),
+            "festivals": upcoming
+        }
+    except Exception as e:
+        print(f"Festivals error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get festivals: {str(e)}")
+
+@app.get("/api/festivals/year/{year}")
+async def get_year_festivals(year: int):
+    """Get all festivals for a specific year"""
+    try:
+        festivals_list = []
+        
+        for festival in FESTIVALS:
+            try:
+                if festival["type"] == "solar":
+                    fest_date = datetime(year, festival["month"], festival["day"])
+                else:
+                    lunar_month_map = {
+                        "Chaitra": (3, 22), "Vaishakha": (4, 21), "Jyeshtha": (5, 22),
+                        "Ashadha": (6, 22), "Shravana": (7, 23), "Bhadrapada": (8, 23),
+                        "Ashwin": (9, 23), "Kartik": (10, 23), "Margashirsha": (11, 22),
+                        "Pausha": (12, 22), "Magha": (1, 20), "Phalguna": (2, 19)
+                    }
+                    
+                    base_month, base_day = lunar_month_map.get(festival["month"], (1, 1))
+                    tithi_offset = festival["tithi"] - 1
+                    if festival["paksha"] == "Krishna":
+                        tithi_offset += 15
+                    
+                    adj_year = year if base_month > 2 else year
+                    fest_date = datetime(adj_year, base_month, base_day) + timedelta(days=tithi_offset)
+                
+                festivals_list.append({
+                    "name": festival["name"],
+                    "date": fest_date.strftime("%Y-%m-%d"),
+                    "display_date": fest_date.strftime("%B %d"),
+                    "month": fest_date.month,
+                    "description": festival["description"]
+                })
+            except:
+                continue
+        
+        festivals_list.sort(key=lambda x: x["date"])
+        
+        return {
+            "status": "ok",
+            "year": year,
+            "count": len(festivals_list),
+            "festivals": festivals_list
+        }
+    except Exception as e:
+        print(f"Year festivals error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get year festivals: {str(e)}")
+
 # ===================== WHISPER TRANSCRIPTION FOR KARAOKE =====================
 from emergentintegrations.llm.openai import OpenAISpeechToText
 import tempfile

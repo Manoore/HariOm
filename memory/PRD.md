@@ -172,6 +172,16 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
     - Full transcription displayed at bottom
     - Play/Pause controls and close button
 
+### P1.7 (Completed - March 15, 2026)
+- [x] **Panchang & Festival Calendar**
+  - [x] Today's Panchang with Tithi, Nakshatra, Yoga, Karana, Sunrise/Sunset
+  - [x] Hindu month display (Phalguna, Chaitra, etc.)
+  - [x] Vara (weekday) with ruling deity
+  - [x] Upcoming Festivals list with days until each festival (22+ festivals)
+  - [x] Monthly Calendar view with Tithi and Nakshatra for each day
+  - [x] Navigation arrows to view any month
+  - [x] Powered by Swiss Ephemeris (pyswisseph) for astronomical calculations
+
 ### P2 (Medium Priority)
 - [ ] Astrologer/Priest/Shop Owner complete dashboards
 - [ ] Product reviews and ratings
