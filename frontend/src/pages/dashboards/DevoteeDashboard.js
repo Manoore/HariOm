@@ -625,7 +625,7 @@ function MantrasTab({ isDesktop }) {
     return translations[cacheKey] || mantra.meaning_english;
   };
   
-  // Load available voices from ElevenLabs
+  // Load available voices from Sarvam AI (Indian voices)
   const loadVoices = async () => {
     try {
       const res = await api.get('/api/tts/voices');
@@ -639,7 +639,7 @@ function MantrasTab({ isDesktop }) {
         loadBrowserVoices();
       }
     } catch (error) {
-      console.error('Error loading ElevenLabs voices:', error);
+      console.error('Error loading Sarvam AI voices:', error);
       loadBrowserVoices();
     }
   };
@@ -902,7 +902,7 @@ function MantrasTab({ isDesktop }) {
                   ))}
                 </select>
                 <p className="text-xs text-gray-400 mt-2">
-                  {selectedVoice?.category !== 'browser' ? '✨ Using ElevenLabs AI voice' : 'Using browser voice'}
+                  {selectedVoice?.category !== 'browser' ? '🎙️ Using Sarvam AI (Indian Voice)' : 'Using browser voice'}
                 </p>
               </div>
             )}

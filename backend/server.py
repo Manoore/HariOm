@@ -418,116 +418,94 @@ async def translate_text(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Translation error: {str(e)}")
 
-# ===================== TEXT-TO-SPEECH (ELEVENLABS) =====================
-from elevenlabs import ElevenLabs
-from elevenlabs.types import VoiceSettings
+# ===================== TEXT-TO-SPEECH (SARVAM AI - Indian Voices) =====================
+from sarvamai import SarvamAI
 import base64
 
-ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
+SARVAM_API_KEY = os.environ.get("SARVAM_API_KEY")
+
+# Sarvam AI voice options for Indian languages (actual speaker names from API)
+SARVAM_VOICES = [
+    {"voice_id": "anushka", "name": "Anushka (Hindi Female)", "language": "hi-IN", "gender": "female", "recommended": True},
+    {"voice_id": "manisha", "name": "Manisha (Hindi Female)", "language": "hi-IN", "gender": "female", "recommended": True},
+    {"voice_id": "ritu", "name": "Ritu (Hindi Female)", "language": "hi-IN", "gender": "female"},
+    {"voice_id": "priya", "name": "Priya (Hindi Female)", "language": "hi-IN", "gender": "female"},
+    {"voice_id": "neha", "name": "Neha (Hindi Female)", "language": "hi-IN", "gender": "female"},
+    {"voice_id": "shreya", "name": "Shreya (Hindi Female)", "language": "hi-IN", "gender": "female"},
+    {"voice_id": "abhilash", "name": "Abhilash (Hindi Male)", "language": "hi-IN", "gender": "male", "recommended": True},
+    {"voice_id": "rahul", "name": "Rahul (Hindi Male)", "language": "hi-IN", "gender": "male"},
+    {"voice_id": "amit", "name": "Amit (Hindi Male)", "language": "hi-IN", "gender": "male"},
+    {"voice_id": "dev", "name": "Dev (Hindi Male)", "language": "hi-IN", "gender": "male"},
+    {"voice_id": "shubh", "name": "Shubh (Hindi Male)", "language": "hi-IN", "gender": "male"},
+    {"voice_id": "kavitha", "name": "Kavitha (Telugu Female)", "language": "te-IN", "gender": "female"},
+    {"voice_id": "vidya", "name": "Vidya (Kannada Female)", "language": "kn-IN", "gender": "female"},
+    {"voice_id": "arya", "name": "Arya (Tamil Female)", "language": "ta-IN", "gender": "female"},
+]
 
 @app.get("/api/tts/voices")
 async def get_tts_voices():
-    """Get available ElevenLabs voices"""
-    if not ELEVENLABS_API_KEY:
+    """Get available Sarvam AI voices for Indian languages"""
+    if not SARVAM_API_KEY:
         return {"status": "error", "message": "TTS service not configured", "voices": [], "use_browser": True}
     
-    try:
-        client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
-        voices_response = client.voices.get_all()
-        
-        # Filter and format voices, prioritizing Indian/Hindi voices
-        voices = []
-        for voice in voices_response.voices:
-            voice_info = {
-                "voice_id": voice.voice_id,
-                "name": voice.name,
-                "category": voice.category if hasattr(voice, 'category') else "general",
-                "description": voice.description if hasattr(voice, 'description') else "",
-                "labels": voice.labels if hasattr(voice, 'labels') else {}
-            }
-            # Check if it's a Hindi/Indian voice
-            labels = voice.labels if hasattr(voice, 'labels') else {}
-            if isinstance(labels, dict):
-                accent = labels.get("accent", "").lower()
-                language = labels.get("language", "").lower()
-                if "indian" in accent or "hindi" in language or "indian" in language:
-                    voice_info["recommended"] = True
-            voices.append(voice_info)
-        
-        # Sort to put recommended voices first
-        voices.sort(key=lambda x: (not x.get("recommended", False), x["name"]))
-        
-        return {"status": "ok", "voices": voices, "use_browser": False}
-    except Exception as e:
-        error_msg = str(e)
-        print(f"Error fetching voices: {error_msg}")
-        # Return fallback voices for common issues
-        if "401" in error_msg or "permissions" in error_msg.lower() or "unusual_activity" in error_msg.lower():
-            return {
-                "status": "limited", 
-                "message": "ElevenLabs API requires upgraded permissions. Using built-in voices.",
-                "voices": [
-                    {"voice_id": "21m00Tcm4TlvDq8ikWAM", "name": "Rachel (ElevenLabs)", "category": "elevenlabs"},
-                    {"voice_id": "AZnzlk1XvdvUeBnXmlld", "name": "Domi (ElevenLabs)", "category": "elevenlabs"},
-                    {"voice_id": "EXAVITQu4vr4xnSDxMaL", "name": "Bella (ElevenLabs)", "category": "elevenlabs"},
-                    {"voice_id": "MF3mGyEYCl7XYWbV9V6O", "name": "Elli (ElevenLabs)", "category": "elevenlabs"},
-                ],
-                "use_browser": True
-            }
-        return {"status": "error", "message": str(e), "voices": [], "use_browser": True}
+    # Return predefined Sarvam voices
+    return {
+        "status": "ok", 
+        "voices": SARVAM_VOICES,
+        "use_browser": False,
+        "provider": "sarvam"
+    }
 
 @app.post("/api/tts/speak")
 async def text_to_speech(request: Request):
-    """Convert text to speech using ElevenLabs"""
-    if not ELEVENLABS_API_KEY:
+    """Convert text to speech using Sarvam AI (Indian voices)"""
+    if not SARVAM_API_KEY:
         raise HTTPException(status_code=503, detail="TTS service not configured")
     
     try:
         body = await request.json()
         text = body.get("text", "")
-        voice_id = body.get("voice_id", "pNInz6obpgDQGcFmaJgB")  # Default: Adam voice
+        voice_id = body.get("voice_id", "anushka")  # Default: Anushka (Hindi female)
+        language = body.get("language", "hi-IN")  # Default: Hindi
         
         if not text:
             raise HTTPException(status_code=400, detail="No text provided")
         
-        # Limit text length for API efficiency
-        if len(text) > 1000:
-            text = text[:1000]
+        # Limit text length (Sarvam supports up to 2500 chars)
+        if len(text) > 2500:
+            text = text[:2500]
         
-        client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+        # Find the voice's language if not specified
+        voice_info = next((v for v in SARVAM_VOICES if v["voice_id"] == voice_id), None)
+        if voice_info:
+            language = voice_info.get("language", "hi-IN")
         
-        # Generate speech with optimized settings for mantras
-        voice_settings = VoiceSettings(
-            stability=0.75,  # Higher stability for clearer pronunciation
-            similarity_boost=0.75,
-            style=0.3,  # Subtle style for reverent tone
-            use_speaker_boost=True
-        )
+        client = SarvamAI(api_subscription_key=SARVAM_API_KEY)
         
-        audio_generator = client.text_to_speech.convert(
+        # Generate speech with Sarvam AI
+        response = client.text_to_speech.convert(
+            target_language_code=language,
             text=text,
-            voice_id=voice_id,
-            model_id="eleven_multilingual_v2",  # Best for Hindi/Sanskrit
-            voice_settings=voice_settings
+            model="bulbul:v2",
+            speaker=voice_id,
+            pace=0.9  # Slightly slower for mantras
         )
         
-        # Collect audio data
-        audio_data = b""
-        for chunk in audio_generator:
-            audio_data += chunk
-        
-        # Convert to base64
-        audio_b64 = base64.b64encode(audio_data).decode()
-        
-        return {
-            "status": "ok",
-            "audio": f"data:audio/mpeg;base64,{audio_b64}",
-            "text": text,
-            "voice_id": voice_id
-        }
+        # Response contains base64 audio
+        if hasattr(response, 'audios') and response.audios:
+            audio_b64 = response.audios[0]
+            return {
+                "status": "ok",
+                "audio": f"data:audio/wav;base64,{audio_b64}",
+                "text": text,
+                "voice_id": voice_id,
+                "provider": "sarvam"
+            }
+        else:
+            raise Exception("No audio generated")
         
     except Exception as e:
-        print(f"TTS Error: {e}")
+        print(f"Sarvam TTS Error: {e}")
         raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
 
 # ===================== DEVOTIONAL CONTENT ROUTES =====================
