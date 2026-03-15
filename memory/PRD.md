@@ -284,4 +284,4 @@ Icons: Custom 3D animated SVGs
 - `backend/tests/test_priest_dashboard.py` - NEW: Pytest tests for Priest Dashboard
 
 ## Preview URLs
-- **Web App**: https://divine-priest-dash.preview.emergentagent.com
+- **Web App**: https://priest-hub.preview.emergentagent.com

@@ -1,0 +1,248 @@
+<analysis>**original_problem_statement:**
+The user wants to build a Divine App, a digital platform connecting users with Hindu spiritual services. It needs to function as both a web application and a native mobile app for the App Store and Play Store.
+
+**PRODUCT REQUIREMENTS:**
+-   **Core Idea:** A digital platform for Hindu spiritual services.
+-   **User Roles:** Devotees, Priests, Astrologers, Shop Owners, Admin.
+-   **Core Functions:**
+    -   Priest booking for at-home or online poojas.
+    -   Spiritual learning (Vedic mantras, shlokas).
+    -   Astrology services (birth charts, horoscopes, Kundali matching).
+-   **Marketplace:** A Pooja Store for spiritual items.
+-   **Additional Features:** Spiritual content, festival reminders, temple info, animated Aarti, searchable locations for astrology, daily updates/feed for devotees.
+-   **UI/UX:**
+    -   Traditional/Warm theme (saffron, gold, maroon).
+    -   Clicking the Divine logo scrolls to the top.
+    -   Devotee home screen with personalized horoscope, bookings, and orders.
+    -   Profile page for devotees.
+    -   Multi-language support for content (Telugu, Hindi, Kannada, Tamil, Malayalam).
+    -   Text-to-speech for mantras with authentic Indian voices.
+-   **Tech Stack Choices:**
+    -   **Authentication:** Firebase (including Google Sign-In).
+    -   **Database:** MongoDB Atlas.
+    -   **Payments:** Razorpay (India) and Stripe (International).
+    -   **Astrology:** Prokerala API.
+    -   **Location Search:** Google Places API for global coverage.
+
+**User's preferred language**: English
+
+**what currently exists?**
+A full-stack application with a React.js frontend and a Python/FastAPI backend.
+- **Authentication:** Firebase for email/password and Google Sign-In is functional. A critical bug was fixed where Google Sign-In users are now prompted to select a role upon registration, instead of defaulting to 'Devotee'.
+- **Dashboards:** Role-based dashboards for Admin, Devotee, and a newly built, comprehensive Priest dashboard. The dashboards now clearly display the user's role and show a welcome toast on login.
+- **Priest Dashboard:** A feature-rich dashboard has been implemented with tabs for Home, Profile Management (bio, skills, location), Services Management, Bookings, Reviews, Media Portfolio, Panchang, and Earnings Reports.
+- **Landing Page:** The landing page has been redesigned with a full-width layout, a temple logo, and a scrolling image carousel featuring divine-related images.
+- **Astrology, Mantras, Audio Library, Festival Calendar:** These features are functional from the previous session.
+
+**Last working item**:
+-   **Last item agent was working:** The user requested several enhancements and features:
+    1.  Make the Priest Dashboard mobile-responsive.
+    2.  Add profile photo upload functionality for all users.
+    3.  Enhance class scheduling to support daily, weekly, and bi-weekly recurrences.
+    4.  Implement a daily updates feature for priests to post content visible on a devotee feed.
+    The agent acknowledged these requests and started by creating a new  file to begin implementation.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** both. The backend will need new APIs for daily posts and updated scheduling logic. The frontend will need significant UI changes for responsiveness, photo uploads, and the new features.
+-   **User Testing Done:** N
+
+**All Pending/In progress Issue list**:
+-   **Issue 1:** Implement Priest Dashboard Enhancements (P0)
+-   **Issue 2:** Google Sign-in is Failing (P1)
+-   **Issue 3:** Expo Mobile App Preview is Not Working (P2)
+-   **Issue 4:** Personalized Horoscope on Devotee Home Screen (P2)
+-   **Issue 5:** Sarvam AI TTS Synchronization (P3)
+
+**Issues Detail:**
+-   **Issue 1: Implement Priest Dashboard Enhancements**
+    -   **Description:** Implement mobile responsiveness, profile photo upload, advanced class scheduling (daily/weekly/bi-weekly), and a daily updates/posts feature for priests.
+    -   **Attempted fixes:** The agent created a new  file to start the work. No backend changes have been made yet.
+    -   **Next debug checklist:**
+        1.  **Backend:** Modify  to add new endpoints for priest daily posts. Update the class creation/editing endpoints to handle new scheduling frequencies (daily, bi-weekly). Implement file upload logic for profile photos.
+        2.  **Frontend:** In , implement a mobile-responsive layout (e.g., using a hamburger menu for navigation and bottom tabs). Add a profile photo upload component. Update the class scheduling form with the new frequency options. Create a new tab/section for priests to create daily posts.
+    -   **Why fix this issue and what will be achieved with the fix?** This will significantly improve the usability and feature set for the Priest role, making the platform more professional and functional on mobile devices.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue:** N/A
+
+-   **Issue 2: Google Sign-in is Failing**
+    -   **Description:** The user reported an  error. While the role assignment bug is fixed, the root cause for this error remains.
+    -   **Attempted fixes:** The agent correctly identified that the preview URL must be added to the Firebase project's list of authorized domains.
+    -   **Next debug checklist:** This issue is blocked on the user. Remind the user to:
+        1.  Go to their Firebase Console.
+        2.  Navigate to Authentication > Settings > Authorized domains.
+        3.  Add the app's preview URL to the list.
+    -   **Why fix this issue and what will be achieved with the fix?** It will restore a key authentication method for users on new preview domains.
+    -   **Status:** BLOCKED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on other issue:** N/A
+
+-   **Issue 3: Expo Mobile App Preview is Not Working**
+    -   **Description:** The React Native/Expo app preview fails because it requires an .
+    -   **Attempted fixes:** This requires user intervention.
+    -   **Next debug checklist:** Remind the user they need to provide their Expo Access Token from .
+    -   **Why fix this issue and what will be achieved with the fix?** Unblocks all native mobile app development.
+    -   **Status:** BLOCKED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend (Mobile)
+    -   **Blocked on other issue:** N/A
+
+-   **Issue 4: Personalized Horoscope on Devotee Home Screen**
+    -   **Description:** The devotee home screen should display a personalized daily horoscope by calling the existing  endpoint.
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:** In , add a  hook within the  to call the endpoint and display the result.
+    -   **Why fix this issue and what will be achieved with the fix?** Implements a requested personalization feature for devotees.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on other issue:** N/A
+
+-   **Issue 5: Sarvam AI TTS Synchronization**
+    -   **Description:** User noted that the TTS audio dosent sync properly but deferred the fix.
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:** Investigate the frontend logic in  that handles playing the TTS audio.
+    -   **Why fix this issue and what will be achieved with the fix?** Improve the user experience of the text-to-speech feature.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on other issue:** N/A
+
+**In progress Task List**:
+-   **Task 1: Priest Dashboard Enhancements**
+    -   **Where to resume:** The agent just overwrote . The next steps are to implement the mobile-responsive UI, photo upload component, and new forms in that file, and then create the supporting backend APIs in .
+    -   **What will be achieved with this?** A mobile-friendly, more powerful dashboard for priests.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on something:** N/A
+
+**Upcoming and Future Tasks**
+**Upcoming Tasks:**
+-   **(P1) Build Out Remaining User Role Dashboards:** Create dashboards for  and  roles.
+-   **(P2) Refactor Frontend Components:** Break down the monolithic  and the new  files into smaller, reusable components.
+-   **(P2) Refactor Backend:** Decompose  into smaller, manageable routers (e.g., , , , etc.) inside a  directory.
+
+**Future Tasks:**
+-   **(P2) Implement Core E-commerce and Booking Features:** Build the shopping cart and product management for Shop Owners.
+-   **(P2) Add Content Features:** Build out the UI and backend for spiritual articles and a temple directory.
+-   **(P3) Prepare for App Store Deployment:** Once the Expo preview is working (Issue #3), use EAS to configure and run builds.
+
+**Completed work in this session**
+-   **Priest Dashboard Built:** A comprehensive dashboard for priests was created from scratch, including profile management, service definitions, availability, class management, content posting, live streaming, review viewing, and earnings reports.
+-   **Google Sign-In Role Bug Fixed:** Resolved a critical bug where new users signing up with Google were defaulted to the 'devotee' role. The flow now prompts the user to select a role during registration.
+-   **Role Visibility Added:** Implemented UI enhancements across all dashboards to clearly display the logged-in user's role in the header/sidebar and show a welcome toast.
+-   **Landing Page Redesigned:** Revamped the landing page to be full-width, added a scrolling image carousel with divine-themed images, and replaced the logo with a temple symbol.
+-   **Admin Role Management Endpoint:** Created a new secure API endpoint for administrators to update user roles.
+
+**Earlier issues found/mentioned but not fixed**
+-   **Issue 1: Sarvam AI TTS Synchronization Issue**
+    -   **Debug checklist:** The user reported a sync issue with the TTS but deferred the fix. This needs to be investigated in  when prioritized.
+    -   **Why to solve this issue and what will be achieved with this?** It will improve the quality and user experience of a core feature.
+    -   **Should Test frontend/backend/both after fix:** Frontend
+    -   **Is recurring issue?** N
+
+**Known issue recurrence from previous fork**
+-   **Issue recurrence in previous fork:** Expo mobile app preview failing.
+-   **Recurrence count:** 6+
+-   **Status:** BLOCKED
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+-   **Tech Stack:** React.js, FastAPI, MongoDB.
+-   **Frontend Libraries:**  and  for the image carousel.
+-   **Third-Party APIs:** Sarvam AI, Internet Archive, drik-panchanga, Prokerala, Google Places, Google Translate, Firebase Auth.
+
+**key DB schema**
+-   **users:** {email, password, role, ...}
+-   **priest_profiles:** {user_id, bio, specializations, location, ...}
+-   **priest_services:** {priest_id, name, description, price, duration}
+-   **priest_portfolio:** {priest_id, media_url, description, type}
+-   **priest_reviews:** {priest_id, devotee_id, rating, comment}
+-   **priest_classes:** {priest_id, title, description, schedule, ...}
+-   **priest_availability:** {priest_id, day, start_time, end_time, type}
+
+**changes in tech stack**
+-   **Frontend:** Added  and  for the landing page image carousel.
+
+**All files of reference**
+-   : The monolithic backend file, heavily modified with numerous new endpoints for the Priest dashboard and admin functions.
+-   : New file created to define and export MongoDB collection objects.
+-   : New, large component containing the entire Priest Dashboard UI and logic.
+-   : Significantly updated for the new design.
+-   : Updated to handle role selection during Google Sign-In.
+-   : Updated UI logic for Google Sign-In with role selection.
+-   : Modified to display the user's role.
+
+**Areas that need refactoring**:
+-   ** is critically unmanageable.** It MUST be broken down into separate router files by feature (e.g., , , ).
+-   **** is now a new monolith. It needs to be decomposed into smaller components for each tab and feature (Profile, Services, Reviews, etc.).
+-   **** remains a large file that needs to be broken down.
+
+**key api endpoints**
+-   : (Admin) Updates a user's role.
+-   : Updates a priest's professional profile.
+-   : Creates a new service offered by a priest.
+-   : Fetches reviews for a priest.
+-   : Adds a media item to a priest's portfolio.
+-   : Fetches earnings data for a priest.
+-   : Modified to accept an optional  for new users.
+
+**Critical Info for New Agent**
+-   **Highest Priority:** The immediate task is to implement the user's latest request: make the Priest Dashboard mobile-friendly, add photo uploads, enhance class scheduling, and add a daily updates feature.
+-   **Refactoring is Urgent:** The backend  and frontend  are extremely large. Refactoring should be proposed as the next high-priority task after the current feature implementation to maintain project health.
+-   **User Blockers:** Remind the user that Google Sign-In may fail on new preview URLs until they authorize the domain in Firebase, and the mobile app is blocked pending their .
+
+**documents and test reports created in this job**
+-    (Note: test report from an intermediate step, not the final state)
+-    (updated)
+
+**Last 10 User Messages and any pending HUMAN messages**
+10. **User:** Asks for Priest Dashboard enhancements: mobile UI, photo upload, advanced scheduling, daily posts. (IN PROGRESS)
+9.  **Agent:** Provides summary of Google Sign-in fix. (COMPLETED)
+8.  **User:** Reports that Google Sign-in with a priest account leads to the devotee screen. (RESOLVED)
+7.  **Agent:** Provides summary of Priest Dashboard enhancements. (COMPLETED)
+6.  **User:** Requests a large number of new features for the Priest Dashboard (profile edit, skills, location, reviews, media posts, panchang, bookings). (COMPLETED)
+5.  **Agent:** Provides summary of landing page redesign. (COMPLETED)
+4.  **User:** Requests landing page changes: make it full-width, add scrolling divine images, change logo to a temple symbol. (COMPLETED)
+3.  **Agent:** Provides login URL and credentials. (COMPLETED)
+2.  **User:** Asks for the login URL. (COMPLETED)
+1.  **Agent:** Provides summary of implementing role visibility in dashboards. (COMPLETED)
+
+**Project Health Check:**
+-   **Broken:**
+    -   Native mobile app preview (requires user to provide ).
+    -   Google Sign-In functionality is dependent on the user authorizing the preview domain in their Firebase console.
+-   **Mocked:**
+    -   Razorpay payment gateway (backend only).
+
+**3rd Party Integrations**
+-   **Firebase Authentication:** Integrated (role selection bug fixed).
+-   **MongoDB Atlas:** Integrated.
+-   **Stripe:** Integrated with test keys.
+-   **Prokerala Astrology API:** Integrated.
+-   **Google Places API:** Integrated.
+-   **Google Translate API:** Integrated.
+-   **Sarvam AI:** Integrated for Text-to-Speech.
+-   **Internet Archive:** Integrated for audio streaming.
+-   **drik-panchanga (Python Library):** Integrated.
+-   **Razorpay:** Partially integrated (backend only).
+-   **react-slick / slick-carousel:** Newly added for frontend image carousel.
+
+**Testing status**
+-   **Testing agent used after significant changes:** YES, but before several major features and bugfixes were added. The latest priest enhancements and Google Sign-in fixes have not been tested by the agent.
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** []
+-   **Known regressions:** None, the Google Sign-In issue was a pre-existing bug that has now been fixed.
+
+**Credentials to test flow:**
+-   **Admin:**  / 
+-   **Priest:**  / 
+-   **Devotee:**  / 
+-   **User's Google Account:**  (role has been manually set to ).
+
+**What agent forgot to execute**
+-   The Personalized Horoscope on Devotee Home Screen task from the original plan has not been started, as user priorities have shifted to the Priest Dashboard.
+-   The Sarvam AI TTS Synchronization issue has not been addressed, as per the user's request to defer it.</analysis>

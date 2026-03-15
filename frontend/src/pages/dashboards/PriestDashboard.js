@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Calendar, Settings, LogOut, ChevronRight, Clock,
@@ -7,7 +7,8 @@ import {
   Trash2, Play, Square, Eye, Heart, CalendarDays, BarChart3,
   Save, X, AlertCircle, Shield, MapPin, Phone, Mail, Camera,
   Image, Upload, MessageSquare, ThumbsUp, Sun, Moon, Sunrise, Sunset,
-  IndianRupee, Filter, Search, ChevronLeft, Award, Briefcase
+  IndianRupee, Filter, Search, ChevronLeft, Award, Briefcase,
+  Menu, Send, Repeat, MessageCircle
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -22,11 +23,15 @@ const ROLE_CONFIG = {
   shop_owner: { label: 'Shop Owner', color: 'bg-green-600', icon: Users },
 };
 
-// Extended Tab Components
-const tabs = [
+// Tab configurations - split into main and more
+const mainTabs = [
   { id: 'home', label: 'Home', icon: Home },
-  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'posts', label: 'Posts', icon: Send },
   { id: 'bookings', label: 'Bookings', icon: Calendar },
+  { id: 'profile', label: 'Profile', icon: User },
+];
+
+const moreTabs = [
   { id: 'services', label: 'Services', icon: Briefcase },
   { id: 'reviews', label: 'Reviews', icon: Star },
   { id: 'portfolio', label: 'Portfolio', icon: Image },
@@ -36,8 +41,7 @@ const tabs = [
   { id: 'streams', label: 'Live', icon: Video },
 ];
 
-// Days of week
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const allTabs = [...mainTabs, ...moreTabs];
 
 // Specialization options
 const SPECIALIZATIONS = [
@@ -50,17 +54,28 @@ const SPECIALIZATIONS = [
 // Languages
 const LANGUAGES = ['Hindi', 'Sanskrit', 'Telugu', 'Tamil', 'Kannada', 'Malayalam', 'Bengali', 'Marathi', 'Gujarati', 'English'];
 
+// Schedule frequency options
+const SCHEDULE_FREQUENCIES = [
+  { value: 'once', label: 'One Time' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'biweekly', label: 'Bi-Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+];
+
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 export default function PriestDashboard() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('home');
   const [loading, setLoading] = useState(true);
   const [welcomeShown, setWelcomeShown] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   // Data states
   const [analytics, setAnalytics] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [availability, setAvailability] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [portfolio, setPortfolio] = useState([]);
   const [services, setServices] = useState([]);
@@ -69,6 +84,7 @@ export default function PriestDashboard() {
   const [earnings, setEarnings] = useState(null);
   const [priestProfile, setPriestProfile] = useState(null);
   const [streams, setStreams] = useState([]);
+  const [posts, setPosts] = useState([]);
 
   // Show welcome toast on first load
   useEffect(() => {
@@ -89,23 +105,23 @@ export default function PriestDashboard() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [analyticsRes, bookingsRes, classesRes, availabilityRes, streamsRes, panchangRes, festivalsRes] = await Promise.all([
+      const [analyticsRes, bookingsRes, classesRes, streamsRes, panchangRes, festivalsRes, postsRes] = await Promise.all([
         api.get('/api/priest/analytics').catch(() => ({ data: null })),
         api.get('/api/priest/bookings').catch(() => ({ data: { bookings: [] } })),
         api.get('/api/priest/classes').catch(() => ({ data: { classes: [] } })),
-        api.get('/api/priest/availability').catch(() => ({ data: null })),
         api.get('/api/priest/streams').catch(() => ({ data: { streams: [] } })),
         api.get('/api/panchang/today').catch(() => ({ data: null })),
         api.get('/api/festivals/upcoming').catch(() => ({ data: { festivals: [] } })),
+        api.get('/api/priest/posts').catch(() => ({ data: { posts: [] } })),
       ]);
 
       setAnalytics(analyticsRes.data);
       setBookings(bookingsRes.data?.bookings || []);
       setClasses(classesRes.data?.classes || []);
-      setAvailability(availabilityRes.data);
       setStreams(streamsRes.data?.streams || []);
       setPanchang(panchangRes.data);
       setFestivals(festivalsRes.data?.festivals || []);
+      setPosts(postsRes.data?.posts || []);
       
       // Fetch priest profile
       try {
@@ -118,47 +134,25 @@ export default function PriestDashboard() {
           experience_years: 5,
           bio: '',
           work_locations: [],
-          service_areas: [],
           base_price: 1100,
           profile_photo: null
         });
       }
 
-      // Fetch reviews
+      // Fetch reviews, portfolio, services, earnings
       try {
-        const reviewsRes = await api.get('/api/priest/reviews');
+        const [reviewsRes, portfolioRes, servicesRes, earningsRes] = await Promise.all([
+          api.get('/api/priest/reviews').catch(() => ({ data: { reviews: [] } })),
+          api.get('/api/priest/portfolio').catch(() => ({ data: { items: [] } })),
+          api.get('/api/priest/services').catch(() => ({ data: { services: [] } })),
+          api.get('/api/priest/earnings').catch(() => ({ data: null })),
+        ]);
         setReviews(reviewsRes.data?.reviews || []);
-      } catch {
-        setReviews([]);
-      }
-
-      // Fetch portfolio
-      try {
-        const portfolioRes = await api.get('/api/priest/portfolio');
         setPortfolio(portfolioRes.data?.items || []);
-      } catch {
-        setPortfolio([]);
-      }
-
-      // Fetch services
-      try {
-        const servicesRes = await api.get('/api/priest/services');
         setServices(servicesRes.data?.services || []);
-      } catch {
-        setServices([]);
-      }
-
-      // Fetch earnings
-      try {
-        const earningsRes = await api.get('/api/priest/earnings');
-        setEarnings(earningsRes.data);
-      } catch {
-        setEarnings({
-          total_earnings: analyticsRes.data?.stats?.total_earnings || 0,
-          monthly_earnings: analyticsRes.data?.stats?.monthly_earnings || 0,
-          pending_payouts: 0,
-          transactions: []
-        });
+        setEarnings(earningsRes.data || { total_earnings: 0, monthly_earnings: 0 });
+      } catch (e) {
+        console.error('Error fetching additional data:', e);
       }
 
     } catch (error) {
@@ -182,7 +176,9 @@ export default function PriestDashboard() {
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <HomeTab analytics={analytics} bookings={bookings} panchang={panchang} festivals={festivals} updateStatus={updateBookingStatus} />;
+        return <HomeTab analytics={analytics} bookings={bookings} panchang={panchang} festivals={festivals} posts={posts} updateStatus={updateBookingStatus} />;
+      case 'posts':
+        return <PostsTab posts={posts} onRefresh={fetchDashboardData} />;
       case 'profile':
         return <ProfileTab profile={priestProfile} user={user} onRefresh={fetchDashboardData} />;
       case 'bookings':
@@ -206,6 +202,11 @@ export default function PriestDashboard() {
     }
   };
 
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setShowMoreMenu(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-cream to-parchment flex items-center justify-center">
@@ -214,57 +215,58 @@ export default function PriestDashboard() {
     );
   }
 
+  const currentTab = allTabs.find(t => t.id === activeTab);
+  const isMoreTab = moreTabs.some(t => t.id === activeTab);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream to-parchment pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-cream to-parchment pb-20 md:pb-6">
       <Toaster position="top-center" richColors />
       
       {/* Header */}
-      <div className="bg-gradient-to-r from-maroon to-maroon-light px-4 pt-8 pb-6">
+      <div className="bg-gradient-to-r from-maroon to-maroon-light px-4 pt-6 pb-4 md:pt-8 md:pb-6">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 md:gap-4">
               {/* Profile Photo */}
-              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
                 {priestProfile?.profile_photo ? (
                   <img src={priestProfile.profile_photo} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-2xl font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>
+                  <span className="text-xl md:text-2xl font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>
                 )}
               </div>
               <div>
-                <p className="text-white/70 text-sm">Namaste,</p>
-                <h1 className="font-cinzel text-xl font-bold text-white">{user?.name || 'Pandit Ji'}</h1>
-                {/* Role Badge */}
-                <div className="mt-1 inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
-                  <Star className="w-3.5 h-3.5 text-gold" />
-                  <span className="text-xs font-medium text-white capitalize">
+                <p className="text-white/70 text-xs md:text-sm">Namaste,</p>
+                <h1 className="font-cinzel text-base md:text-xl font-bold text-white">{user?.name || 'Pandit Ji'}</h1>
+                <div className="mt-1 inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                  <Star className="w-3 h-3 text-gold" />
+                  <span className="text-[10px] md:text-xs font-medium text-white capitalize">
                     {ROLE_CONFIG[user?.role]?.label || 'Priest'}
                   </span>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors relative">
-                <Bell className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-2">
+              <button className="w-9 h-9 md:w-10 md:h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors relative">
+                <Bell className="w-4 h-4 md:w-5 md:h-5 text-white" />
                 {bookings.filter(b => b.status === 'pending').length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-red-500 rounded-full text-[10px] md:text-xs text-white flex items-center justify-center">
                     {bookings.filter(b => b.status === 'pending').length}
                   </span>
                 )}
               </button>
               <button 
                 onClick={logout}
-                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-red-500/50 transition-colors"
-                data-testid="logout-btn"
+                className="w-9 h-9 md:w-10 md:h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-red-500/50 transition-colors"
               >
-                <LogOut className="w-5 h-5 text-white" />
+                <LogOut className="w-4 h-4 md:w-5 md:h-5 text-white" />
               </button>
             </div>
           </div>
 
-          {/* Quick Stats - Only on Home */}
+          {/* Quick Stats - Only on Home, hidden on mobile */}
           {activeTab === 'home' && analytics && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+            <div className="hidden md:grid grid-cols-4 gap-3 mt-4">
               <StatCard icon={IndianRupee} value={`₹${analytics.stats?.monthly_earnings || 0}`} label="This Month" />
               <StatCard icon={Calendar} value={bookings.filter(b => b.status === 'pending').length} label="Pending" highlight />
               <StatCard icon={Users} value={analytics.stats?.total_students || 0} label="Students" />
@@ -274,20 +276,19 @@ export default function PriestDashboard() {
         </div>
       </div>
 
-      {/* Tab Navigation - Scrollable */}
-      <div className="sticky top-0 z-20 bg-white shadow-sm">
+      {/* Desktop Tab Navigation */}
+      <div className="hidden md:block sticky top-0 z-20 bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex gap-1 overflow-x-auto py-2 scrollbar-hide">
-            {tabs.map((tab) => (
+            {allTabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   activeTab === tab.id
                     ? 'bg-saffron text-white shadow-md'
                     : 'text-gray-600 hover:bg-orange-50'
                 }`}
-                data-testid={`tab-${tab.id}`}
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.label}
@@ -297,8 +298,26 @@ export default function PriestDashboard() {
         </div>
       </div>
 
+      {/* Mobile Current Tab Indicator (Breadcrumb) */}
+      <div className="md:hidden sticky top-0 z-20 bg-white shadow-sm px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {currentTab && <currentTab.icon className="w-5 h-5 text-saffron" />}
+            <span className="font-medium text-gray-800">{currentTab?.label || 'Home'}</span>
+          </div>
+          {isMoreTab && (
+            <button 
+              onClick={() => setActiveTab('home')}
+              className="text-saffron text-sm flex items-center gap-1"
+            >
+              <ChevronLeft className="w-4 h-4" /> Back
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 py-4 md:py-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -309,6 +328,61 @@ export default function PriestDashboard() {
           >
             {renderContent()}
           </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
+        <div className="flex items-center justify-around py-2">
+          {mainTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={`flex flex-col items-center gap-1 px-3 py-1 ${
+                activeTab === tab.id ? 'text-saffron' : 'text-gray-500'
+              }`}
+            >
+              <tab.icon className="w-5 h-5" />
+              <span className="text-[10px]">{tab.label}</span>
+            </button>
+          ))}
+          {/* More Menu Button */}
+          <button
+            onClick={() => setShowMoreMenu(!showMoreMenu)}
+            className={`flex flex-col items-center gap-1 px-3 py-1 ${
+              isMoreTab || showMoreMenu ? 'text-saffron' : 'text-gray-500'
+            }`}
+          >
+            <Menu className="w-5 h-5" />
+            <span className="text-[10px]">More</span>
+          </button>
+        </div>
+
+        {/* More Menu Popup */}
+        <AnimatePresence>
+          {showMoreMenu && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg rounded-t-2xl p-4"
+            >
+              <div className="grid grid-cols-4 gap-4">
+                {moreTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-xl ${
+                      activeTab === tab.id ? 'bg-saffron/10 text-saffron' : 'text-gray-600'
+                    }`}
+                  >
+                    <tab.icon className="w-6 h-6" />
+                    <span className="text-xs">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
     </div>
@@ -329,66 +403,104 @@ function StatCard({ icon: Icon, value, label, highlight }) {
 }
 
 // ==================== HOME TAB ====================
-function HomeTab({ analytics, bookings, panchang, festivals, updateStatus }) {
+function HomeTab({ analytics, bookings, panchang, festivals, posts, updateStatus }) {
   const pendingBookings = bookings.filter(b => b.status === 'pending');
   const upcomingBookings = bookings.filter(b => b.status === 'confirmed');
   const todayFestivals = festivals.slice(0, 3);
+  const recentPosts = posts.slice(0, 3);
 
-  // Helper function to safely extract panchang values
   const getPanchangValue = (value, fallback = '') => {
     if (!value) return fallback;
     if (typeof value === 'string') return value;
-    if (typeof value === 'object') {
-      // Handle objects like {name: "Dashami", number: 10}
-      return value.name || value.value || String(value) || fallback;
-    }
+    if (typeof value === 'object') return value.name || value.value || fallback;
     return String(value);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
+      {/* Mobile Stats */}
+      <div className="md:hidden grid grid-cols-4 gap-2">
+        <div className="bg-white rounded-xl p-2 text-center shadow-sm">
+          <p className="text-lg font-bold text-saffron">₹{analytics?.stats?.monthly_earnings || 0}</p>
+          <p className="text-[10px] text-gray-500">Month</p>
+        </div>
+        <div className="bg-orange-50 rounded-xl p-2 text-center shadow-sm">
+          <p className="text-lg font-bold text-orange-600">{pendingBookings.length}</p>
+          <p className="text-[10px] text-gray-500">Pending</p>
+        </div>
+        <div className="bg-white rounded-xl p-2 text-center shadow-sm">
+          <p className="text-lg font-bold text-blue-600">{analytics?.stats?.total_students || 0}</p>
+          <p className="text-[10px] text-gray-500">Students</p>
+        </div>
+        <div className="bg-white rounded-xl p-2 text-center shadow-sm">
+          <p className="text-lg font-bold text-gold">{analytics?.stats?.avg_rating || '4.8'}</p>
+          <p className="text-[10px] text-gray-500">Rating</p>
+        </div>
+      </div>
+
       {/* Today's Panchang Quick View */}
       {panchang && (
-        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl p-4 border border-orange-100">
-          <div className="flex items-center gap-2 mb-3">
-            <Sun className="w-5 h-5 text-saffron" />
-            <h3 className="font-cinzel font-semibold text-maroon">Today's Panchang</h3>
+        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl p-3 md:p-4 border border-orange-100">
+          <div className="flex items-center gap-2 mb-2 md:mb-3">
+            <Sun className="w-4 h-4 md:w-5 md:h-5 text-saffron" />
+            <h3 className="font-cinzel text-sm md:text-base font-semibold text-maroon">Today's Panchang</h3>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+          <div className="grid grid-cols-4 gap-2 md:gap-3 text-xs md:text-sm">
             <div>
-              <p className="text-gray-500">Tithi</p>
+              <p className="text-gray-500 text-[10px] md:text-xs">Tithi</p>
               <p className="font-medium text-gray-800">{getPanchangValue(panchang.tithi, 'Dashami')}</p>
             </div>
             <div>
-              <p className="text-gray-500">Nakshatra</p>
+              <p className="text-gray-500 text-[10px] md:text-xs">Nakshatra</p>
               <p className="font-medium text-gray-800">{getPanchangValue(panchang.nakshatra, 'Rohini')}</p>
             </div>
             <div>
-              <p className="text-gray-500">Sunrise</p>
+              <p className="text-gray-500 text-[10px] md:text-xs">Sunrise</p>
               <p className="font-medium text-gray-800">{getPanchangValue(panchang.sunrise, '6:15 AM')}</p>
             </div>
             <div>
-              <p className="text-gray-500">Sunset</p>
+              <p className="text-gray-500 text-[10px] md:text-xs">Sunset</p>
               <p className="font-medium text-gray-800">{getPanchangValue(panchang.sunset, '6:30 PM')}</p>
             </div>
           </div>
         </div>
       )}
 
+      {/* Recent Posts Preview */}
+      {recentPosts.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm p-4">
+          <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <Send className="w-4 h-4 text-saffron" />
+            Recent Posts
+          </h3>
+          <div className="space-y-2">
+            {recentPosts.map((post) => (
+              <div key={post.id} className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-700 line-clamp-2">{post.content}</p>
+                <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                  <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {post.likes || 0}</span>
+                  <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> {post.comments || 0}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Upcoming Festivals */}
       {todayFestivals.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-lg p-4">
-          <h3 className="font-cinzel font-semibold text-maroon mb-3 flex items-center gap-2">
-            <CalendarDays className="w-5 h-5" />
+        <div className="bg-white rounded-xl shadow-sm p-4">
+          <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-saffron" />
             Upcoming Festivals
           </h3>
-          <div className="flex gap-3 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {todayFestivals.map((fest, i) => (
-              <div key={i} className="flex-shrink-0 bg-gradient-to-br from-saffron to-gold rounded-xl p-3 text-white min-w-[140px]">
+              <div key={i} className="flex-shrink-0 bg-gradient-to-br from-saffron to-gold rounded-xl p-3 text-white min-w-[120px]">
                 <p className="font-semibold text-sm">{fest.name}</p>
                 <p className="text-xs opacity-80">{fest.date}</p>
                 {fest.days_until !== undefined && (
-                  <p className="text-xs mt-1 bg-white/20 rounded px-2 py-0.5 inline-block">
+                  <p className="text-[10px] mt-1 bg-white/20 rounded px-2 py-0.5 inline-block">
                     {fest.days_until === 0 ? 'Today!' : `${fest.days_until} days`}
                   </p>
                 )}
@@ -398,84 +510,214 @@ function HomeTab({ analytics, bookings, panchang, festivals, updateStatus }) {
         </div>
       )}
 
-      {/* Analytics Overview */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h2 className="font-cinzel text-lg font-semibold text-maroon mb-4 flex items-center gap-2">
-          <BarChart3 className="w-5 h-5" />
-          Dashboard Overview
-        </h2>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4">
-            <p className="text-2xl font-bold text-saffron">{analytics?.stats?.total_bookings || 0}</p>
-            <p className="text-sm text-gray-600">Total Bookings</p>
-          </div>
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4">
-            <p className="text-2xl font-bold text-green-600">{analytics?.stats?.completed_bookings || 0}</p>
-            <p className="text-sm text-gray-600">Completed</p>
-          </div>
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
-            <p className="text-2xl font-bold text-blue-600">{analytics?.stats?.total_classes || 0}</p>
-            <p className="text-sm text-gray-600">Classes</p>
-          </div>
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
-            <p className="text-2xl font-bold text-purple-600">{analytics?.stats?.content_count || 0}</p>
-            <p className="text-sm text-gray-600">Content Posts</p>
-          </div>
-        </div>
-
-        {/* Earnings Summary */}
-        <div className="mt-6 p-4 bg-gradient-to-r from-saffron/10 to-gold/10 rounded-xl border border-saffron/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Earnings</p>
-              <p className="text-3xl font-bold text-maroon">₹{analytics?.stats?.total_earnings || 0}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">This Month</p>
-              <p className="text-2xl font-bold text-saffron">₹{analytics?.stats?.monthly_earnings || 0}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Pending Requests */}
       {pendingBookings.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="font-cinzel text-lg font-semibold text-maroon mb-4 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-yellow-500" />
+        <div className="bg-white rounded-xl shadow-sm p-4">
+          <h2 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-yellow-500" />
             Pending Requests ({pendingBookings.length})
           </h2>
           <div className="space-y-3">
             {pendingBookings.slice(0, 3).map((booking) => (
-              <BookingCard key={booking.id} booking={booking} onUpdateStatus={updateStatus} />
+              <BookingCard key={booking.id} booking={booking} onUpdateStatus={updateStatus} compact />
             ))}
           </div>
         </div>
       )}
 
-      {/* Upcoming Bookings */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h2 className="font-cinzel text-lg font-semibold text-maroon mb-4 flex items-center gap-2">
-          <CalendarDays className="w-5 h-5" />
-          Upcoming Bookings ({upcomingBookings.length})
+      {/* Dashboard Overview */}
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+        <h2 className="font-cinzel text-base md:text-lg font-semibold text-maroon mb-4 flex items-center gap-2">
+          <BarChart3 className="w-5 h-5" />
+          Overview
         </h2>
-        {upcomingBookings.length === 0 ? (
-          <p className="text-gray-400 text-center py-8">No upcoming bookings</p>
-        ) : (
-          <div className="space-y-3">
-            {upcomingBookings.slice(0, 5).map((booking) => (
-              <BookingCard key={booking.id} booking={booking} onUpdateStatus={updateStatus} />
-            ))}
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-3 md:p-4">
+            <p className="text-xl md:text-2xl font-bold text-saffron">{analytics?.stats?.total_bookings || 0}</p>
+            <p className="text-xs md:text-sm text-gray-600">Total Bookings</p>
           </div>
-        )}
+          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 md:p-4">
+            <p className="text-xl md:text-2xl font-bold text-green-600">{analytics?.stats?.completed_bookings || 0}</p>
+            <p className="text-xs md:text-sm text-gray-600">Completed</p>
+          </div>
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 md:p-4">
+            <p className="text-xl md:text-2xl font-bold text-blue-600">{analytics?.stats?.total_classes || 0}</p>
+            <p className="text-xs md:text-sm text-gray-600">Classes</p>
+          </div>
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-3 md:p-4">
+            <p className="text-xl md:text-2xl font-bold text-purple-600">{posts?.length || 0}</p>
+            <p className="text-xs md:text-sm text-gray-600">Posts</p>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
+// ==================== POSTS TAB (New Feature) ====================
+function PostsTab({ posts, onRefresh }) {
+  const [showModal, setShowModal] = useState(false);
+  const [newPost, setNewPost] = useState({ content: '', image_url: '' });
+  const [saving, setSaving] = useState(false);
+
+  const createPost = async () => {
+    if (!newPost.content.trim()) {
+      toast.error('Please write something');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post('/api/priest/posts', newPost);
+      toast.success('Post published!');
+      setNewPost({ content: '', image_url: '' });
+      setShowModal(false);
+      onRefresh();
+    } catch (error) {
+      toast.error('Failed to post');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deletePost = async (postId) => {
+    if (!window.confirm('Delete this post?')) return;
+    try {
+      await api.delete(`/api/priest/posts/${postId}`);
+      toast.success('Post deleted');
+      onRefresh();
+    } catch (error) {
+      toast.error('Failed to delete');
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-cinzel text-lg md:text-xl font-semibold text-maroon">Daily Updates</h2>
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm"
+        >
+          <Plus className="w-4 h-4" /> New Post
+        </button>
+      </div>
+
+      <p className="text-sm text-gray-500">
+        Share daily updates, spiritual thoughts, mantras, or announcements with your devotees.
+      </p>
+
+      {posts.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <Send className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-400 mb-4">No posts yet</p>
+          <button onClick={() => setShowModal(true)} className="text-saffron hover:underline">
+            Share your first update
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <div key={post.id} className="bg-white rounded-xl shadow-sm p-4">
+              <div className="flex justify-between items-start mb-3">
+                <p className="text-xs text-gray-400">
+                  {new Date(post.created_at).toLocaleDateString('en-IN', {
+                    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                  })}
+                </p>
+                <button onClick={() => deletePost(post.id)} className="text-gray-400 hover:text-red-500">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <p className="text-gray-700 whitespace-pre-wrap">{post.content}</p>
+              
+              {post.image_url && (
+                <img src={post.image_url} alt="Post" className="mt-3 rounded-lg max-h-60 object-cover" />
+              )}
+              
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+                <span className="flex items-center gap-1 text-sm text-gray-500">
+                  <Heart className="w-4 h-4" /> {post.likes || 0} likes
+                </span>
+                <span className="flex items-center gap-1 text-sm text-gray-500">
+                  <MessageCircle className="w-4 h-4" /> {post.comments || 0} comments
+                </span>
+                <span className="flex items-center gap-1 text-sm text-gray-500">
+                  <Eye className="w-4 h-4" /> {post.views || 0} views
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* New Post Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="bg-white rounded-2xl max-w-lg w-full"
+            >
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="font-cinzel text-lg font-semibold text-maroon">Create Post</h2>
+                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="p-4 space-y-4">
+                <textarea
+                  value={newPost.content}
+                  onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                  placeholder="Share spiritual thoughts, daily mantras, or announcements..."
+                  rows={5}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50 resize-none"
+                />
+                
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Image URL (optional)</label>
+                  <input
+                    type="url"
+                    value={newPost.image_url}
+                    onChange={(e) => setNewPost({ ...newPost, image_url: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                  />
+                </div>
+              </div>
+              
+              <div className="p-4 border-t border-gray-100 flex justify-end gap-3">
+                <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600">
+                  Cancel
+                </button>
+                <button
+                  onClick={createPost}
+                  disabled={saving}
+                  className="px-6 py-2 bg-saffron text-white rounded-xl disabled:opacity-50 flex items-center gap-2"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  Post
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ==================== BOOKING CARD ====================
-function BookingCard({ booking, onUpdateStatus }) {
+function BookingCard({ booking, onUpdateStatus, compact = false }) {
   const statusColors = {
     pending: 'bg-yellow-100 text-yellow-700',
     confirmed: 'bg-blue-100 text-blue-700',
@@ -484,30 +726,20 @@ function BookingCard({ booking, onUpdateStatus }) {
   };
 
   return (
-    <motion.div
-      className="border border-orange-100 rounded-xl p-4"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div className="flex justify-between items-start mb-3">
+    <div className={`border border-orange-100 rounded-xl ${compact ? 'p-3' : 'p-4'}`}>
+      <div className="flex justify-between items-start mb-2">
         <div>
-          <p className="font-semibold text-gray-800">{booking.service_name}</p>
-          <p className="text-sm text-gray-500 flex items-center gap-1">
+          <p className={`font-semibold text-gray-800 ${compact ? 'text-sm' : ''}`}>{booking.service_name}</p>
+          <p className="text-xs text-gray-500 flex items-center gap-1">
             <User className="w-3 h-3" />
             {booking.user_name}
           </p>
           <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
             <Clock className="w-3 h-3" />
             {new Date(booking.booking_date).toLocaleDateString('en-IN', { 
-              weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' 
+              weekday: 'short', day: 'numeric', month: 'short'
             })}
           </div>
-          {booking.location && (
-            <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
-              <MapPin className="w-3 h-3" />
-              {booking.location}
-            </p>
-          )}
           <p className="text-sm font-medium text-saffron mt-1">₹{booking.price}</p>
         </div>
         <span className={`text-xs px-2 py-1 rounded-full ${statusColors[booking.status]}`}>
@@ -516,20 +748,18 @@ function BookingCard({ booking, onUpdateStatus }) {
       </div>
 
       {booking.status === 'pending' && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-2">
           <button
             onClick={() => onUpdateStatus(booking.id, 'confirmed')}
-            className="flex-1 bg-green-500 text-white rounded-lg py-2 text-sm flex items-center justify-center gap-1 hover:bg-green-600 transition-colors"
-            data-testid="accept-booking-btn"
+            className="flex-1 bg-green-500 text-white rounded-lg py-1.5 text-xs flex items-center justify-center gap-1"
           >
-            <CheckCircle className="w-4 h-4" /> Accept
+            <CheckCircle className="w-3 h-3" /> Accept
           </button>
           <button
             onClick={() => onUpdateStatus(booking.id, 'cancelled')}
-            className="flex-1 bg-red-500 text-white rounded-lg py-2 text-sm flex items-center justify-center gap-1 hover:bg-red-600 transition-colors"
-            data-testid="decline-booking-btn"
+            className="flex-1 bg-red-500 text-white rounded-lg py-1.5 text-xs flex items-center justify-center gap-1"
           >
-            <XCircle className="w-4 h-4" /> Decline
+            <XCircle className="w-3 h-3" /> Decline
           </button>
         </div>
       )}
@@ -537,20 +767,21 @@ function BookingCard({ booking, onUpdateStatus }) {
       {booking.status === 'confirmed' && (
         <button
           onClick={() => onUpdateStatus(booking.id, 'completed')}
-          className="w-full bg-saffron text-white rounded-lg py-2 text-sm hover:bg-saffron-dark transition-colors"
-          data-testid="complete-booking-btn"
+          className="w-full bg-saffron text-white rounded-lg py-1.5 text-xs mt-2"
         >
-          Mark as Completed
+          Mark Completed
         </button>
       )}
-    </motion.div>
+    </div>
   );
 }
 
-// ==================== PROFILE TAB ====================
+// ==================== PROFILE TAB with Photo Upload ====================
 function ProfileTab({ profile, user, onRefresh }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     bio: profile?.bio || '',
     experience_years: profile?.experience_years || 5,
@@ -558,15 +789,34 @@ function ProfileTab({ profile, user, onRefresh }) {
     languages: profile?.languages || ['Hindi', 'Sanskrit'],
     base_price: profile?.base_price || 1100,
     work_locations: profile?.work_locations || [],
-    service_areas: profile?.service_areas || [],
     phone: user?.phone || '',
     email: user?.email || '',
-    address: profile?.address || '',
-    city: profile?.city || '',
-    state: profile?.state || '',
-    pincode: profile?.pincode || ''
+    profile_photo: profile?.profile_photo || ''
   });
   const [newLocation, setNewLocation] = useState('');
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // For now, we'll use a URL-based approach
+    // In production, you'd upload to cloud storage
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      setUploading(true);
+      try {
+        // Store as base64 or upload to server
+        const base64 = reader.result;
+        setFormData({ ...formData, profile_photo: base64 });
+        toast.success('Photo updated! Click Save to apply.');
+      } catch (error) {
+        toast.error('Failed to upload photo');
+      } finally {
+        setUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const toggleSpecialization = (spec) => {
     if (formData.specializations.includes(spec)) {
@@ -591,15 +841,11 @@ function ProfileTab({ profile, user, onRefresh }) {
     }
   };
 
-  const removeWorkLocation = (loc) => {
-    setFormData({ ...formData, work_locations: formData.work_locations.filter(l => l !== loc) });
-  };
-
   const handleSave = async () => {
     setSaving(true);
     try {
       await api.put('/api/priest/profile', formData);
-      toast.success('Profile updated successfully!');
+      toast.success('Profile updated!');
       setEditing(false);
       onRefresh();
     } catch (error) {
@@ -610,31 +856,22 @@ function ProfileTab({ profile, user, onRefresh }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-cinzel text-xl font-semibold text-maroon">My Profile</h2>
+        <h2 className="font-cinzel text-lg md:text-xl font-semibold text-maroon">My Profile</h2>
         {!editing ? (
           <button
             onClick={() => setEditing(true)}
-            className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg hover:bg-saffron-dark transition-colors"
-            data-testid="edit-profile-btn"
+            className="flex items-center gap-2 bg-saffron text-white px-3 md:px-4 py-2 rounded-lg text-sm"
           >
-            <Edit className="w-4 h-4" /> Edit Profile
+            <Edit className="w-4 h-4" /> Edit
           </button>
         ) : (
           <div className="flex gap-2">
-            <button
-              onClick={() => setEditing(false)}
-              className="flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg"
-            >
-              <X className="w-4 h-4" /> Cancel
+            <button onClick={() => setEditing(false)} className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm">
+              Cancel
             </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-              data-testid="save-profile-btn"
-            >
+            <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm disabled:opacity-50 flex items-center gap-2">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save
             </button>
@@ -643,58 +880,74 @@ function ProfileTab({ profile, user, onRefresh }) {
       </div>
 
       {/* Profile Photo Section */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <div className="flex items-center gap-6">
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-6">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-saffron to-gold flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-              {profile?.profile_photo ? (
-                <img src={profile.profile_photo} alt="Profile" className="w-full h-full object-cover" />
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-saffron to-gold flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+              {formData.profile_photo ? (
+                <img src={formData.profile_photo} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-3xl font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>
+                <span className="text-3xl md:text-4xl font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>
               )}
             </div>
             {editing && (
-              <button className="absolute bottom-0 right-0 w-8 h-8 bg-saffron rounded-full flex items-center justify-center text-white shadow-md">
-                <Camera className="w-4 h-4" />
-              </button>
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="absolute bottom-0 right-0 w-8 h-8 md:w-9 md:h-9 bg-saffron rounded-full flex items-center justify-center text-white shadow-md hover:bg-saffron-dark"
+                >
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                </button>
+              </>
             )}
           </div>
-          <div>
-            <h3 className="font-cinzel text-xl font-bold text-maroon">{user?.name}</h3>
-            <div className="flex items-center gap-2 mt-1">
+          <div className="text-center sm:text-left">
+            <h3 className="font-cinzel text-lg md:text-xl font-bold text-maroon">{user?.name}</h3>
+            <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
               <Star className="w-4 h-4 text-gold fill-gold" />
               <span className="text-sm text-gray-600">4.8 rating</span>
               <span className="text-gray-400">•</span>
-              <span className="text-sm text-gray-600">{formData.experience_years} years experience</span>
+              <span className="text-sm text-gray-600">{formData.experience_years} years exp.</span>
             </div>
             {profile?.is_verified && (
-              <div className="flex items-center gap-1 mt-2 text-green-600">
+              <div className="flex items-center justify-center sm:justify-start gap-1 mt-2 text-green-600">
                 <Award className="w-4 h-4" />
                 <span className="text-sm font-medium">Verified Priest</span>
               </div>
+            )}
+            {editing && (
+              <p className="text-xs text-gray-400 mt-2">Click camera to upload photo</p>
             )}
           </div>
         </div>
       </div>
 
       {/* Bio */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
         <h3 className="font-semibold text-gray-800 mb-3">About Me</h3>
         {editing ? (
           <textarea
             value={formData.bio}
             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-            placeholder="Write a brief introduction about yourself, your experience, and what makes you unique..."
+            placeholder="Write about yourself..."
             rows={4}
             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
           />
         ) : (
-          <p className="text-gray-600">{formData.bio || 'No bio added yet. Click Edit to add your introduction.'}</p>
+          <p className="text-gray-600 text-sm md:text-base">{formData.bio || 'No bio added yet.'}</p>
         )}
       </div>
 
       {/* Specializations */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
         <h3 className="font-semibold text-gray-800 mb-3">Specializations</h3>
         <div className="flex flex-wrap gap-2">
           {SPECIALIZATIONS.map((spec) => (
@@ -702,12 +955,10 @@ function ProfileTab({ profile, user, onRefresh }) {
               key={spec}
               onClick={() => editing && toggleSpecialization(spec)}
               disabled={!editing}
-              className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs md:text-sm transition-colors ${
                 formData.specializations.includes(spec)
                   ? 'bg-saffron text-white'
-                  : editing
-                    ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    : 'bg-gray-100 text-gray-400'
+                  : editing ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-gray-100 text-gray-400'
               }`}
             >
               {spec}
@@ -717,7 +968,7 @@ function ProfileTab({ profile, user, onRefresh }) {
       </div>
 
       {/* Languages */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
         <h3 className="font-semibold text-gray-800 mb-3">Languages</h3>
         <div className="flex flex-wrap gap-2">
           {LANGUAGES.map((lang) => (
@@ -725,12 +976,10 @@ function ProfileTab({ profile, user, onRefresh }) {
               key={lang}
               onClick={() => editing && toggleLanguage(lang)}
               disabled={!editing}
-              className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs md:text-sm transition-colors ${
                 formData.languages.includes(lang)
                   ? 'bg-blue-500 text-white'
-                  : editing
-                    ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    : 'bg-gray-100 text-gray-400'
+                  : editing ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-gray-100 text-gray-400'
               }`}
             >
               {lang}
@@ -740,12 +989,12 @@ function ProfileTab({ profile, user, onRefresh }) {
       </div>
 
       {/* Work Locations */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+        <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
           <MapPin className="w-5 h-5 text-saffron" />
           Work Locations
         </h3>
-        <p className="text-sm text-gray-500 mb-3">Areas where you can provide services</p>
+        <p className="text-xs text-gray-500 mb-3">Areas where you can provide services</p>
         
         {editing && (
           <div className="flex gap-2 mb-3">
@@ -753,30 +1002,27 @@ function ProfileTab({ profile, user, onRefresh }) {
               type="text"
               value={newLocation}
               onChange={(e) => setNewLocation(e.target.value)}
-              placeholder="Add a city or area (e.g., Mumbai, Andheri)"
-              className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron/50"
+              placeholder="Add city or area"
+              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
               onKeyPress={(e) => e.key === 'Enter' && addWorkLocation()}
             />
-            <button
-              onClick={addWorkLocation}
-              className="px-4 py-2 bg-saffron text-white rounded-lg hover:bg-saffron-dark"
-            >
-              <Plus className="w-5 h-5" />
+            <button onClick={addWorkLocation} className="px-3 py-2 bg-saffron text-white rounded-lg">
+              <Plus className="w-4 h-4" />
             </button>
           </div>
         )}
 
         <div className="flex flex-wrap gap-2">
           {formData.work_locations.length === 0 ? (
-            <p className="text-gray-400 text-sm">No work locations added</p>
+            <p className="text-gray-400 text-sm">No locations added</p>
           ) : (
             formData.work_locations.map((loc, i) => (
-              <div key={i} className="flex items-center gap-1 bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full">
+              <div key={i} className="flex items-center gap-1 bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full text-sm">
                 <MapPin className="w-3 h-3" />
-                <span className="text-sm">{loc}</span>
+                {loc}
                 {editing && (
-                  <button onClick={() => removeWorkLocation(loc)} className="ml-1 hover:text-red-500">
-                    <X className="w-3 h-3" />
+                  <button onClick={() => setFormData({ ...formData, work_locations: formData.work_locations.filter(l => l !== loc) })}>
+                    <X className="w-3 h-3 ml-1 hover:text-red-500" />
                   </button>
                 )}
               </div>
@@ -786,65 +1032,31 @@ function ProfileTab({ profile, user, onRefresh }) {
       </div>
 
       {/* Contact & Pricing */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
         <h3 className="font-semibold text-gray-800 mb-4">Contact & Pricing</h3>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Phone</label>
+            <label className="block text-xs text-gray-500 mb-1">Phone</label>
             {editing ? (
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron/50"
-              />
+              <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
             ) : (
-              <p className="flex items-center gap-2 text-gray-800">
-                <Phone className="w-4 h-4 text-gray-400" />
-                {formData.phone || 'Not provided'}
-              </p>
+              <p className="text-sm text-gray-800">{formData.phone || 'Not provided'}</p>
             )}
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Email</label>
+            <label className="block text-xs text-gray-500 mb-1">Experience</label>
             {editing ? (
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron/50"
-              />
+              <input type="number" value={formData.experience_years} onChange={(e) => setFormData({ ...formData, experience_years: parseInt(e.target.value) })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
             ) : (
-              <p className="flex items-center gap-2 text-gray-800">
-                <Mail className="w-4 h-4 text-gray-400" />
-                {formData.email || 'Not provided'}
-              </p>
+              <p className="text-sm text-gray-800">{formData.experience_years} years</p>
             )}
           </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Experience (Years)</label>
+          <div className="col-span-2">
+            <label className="block text-xs text-gray-500 mb-1">Base Price (₹)</label>
             {editing ? (
-              <input
-                type="number"
-                value={formData.experience_years}
-                onChange={(e) => setFormData({ ...formData, experience_years: parseInt(e.target.value) })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron/50"
-              />
+              <input type="number" value={formData.base_price} onChange={(e) => setFormData({ ...formData, base_price: parseInt(e.target.value) })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
             ) : (
-              <p className="text-gray-800">{formData.experience_years} years</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Base Price (₹)</label>
-            {editing ? (
-              <input
-                type="number"
-                value={formData.base_price}
-                onChange={(e) => setFormData({ ...formData, base_price: parseInt(e.target.value) })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron/50"
-              />
-            ) : (
-              <p className="text-saffron font-bold text-lg">₹{formData.base_price}</p>
+              <p className="text-lg font-bold text-saffron">₹{formData.base_price}</p>
             )}
           </div>
         </div>
@@ -856,428 +1068,44 @@ function ProfileTab({ profile, user, onRefresh }) {
 // ==================== BOOKINGS TAB ====================
 function BookingsTab({ bookings, updateStatus }) {
   const [filter, setFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredBookings = bookings.filter(b => {
-    const matchesFilter = filter === 'all' || b.status === filter;
-    const matchesSearch = b.service_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         b.user_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
-
+  const filteredBookings = bookings.filter(b => filter === 'all' || b.status === filter);
   const stats = {
     all: bookings.length,
     pending: bookings.filter(b => b.status === 'pending').length,
     confirmed: bookings.filter(b => b.status === 'confirmed').length,
     completed: bookings.filter(b => b.status === 'completed').length,
-    cancelled: bookings.filter(b => b.status === 'cancelled').length,
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="font-cinzel text-xl font-semibold text-maroon">All Bookings</h2>
+    <div className="space-y-4">
+      <h2 className="font-cinzel text-lg md:text-xl font-semibold text-maroon">Bookings</h2>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-lg p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search bookings..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron/50"
-            />
-          </div>
-          <div className="flex gap-2 overflow-x-auto">
-            {Object.entries(stats).map(([status, count]) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                  filter === status
-                    ? 'bg-saffron text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)} ({count})
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* Filter Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        {Object.entries(stats).map(([status, count]) => (
+          <button
+            key={status}
+            onClick={() => setFilter(status)}
+            className={`px-3 py-1.5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap ${
+              filter === status ? 'bg-saffron text-white' : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            {status.charAt(0).toUpperCase() + status.slice(1)} ({count})
+          </button>
+        ))}
       </div>
 
-      {/* Bookings List */}
-      <div className="space-y-4">
-        {filteredBookings.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-400">No bookings found</p>
-          </div>
-        ) : (
-          filteredBookings.map((booking) => (
-            <div key={booking.id} className="bg-white rounded-2xl shadow-lg p-6">
+      {filteredBookings.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-400">No bookings found</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredBookings.map((booking) => (
+            <div key={booking.id} className="bg-white rounded-xl shadow-sm p-4">
               <BookingCard booking={booking} onUpdateStatus={updateStatus} />
-              
-              {/* Additional booking details */}
-              {booking.notes && (
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-sm text-gray-500">Notes:</p>
-                  <p className="text-sm text-gray-700">{booking.notes}</p>
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ==================== SERVICES TAB ====================
-function ServicesTab({ services, onRefresh }) {
-  const [showModal, setShowModal] = useState(false);
-  const [editingService, setEditingService] = useState(null);
-
-  const deleteService = async (serviceId) => {
-    if (!window.confirm('Are you sure you want to delete this service?')) return;
-    try {
-      await api.delete(`/api/priest/services/${serviceId}`);
-      toast.success('Service deleted');
-      onRefresh();
-    } catch (error) {
-      toast.error('Failed to delete service');
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="font-cinzel text-xl font-semibold text-maroon">My Services</h2>
-        <button
-          onClick={() => { setEditingService(null); setShowModal(true); }}
-          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg hover:bg-saffron-dark transition-colors"
-          data-testid="add-service-btn"
-        >
-          <Plus className="w-4 h-4" /> Add Service
-        </button>
-      </div>
-
-      {services.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-          <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-400 mb-4">No services added yet</p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="text-saffron hover:underline"
-          >
-            Add your first service
-          </button>
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-4">
-          {services.map((service) => (
-            <div key={service.id} className="bg-white rounded-xl shadow-lg p-5 border-l-4 border-saffron">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-800">{service.name}</h3>
-                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                    {service.category}
-                  </span>
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => { setEditingService(service); setShowModal(true); }}
-                    className="p-2 hover:bg-gray-100 rounded-lg"
-                  >
-                    <Edit className="w-4 h-4 text-gray-500" />
-                  </button>
-                  <button
-                    onClick={() => deleteService(service.id)}
-                    className="p-2 hover:bg-red-50 rounded-lg"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
-                </div>
-              </div>
-              
-              <p className="text-sm text-gray-500 mb-3">{service.description}</p>
-              
-              <div className="flex flex-wrap gap-3 text-sm">
-                <span className="flex items-center gap-1 text-gray-600">
-                  <Clock className="w-4 h-4" />
-                  {service.duration_minutes} min
-                </span>
-                <span className="flex items-center gap-1 text-saffron font-bold">
-                  <IndianRupee className="w-4 h-4" />
-                  ₹{service.price}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Service Modal */}
-      <ServiceModal
-        isOpen={showModal}
-        onClose={() => { setShowModal(false); setEditingService(null); }}
-        editData={editingService}
-        onSuccess={onRefresh}
-      />
-    </div>
-  );
-}
-
-// ==================== SERVICE MODAL ====================
-function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    category: 'Pooja',
-    duration_minutes: 60,
-    price: 1100,
-    is_available: true
-  });
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (editData) {
-      setForm(editData);
-    } else {
-      setForm({
-        name: '',
-        description: '',
-        category: 'Pooja',
-        duration_minutes: 60,
-        price: 1100,
-        is_available: true
-      });
-    }
-  }, [editData, isOpen]);
-
-  const handleSubmit = async () => {
-    if (!form.name) {
-      toast.error('Please enter service name');
-      return;
-    }
-    
-    setSaving(true);
-    try {
-      if (editData) {
-        await api.put(`/api/priest/services/${editData.id}`, form);
-        toast.success('Service updated!');
-      } else {
-        await api.post('/api/priest/services', form);
-        toast.success('Service added!');
-      }
-      onSuccess();
-      onClose();
-    } catch (error) {
-      toast.error('Failed to save service');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
-      >
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <h2 className="font-cinzel text-xl font-semibold text-maroon">
-              {editData ? 'Edit Service' : 'Add New Service'}
-            </h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Service Name*</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g., Satyanarayan Pooja"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Describe what's included..."
-              rows={3}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <select
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
-              >
-                <option value="Pooja">Pooja</option>
-                <option value="Homam">Homam/Havan</option>
-                <option value="Ceremony">Ceremony</option>
-                <option value="Consultation">Consultation</option>
-                <option value="Online">Online Service</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
-              <input
-                type="number"
-                value={form.duration_minutes}
-                onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
-            <input
-              type="number"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
-            />
-          </div>
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={form.is_available}
-              onChange={(e) => setForm({ ...form, is_available: e.target.checked })}
-              className="w-4 h-4 text-saffron"
-            />
-            <span className="text-sm text-gray-600">Available for booking</span>
-          </label>
-        </div>
-
-        <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-xl">
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="px-6 py-2 bg-saffron text-white rounded-xl hover:bg-saffron-dark disabled:opacity-50 flex items-center gap-2"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {editData ? 'Update' : 'Add Service'}
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// ==================== REVIEWS TAB ====================
-function ReviewsTab({ reviews }) {
-  const avgRating = reviews.length > 0 
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-    : '0.0';
-
-  const ratingCounts = [5, 4, 3, 2, 1].map(stars => ({
-    stars,
-    count: reviews.filter(r => r.rating === stars).length,
-    percentage: reviews.length > 0 
-      ? ((reviews.filter(r => r.rating === stars).length / reviews.length) * 100).toFixed(0)
-      : 0
-  }));
-
-  return (
-    <div className="space-y-6">
-      <h2 className="font-cinzel text-xl font-semibold text-maroon">Reviews & Ratings</h2>
-
-      {/* Rating Summary */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="text-center">
-            <p className="text-5xl font-bold text-maroon">{avgRating}</p>
-            <div className="flex items-center justify-center gap-1 my-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={`w-6 h-6 ${star <= Math.round(parseFloat(avgRating)) ? 'text-gold fill-gold' : 'text-gray-300'}`}
-                />
-              ))}
-            </div>
-            <p className="text-gray-500">Based on {reviews.length} reviews</p>
-          </div>
-
-          <div className="space-y-2">
-            {ratingCounts.map(({ stars, count, percentage }) => (
-              <div key={stars} className="flex items-center gap-3">
-                <span className="text-sm w-8">{stars} ★</span>
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-gold h-2 rounded-full transition-all"
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-                <span className="text-sm text-gray-500 w-8">{count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Reviews List */}
-      {reviews.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-          <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-400">No reviews yet</p>
-          <p className="text-sm text-gray-400 mt-2">Reviews will appear here once devotees rate your services</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {reviews.map((review) => (
-            <div key={review.id} className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white font-bold">
-                  {review.user_name?.charAt(0) || 'U'}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <p className="font-semibold text-gray-800">{review.user_name}</p>
-                      <p className="text-xs text-gray-400">{review.service_name}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-4 h-4 ${star <= review.rating ? 'text-gold fill-gold' : 'text-gray-300'}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-gray-600 text-sm">{review.comment}</p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {new Date(review.created_at).toLocaleDateString('en-IN', {
-                      day: 'numeric', month: 'short', year: 'numeric'
-                    })}
-                  </p>
-                </div>
-              </div>
             </div>
           ))}
         </div>
@@ -1286,396 +1114,7 @@ function ReviewsTab({ reviews }) {
   );
 }
 
-// ==================== PORTFOLIO TAB ====================
-function PortfolioTab({ portfolio, onRefresh }) {
-  const [showModal, setShowModal] = useState(false);
-
-  const deleteItem = async (itemId) => {
-    if (!window.confirm('Delete this portfolio item?')) return;
-    try {
-      await api.delete(`/api/priest/portfolio/${itemId}`);
-      toast.success('Item deleted');
-      onRefresh();
-    } catch (error) {
-      toast.error('Failed to delete item');
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="font-cinzel text-xl font-semibold text-maroon">Portfolio</h2>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg hover:bg-saffron-dark"
-          data-testid="add-portfolio-btn"
-        >
-          <Upload className="w-4 h-4" /> Add Media
-        </button>
-      </div>
-
-      <p className="text-sm text-gray-500">
-        Showcase your work - photos and videos of ceremonies, poojas, and events you've conducted.
-      </p>
-
-      {portfolio.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-          <Image className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-400 mb-4">No portfolio items yet</p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="text-saffron hover:underline"
-          >
-            Add your first photo or video
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {portfolio.map((item) => (
-            <div key={item.id} className="relative group">
-              <div className="aspect-square rounded-xl overflow-hidden bg-gray-100">
-                {item.type === 'video' ? (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                    <Play className="w-12 h-12 text-white" />
-                  </div>
-                ) : (
-                  <img
-                    src={item.url}
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-2">
-                <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                  <Eye className="w-5 h-5 text-gray-700" />
-                </button>
-                <button
-                  onClick={() => deleteItem(item.id)}
-                  className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center"
-                >
-                  <Trash2 className="w-5 h-5 text-white" />
-                </button>
-              </div>
-              {item.title && (
-                <p className="text-sm text-gray-600 mt-2 truncate">{item.title}</p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Portfolio Modal */}
-      <PortfolioModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSuccess={onRefresh}
-      />
-    </div>
-  );
-}
-
-// ==================== PORTFOLIO MODAL ====================
-function PortfolioModal({ isOpen, onClose, onSuccess }) {
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    type: 'image',
-    url: ''
-  });
-  const [saving, setSaving] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!form.url) {
-      toast.error('Please enter media URL');
-      return;
-    }
-    
-    setSaving(true);
-    try {
-      await api.post('/api/priest/portfolio', form);
-      toast.success('Portfolio item added!');
-      onSuccess();
-      onClose();
-      setForm({ title: '', description: '', type: 'image', url: '' });
-    } catch (error) {
-      toast.error('Failed to add item');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl max-w-lg w-full"
-      >
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <h2 className="font-cinzel text-xl font-semibold text-maroon">Add Portfolio Item</h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="e.g., Griha Pravesh Ceremony"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={form.type === 'image'}
-                  onChange={() => setForm({ ...form, type: 'image' })}
-                  className="text-saffron"
-                />
-                <span className="text-sm">Image</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={form.type === 'video'}
-                  onChange={() => setForm({ ...form, type: 'video' })}
-                  className="text-saffron"
-                />
-                <span className="text-sm">Video</span>
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {form.type === 'image' ? 'Image URL' : 'Video URL (YouTube/Vimeo)'}
-            </label>
-            <input
-              type="url"
-              value={form.url}
-              onChange={(e) => setForm({ ...form, url: e.target.value })}
-              placeholder="https://..."
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Brief description..."
-              rows={2}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
-            />
-          </div>
-        </div>
-
-        <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-xl">
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="px-6 py-2 bg-saffron text-white rounded-xl hover:bg-saffron-dark disabled:opacity-50 flex items-center gap-2"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            Add
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// ==================== PANCHANG TAB ====================
-function PanchangTab({ panchang, festivals }) {
-  // Helper function to safely extract panchang values
-  const getPanchangValue = (value, fallback = '') => {
-    if (!value) return fallback;
-    if (typeof value === 'string') return value;
-    if (typeof value === 'object') {
-      return value.name || value.value || String(value) || fallback;
-    }
-    return String(value);
-  };
-
-  return (
-    <div className="space-y-6">
-      <h2 className="font-cinzel text-xl font-semibold text-maroon">Panchang & Calendar</h2>
-
-      {/* Today's Panchang */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h3 className="font-cinzel text-lg font-semibold text-maroon mb-4 flex items-center gap-2">
-          <Sun className="w-5 h-5 text-saffron" />
-          Today's Panchang
-        </h3>
-        
-        {panchang ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-orange-50 rounded-xl p-4">
-              <p className="text-xs text-gray-500 uppercase">Tithi</p>
-              <p className="font-semibold text-gray-800">{getPanchangValue(panchang.tithi, 'Loading...')}</p>
-            </div>
-            <div className="bg-yellow-50 rounded-xl p-4">
-              <p className="text-xs text-gray-500 uppercase">Nakshatra</p>
-              <p className="font-semibold text-gray-800">{getPanchangValue(panchang.nakshatra, 'Loading...')}</p>
-            </div>
-            <div className="bg-green-50 rounded-xl p-4">
-              <p className="text-xs text-gray-500 uppercase">Yoga</p>
-              <p className="font-semibold text-gray-800">{getPanchangValue(panchang.yoga, 'Siddhi')}</p>
-            </div>
-            <div className="bg-blue-50 rounded-xl p-4">
-              <p className="text-xs text-gray-500 uppercase">Karana</p>
-              <p className="font-semibold text-gray-800">{getPanchangValue(panchang.karana, 'Bava')}</p>
-            </div>
-            <div className="bg-purple-50 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Sunrise className="w-4 h-4 text-orange-500" />
-                <p className="text-xs text-gray-500 uppercase">Sunrise</p>
-              </div>
-              <p className="font-semibold text-gray-800">{getPanchangValue(panchang.sunrise, '6:15 AM')}</p>
-            </div>
-            <div className="bg-indigo-50 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Sunset className="w-4 h-4 text-orange-600" />
-                <p className="text-xs text-gray-500 uppercase">Sunset</p>
-              </div>
-              <p className="font-semibold text-gray-800">{getPanchangValue(panchang.sunset, '6:30 PM')}</p>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <Loader2 className="w-8 h-8 text-saffron animate-spin mx-auto" />
-            <p className="text-gray-400 mt-2">Loading panchang...</p>
-          </div>
-        )}
-      </div>
-
-      {/* Upcoming Festivals */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h3 className="font-cinzel text-lg font-semibold text-maroon mb-4 flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-saffron" />
-          Upcoming Festivals
-        </h3>
-        
-        {festivals.length === 0 ? (
-          <p className="text-gray-400 text-center py-8">No upcoming festivals data</p>
-        ) : (
-          <div className="space-y-3">
-            {festivals.slice(0, 10).map((festival, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-saffron to-gold rounded-xl flex items-center justify-center text-white font-bold">
-                    {festival.name?.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-800">{festival.name}</p>
-                    <p className="text-sm text-gray-500">{festival.date}</p>
-                  </div>
-                </div>
-                {festival.days_until !== undefined && (
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    festival.days_until === 0 
-                      ? 'bg-green-100 text-green-700' 
-                      : festival.days_until <= 7 
-                        ? 'bg-orange-100 text-orange-700'
-                        : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {festival.days_until === 0 ? 'Today!' : `${festival.days_until} days`}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ==================== EARNINGS TAB ====================
-function EarningsTab({ earnings, analytics }) {
-  const transactions = earnings?.transactions || [];
-
-  return (
-    <div className="space-y-6">
-      <h2 className="font-cinzel text-xl font-semibold text-maroon">Earnings & Payouts</h2>
-
-      {/* Earnings Summary */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white">
-          <p className="text-sm opacity-80">Total Earnings</p>
-          <p className="text-3xl font-bold mt-1">₹{earnings?.total_earnings || analytics?.stats?.total_earnings || 0}</p>
-        </div>
-        <div className="bg-gradient-to-br from-saffron to-orange-500 rounded-2xl p-6 text-white">
-          <p className="text-sm opacity-80">This Month</p>
-          <p className="text-3xl font-bold mt-1">₹{earnings?.monthly_earnings || analytics?.stats?.monthly_earnings || 0}</p>
-        </div>
-        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white">
-          <p className="text-sm opacity-80">Pending Payout</p>
-          <p className="text-3xl font-bold mt-1">₹{earnings?.pending_payouts || 0}</p>
-        </div>
-      </div>
-
-      {/* Recent Transactions */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h3 className="font-semibold text-gray-800 mb-4">Recent Transactions</h3>
-        
-        {transactions.length === 0 ? (
-          <div className="text-center py-8">
-            <IndianRupee className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-400">No transactions yet</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {transactions.map((txn, i) => (
-              <div key={i} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    txn.type === 'credit' ? 'bg-green-100' : 'bg-red-100'
-                  }`}>
-                    {txn.type === 'credit' ? (
-                      <TrendingUp className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <IndianRupee className="w-5 h-5 text-red-600" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800">{txn.description}</p>
-                    <p className="text-xs text-gray-400">{txn.date}</p>
-                  </div>
-                </div>
-                <p className={`font-bold ${txn.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
-                  {txn.type === 'credit' ? '+' : '-'}₹{txn.amount}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ==================== CLASSES TAB ====================
+// ==================== CLASSES TAB with Schedule Options ====================
 function ClassesTab({ classes, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
@@ -1687,67 +1126,67 @@ function ClassesTab({ classes, onRefresh }) {
       toast.success('Class deleted');
       onRefresh();
     } catch (error) {
-      toast.error('Failed to delete class');
+      toast.error('Failed to delete');
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-cinzel text-xl font-semibold text-maroon">My Classes</h2>
+        <h2 className="font-cinzel text-lg md:text-xl font-semibold text-maroon">Classes</h2>
         <button
           onClick={() => { setEditingClass(null); setShowModal(true); }}
-          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg hover:bg-saffron-dark"
-          data-testid="add-class-btn"
+          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm"
         >
           <Plus className="w-4 h-4" /> Add Class
         </button>
       </div>
 
       {classes.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-          <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-400 mb-4">No classes created yet</p>
-          <button onClick={() => setShowModal(true)} className="text-saffron hover:underline">
-            Create your first class
-          </button>
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-400">No classes yet</p>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {classes.map((cls) => (
-            <div key={cls.id} className="bg-white rounded-xl shadow-lg p-5 border-l-4 border-saffron">
-              <div className="flex justify-between items-start mb-3">
+            <div key={cls.id} className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-saffron">
+              <div className="flex justify-between items-start mb-2">
                 <div>
                   <h3 className="font-semibold text-gray-800">{cls.title}</h3>
-                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                    {cls.category}
-                  </span>
+                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{cls.category}</span>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => { setEditingClass(cls); setShowModal(true); }} className="p-2 hover:bg-gray-100 rounded-lg">
+                  <button onClick={() => { setEditingClass(cls); setShowModal(true); }} className="p-1.5 hover:bg-gray-100 rounded">
                     <Edit className="w-4 h-4 text-gray-500" />
                   </button>
-                  <button onClick={() => deleteClass(cls.id)} className="p-2 hover:bg-red-50 rounded-lg">
+                  <button onClick={() => deleteClass(cls.id)} className="p-1.5 hover:bg-red-50 rounded">
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </button>
                 </div>
               </div>
               
-              <p className="text-sm text-gray-500 mb-3 line-clamp-2">{cls.description}</p>
+              <p className="text-sm text-gray-500 mb-2 line-clamp-2">{cls.description}</p>
               
-              <div className="flex flex-wrap gap-3 text-sm">
+              <div className="flex flex-wrap gap-2 text-xs md:text-sm">
                 <span className="flex items-center gap-1 text-gray-600">
-                  <Clock className="w-4 h-4" />
-                  {cls.duration_minutes} min
+                  <Clock className="w-3 h-3" /> {cls.duration_minutes} min
                 </span>
                 <span className="flex items-center gap-1 text-gray-600">
-                  <Users className="w-4 h-4" />
-                  {cls.enrolled_count || 0}/{cls.max_students}
+                  <Users className="w-3 h-3" /> {cls.enrolled_count || 0}/{cls.max_students}
                 </span>
-                <span className="flex items-center gap-1 text-saffron font-medium">
-                  ₹{cls.price}
-                </span>
+                <span className="flex items-center gap-1 text-saffron font-medium">₹{cls.price}</span>
               </div>
+              
+              {cls.frequency && cls.frequency !== 'once' && (
+                <div className="mt-2 flex items-center gap-1 text-xs text-blue-600">
+                  <Repeat className="w-3 h-3" />
+                  {cls.frequency === 'daily' && 'Daily'}
+                  {cls.frequency === 'weekly' && `Every ${cls.schedule_day || 'week'}`}
+                  {cls.frequency === 'biweekly' && 'Bi-weekly'}
+                  {cls.frequency === 'monthly' && 'Monthly'}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -1763,28 +1202,41 @@ function ClassesTab({ classes, onRefresh }) {
   );
 }
 
-// ==================== CLASS MODAL (simplified) ====================
+// ==================== CLASS MODAL with Schedule Options ====================
 function ClassModal({ isOpen, onClose, editData, onSuccess }) {
   const [form, setForm] = useState({
     title: '', description: '', class_type: 'online', duration_minutes: 60,
-    price: 500, max_students: 20, category: 'General', schedule: []
+    price: 500, max_students: 20, category: 'General',
+    frequency: 'weekly', schedule_day: 'Monday', schedule_time: '10:00'
   });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (editData) setForm(editData);
-    else setForm({ title: '', description: '', class_type: 'online', duration_minutes: 60, price: 500, max_students: 20, category: 'General', schedule: [] });
+    if (editData) {
+      setForm({
+        ...editData,
+        frequency: editData.frequency || 'weekly',
+        schedule_day: editData.schedule_day || 'Monday',
+        schedule_time: editData.schedule_time || '10:00'
+      });
+    } else {
+      setForm({
+        title: '', description: '', class_type: 'online', duration_minutes: 60,
+        price: 500, max_students: 20, category: 'General',
+        frequency: 'weekly', schedule_day: 'Monday', schedule_time: '10:00'
+      });
+    }
   }, [editData, isOpen]);
 
   const handleSubmit = async () => {
-    if (!form.title) { toast.error('Please enter a class title'); return; }
+    if (!form.title) { toast.error('Enter class title'); return; }
     setSaving(true);
     try {
       if (editData) await api.put(`/api/priest/classes/${editData.id}`, form);
       else await api.post('/api/priest/classes', form);
-      toast.success(editData ? 'Class updated!' : 'Class created!');
+      toast.success(editData ? 'Updated!' : 'Created!');
       onSuccess(); onClose();
-    } catch { toast.error('Failed to save class'); }
+    } catch { toast.error('Failed'); }
     finally { setSaving(false); }
   };
 
@@ -1792,27 +1244,102 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-cinzel text-xl font-semibold text-maroon">{editData ? 'Edit Class' : 'Create Class'}</h2>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+      >
+        <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white">
+          <h2 className="font-cinzel text-lg font-semibold text-maroon">{editData ? 'Edit Class' : 'New Class'}</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
         </div>
-        <div className="p-6 space-y-4">
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
-            <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full px-4 py-3 border border-gray-200 rounded-xl" /></div>
+        
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
+            <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" placeholder="e.g., Sanskrit for Beginners" />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="w-full px-4 py-2 border border-gray-200 rounded-xl" />
+          </div>
+          
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
-              <input type="number" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-gray-200 rounded-xl" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
-              <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-gray-200 rounded-xl" /></div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl">
+                <option>General</option>
+                <option>Vedic Chanting</option>
+                <option>Sanskrit</option>
+                <option>Puja Rituals</option>
+                <option>Meditation</option>
+                <option>Philosophy</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <select value={form.class_type} onChange={(e) => setForm({ ...form, class_type: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl">
+                <option value="online">Online</option>
+                <option value="offline">In-person</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
+              <input type="number" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+              <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Max Students</label>
+              <input type="number" value={form.max_students} onChange={(e) => setForm({ ...form, max_students: parseInt(e.target.value) })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" />
+            </div>
+          </div>
+          
+          {/* Schedule Section */}
+          <div className="border-t pt-4">
+            <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+              <Repeat className="w-4 h-4 text-saffron" /> Schedule
+            </h4>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
+                <select value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl">
+                  {SCHEDULE_FREQUENCIES.map(f => (
+                    <option key={f.value} value={f.value}>{f.label}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {(form.frequency === 'weekly' || form.frequency === 'biweekly') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Day</label>
+                  <select value={form.schedule_day} onChange={(e) => setForm({ ...form, schedule_day: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl">
+                    {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+              <input type="time" value={form.schedule_time} onChange={(e) => setForm({ ...form, schedule_time: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" />
+            </div>
           </div>
         </div>
-        <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-xl">Cancel</button>
+        
+        <div className="p-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
+          <button onClick={onClose} className="px-4 py-2 text-gray-600">Cancel</button>
           <button onClick={handleSubmit} disabled={saving} className="px-6 py-2 bg-saffron text-white rounded-xl disabled:opacity-50 flex items-center gap-2">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}{editData ? 'Update' : 'Create'}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {editData ? 'Update' : 'Create'}
           </button>
         </div>
       </motion.div>
@@ -1820,140 +1347,156 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
   );
 }
 
-// ==================== STREAMS TAB ====================
-function StreamsTab({ streams, onRefresh }) {
+// ==================== Simplified remaining tabs ====================
+function ServicesTab({ services, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
-
-  const startStream = async (streamId) => {
-    try { await api.put(`/api/priest/streams/${streamId}/start`); toast.success('Stream started!'); onRefresh(); }
-    catch { toast.error('Failed to start stream'); }
-  };
-
-  const endStream = async (streamId) => {
-    try { await api.put(`/api/priest/streams/${streamId}/end`); toast.success('Stream ended'); onRefresh(); }
-    catch { toast.error('Failed to end stream'); }
-  };
-
-  const scheduledStreams = streams.filter(s => s.status === 'scheduled');
-  const liveStreams = streams.filter(s => s.status === 'live');
-  const pastStreams = streams.filter(s => s.status === 'ended');
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-cinzel text-xl font-semibold text-maroon">Live Streams</h2>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg hover:bg-saffron-dark">
-          <Plus className="w-4 h-4" /> Schedule Stream
+        <h2 className="font-cinzel text-lg font-semibold text-maroon">Services</h2>
+        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm">
+          <Plus className="w-4 h-4" /> Add
         </button>
       </div>
-
-      {liveStreams.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
-          <h3 className="font-semibold text-red-700 flex items-center gap-2 mb-4">
-            <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>Live Now
-          </h3>
-          {liveStreams.map((stream) => (
-            <div key={stream.id} className="bg-white rounded-xl p-4 border border-red-200 flex justify-between items-start">
-              <div>
-                <h4 className="font-semibold text-gray-800">{stream.title}</h4>
-                <p className="text-sm text-gray-500">{stream.description}</p>
-                <div className="flex items-center gap-2 mt-2 text-sm text-gray-400"><Eye className="w-4 h-4" />{stream.viewer_count} watching</div>
+      {services.length === 0 ? (
+        <div className="bg-white rounded-xl p-8 text-center"><Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" /><p className="text-gray-400">No services yet</p></div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-4">
+          {services.map(s => (
+            <div key={s.id} className="bg-white rounded-xl p-4 border-l-4 border-saffron">
+              <h3 className="font-semibold">{s.name}</h3>
+              <p className="text-sm text-gray-500">{s.description}</p>
+              <div className="flex gap-3 mt-2 text-sm">
+                <span><Clock className="w-3 h-3 inline" /> {s.duration_minutes}min</span>
+                <span className="text-saffron font-medium">₹{s.price}</span>
               </div>
-              <button onClick={() => endStream(stream.id)} className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
-                <Square className="w-4 h-4" />End
-              </button>
             </div>
           ))}
         </div>
       )}
-
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h3 className="font-semibold text-gray-800 mb-4">Scheduled ({scheduledStreams.length})</h3>
-        {scheduledStreams.length === 0 ? (
-          <p className="text-gray-400 text-center py-8">No scheduled streams</p>
-        ) : (
-          <div className="space-y-3">
-            {scheduledStreams.map((stream) => (
-              <div key={stream.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl">
-                <div>
-                  <h4 className="font-medium text-gray-800">{stream.title}</h4>
-                  <p className="text-xs text-gray-400 mt-1">{new Date(stream.scheduled_at).toLocaleString()}</p>
-                </div>
-                <button onClick={() => startStream(stream.id)} className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
-                  <Play className="w-4 h-4" />Go Live
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {pastStreams.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="font-semibold text-gray-800 mb-4">Past Streams</h3>
-          <div className="space-y-3">
-            {pastStreams.slice(0, 5).map((stream) => (
-              <div key={stream.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div>
-                  <h4 className="font-medium text-gray-700">{stream.title}</h4>
-                  <div className="flex items-center gap-3 text-sm text-gray-400 mt-1">
-                    <span>{new Date(stream.ended_at).toLocaleDateString()}</span>
-                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" />Max: {stream.max_viewers}</span>
-                  </div>
-                </div>
-                <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">Ended</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <StreamModal isOpen={showModal} onClose={() => setShowModal(false)} onSuccess={onRefresh} />
     </div>
   );
 }
 
-// ==================== STREAM MODAL ====================
-function StreamModal({ isOpen, onClose, onSuccess }) {
-  const [form, setForm] = useState({ title: '', description: '', stream_type: 'puja', scheduled_at: '' });
-  const [saving, setSaving] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!form.title || !form.scheduled_at) { toast.error('Please fill required fields'); return; }
-    setSaving(true);
-    try { await api.post('/api/priest/streams', form); toast.success('Stream scheduled!'); onSuccess(); onClose(); setForm({ title: '', description: '', stream_type: 'puja', scheduled_at: '' }); }
-    catch { toast.error('Failed to schedule stream'); }
-    finally { setSaving(false); }
-  };
-
-  if (!isOpen) return null;
-
+function ReviewsTab({ reviews }) {
+  const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0';
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl max-w-lg w-full">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-cinzel text-xl font-semibold text-maroon">Schedule Live Stream</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
+    <div className="space-y-4">
+      <h2 className="font-cinzel text-lg font-semibold text-maroon">Reviews</h2>
+      <div className="bg-white rounded-xl p-6 text-center">
+        <p className="text-4xl font-bold text-maroon">{avgRating}</p>
+        <div className="flex justify-center gap-1 my-2">{[1,2,3,4,5].map(s => <Star key={s} className={`w-5 h-5 ${s <= Math.round(parseFloat(avgRating)) ? 'text-gold fill-gold' : 'text-gray-300'}`} />)}</div>
+        <p className="text-gray-500">{reviews.length} reviews</p>
+      </div>
+      {reviews.length === 0 ? <p className="text-center text-gray-400 py-8">No reviews yet</p> : (
+        <div className="space-y-3">{reviews.map(r => (
+          <div key={r.id} className="bg-white rounded-xl p-4">
+            <div className="flex justify-between"><span className="font-medium">{r.user_name}</span><div className="flex gap-0.5">{[1,2,3,4,5].map(s => <Star key={s} className={`w-4 h-4 ${s <= r.rating ? 'text-gold fill-gold' : 'text-gray-300'}`} />)}</div></div>
+            <p className="text-sm text-gray-600 mt-2">{r.comment}</p>
+          </div>
+        ))}</div>
+      )}
+    </div>
+  );
+}
+
+function PortfolioTab({ portfolio, onRefresh }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-cinzel text-lg font-semibold text-maroon">Portfolio</h2>
+        <button className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm"><Upload className="w-4 h-4" /> Add</button>
+      </div>
+      {portfolio.length === 0 ? (
+        <div className="bg-white rounded-xl p-8 text-center"><Image className="w-12 h-12 text-gray-300 mx-auto mb-4" /><p className="text-gray-400">No portfolio items</p></div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{portfolio.map(p => (
+          <div key={p.id} className="aspect-square rounded-xl bg-gray-100 overflow-hidden">
+            <img src={p.url} alt={p.title} className="w-full h-full object-cover" />
+          </div>
+        ))}</div>
+      )}
+    </div>
+  );
+}
+
+function PanchangTab({ panchang, festivals }) {
+  const getPanchangValue = (v, f = '') => { if (!v) return f; if (typeof v === 'string') return v; if (typeof v === 'object') return v.name || v.value || f; return String(v); };
+  return (
+    <div className="space-y-4">
+      <h2 className="font-cinzel text-lg font-semibold text-maroon">Panchang & Calendar</h2>
+      <div className="bg-white rounded-xl p-4 md:p-6">
+        <h3 className="font-semibold mb-4 flex items-center gap-2"><Sun className="w-5 h-5 text-saffron" /> Today's Panchang</h3>
+        {panchang ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[{l:'Tithi',v:panchang.tithi},{l:'Nakshatra',v:panchang.nakshatra},{l:'Yoga',v:panchang.yoga},{l:'Karana',v:panchang.karana},{l:'Sunrise',v:panchang.sunrise},{l:'Sunset',v:panchang.sunset}].map((i,idx) => (
+              <div key={idx} className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-gray-500">{i.l}</p><p className="font-medium">{getPanchangValue(i.v, '--')}</p></div>
+            ))}
+          </div>
+        ) : <p className="text-center text-gray-400 py-4">Loading...</p>}
+      </div>
+      <div className="bg-white rounded-xl p-4 md:p-6">
+        <h3 className="font-semibold mb-4 flex items-center gap-2"><CalendarDays className="w-5 h-5 text-saffron" /> Upcoming Festivals</h3>
+        <div className="space-y-2">{festivals.slice(0,10).map((f,i) => (
+          <div key={i} className="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
+            <div><p className="font-medium">{f.name}</p><p className="text-sm text-gray-500">{f.date}</p></div>
+            {f.days_until !== undefined && <span className={`px-3 py-1 rounded-full text-sm ${f.days_until === 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{f.days_until === 0 ? 'Today!' : `${f.days_until} days`}</span>}
+          </div>
+        ))}</div>
+      </div>
+    </div>
+  );
+}
+
+function EarningsTab({ earnings, analytics }) {
+  return (
+    <div className="space-y-4">
+      <h2 className="font-cinzel text-lg font-semibold text-maroon">Earnings</h2>
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white"><p className="text-sm opacity-80">Total</p><p className="text-2xl font-bold">₹{earnings?.total_earnings || analytics?.stats?.total_earnings || 0}</p></div>
+        <div className="bg-gradient-to-br from-saffron to-orange-500 rounded-xl p-4 text-white"><p className="text-sm opacity-80">This Month</p><p className="text-2xl font-bold">₹{earnings?.monthly_earnings || analytics?.stats?.monthly_earnings || 0}</p></div>
+        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white"><p className="text-sm opacity-80">Pending</p><p className="text-2xl font-bold">₹{earnings?.pending_payouts || 0}</p></div>
+      </div>
+      <div className="bg-white rounded-xl p-4"><h3 className="font-semibold mb-4">Recent Transactions</h3>
+        {(!earnings?.transactions || earnings.transactions.length === 0) ? <p className="text-center text-gray-400 py-8">No transactions</p> : (
+          <div className="space-y-2">{earnings.transactions.slice(0,10).map((t,i) => (
+            <div key={i} className="flex justify-between p-3 border border-gray-100 rounded-xl">
+              <div><p className="font-medium">{t.description}</p><p className="text-xs text-gray-400">{t.date}</p></div>
+              <p className="font-bold text-green-600">+₹{t.amount}</p>
+            </div>
+          ))}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StreamsTab({ streams, onRefresh }) {
+  const scheduled = streams.filter(s => s.status === 'scheduled');
+  const live = streams.filter(s => s.status === 'live');
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-cinzel text-lg font-semibold text-maroon">Live Streams</h2>
+        <button className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm"><Plus className="w-4 h-4" /> Schedule</button>
+      </div>
+      {live.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <h3 className="font-semibold text-red-700 flex items-center gap-2 mb-3"><span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>Live Now</h3>
+          {live.map(s => <div key={s.id} className="bg-white rounded-xl p-3"><p className="font-medium">{s.title}</p><p className="text-sm text-gray-500">{s.viewer_count} watching</p></div>)}
         </div>
-        <div className="p-6 space-y-4">
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
-            <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Stream Type</label>
-            <select value={form.stream_type} onChange={(e) => setForm({ ...form, stream_type: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl">
-              <option value="puja">Puja</option><option value="class">Class</option><option value="discourse">Discourse</option><option value="aarti">Aarti</option><option value="bhajan">Bhajan</option>
-            </select></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="w-full px-4 py-3 border border-gray-200 rounded-xl" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date & Time*</label>
-            <input type="datetime-local" value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl" /></div>
-        </div>
-        <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-xl">Cancel</button>
-          <button onClick={handleSubmit} disabled={saving} className="px-6 py-2 bg-saffron text-white rounded-xl disabled:opacity-50 flex items-center gap-2">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}Schedule
-          </button>
-        </div>
-      </motion.div>
+      )}
+      <div className="bg-white rounded-xl p-4">
+        <h3 className="font-semibold mb-3">Scheduled ({scheduled.length})</h3>
+        {scheduled.length === 0 ? <p className="text-center text-gray-400 py-4">No scheduled streams</p> : (
+          <div className="space-y-2">{scheduled.map(s => (
+            <div key={s.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl">
+              <div><p className="font-medium">{s.title}</p><p className="text-xs text-gray-400">{new Date(s.scheduled_at).toLocaleString()}</p></div>
+              <button className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm flex items-center gap-1"><Play className="w-4 h-4" />Go Live</button>
+            </div>
+          ))}</div>
+        )}
+      </div>
     </div>
   );
 }

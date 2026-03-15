@@ -1813,7 +1813,7 @@ async def update_booking_status(booking_id: str, status: BookingStatus, user: di
     return {"message": "Booking status updated"}
 
 # ===================== PRIEST DASHBOARD - CLASSES =====================
-from database import priest_classes_collection, priest_availability_collection, priest_content_collection, priest_streams_collection, priest_portfolio_collection, priest_services_collection
+from database import priest_classes_collection, priest_availability_collection, priest_content_collection, priest_streams_collection, priest_portfolio_collection, priest_services_collection, priest_posts_collection
 
 @app.get("/api/priest/classes")
 async def get_priest_classes(user: dict = Depends(require_role([UserRole.PRIEST]))):
@@ -1836,6 +1836,9 @@ async def get_priest_classes(user: dict = Depends(require_role([UserRole.PRIEST]
             "enrolled_count": cls.get("enrolled_count", 0),
             "schedule": cls.get("schedule", []),
             "category": cls.get("category", "General"),
+            "frequency": cls.get("frequency", "weekly"),
+            "schedule_day": cls.get("schedule_day", ""),
+            "schedule_time": cls.get("schedule_time", ""),
             "is_active": cls.get("is_active", True),
             "created_at": cls["created_at"].isoformat() if isinstance(cls["created_at"], datetime) else cls["created_at"]
         })
@@ -1862,6 +1865,9 @@ async def create_priest_class(request: Request, user: dict = Depends(require_rol
         "enrolled_count": 0,
         "schedule": data.get("schedule", []),  # [{"day": "Monday", "time": "10:00"}]
         "category": data.get("category", "General"),
+        "frequency": data.get("frequency", "weekly"),  # once, daily, weekly, biweekly, monthly
+        "schedule_day": data.get("schedule_day", ""),  # Day of week for weekly/biweekly
+        "schedule_time": data.get("schedule_time", ""),  # Time of class
         "is_active": True,
         "created_at": datetime.now(timezone.utc)
     }
@@ -1881,7 +1887,8 @@ async def update_priest_class(class_id: str, request: Request, user: dict = Depe
     data = await request.json()
     update_data = {k: v for k, v in data.items() if k in [
         "title", "description", "class_type", "duration_minutes", 
-        "price", "max_students", "schedule", "category", "is_active"
+        "price", "max_students", "schedule", "category", "is_active",
+        "frequency", "schedule_day", "schedule_time"
     ]}
     
     await priest_classes_collection.update_one(
@@ -2466,6 +2473,113 @@ async def get_priest_earnings(user: dict = Depends(require_role([UserRole.PRIEST
         "transactions": transactions[:20]  # Limit to 20 most recent
     }
 
+
+# ===================== PRIEST DASHBOARD - DAILY POSTS/UPDATES =====================
+@app.get("/api/priest/posts")
+async def get_priest_posts(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get all posts by the priest (daily updates)"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        return {"posts": []}
+    
+    cursor = priest_posts_collection.find({"priest_id": str(priest["_id"])}).sort("created_at", -1)
+    posts = []
+    async for post in cursor:
+        posts.append({
+            "id": str(post["_id"]),
+            "content": post.get("content", ""),
+            "image_url": post.get("image_url", ""),
+            "likes": post.get("likes", 0),
+            "comments": post.get("comments_count", 0),
+            "views": post.get("views", 0),
+            "created_at": post["created_at"].isoformat() if isinstance(post["created_at"], datetime) else post["created_at"]
+        })
+    return {"posts": posts}
+
+@app.post("/api/priest/posts")
+async def create_priest_post(request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Create a new daily post/update"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    data = await request.json()
+    
+    if not data.get("content"):
+        raise HTTPException(status_code=400, detail="Post content is required")
+    
+    post_dict = {
+        "priest_id": str(priest["_id"]),
+        "priest_name": user["name"],
+        "content": data.get("content"),
+        "image_url": data.get("image_url", ""),
+        "likes": 0,
+        "comments_count": 0,
+        "views": 0,
+        "is_published": True,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await priest_posts_collection.insert_one(post_dict)
+    return {"message": "Post created", "post_id": str(result.inserted_id)}
+
+@app.delete("/api/priest/posts/{post_id}")
+async def delete_priest_post(post_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Delete a post"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    post = await priest_posts_collection.find_one({"_id": ObjectId(post_id)})
+    
+    if not post or post["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    await priest_posts_collection.delete_one({"_id": ObjectId(post_id)})
+    return {"message": "Post deleted"}
+
+# Public endpoint to get posts from a specific priest (for devotee feed)
+@app.get("/api/posts/priest/{priest_id}")
+async def get_public_priest_posts(priest_id: str, skip: int = 0, limit: int = 20):
+    """Get published posts from a priest (public)"""
+    cursor = priest_posts_collection.find({
+        "priest_id": priest_id,
+        "is_published": True
+    }).skip(skip).limit(limit).sort("created_at", -1)
+    
+    posts = []
+    async for post in cursor:
+        posts.append({
+            "id": str(post["_id"]),
+            "content": post.get("content", ""),
+            "image_url": post.get("image_url", ""),
+            "priest_name": post.get("priest_name", ""),
+            "likes": post.get("likes", 0),
+            "comments": post.get("comments_count", 0),
+            "views": post.get("views", 0),
+            "created_at": post["created_at"].isoformat() if isinstance(post["created_at"], datetime) else post["created_at"]
+        })
+    return {"posts": posts}
+
+# Get all priest posts feed (for devotee dashboard)
+@app.get("/api/posts/feed")
+async def get_posts_feed(skip: int = 0, limit: int = 50):
+    """Get all priest posts feed (public - for devotees)"""
+    cursor = priest_posts_collection.find({
+        "is_published": True
+    }).skip(skip).limit(limit).sort("created_at", -1)
+    
+    posts = []
+    async for post in cursor:
+        posts.append({
+            "id": str(post["_id"]),
+            "content": post.get("content", ""),
+            "image_url": post.get("image_url", ""),
+            "priest_id": post.get("priest_id", ""),
+            "priest_name": post.get("priest_name", ""),
+            "likes": post.get("likes", 0),
+            "comments": post.get("comments_count", 0),
+            "views": post.get("views", 0),
+            "created_at": post["created_at"].isoformat() if isinstance(post["created_at"], datetime) else post["created_at"]
+        })
+    return {"posts": posts, "total": len(posts)}
 
 
 # ===================== PUBLIC - VIEW PRIEST CONTENT =====================
