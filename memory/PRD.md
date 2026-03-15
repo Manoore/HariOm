@@ -81,6 +81,17 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [x] 3D animated SVG devotional icons throughout the app
 - [x] No emojis used anywhere
 
+### Astrology Features (COMPLETE - March 15, 2026)
+- [x] Daily Horoscope tab with 12 zodiac signs (colorful symbols)
+- [x] Horoscope prediction display with Lucky Number & Lucky Color
+- [x] Birth Kundali tab with form (Date/Time, Birth Place dropdown)
+- [x] Kundali Matching tab for marriage compatibility (Bride & Groom details)
+- [x] Personalized horoscope on Home screen (based on user's nakshatra/DOB)
+- [x] Profile completion prompt for users without DOB/nakshatra
+- [x] Graceful API error handling (displays "Service Temporarily Unavailable")
+- [x] Fallback horoscope data when Prokerala API unavailable
+- [x] Backend integration with Prokerala API (needs valid credentials)
+
 ### Backend APIs (100% Working - 20/20 Tests)
 - [x] User authentication (register/login/profile)
 - [x] Firebase sync endpoints (/api/auth/firebase-sync, /api/auth/firebase-register)
@@ -120,12 +131,23 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [ ] Priest booking payment flow
 - [ ] Order confirmation and receipt
 
+### P1.5 (Completed - March 15, 2026)
+- [x] **Astrology Tab UI Complete**
+  - [x] Daily Horoscope with 12 zodiac signs
+  - [x] Birth Kundali form with date/time/location inputs
+  - [x] Kundali Matching form for marriage compatibility
+  - [x] Graceful error handling when Prokerala API unavailable
+  - [x] Fallback horoscope data for daily predictions
+- [x] **Personalized Horoscope on Home Screen**
+  - [x] Shows horoscope when user has DOB/nakshatra in profile
+  - [x] Profile completion prompt when user hasn't set up astrology details
+
 ### P2 (Medium Priority)
+- [ ] Valid Prokerala API credentials for Kundali features
 - [ ] Astrologer/Priest/Shop Owner complete dashboards
 - [ ] Product reviews and ratings
 - [ ] Search and filter improvements
 - [ ] Image upload for products/priests
-- [ ] Horoscope API integration (real data)
 
 ### P3 (Future/Nice to Have)
 - [ ] Video consultation integration
