@@ -3420,7 +3420,20 @@ function ShopTab({ isDesktop }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const { addToCart } = useCart();
+  const [showCart, setShowCart] = useState(false);
+  const [view, setView] = useState('shop'); // shop, checkout, success, orders, order-detail
+  const [orderData, setOrderData] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const { addToCart, cartCount } = useCart();
+
+  // Lazy load checkout components
+  const [CheckoutComponents, setCheckoutComponents] = useState(null);
+  
+  useEffect(() => {
+    import('../../components/Checkout/CheckoutComponents').then(module => {
+      setCheckoutComponents(module);
+    });
+  }, []);
 
   useEffect(() => {
     fetchProducts();
@@ -3450,10 +3463,100 @@ function ShopTab({ isDesktop }) {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Handle different views
+  if (CheckoutComponents && view === 'checkout') {
+    return (
+      <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+        <CheckoutComponents.CheckoutPage 
+          onBack={() => setView('shop')} 
+          onComplete={(data) => {
+            setOrderData(data);
+            setView('success');
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (CheckoutComponents && view === 'success' && orderData) {
+    return (
+      <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+        <CheckoutComponents.OrderSuccessPage 
+          orderData={orderData}
+          onContinue={() => {
+            setOrderData(null);
+            setView('shop');
+          }}
+          onViewOrders={() => setView('orders')}
+        />
+      </div>
+    );
+  }
+
+  if (CheckoutComponents && view === 'orders') {
+    return (
+      <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+        <CheckoutComponents.MyOrdersPage 
+          onBack={() => setView('shop')}
+          onViewOrder={(orderId) => {
+            setSelectedOrderId(orderId);
+            setView('order-detail');
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (CheckoutComponents && view === 'order-detail' && selectedOrderId) {
+    return (
+      <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+        <CheckoutComponents.OrderDetailPage 
+          orderId={selectedOrderId}
+          onBack={() => setView('orders')}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+      {/* Cart Sidebar */}
+      {CheckoutComponents && (
+        <CheckoutComponents.CartSidebar 
+          isOpen={showCart} 
+          onClose={() => setShowCart(false)}
+          onCheckout={() => {
+            setShowCart(false);
+            setView('checkout');
+          }}
+        />
+      )}
+
       <div className="pt-4 pb-4">
-        <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon mb-4">Pooja Store</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Pooja Store</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setView('orders')}
+              className="text-sm text-saffron hover:underline"
+              data-testid="my-orders-link"
+            >
+              My Orders
+            </button>
+            <button 
+              onClick={() => setShowCart(true)}
+              className="relative p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow"
+              data-testid="cart-button"
+            >
+              <ShoppingCart className="w-6 h-6 text-saffron" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
         
         {/* Search */}
         <div className={`relative ${isDesktop ? 'max-w-md' : ''}`}>
@@ -3489,15 +3592,24 @@ function ShopTab({ isDesktop }) {
                 )}
               </div>
               <p className={`font-medium ${isDesktop ? 'text-base' : 'text-sm'} text-gray-800 line-clamp-2 mb-1`}>{product.name}</p>
+              <p className="text-xs text-gray-500 mb-1">{product.shop_name}</p>
               <div className="flex items-center gap-1 mb-2">
                 <Star className="w-3 h-3 text-gold fill-gold" />
                 <span className="text-xs text-gray-500">{product.rating}</span>
+                {product.stock < 10 && product.stock > 0 && (
+                  <span className="text-xs text-amber-600 ml-auto">Only {product.stock} left</span>
+                )}
+                {product.stock === 0 && (
+                  <span className="text-xs text-red-500 ml-auto">Out of stock</span>
+                )}
               </div>
               <div className="flex items-center justify-between">
                 <p className="text-saffron font-bold">₹{product.price}</p>
                 <button
                   onClick={() => handleAddToCart(product.id)}
-                  className="w-8 h-8 lg:w-10 lg:h-10 bg-saffron hover:bg-saffron-dark text-white rounded-full flex items-center justify-center transition-colors"
+                  disabled={product.stock === 0}
+                  className="w-8 h-8 lg:w-10 lg:h-10 bg-saffron hover:bg-saffron-dark text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-testid={`add-to-cart-${product.id}`}
                 >
                   <Plus className="w-4 h-4 lg:w-5 lg:h-5" />
                 </button>

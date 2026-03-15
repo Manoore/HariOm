@@ -274,6 +274,37 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Backend APIs: GET/PUT /api/admin/system-config
   - [x] SystemSettingsAdmin component with collapsible categories
 
+- [x] **Shop Owner Dashboard** (NEW - March 15, 2026)
+  - [x] Dashboard Home - Revenue stats (today/monthly/total), pending orders, product count
+  - [x] Recent Orders widget with status badges
+  - [x] Top Selling Products widget with revenue
+  - [x] Products Tab - Add/Edit/Delete products with full CRUD
+  - [x] **Image Upload** - Up to 5 product images with preview and remove
+  - [x] **Video Upload** - Optional product video with preview and remove
+  - [x] Orders Tab - View all orders with status filters (All/Pending/Processing/Shipped/Delivered/Cancelled)
+  - [x] Order Details modal - Customer info, shipping address, items, status update buttons
+  - [x] Inventory Tab - Stock management with low stock alerts, inline editing
+  - [x] Shop Profile Tab - Edit shop info, shipping cost, free shipping threshold
+  - [x] Messages Tab - Chat with customers (shared ChatTab component)
+  - [x] Backend APIs: /api/shop/dashboard, /api/shop/orders, /api/shop/inventory, /api/shop/profile
+
+- [x] **E-commerce Checkout Flow** (NEW - March 15, 2026)
+  - [x] Pooja Store with product grid, search, add to cart
+  - [x] Cart button with badge showing item count
+  - [x] My Orders link in store header
+  - [x] Cart Sidebar - Slide-in cart with items, quantity controls, shipping breakdown
+  - [x] Multi-step Checkout (Address → Payment → Confirm)
+  - [x] Shipping Address form with name, phone, address, city, notes
+  - [x] Payment Method selection (Stripe/Razorpay)
+  - [x] Order Summary with per-shop shipping breakdown
+  - [x] Shop-owner defined shipping cost with free shipping threshold
+  - [x] Order Success page with order number and chat room notice
+  - [x] My Orders page with order history and status tracking
+  - [x] Order Detail page with full order information
+  - [x] Auto-created chat room between customer and shop owner for each order
+  - [x] Backend APIs: /api/checkout, /api/cart/summary, /api/orders/{id}
+  - [x] File uploads: /api/upload/image, /api/upload/video
+
 - [x] **Priest Dashboard - FULLY IMPLEMENTED**
   - [x] **Home Tab** - Analytics overview with cards
     - Total Bookings, Completed, Classes, Content Posts stats
@@ -386,22 +417,27 @@ Icons: Custom 3D animated SVGs
 - `frontend/src/lib/firebase.js` - Firebase configuration and auth functions
 - `frontend/src/contexts/AuthContext.js` - Auth context with Firebase + manual sync
 - `frontend/src/contexts/PaymentContext.js` - IP-based payment gateway selection
+- `frontend/src/contexts/CartContext.js` - Cart state management with add/remove/update
 - `frontend/src/components/PaymentComponents.js` - Stripe/Razorpay components
-- `frontend/src/components/Chat/ChatTab.js` - Real-time chat UI components (NEW)
-- `frontend/src/components/Admin/SystemSettingsAdmin.js` - Admin system configuration UI (NEW)
+- `frontend/src/components/Chat/ChatTab.js` - Real-time chat UI components
+- `frontend/src/components/Admin/SystemSettingsAdmin.js` - Admin system configuration UI
+- `frontend/src/components/Checkout/CheckoutComponents.js` - Cart sidebar, Checkout flow, Orders pages (NEW)
 - `frontend/src/pages/AuthScreen.js` - Centered auth screens
 - `frontend/src/pages/dashboards/PriestDashboard.js` - Complete Priest Dashboard with all features
-- `frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee Dashboard with Feed tab, PostCard, Chat
-- `frontend/src/pages/dashboards/AdminDashboard.js` - Admin Dashboard with System Settings tab (UPDATED)
-- `backend/server.py` - Backend with Firebase sync + Stripe + Priest APIs + Comments/Likes + Chat APIs
-- `backend/system_config.py` - Encrypted admin-editable configuration system (NEW)
-- `backend/video_consultation.py` - 100ms integration with dynamic credentials (UPDATED)
+- `frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee Dashboard with Feed, Shop, Chat, Checkout
+- `frontend/src/pages/dashboards/AdminDashboard.js` - Admin Dashboard with System Settings tab
+- `frontend/src/pages/dashboards/ShopOwnerDashboard.js` - Complete Shop Owner Dashboard (NEW - March 15, 2026)
+- `backend/server.py` - Backend with all APIs including shop owner dashboard and checkout
+- `backend/system_config.py` - Encrypted admin-editable configuration system
+- `backend/video_consultation.py` - 100ms integration with dynamic credentials
+- `backend/models.py` - Pydantic models including ProductCreate with video_url
 - `backend/config.py` - Configuration with Stripe keys
 - `backend/database.py` - MongoDB collections including chat_rooms, chat_messages, system_config
 - `backend/tests/test_priest_dashboard.py` - Pytest tests for Priest Dashboard
 - `backend/tests/test_post_comments_likes.py` - Pytest tests for Comments & Likes feature
 - `backend/tests/test_chat_feature.py` - Pytest tests for Chat feature
-- `backend/tests/test_system_config.py` - Pytest tests for System Config APIs (NEW)
+- `backend/tests/test_system_config.py` - Pytest tests for System Config APIs
+- `backend/tests/test_shop_checkout.py` - Pytest tests for Shop Owner and Checkout APIs (NEW)
 
 ## Preview URLs
 - **Web App**: https://priest-hub-1.preview.emergentagent.com

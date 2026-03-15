@@ -119,6 +119,7 @@ class ProductCreate(BaseModel):
     category: str
     stock: int
     images: List[str] = []
+    video_url: Optional[str] = None
 
 class ProductResponse(BaseModel):
     id: str
@@ -130,6 +131,7 @@ class ProductResponse(BaseModel):
     category: str
     stock: int
     images: List[str]
+    video_url: Optional[str] = None
     rating: float = 0.0
     total_reviews: int = 0
 

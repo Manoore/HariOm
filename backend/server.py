@@ -113,6 +113,41 @@ async def get_uploaded_file(filename: str):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path)
 
+@app.post("/api/upload/video")
+async def upload_video(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
+    """Upload a video file and return the URL"""
+    # Validate file type
+    allowed_types = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo", "video/mpeg"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only MP4, WebM, MOV, AVI, and MPEG are allowed.")
+    
+    # Validate file size (max 50MB)
+    contents = await file.read()
+    if len(contents) > 50 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 50MB.")
+    
+    # Generate unique filename
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'mp4'
+    unique_filename = f"video_{uuid.uuid4()}.{ext}"
+    file_path = UPLOADS_DIR / unique_filename
+    
+    # Save file
+    with open(file_path, "wb") as f:
+        f.write(contents)
+    
+    # Get the base URL from environment or construct it
+    backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
+    if not backend_url:
+        backend_url = "https://priest-hub-1.preview.emergentagent.com"
+    
+    # Return the URL
+    video_url = f"{backend_url}/api/uploads/{unique_filename}"
+    
+    return {"url": video_url, "filename": unique_filename}
+
 # ===================== SEED DATA =====================
 async def seed_initial_data():
     """Seed initial data if database is empty"""
@@ -3662,6 +3697,7 @@ async def add_product(data: ProductCreate, user: dict = Depends(require_role([Us
         "category": data.category,
         "stock": data.stock,
         "images": data.images,
+        "video_url": data.video_url,
         "rating": 0.0,
         "total_reviews": 0,
         "created_at": datetime.now(timezone.utc)
@@ -3687,9 +3723,540 @@ async def get_my_products(user: dict = Depends(require_role([UserRole.SHOP_OWNER
             "category": product["category"],
             "stock": product["stock"],
             "images": product.get("images", []),
+            "video_url": product.get("video_url"),
             "rating": product.get("rating", 0)
         })
     return {"products": products}
+
+# ===================== SHOP OWNER DASHBOARD APIs =====================
+
+@app.get("/api/shop/profile")
+async def get_shop_profile(user: dict = Depends(require_role([UserRole.SHOP_OWNER]))):
+    """Get shop profile for shop owner"""
+    shop = await shops_collection.find_one({"owner_id": str(user["_id"])})
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    
+    return {
+        "id": str(shop["_id"]),
+        "name": shop.get("name"),
+        "description": shop.get("description"),
+        "address": shop.get("address"),
+        "city": shop.get("city"),
+        "phone": shop.get("phone"),
+        "email": shop.get("email", user.get("email")),
+        "logo": shop.get("logo"),
+        "banner": shop.get("banner"),
+        "shipping_cost": shop.get("shipping_cost", 50),
+        "free_shipping_above": shop.get("free_shipping_above", 0),
+        "rating": shop.get("rating", 0),
+        "is_verified": shop.get("is_verified", False),
+        "created_at": shop.get("created_at", datetime.now(timezone.utc)).isoformat()
+    }
+
+@app.put("/api/shop/profile")
+async def update_shop_profile(request: Request, user: dict = Depends(require_role([UserRole.SHOP_OWNER]))):
+    """Update shop profile"""
+    shop = await shops_collection.find_one({"owner_id": str(user["_id"])})
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    
+    data = await request.json()
+    allowed_fields = ["name", "description", "address", "city", "phone", "email", 
+                      "logo", "banner", "shipping_cost", "free_shipping_above"]
+    
+    update_data = {k: v for k, v in data.items() if k in allowed_fields}
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    await shops_collection.update_one(
+        {"_id": shop["_id"]},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Profile updated"}
+
+@app.get("/api/shop/orders")
+async def get_shop_orders(
+    status: Optional[str] = None,
+    user: dict = Depends(require_role([UserRole.SHOP_OWNER]))
+):
+    """Get all orders for shop owner's products"""
+    shop = await shops_collection.find_one({"owner_id": str(user["_id"])})
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    
+    shop_id = str(shop["_id"])
+    
+    # Build query to find orders containing this shop's products
+    query = {"shop_ids": shop_id}
+    if status:
+        query["status"] = status
+    
+    cursor = orders_collection.find(query).sort("created_at", -1)
+    orders = []
+    async for order in cursor:
+        # Get customer info
+        customer = await users_collection.find_one({"_id": ObjectId(order["user_id"])}) if ObjectId.is_valid(order["user_id"]) else None
+        
+        # Filter items to only this shop's products
+        shop_items = [item for item in order["items"] if item.get("shop_id") == shop_id]
+        shop_total = sum(item.get("subtotal", 0) for item in shop_items)
+        
+        orders.append({
+            "id": str(order["_id"]),
+            "order_number": str(order["_id"])[-8:].upper(),
+            "customer_name": customer.get("name", "Unknown") if customer else "Unknown",
+            "customer_phone": customer.get("phone", "N/A") if customer else "N/A",
+            "customer_email": customer.get("email", "") if customer else "",
+            "items": shop_items,
+            "item_count": len(shop_items),
+            "shop_total": shop_total,
+            "shipping_address": order.get("shipping_address"),
+            "status": order.get("status"),
+            "payment_status": order.get("payment_status"),
+            "payment_method": order.get("payment_method"),
+            "created_at": order.get("created_at", datetime.now(timezone.utc)).isoformat()
+        })
+    
+    return {"orders": orders}
+
+@app.get("/api/shop/dashboard")
+async def get_shop_dashboard(user: dict = Depends(require_role([UserRole.SHOP_OWNER]))):
+    """Get dashboard statistics for shop owner"""
+    shop = await shops_collection.find_one({"owner_id": str(user["_id"])})
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    
+    shop_id = str(shop["_id"])
+    
+    # Get product count
+    product_count = await products_collection.count_documents({"shop_id": shop_id})
+    
+    # Get low stock products (stock < 10)
+    low_stock_count = await products_collection.count_documents({"shop_id": shop_id, "stock": {"$lt": 10}})
+    
+    # Get orders statistics
+    all_orders = await orders_collection.count_documents({"shop_ids": shop_id})
+    pending_orders = await orders_collection.count_documents({"shop_ids": shop_id, "status": "pending"})
+    processing_orders = await orders_collection.count_documents({"shop_ids": shop_id, "status": "paid"})
+    shipped_orders = await orders_collection.count_documents({"shop_ids": shop_id, "status": "shipped"})
+    delivered_orders = await orders_collection.count_documents({"shop_ids": shop_id, "status": "delivered"})
+    
+    # Calculate revenue
+    now = datetime.now(timezone.utc)
+    start_of_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    # Today's revenue
+    today_pipeline = [
+        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "shipped", "delivered"]}, "created_at": {"$gte": start_of_today}}},
+        {"$unwind": "$items"},
+        {"$match": {"items.shop_id": shop_id}},
+        {"$group": {"_id": None, "total": {"$sum": "$items.subtotal"}}}
+    ]
+    today_result = await orders_collection.aggregate(today_pipeline).to_list(1)
+    today_revenue = today_result[0]["total"] if today_result else 0
+    
+    # Monthly revenue
+    month_pipeline = [
+        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "shipped", "delivered"]}, "created_at": {"$gte": start_of_month}}},
+        {"$unwind": "$items"},
+        {"$match": {"items.shop_id": shop_id}},
+        {"$group": {"_id": None, "total": {"$sum": "$items.subtotal"}}}
+    ]
+    month_result = await orders_collection.aggregate(month_pipeline).to_list(1)
+    monthly_revenue = month_result[0]["total"] if month_result else 0
+    
+    # Total revenue
+    total_pipeline = [
+        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "shipped", "delivered"]}}},
+        {"$unwind": "$items"},
+        {"$match": {"items.shop_id": shop_id}},
+        {"$group": {"_id": None, "total": {"$sum": "$items.subtotal"}}}
+    ]
+    total_result = await orders_collection.aggregate(total_pipeline).to_list(1)
+    total_revenue = total_result[0]["total"] if total_result else 0
+    
+    # Recent orders
+    recent_cursor = orders_collection.find({"shop_ids": shop_id}).sort("created_at", -1).limit(5)
+    recent_orders = []
+    async for order in recent_cursor:
+        customer = await users_collection.find_one({"_id": ObjectId(order["user_id"])}) if ObjectId.is_valid(order["user_id"]) else None
+        shop_items = [item for item in order["items"] if item.get("shop_id") == shop_id]
+        recent_orders.append({
+            "id": str(order["_id"]),
+            "order_number": str(order["_id"])[-8:].upper(),
+            "customer_name": customer.get("name", "Unknown") if customer else "Unknown",
+            "items_count": len(shop_items),
+            "total": sum(item.get("subtotal", 0) for item in shop_items),
+            "status": order.get("status"),
+            "created_at": order.get("created_at", datetime.now(timezone.utc)).isoformat()
+        })
+    
+    # Top selling products
+    top_pipeline = [
+        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "shipped", "delivered"]}}},
+        {"$unwind": "$items"},
+        {"$match": {"items.shop_id": shop_id}},
+        {"$group": {"_id": "$items.product_id", "name": {"$first": "$items.name"}, "sold": {"$sum": "$items.quantity"}, "revenue": {"$sum": "$items.subtotal"}}},
+        {"$sort": {"sold": -1}},
+        {"$limit": 5}
+    ]
+    top_products = await orders_collection.aggregate(top_pipeline).to_list(5)
+    
+    return {
+        "stats": {
+            "total_products": product_count,
+            "low_stock": low_stock_count,
+            "total_orders": all_orders,
+            "pending_orders": pending_orders,
+            "processing_orders": processing_orders,
+            "shipped_orders": shipped_orders,
+            "delivered_orders": delivered_orders,
+            "today_revenue": today_revenue,
+            "monthly_revenue": monthly_revenue,
+            "total_revenue": total_revenue
+        },
+        "recent_orders": recent_orders,
+        "top_products": [{"id": p["_id"], "name": p["name"], "sold": p["sold"], "revenue": p["revenue"]} for p in top_products]
+    }
+
+@app.put("/api/shop/products/{product_id}")
+async def update_product(product_id: str, request: Request, user: dict = Depends(require_role([UserRole.SHOP_OWNER]))):
+    """Update a product"""
+    shop = await shops_collection.find_one({"owner_id": str(user["_id"])})
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    
+    product = await products_collection.find_one({"_id": ObjectId(product_id), "shop_id": str(shop["_id"])})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    data = await request.json()
+    allowed_fields = ["name", "description", "price", "category", "stock", "images", "video_url"]
+    update_data = {k: v for k, v in data.items() if k in allowed_fields}
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    await products_collection.update_one(
+        {"_id": ObjectId(product_id)},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Product updated"}
+
+@app.delete("/api/shop/products/{product_id}")
+async def delete_product(product_id: str, user: dict = Depends(require_role([UserRole.SHOP_OWNER]))):
+    """Delete a product"""
+    shop = await shops_collection.find_one({"owner_id": str(user["_id"])})
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    
+    result = await products_collection.delete_one({"_id": ObjectId(product_id), "shop_id": str(shop["_id"])})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return {"message": "Product deleted"}
+
+@app.get("/api/shop/inventory")
+async def get_shop_inventory(user: dict = Depends(require_role([UserRole.SHOP_OWNER]))):
+    """Get inventory with low stock alerts"""
+    shop = await shops_collection.find_one({"owner_id": str(user["_id"])})
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    
+    cursor = products_collection.find({"shop_id": str(shop["_id"])}).sort("stock", 1)
+    products = []
+    async for product in cursor:
+        products.append({
+            "id": str(product["_id"]),
+            "name": product["name"],
+            "category": product["category"],
+            "price": product["price"],
+            "stock": product["stock"],
+            "images": product.get("images", []),
+            "is_low_stock": product["stock"] < 10,
+            "is_out_of_stock": product["stock"] == 0
+        })
+    
+    return {
+        "products": products,
+        "total": len(products),
+        "low_stock_count": sum(1 for p in products if p["is_low_stock"]),
+        "out_of_stock_count": sum(1 for p in products if p["is_out_of_stock"])
+    }
+
+@app.put("/api/shop/products/{product_id}/stock")
+async def update_product_stock(product_id: str, request: Request, user: dict = Depends(require_role([UserRole.SHOP_OWNER]))):
+    """Update product stock"""
+    shop = await shops_collection.find_one({"owner_id": str(user["_id"])})
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    
+    data = await request.json()
+    new_stock = data.get("stock", 0)
+    
+    result = await products_collection.update_one(
+        {"_id": ObjectId(product_id), "shop_id": str(shop["_id"])},
+        {"$set": {"stock": new_stock, "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return {"message": "Stock updated"}
+
+# Enhanced order creation with shipping calculation
+class CheckoutData(BaseModel):
+    shipping_address: str
+    shipping_city: str
+    shipping_phone: str
+    shipping_name: str
+    payment_method: str = "stripe"
+    notes: Optional[str] = None
+
+@app.post("/api/checkout")
+async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_user)):
+    """Create order with full checkout flow"""
+    cart = await cart_collection.find_one({"user_id": str(user["_id"])})
+    if not cart or not cart.get("items"):
+        raise HTTPException(status_code=400, detail="Cart is empty")
+    
+    items = []
+    subtotal = 0
+    shop_shipping = {}  # Track shipping per shop
+    shop_names = {}
+    
+    for cart_item in cart["items"]:
+        product = await products_collection.find_one({"_id": ObjectId(cart_item["product_id"])})
+        if not product:
+            continue
+        
+        # Check stock
+        if product["stock"] < cart_item["quantity"]:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Insufficient stock for {product['name']}. Available: {product['stock']}"
+            )
+        
+        item_total = product["price"] * cart_item["quantity"]
+        subtotal += item_total
+        
+        shop_id = product.get("shop_id")
+        items.append({
+            "product_id": cart_item["product_id"],
+            "name": product["name"],
+            "price": product["price"],
+            "quantity": cart_item["quantity"],
+            "subtotal": item_total,
+            "shop_id": shop_id,
+            "image": product.get("images", [None])[0]
+        })
+        
+        # Get shop shipping info
+        if shop_id and shop_id not in shop_shipping:
+            shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
+            if shop:
+                shop_shipping[shop_id] = {
+                    "cost": shop.get("shipping_cost", 50),
+                    "free_above": shop.get("free_shipping_above", 0)
+                }
+                shop_names[shop_id] = shop.get("name", "Shop")
+    
+    # Calculate shipping
+    total_shipping = 0
+    for shop_id, shipping_info in shop_shipping.items():
+        shop_subtotal = sum(item["subtotal"] for item in items if item.get("shop_id") == shop_id)
+        if shipping_info["free_above"] > 0 and shop_subtotal >= shipping_info["free_above"]:
+            # Free shipping
+            pass
+        else:
+            total_shipping += shipping_info["cost"]
+    
+    total_amount = subtotal + total_shipping
+    
+    # Create order
+    order_dict = {
+        "user_id": str(user["_id"]),
+        "user_name": user.get("name"),
+        "user_email": user.get("email"),
+        "items": items,
+        "subtotal": subtotal,
+        "shipping_cost": total_shipping,
+        "total_amount": total_amount,
+        "shipping_address": data.shipping_address,
+        "shipping_city": data.shipping_city,
+        "shipping_phone": data.shipping_phone,
+        "shipping_name": data.shipping_name,
+        "notes": data.notes,
+        "status": OrderStatus.PENDING,
+        "payment_method": data.payment_method,
+        "payment_status": "pending",
+        "shop_ids": list(shop_shipping.keys()),
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await orders_collection.insert_one(order_dict)
+    order_id = str(result.inserted_id)
+    
+    # Reduce stock for all items
+    for item in items:
+        await products_collection.update_one(
+            {"_id": ObjectId(item["product_id"])},
+            {"$inc": {"stock": -item["quantity"]}}
+        )
+    
+    # Create chat rooms with each shop owner
+    for shop_id in shop_shipping.keys():
+        shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
+        if shop:
+            shop_owner = await users_collection.find_one({"_id": ObjectId(shop["owner_id"])})
+            if shop_owner:
+                shop_items_count = len([i for i in items if i.get("shop_id") == shop_id])
+                context = f"Order #{order_id[-8:].upper()} - {shop_items_count} item(s)"
+                await create_chat_room(
+                    room_type="order",
+                    reference_id=order_id,
+                    participant1_id=str(user["_id"]),
+                    participant1_name=user.get("name", "Customer"),
+                    participant2_id=str(shop_owner["_id"]),
+                    participant2_name=shop.get("name", shop_owner.get("name", "Shop")),
+                    context=context
+                )
+    
+    # Clear cart
+    await cart_collection.delete_one({"user_id": str(user["_id"])})
+    
+    return {
+        "message": "Order created",
+        "order_id": order_id,
+        "order_number": order_id[-8:].upper(),
+        "subtotal": subtotal,
+        "shipping": total_shipping,
+        "total": total_amount,
+        "payment_method": data.payment_method
+    }
+
+@app.get("/api/orders/{order_id}")
+async def get_order_details(order_id: str, user: dict = Depends(get_current_user)):
+    """Get single order details"""
+    order = await orders_collection.find_one({"_id": ObjectId(order_id)})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Check authorization
+    is_owner = order["user_id"] == str(user["_id"])
+    is_shop_owner = False
+    if not is_owner:
+        for shop_id in order.get("shop_ids", []):
+            shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
+            if shop and shop["owner_id"] == str(user["_id"]):
+                is_shop_owner = True
+                break
+    
+    if not is_owner and not is_shop_owner and user.get("role") != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Get shop info
+    shops = {}
+    for shop_id in order.get("shop_ids", []):
+        shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
+        if shop:
+            shops[shop_id] = {"name": shop.get("name"), "phone": shop.get("phone")}
+    
+    return {
+        "id": str(order["_id"]),
+        "order_number": str(order["_id"])[-8:].upper(),
+        "items": order["items"],
+        "subtotal": order.get("subtotal", order.get("total_amount", 0)),
+        "shipping_cost": order.get("shipping_cost", 0),
+        "total_amount": order["total_amount"],
+        "shipping_address": order.get("shipping_address"),
+        "shipping_city": order.get("shipping_city"),
+        "shipping_phone": order.get("shipping_phone"),
+        "shipping_name": order.get("shipping_name"),
+        "notes": order.get("notes"),
+        "status": order.get("status"),
+        "payment_method": order.get("payment_method"),
+        "payment_status": order.get("payment_status"),
+        "shops": shops,
+        "created_at": order.get("created_at", datetime.now(timezone.utc)).isoformat()
+    }
+
+@app.post("/api/orders/{order_id}/pay")
+async def pay_for_order(order_id: str, user: dict = Depends(get_current_user)):
+    """Mark order as paid (after successful payment)"""
+    order = await orders_collection.find_one({"_id": ObjectId(order_id), "user_id": str(user["_id"])})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    await orders_collection.update_one(
+        {"_id": ObjectId(order_id)},
+        {"$set": {"status": OrderStatus.PAID, "payment_status": "paid", "paid_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "Payment confirmed", "status": "paid"}
+
+@app.get("/api/cart/summary")
+async def get_cart_summary(user: dict = Depends(get_current_user)):
+    """Get cart with shipping calculation preview"""
+    cart = await cart_collection.find_one({"user_id": str(user["_id"])})
+    if not cart or not cart.get("items"):
+        return {"items": [], "subtotal": 0, "shipping": 0, "total": 0}
+    
+    items = []
+    subtotal = 0
+    shop_shipping = {}
+    
+    for cart_item in cart["items"]:
+        product = await products_collection.find_one({"_id": ObjectId(cart_item["product_id"])})
+        if not product:
+            continue
+        
+        item_total = product["price"] * cart_item["quantity"]
+        subtotal += item_total
+        
+        shop_id = product.get("shop_id")
+        items.append({
+            "product_id": cart_item["product_id"],
+            "name": product["name"],
+            "price": product["price"],
+            "quantity": cart_item["quantity"],
+            "subtotal": item_total,
+            "stock": product["stock"],
+            "shop_id": shop_id,
+            "shop_name": product.get("shop_name", "Shop"),
+            "image": product.get("images", [None])[0]
+        })
+        
+        if shop_id and shop_id not in shop_shipping:
+            shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
+            if shop:
+                shop_shipping[shop_id] = {
+                    "name": shop.get("name"),
+                    "cost": shop.get("shipping_cost", 50),
+                    "free_above": shop.get("free_shipping_above", 0)
+                }
+    
+    # Calculate shipping
+    total_shipping = 0
+    shipping_breakdown = []
+    for shop_id, shipping_info in shop_shipping.items():
+        shop_subtotal = sum(item["subtotal"] for item in items if item.get("shop_id") == shop_id)
+        if shipping_info["free_above"] > 0 and shop_subtotal >= shipping_info["free_above"]:
+            shipping_breakdown.append({"shop": shipping_info["name"], "cost": 0, "reason": "Free shipping"})
+        else:
+            total_shipping += shipping_info["cost"]
+            free_msg = f"Free above ₹{shipping_info['free_above']}" if shipping_info["free_above"] > 0 else ""
+            shipping_breakdown.append({"shop": shipping_info["name"], "cost": shipping_info["cost"], "reason": free_msg})
+    
+    return {
+        "items": items,
+        "item_count": sum(item["quantity"] for item in items),
+        "subtotal": subtotal,
+        "shipping": total_shipping,
+        "shipping_breakdown": shipping_breakdown,
+        "total": subtotal + total_shipping
+    }
 
 # ===================== REAL-TIME CHAT SYSTEM =====================
 from fastapi import WebSocket, WebSocketDisconnect

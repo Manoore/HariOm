@@ -58,10 +58,23 @@ export function CartProvider({ children }) {
     }
   };
 
+  const removeFromCart = async (productId) => {
+    try {
+      await api.put('/api/cart/update', { product_id: productId, quantity: 0 });
+      await fetchCart();
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+    }
+  };
+
+  const refreshCart = async () => {
+    await fetchCart();
+  };
+
   const cartCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cart, loading, addToCart, updateCartItem, clearCart, cartCount, fetchCart }}>
+    <CartContext.Provider value={{ cart, loading, addToCart, updateCartItem, clearCart, removeFromCart, refreshCart, cartCount, fetchCart }}>
       {children}
     </CartContext.Provider>
   );
