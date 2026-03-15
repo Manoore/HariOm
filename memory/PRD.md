@@ -18,51 +18,42 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - **Horoscope**: Local calculation service
 - **Design Theme**: Traditional warm (saffron, gold, maroon)
 - **MVP Scope**: All core features together
+- **Icons**: 3D animated SVG icons (NO EMOJIS)
 
 ## Architecture
 - **Frontend**: React.js (mobile-first responsive)
 - **Backend**: Python FastAPI
 - **Database**: MongoDB
 - **Styling**: Tailwind CSS with custom traditional theme
-
-## User Personas
-1. **Devotees**: Book priests, check horoscope, buy pooja items
-2. **Priests**: Manage bookings, offer services
-3. **Astrologers**: Provide consultations
-4. **Shop Owners**: Sell pooja products
-5. **Admin**: Platform management
+- **Mobile**: React Native with Expo (separate project at /app/divine-mobile)
 
 ## App Flows
 
 ### Web Flow (Desktop/Tablet)
-1. **Marketing Landing Page** → Full landing page with:
-   - Hero section with app preview
-   - Features, Services, Priests sections
-   - Marketplace preview
-   - Festival calendar
-   - Testimonials and CTA
-   - Footer with contact info
+1. **Marketing Landing Page** → Full landing page with 3D animated devotional icons
 2. **Login/Sign Up** → Authentication with user type selection
 3. **Dashboard** → Role-specific dashboard with sidebar navigation
 
 ### Mobile Flow (Phone)
-1. **Splash Screen** → Animated Divine logo with loading
-2. **Welcome Screen** → Feature icons, Get Started / Login buttons
+1. **Splash Screen** → Animated Divine logo with lamp
+2. **Welcome Screen** → 3D animated feature icons, Get Started / Login buttons
 3. **Login/Register** → Authentication with user type dropdown
 4. **Dashboard** → Role-specific dashboard with bottom navigation
 
-## Core Requirements
-- [x] Mobile-first responsive design
-- [x] Platform-specific flows (Web: Landing → Auth → Dashboard, Mobile: Splash → Auth → Dashboard)
-- [x] Role-based authentication and dashboards
-- [x] Priest listing and booking system
-- [x] Horoscope/Astrology section with zodiac signs
-- [x] Pooja marketplace with cart
-- [x] Festival calendar
-- [x] Temple directory
-- [x] Bottom navigation for mobile, sidebar for desktop
-
 ## What's Been Implemented (March 2026)
+
+### UI Updates - 3D Animated Icons
+- [x] Removed ALL emojis from the app
+- [x] Created custom 3D animated SVG icons:
+  - **DiyaIcon** - Animated oil lamp with flickering flame
+  - **OmIcon** - Sacred Om symbol with rotation
+  - **KalashIcon** - Traditional kalash with floating animation
+  - **TempleIcon** - Hindu temple with 3D perspective
+  - **BellIcon** - Temple bell with swinging animation
+  - **ConchIcon** - Shankh/Conch shell
+  - **ZodiacIcon** - Rotating zodiac wheel
+  - **CartIcon** - Pooja basket with bouncing animation
+- [x] Applied icons across Landing Page, Auth Screen, and Dashboards
 
 ### Backend APIs (100% Working)
 - [x] User authentication (register/login/profile)
@@ -74,39 +65,29 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [x] Horoscope/Astrology APIs
 - [x] Festivals and Temples APIs
 - [x] Admin stats and management
-- [x] Stripe payment integration
 
 ### Frontend (100% Complete)
-- [x] Web Marketing Landing Page (Hero, Features, Services, Priests, Marketplace, Festivals, CTA, Footer)
-- [x] Splash screen with animated Divine logo (mobile only)
-- [x] Welcome screen with feature icons (mobile only)
+- [x] Web Marketing Landing Page with 3D icons
+- [x] Splash screen with animated Divine logo
+- [x] Welcome screen with 3D feature icons
 - [x] Login/Register screens with user type dropdown
-- [x] **Devotee Dashboard** - Responsive (sidebar on desktop, bottom nav on mobile)
-  - Home tab with quick actions, festivals, priests
-  - Priests tab with booking flow
-  - Astrology tab with zodiac horoscope
-  - Shop tab with product grid and cart
-  - Profile tab with bookings and orders
-- [x] **Admin Dashboard** - Responsive (sidebar on desktop, bottom nav on mobile)
-  - Overview tab with stats
-  - Users tab with all users list
-  - Priests tab with priest management
-  - Products tab with product grid
-  - Bookings tab with booking list
-- [x] Priest Dashboard for booking management
+- [x] **Devotee Dashboard** - Responsive with 3D quick action icons
+- [x] **Admin Dashboard** - Responsive with sidebar
+- [x] Priest Dashboard
 - [x] Shop Owner Dashboard
 
-### Design
-- [x] Traditional Indian theme (saffron/gold/maroon)
-- [x] Cinzel font for headings
-- [x] Dark cosmic mode for astrology section
-- [x] Mobile-first bottom navigation
-- [x] Desktop sidebar navigation
+### Mobile (Expo) - Partially Complete
+- [x] Project setup at /app/divine-mobile
+- [x] Navigation structure
+- [x] Auth context and screens
+- [x] DevoteeDashboard with tabs
+- [ ] Expo preview not working in cloud environment (requires EXPO_TOKEN)
 
 ## Prioritized Backlog
 
 ### P0 (Critical)
-- [ ] Firebase Authentication integration (user to provide keys)
+- [ ] Firebase Authentication integration (user to provide credentials)
+- [ ] Expo authentication for mobile preview (user to provide EXPO_TOKEN)
 
 ### P1 (High Priority)
 - [ ] Razorpay payment integration with real keys
@@ -133,27 +114,21 @@ Backend: FastAPI, Motor (MongoDB async driver)
 Database: MongoDB
 Auth: JWT (Firebase integration pending)
 Payments: Stripe (configured), Razorpay (pending keys)
+Mobile: React Native with Expo
+Icons: Custom 3D animated SVGs
 ```
 
-## Test Results (March 14, 2026)
-- Backend: 100% working
-- Frontend: 100% (all flows tested and verified)
-- Integration: 100% working
-
-### Test Credentials
+## Test Credentials
 - **Admin**: admin@divineapp.com / admin123
 - **Devotee**: test.devotee@divineapp.com / devotee123
 
-## Next Steps
-1. User provides Firebase credentials for auth integration
-2. User provides Razorpay keys for Indian payments
-3. Complete payment flow testing
-4. App store preparation (React Native migration if needed)
-
 ## Key Files
-- `frontend/src/pages/MobileApp.js` - Main app navigator (controls web vs mobile flow)
-- `frontend/src/pages/LandingPage.js` - Web marketing landing page
-- `frontend/src/pages/AuthScreen.js` - Authentication with user type dropdown
-- `frontend/src/pages/dashboards/AdminDashboard.js` - Admin dashboard (responsive)
-- `frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee dashboard (responsive)
-- `backend/server.py` - FastAPI backend
+- `frontend/src/pages/LandingPage.js` - Web marketing landing page with 3D icons
+- `frontend/src/pages/AuthScreen.js` - Authentication with 3D feature icons
+- `frontend/src/pages/dashboards/DevoteeDashboard.js` - Dashboard with 3D quick actions
+- `frontend/src/pages/dashboards/AdminDashboard.js` - Admin dashboard
+- `divine-mobile/` - React Native Expo project
+
+## Preview URLs
+- **Web App**: https://divine-spiritual.preview.emergentagent.com
+- **Expo QR Code**: https://divine-spiritual.preview.emergentagent.com/expo-qr.html (requires EXPO_TOKEN)

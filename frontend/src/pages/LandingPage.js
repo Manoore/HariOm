@@ -1,12 +1,245 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { 
   Star, Calendar, ShoppingBag, Sun, ChevronRight, Users, Award, Clock, 
-  ArrowRight, Sparkles, Check, Play, Quote, MapPin, Phone, Mail,
+  ArrowRight, Check, Play, Quote, MapPin, Phone, Mail,
   Facebook, Twitter, Instagram, Youtube, ChevronDown, Menu, X
 } from 'lucide-react';
 import api from '../lib/api';
+
+// 3D Animated Devotional Icons
+const DiyaIcon = ({ className = "", animate = true }) => (
+  <motion.div 
+    className={`relative ${className}`}
+    animate={animate ? { 
+      rotateY: [0, 10, 0, -10, 0],
+      scale: [1, 1.02, 1, 1.02, 1]
+    } : {}}
+    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+    style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
+  >
+    <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+      <defs>
+        <linearGradient id="diyaGold" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FFD700" />
+          <stop offset="100%" stopColor="#B8860B" />
+        </linearGradient>
+        <linearGradient id="flame" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stopColor="#FF6B00" />
+          <stop offset="50%" stopColor="#FFD700" />
+          <stop offset="100%" stopColor="#FFF5CC" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <ellipse cx="50" cy="85" rx="30" ry="8" fill="#8B4513" />
+      <path d="M25 85 Q25 65 35 55 L65 55 Q75 65 75 85" fill="url(#diyaGold)" />
+      <ellipse cx="50" cy="55" rx="22" ry="7" fill="#FFD700" />
+      <motion.path 
+        d="M50 50 Q42 35 50 15 Q58 35 50 50" 
+        fill="url(#flame)" 
+        filter="url(#glow)"
+        animate={{ d: ["M50 50 Q42 35 50 15 Q58 35 50 50", "M50 50 Q44 32 50 12 Q56 32 50 50", "M50 50 Q42 35 50 15 Q58 35 50 50"] }}
+        transition={{ duration: 0.5, repeat: Infinity }}
+      />
+      <ellipse cx="50" cy="20" rx="5" ry="8" fill="#FFF5CC" opacity="0.8" />
+    </svg>
+  </motion.div>
+);
+
+const OmIcon = ({ className = "", animate = true }) => (
+  <motion.div 
+    className={`relative ${className}`}
+    animate={animate ? { 
+      rotateZ: [0, 5, 0, -5, 0],
+      scale: [1, 1.05, 1]
+    } : {}}
+    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+    style={{ transformStyle: 'preserve-3d' }}
+  >
+    <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+      <defs>
+        <linearGradient id="omGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FF9933" />
+          <stop offset="100%" stopColor="#722F37" />
+        </linearGradient>
+      </defs>
+      <text x="50" y="70" textAnchor="middle" fontSize="60" fill="url(#omGradient)" fontFamily="serif" fontWeight="bold">ॐ</text>
+    </svg>
+  </motion.div>
+);
+
+const KalashIcon = ({ className = "", animate = true }) => (
+  <motion.div 
+    className={`relative ${className}`}
+    animate={animate ? { 
+      y: [0, -5, 0],
+      rotateY: [0, 15, 0, -15, 0]
+    } : {}}
+    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+    style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
+  >
+    <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+      <defs>
+        <linearGradient id="kalashCopper" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#CD7F32" />
+          <stop offset="50%" stopColor="#FFD700" />
+          <stop offset="100%" stopColor="#CD7F32" />
+        </linearGradient>
+        <linearGradient id="leaves" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stopColor="#228B22" />
+          <stop offset="100%" stopColor="#32CD32" />
+        </linearGradient>
+      </defs>
+      <ellipse cx="50" cy="88" rx="25" ry="6" fill="#8B4513" />
+      <path d="M30 85 L35 50 Q35 45 50 45 Q65 45 65 50 L70 85 Q50 90 30 85" fill="url(#kalashCopper)" />
+      <ellipse cx="50" cy="45" rx="15" ry="5" fill="#FFD700" />
+      <ellipse cx="50" cy="32" rx="8" ry="12" fill="#2E8B57" />
+      <path d="M42 35 Q50 20 50 10 Q50 20 58 35" fill="url(#leaves)" />
+      <path d="M38 38 Q45 25 50 15" stroke="#228B22" strokeWidth="2" fill="none" />
+      <path d="M62 38 Q55 25 50 15" stroke="#228B22" strokeWidth="2" fill="none" />
+    </svg>
+  </motion.div>
+);
+
+const TempleIcon = ({ className = "", animate = true }) => (
+  <motion.div 
+    className={`relative ${className}`}
+    animate={animate ? { 
+      scale: [1, 1.03, 1],
+      rotateX: [0, 5, 0]
+    } : {}}
+    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+    style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
+  >
+    <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+      <defs>
+        <linearGradient id="templeStone" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#DEB887" />
+          <stop offset="100%" stopColor="#D2691E" />
+        </linearGradient>
+        <linearGradient id="templeGold" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#FFD700" />
+          <stop offset="100%" stopColor="#B8860B" />
+        </linearGradient>
+      </defs>
+      <rect x="20" y="70" width="60" height="25" fill="url(#templeStone)" />
+      <rect x="25" y="45" width="50" height="25" fill="url(#templeStone)" />
+      <polygon points="50,10 75,45 25,45" fill="url(#templeGold)" />
+      <circle cx="50" cy="30" r="5" fill="#FFD700" />
+      <rect x="40" y="75" width="20" height="20" fill="#4A3728" />
+      <rect x="43" y="78" width="14" height="14" fill="#2E1810" />
+    </svg>
+  </motion.div>
+);
+
+const BellIcon = ({ className = "", animate = true }) => (
+  <motion.div 
+    className={`relative ${className}`}
+    animate={animate ? { 
+      rotate: [-5, 5, -5],
+      y: [0, -2, 0]
+    } : {}}
+    transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }}
+    style={{ transformOrigin: 'top center' }}
+  >
+    <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+      <defs>
+        <linearGradient id="bellBrass" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FFD700" />
+          <stop offset="50%" stopColor="#CD853F" />
+          <stop offset="100%" stopColor="#B8860B" />
+        </linearGradient>
+      </defs>
+      <ellipse cx="50" cy="15" rx="5" ry="5" fill="#B8860B" />
+      <path d="M45 15 L45 25 Q30 35 30 60 L70 60 Q70 35 55 25 L55 15" fill="url(#bellBrass)" />
+      <ellipse cx="50" cy="60" rx="22" ry="8" fill="#CD853F" />
+      <circle cx="50" cy="70" r="6" fill="#B8860B" />
+    </svg>
+  </motion.div>
+);
+
+const ConchIcon = ({ className = "", animate = true }) => (
+  <motion.div 
+    className={`relative ${className}`}
+    animate={animate ? { 
+      rotateZ: [0, 10, 0, -10, 0],
+      scale: [1, 1.05, 1]
+    } : {}}
+    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+  >
+    <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+      <defs>
+        <linearGradient id="conchShell" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FFF5EE" />
+          <stop offset="50%" stopColor="#FFE4E1" />
+          <stop offset="100%" stopColor="#FFDAB9" />
+        </linearGradient>
+      </defs>
+      <path d="M70 50 Q75 30 60 20 Q40 15 30 35 Q20 55 35 75 Q50 90 70 80 Q85 70 70 50" fill="url(#conchShell)" stroke="#DEB887" strokeWidth="2" />
+      <path d="M55 45 Q50 50 55 60" stroke="#CD853F" strokeWidth="2" fill="none" />
+      <path d="M60 40 Q52 50 60 65" stroke="#CD853F" strokeWidth="2" fill="none" />
+      <ellipse cx="40" cy="50" rx="8" ry="15" fill="#2F1810" />
+    </svg>
+  </motion.div>
+);
+
+const ZodiacIcon = ({ className = "", animate = true }) => (
+  <motion.div 
+    className={`relative ${className}`}
+    animate={animate ? { 
+      rotate: [0, 360]
+    } : {}}
+    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+  >
+    <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+      <defs>
+        <linearGradient id="cosmicPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#4B0082" />
+          <stop offset="100%" stopColor="#9400D3" />
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="40" fill="none" stroke="url(#cosmicPurple)" strokeWidth="3" />
+      <circle cx="50" cy="50" r="30" fill="none" stroke="#FFD700" strokeWidth="1" strokeDasharray="5 5" />
+      <circle cx="50" cy="15" r="4" fill="#FFD700" />
+      <circle cx="85" cy="50" r="4" fill="#FFD700" />
+      <circle cx="50" cy="85" r="4" fill="#FFD700" />
+      <circle cx="15" cy="50" r="4" fill="#FFD700" />
+      <circle cx="50" cy="50" r="8" fill="#4B0082" />
+      <circle cx="50" cy="50" r="4" fill="#FFD700" />
+    </svg>
+  </motion.div>
+);
+
+const CartIcon = ({ className = "", animate = true }) => (
+  <motion.div 
+    className={`relative ${className}`}
+    animate={animate ? { 
+      y: [0, -3, 0],
+      rotate: [0, 2, 0, -2, 0]
+    } : {}}
+    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+  >
+    <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+      <defs>
+        <linearGradient id="basketWood" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#DEB887" />
+          <stop offset="100%" stopColor="#8B4513" />
+        </linearGradient>
+      </defs>
+      <path d="M20 35 L30 75 L70 75 L80 35 Z" fill="url(#basketWood)" stroke="#8B4513" strokeWidth="2" />
+      <path d="M25 45 L75 45" stroke="#A0522D" strokeWidth="2" />
+      <path d="M27 55 L73 55" stroke="#A0522D" strokeWidth="2" />
+      <path d="M29 65 L71 65" stroke="#A0522D" strokeWidth="2" />
+      <ellipse cx="35" cy="30" rx="6" ry="8" fill="#FF6347" />
+      <ellipse cx="50" cy="28" rx="5" ry="7" fill="#FFD700" />
+      <ellipse cx="65" cy="30" rx="6" ry="8" fill="#32CD32" />
+      <path d="M35 20 L35 25" stroke="#228B22" strokeWidth="2" />
+    </svg>
+  </motion.div>
+);
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
@@ -47,14 +280,7 @@ export default function LandingPage({ onGetStarted }) {
           <div className="flex justify-between items-center h-16 lg:h-20">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                  <ellipse cx="50" cy="85" rx="30" ry="8" fill="#B8860B" />
-                  <path d="M30 85 Q30 70 35 60 L65 60 Q70 70 70 85" fill="#FFD700" />
-                  <ellipse cx="50" cy="60" rx="18" ry="6" fill="#FFD700" />
-                  <path d="M50 55 Q45 40 50 25 Q55 40 50 55" fill="#FF9933" />
-                </svg>
-              </div>
+              <DiyaIcon className="w-10 h-10" animate={false} />
               <span className="font-cinzel text-2xl font-bold text-maroon">DIVINE</span>
             </div>
 
@@ -126,7 +352,7 @@ export default function LandingPage({ onGetStarted }) {
               transition={{ duration: 0.8 }}
             >
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-                <Sparkles className="w-4 h-4 text-gold" />
+                <OmIcon className="w-5 h-5" animate={false} />
                 <span className="text-white/90 text-sm">Your Complete Spiritual Ecosystem</span>
               </div>
               
@@ -185,11 +411,18 @@ export default function LandingPage({ onGetStarted }) {
                       <p className="text-gray-500 text-xs">Namaste,</p>
                       <p className="font-cinzel text-lg font-bold text-maroon">Devotee</p>
                       <div className="grid grid-cols-4 gap-2 mt-4">
-                        {['🙏', '✨', '🛒', '🛕'].map((icon, i) => (
-                          <div key={i} className="bg-white rounded-xl p-3 text-center shadow-sm">
-                            <span className="text-lg">{icon}</span>
-                          </div>
-                        ))}
+                        <div className="bg-white rounded-xl p-3 text-center shadow-sm">
+                          <BellIcon className="w-6 h-6 mx-auto" animate={false} />
+                        </div>
+                        <div className="bg-white rounded-xl p-3 text-center shadow-sm">
+                          <ZodiacIcon className="w-6 h-6 mx-auto" animate={false} />
+                        </div>
+                        <div className="bg-white rounded-xl p-3 text-center shadow-sm">
+                          <CartIcon className="w-6 h-6 mx-auto" animate={false} />
+                        </div>
+                        <div className="bg-white rounded-xl p-3 text-center shadow-sm">
+                          <TempleIcon className="w-6 h-6 mx-auto" animate={false} />
+                        </div>
                       </div>
                       <div className="mt-4 bg-gradient-to-r from-saffron to-gold rounded-xl p-3 text-white">
                         <p className="text-xs opacity-80">Next Festival</p>
@@ -256,40 +489,40 @@ export default function LandingPage({ onGetStarted }) {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               { 
-                icon: Users, 
+                icon: BellIcon, 
                 title: 'Verified Priests', 
                 desc: 'All priests are thoroughly verified with experience validation and background checks.',
-                color: 'bg-saffron'
+                color: 'bg-gradient-to-br from-saffron to-orange-400'
               },
               { 
-                icon: Sun, 
+                icon: ZodiacIcon, 
                 title: 'Personalized Astrology', 
                 desc: 'Get daily horoscopes, birth chart analysis, and personalized cosmic insights.',
-                color: 'bg-indigo-500'
+                color: 'bg-gradient-to-br from-indigo-500 to-purple-500'
               },
               { 
-                icon: ShoppingBag, 
+                icon: CartIcon, 
                 title: 'Authentic Products', 
                 desc: 'Shop quality pooja items, idols, and spiritual products from trusted sellers.',
-                color: 'bg-gold-dark'
+                color: 'bg-gradient-to-br from-gold to-amber-500'
               },
               { 
-                icon: Calendar, 
-                title: 'Festival Reminders', 
-                desc: 'Never miss important festivals, muhurtas, and auspicious occasions.',
-                color: 'bg-maroon'
+                icon: TempleIcon, 
+                title: 'Temple Directory', 
+                desc: 'Discover temples near you and plan your spiritual pilgrimages.',
+                color: 'bg-gradient-to-br from-maroon to-red-700'
               },
             ].map((feature, index) => (
               <motion.div 
                 key={index}
-                className="text-center p-6"
+                className="text-center p-6 rounded-2xl hover:bg-cream/50 transition-colors"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
               >
-                <div className={`${feature.color} w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4`}>
-                  <feature.icon className="w-8 h-8 text-white" />
+                <div className={`${feature.color} w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                  <feature.icon className="w-10 h-10" animate={true} />
                 </div>
                 <h3 className="font-cinzel text-xl font-semibold text-maroon mb-2">{feature.title}</h3>
                 <p className="text-gray-600 text-sm">{feature.desc}</p>
@@ -351,15 +584,15 @@ export default function LandingPage({ onGetStarted }) {
               className="grid grid-cols-2 gap-4"
             >
               {[
-                { title: 'Satyanarayana Pooja', price: '₹2,100', duration: '2 hours', image: '🙏' },
-                { title: 'Griha Pravesh', price: '₹5,100', duration: '3 hours', image: '🏠' },
-                { title: 'Navagraha Shanti', price: '₹4,500', duration: '2.5 hours', image: '✨' },
-                { title: 'Rudrabhishekam', price: '₹3,100', duration: '1.5 hours', image: '🔱' },
+                { title: 'Satyanarayana Pooja', price: '2,100', duration: '2 hours', Icon: KalashIcon },
+                { title: 'Griha Pravesh', price: '5,100', duration: '3 hours', Icon: TempleIcon },
+                { title: 'Navagraha Shanti', price: '4,500', duration: '2.5 hours', Icon: ZodiacIcon },
+                { title: 'Rudrabhishekam', price: '3,100', duration: '1.5 hours', Icon: ConchIcon },
               ].map((service, i) => (
                 <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100 hover:shadow-md transition-shadow">
-                  <span className="text-4xl block mb-3">{service.image}</span>
+                  <service.Icon className="w-12 h-12 mb-3" animate={true} />
                   <h4 className="font-semibold text-gray-800 mb-1">{service.title}</h4>
-                  <p className="text-saffron font-bold text-lg mb-1">{service.price}</p>
+                  <p className="text-saffron font-bold text-lg mb-1">₹{service.price}</p>
                   <p className="text-gray-500 text-sm flex items-center gap-1">
                     <Clock className="w-3 h-3" /> {service.duration}
                   </p>
@@ -387,10 +620,10 @@ export default function LandingPage({ onGetStarted }) {
 
           <div className="grid md:grid-cols-4 gap-8">
             {[
-              { step: '01', title: 'Create Account', desc: 'Sign up in seconds with your email or phone number' },
-              { step: '02', title: 'Choose Service', desc: 'Browse priests, select pooja type, or shop products' },
-              { step: '03', title: 'Book & Pay', desc: 'Select date, time and complete secure payment' },
-              { step: '04', title: 'Get Blessed', desc: 'Attend pooja in person or join online video session' },
+              { step: '01', title: 'Create Account', desc: 'Sign up in seconds with your email or phone number', Icon: Users },
+              { step: '02', title: 'Choose Service', desc: 'Browse priests, select pooja type, or shop products', Icon: BellIcon },
+              { step: '03', title: 'Book & Pay', desc: 'Select date, time and complete secure payment', Icon: Calendar },
+              { step: '04', title: 'Get Blessed', desc: 'Attend pooja in person or join online video session', Icon: DiyaIcon },
             ].map((item, i) => (
               <motion.div 
                 key={i}
@@ -400,7 +633,13 @@ export default function LandingPage({ onGetStarted }) {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <div className="text-6xl font-bold text-white/10 font-cinzel mb-4">{item.step}</div>
+                <div className="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-2xl flex items-center justify-center">
+                  {typeof item.Icon === 'function' && item.Icon.name.includes('Icon') ? 
+                    <item.Icon className="w-8 h-8" animate={false} /> : 
+                    <item.Icon className="w-8 h-8 text-gold" />
+                  }
+                </div>
+                <div className="text-6xl font-bold text-white/10 font-cinzel mb-2">{item.step}</div>
                 <h4 className="font-cinzel text-xl font-semibold text-white mb-2">{item.title}</h4>
                 <p className="text-white/70 text-sm">{item.desc}</p>
                 {i < 3 && (
@@ -522,7 +761,7 @@ export default function LandingPage({ onGetStarted }) {
                   {product.images?.[0] ? (
                     <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
                   ) : (
-                    <ShoppingBag className="w-12 h-12 text-saffron/30" />
+                    <CartIcon className="w-12 h-12" animate={false} />
                   )}
                 </div>
                 <h4 className="font-medium text-gray-800 text-sm mb-1 line-clamp-2">{product.name}</h4>
@@ -565,12 +804,15 @@ export default function LandingPage({ onGetStarted }) {
             {festivals.map((festival, index) => (
               <motion.div 
                 key={festival.id}
-                className="bg-gradient-to-br from-saffron to-gold rounded-2xl p-6 text-white"
+                className="bg-gradient-to-br from-saffron to-gold rounded-2xl p-6 text-white relative overflow-hidden"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
               >
+                <div className="absolute top-2 right-2 opacity-20">
+                  <DiyaIcon className="w-16 h-16" animate={false} />
+                </div>
                 <Calendar className="w-8 h-8 mb-4 opacity-80" />
                 <h4 className="font-cinzel text-lg font-semibold mb-1">{festival.name}</h4>
                 <p className="text-white/80 text-sm mb-2">{festival.date}</p>
@@ -628,8 +870,12 @@ export default function LandingPage({ onGetStarted }) {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-maroon">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="py-24 bg-maroon relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10"><OmIcon className="w-32 h-32" animate={false} /></div>
+          <div className="absolute bottom-10 right-10"><DiyaIcon className="w-32 h-32" animate={false} /></div>
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -658,14 +904,7 @@ export default function LandingPage({ onGetStarted }) {
           <div className="grid md:grid-cols-4 gap-12">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10">
-                  <svg viewBox="0 0 100 100" className="w-full h-full">
-                    <ellipse cx="50" cy="85" rx="30" ry="8" fill="#B8860B" />
-                    <path d="M30 85 Q30 70 35 60 L65 60 Q70 70 70 85" fill="#FFD700" />
-                    <ellipse cx="50" cy="60" rx="18" ry="6" fill="#FFD700" />
-                    <path d="M50 55 Q45 40 50 25 Q55 40 50 55" fill="#FF9933" />
-                  </svg>
-                </div>
+                <DiyaIcon className="w-10 h-10" animate={false} />
                 <span className="font-cinzel text-xl font-bold">DIVINE</span>
               </div>
               <p className="text-gray-400 text-sm mb-4">
@@ -719,7 +958,7 @@ export default function LandingPage({ onGetStarted }) {
           </div>
 
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-sm text-gray-500">
-            <p>© 2025 Divine App. All rights reserved. Made with 🙏 in India</p>
+            <p>© 2025 Divine App. All rights reserved. Made with devotion in India</p>
           </div>
         </div>
       </footer>

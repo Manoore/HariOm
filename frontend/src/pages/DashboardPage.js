@@ -76,7 +76,7 @@ function DevoteeDashboard() {
           {/* Welcome Section */}
           <div className="card p-6 mb-8 bg-gradient-to-r from-saffron to-gold text-white">
             <h1 className="font-cinzel text-2xl font-bold mb-2">
-              Namaste, {user.name}! 🙏
+              Namaste, {user.name}!
             </h1>
             <p className="opacity-90">Welcome to your spiritual dashboard</p>
           </div>

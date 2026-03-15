@@ -11,6 +11,76 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { Toaster, toast } from 'sonner';
 
+// 3D Animated Devotional SVG Icons
+const BellIcon3D = ({ size = "w-8 h-8" }) => (
+  <motion.svg viewBox="0 0 100 100" className={size} animate={{ rotate: [-3, 3, -3] }} transition={{ duration: 0.4, repeat: Infinity }}>
+    <defs>
+      <linearGradient id="bellGradD" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FFD700" />
+        <stop offset="100%" stopColor="#CD853F" />
+      </linearGradient>
+    </defs>
+    <ellipse cx="50" cy="15" rx="5" ry="5" fill="#B8860B" />
+    <path d="M45 15 L45 25 Q30 35 30 60 L70 60 Q70 35 55 25 L55 15" fill="url(#bellGradD)" />
+    <ellipse cx="50" cy="60" rx="22" ry="8" fill="#CD853F" />
+    <circle cx="50" cy="70" r="6" fill="#B8860B" />
+  </motion.svg>
+);
+
+const ZodiacIcon3D = ({ size = "w-8 h-8" }) => (
+  <motion.svg viewBox="0 0 100 100" className={size} animate={{ rotate: [0, 360] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }}>
+    <defs>
+      <linearGradient id="zodiacGradD" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#4B0082" />
+        <stop offset="100%" stopColor="#9400D3" />
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="35" fill="none" stroke="url(#zodiacGradD)" strokeWidth="3" />
+    <circle cx="50" cy="50" r="25" fill="none" stroke="#FFD700" strokeWidth="1" strokeDasharray="4 4" />
+    <circle cx="50" cy="18" r="4" fill="#FFD700" />
+    <circle cx="82" cy="50" r="4" fill="#FFD700" />
+    <circle cx="50" cy="82" r="4" fill="#FFD700" />
+    <circle cx="18" cy="50" r="4" fill="#FFD700" />
+    <circle cx="50" cy="50" r="6" fill="#4B0082" />
+  </motion.svg>
+);
+
+const TempleIcon3D = ({ size = "w-8 h-8" }) => (
+  <motion.svg viewBox="0 0 100 100" className={size} animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 3, repeat: Infinity }}>
+    <defs>
+      <linearGradient id="templeGradD" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#DEB887" />
+        <stop offset="100%" stopColor="#CD853F" />
+      </linearGradient>
+      <linearGradient id="roofGradD" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#FFD700" />
+        <stop offset="100%" stopColor="#B8860B" />
+      </linearGradient>
+    </defs>
+    <rect x="20" y="65" width="60" height="30" fill="url(#templeGradD)" />
+    <rect x="28" y="45" width="44" height="20" fill="url(#templeGradD)" />
+    <polygon points="50,10 78,45 22,45" fill="url(#roofGradD)" />
+    <circle cx="50" cy="28" r="5" fill="#FFD700" />
+    <rect x="40" y="70" width="20" height="25" fill="#4A3728" />
+  </motion.svg>
+);
+
+const CartIcon3D = ({ size = "w-8 h-8" }) => (
+  <motion.svg viewBox="0 0 100 100" className={size} animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+    <defs>
+      <linearGradient id="cartGradD" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#DEB887" />
+        <stop offset="100%" stopColor="#8B4513" />
+      </linearGradient>
+    </defs>
+    <path d="M20 35 L30 75 L70 75 L80 35 Z" fill="url(#cartGradD)" stroke="#8B4513" strokeWidth="2" />
+    <path d="M25 45 L75 45 M27 55 L73 55 M29 65 L71 65" stroke="#A0522D" strokeWidth="2" fill="none" />
+    <ellipse cx="35" cy="28" rx="6" ry="8" fill="#FF6347" />
+    <ellipse cx="50" cy="26" rx="5" ry="7" fill="#FFD700" />
+    <ellipse cx="65" cy="28" rx="6" ry="8" fill="#32CD32" />
+  </motion.svg>
+);
+
 // Check if desktop
 const useIsDesktop = () => {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
@@ -182,22 +252,22 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
         <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">{user?.name || 'Devotee'}</h1>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions with 3D Icons */}
       <div className={`grid ${isDesktop ? 'grid-cols-4 gap-6' : 'grid-cols-4 gap-3'} mb-8`}>
         {[
-          { icon: '🙏', label: 'Priests', tab: 'priests' },
-          { icon: '✨', label: 'Horoscope', tab: 'astrology' },
-          { icon: '🛒', label: 'Shop', tab: 'shop' },
-          { icon: '🛕', label: 'Temples', tab: 'temples' },
+          { Icon: BellIcon3D, label: 'Priests', tab: 'priests' },
+          { Icon: ZodiacIcon3D, label: 'Horoscope', tab: 'astrology' },
+          { Icon: CartIcon3D, label: 'Shop', tab: 'shop' },
+          { Icon: TempleIcon3D, label: 'Temples', tab: 'temples' },
         ].map((item) => (
           <button
             key={item.label}
             onClick={() => setActiveTab(item.tab)}
-            className={`bg-white rounded-2xl ${isDesktop ? 'p-6' : 'p-4'} shadow-sm border border-orange-50 active:scale-95 transition-transform hover:shadow-md`}
+            className={`bg-white rounded-2xl ${isDesktop ? 'p-6' : 'p-4'} shadow-sm border border-orange-50 active:scale-95 transition-transform hover:shadow-md flex flex-col items-center justify-center`}
             data-testid={`quick-${item.tab}`}
           >
-            <span className={`${isDesktop ? 'text-4xl' : 'text-2xl'} block mb-2`}>{item.icon}</span>
-            <span className={`${isDesktop ? 'text-base' : 'text-xs'} text-gray-600`}>{item.label}</span>
+            <item.Icon size={isDesktop ? "w-12 h-12" : "w-8 h-8"} />
+            <span className={`${isDesktop ? 'text-base mt-2' : 'text-xs mt-1'} text-gray-600`}>{item.label}</span>
           </button>
         ))}
       </div>
