@@ -5,7 +5,7 @@ import {
   Bell, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
   CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
-  Camera, MessageCircle, Send, Image as ImageIcon
+  Camera, MessageCircle, Send, Image as ImageIcon, Rss
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -100,6 +100,7 @@ function Sidebar({ activeTab, setActiveTab, user }) {
   
   const tabs = [
     { id: 'home', icon: Home, label: 'Home' },
+    { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
     { id: 'mantras', icon: BookOpen, label: 'Mantras & Shlokas' },
     { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
     { id: 'priests', icon: Star, label: 'Book Priests' },
@@ -188,7 +189,7 @@ function BottomNav({ activeTab, setActiveTab }) {
   
   const tabs = [
     { id: 'home', icon: Home, label: 'Home' },
-    { id: 'mantras', icon: BookOpen, label: 'Mantras' },
+    { id: 'feed', icon: Rss, label: 'Feed' },
     { id: 'astrology', icon: Sun, label: 'Astrology' },
     { id: 'shop', icon: ShoppingBag, label: 'Shop' },
     { id: 'profile', icon: User, label: 'Profile' },
@@ -506,6 +507,95 @@ function PostCard({ post }) {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Feed Tab - Dedicated Spiritual Updates Feed
+function FeedTab({ isDesktop }) {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    loadPosts(0);
+  }, []);
+
+  const loadPosts = async (pageNum) => {
+    try {
+      setLoading(true);
+      const res = await api.get(`/api/posts/feed?limit=10&skip=${pageNum * 10}`);
+      const newPosts = res.data.posts || [];
+      
+      if (pageNum === 0) {
+        setPosts(newPosts);
+      } else {
+        setPosts(prev => [...prev, ...newPosts]);
+      }
+      
+      setHasMore(newPosts.length === 10);
+    } catch (error) {
+      console.error('Error loading posts:', error);
+      toast.error('Failed to load posts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    loadPosts(nextPage);
+  };
+
+  return (
+    <div className={`p-4 lg:p-8 pb-24 lg:pb-8 ${isDesktop ? 'max-w-4xl mx-auto' : ''}`}>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="font-cinzel text-2xl font-bold text-maroon mb-1">Spiritual Feed</h1>
+        <p className="text-gray-500 text-sm">Updates from our priests and spiritual guides</p>
+      </div>
+
+      {/* Posts */}
+      {loading && posts.length === 0 ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-saffron" />
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="bg-white rounded-2xl p-8 text-center border border-orange-50">
+          <Rss className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <h3 className="font-semibold text-gray-700 mb-1">No Posts Yet</h3>
+          <p className="text-gray-400 text-sm">Follow priests to see their spiritual updates here</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+          
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="text-center pt-4">
+              <button
+                onClick={loadMore}
+                disabled={loading}
+                className="px-6 py-2 bg-saffron text-white rounded-full text-sm font-medium hover:bg-orange-600 transition-colors disabled:opacity-50"
+                data-testid="load-more-posts"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading...
+                  </span>
+                ) : (
+                  'Load More'
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -3715,6 +3805,7 @@ export default function DevoteeDashboard() {
         {activeTab === 'home' && (
           <HomeTab setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} isDesktop={isDesktop} />
         )}
+        {activeTab === 'feed' && <FeedTab isDesktop={isDesktop} />}
         {activeTab === 'mantras' && <MantrasTab isDesktop={isDesktop} />}
         {activeTab === 'calendar' && <CalendarTab isDesktop={isDesktop} />}
         {activeTab === 'priests' && (
