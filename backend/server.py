@@ -337,6 +337,87 @@ async def place_details(place_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Places API error: {str(e)}")
 
+# ===================== TRANSLATION API =====================
+@app.post("/api/translate")
+async def translate_text(request: Request):
+    """Translate text using Google Translate API or fallback to MyMemory"""
+    try:
+        body = await request.json()
+        text = body.get("text", "")
+        target_lang = body.get("target_lang", "hi")  # Default to Hindi
+        
+        if not text:
+            return {"status": "error", "message": "No text provided"}
+        
+        # Language codes mapping
+        lang_codes = {
+            "hindi": "hi",
+            "telugu": "te",
+            "kannada": "kn",
+            "tamil": "ta",
+            "malayalam": "ml",
+            "english": "en"
+        }
+        
+        target = lang_codes.get(target_lang.lower(), target_lang)
+        
+        # Try Google Translate first if API key available
+        if GOOGLE_PLACES_API_KEY:
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        "https://translation.googleapis.com/language/translate/v2",
+                        params={"key": GOOGLE_PLACES_API_KEY},
+                        json={
+                            "q": text,
+                            "target": target,
+                            "format": "text"
+                        },
+                        timeout=10.0
+                    )
+                    data = response.json()
+                    
+                    if "data" in data and "translations" in data["data"]:
+                        translated = data["data"]["translations"][0]["translatedText"]
+                        return {
+                            "status": "ok",
+                            "original": text,
+                            "translated": translated,
+                            "target_lang": target,
+                            "provider": "google"
+                        }
+            except Exception as e:
+                print(f"Google Translate failed: {e}")
+        
+        # Fallback to MyMemory API (free, no API key needed)
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    "https://api.mymemory.translated.net/get",
+                    params={
+                        "q": text[:500],  # MyMemory has 500 char limit
+                        "langpair": f"en|{target}"
+                    },
+                    timeout=10.0
+                )
+                data = response.json()
+                
+                if data.get("responseStatus") == 200:
+                    translated = data.get("responseData", {}).get("translatedText", text)
+                    return {
+                        "status": "ok",
+                        "original": text,
+                        "translated": translated,
+                        "target_lang": target,
+                        "provider": "mymemory"
+                    }
+        except Exception as e:
+            print(f"MyMemory translate failed: {e}")
+        
+        return {"status": "error", "message": "Translation services unavailable"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Translation error: {str(e)}")
+
 # ===================== DEVOTIONAL CONTENT ROUTES =====================
 @app.get("/api/devotional/deities")
 async def get_deities():

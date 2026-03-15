@@ -542,11 +542,88 @@ function MantrasTab({ isDesktop }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
   const [showVoiceSelector, setShowVoiceSelector] = useState(false);
+  
+  // Translation states
+  const [selectedLanguage, setSelectedLanguage] = useState('english');
+  const [translations, setTranslations] = useState({});
+  const [translating, setTranslating] = useState(false);
+  
+  const languages = [
+    { code: 'english', name: 'English', native: 'English' },
+    { code: 'hindi', name: 'Hindi', native: 'हिंदी' },
+    { code: 'telugu', name: 'Telugu', native: 'తెలుగు' },
+    { code: 'kannada', name: 'Kannada', native: 'ಕನ್ನಡ' },
+    { code: 'tamil', name: 'Tamil', native: 'தமிழ்' },
+    { code: 'malayalam', name: 'Malayalam', native: 'മലയാളം' },
+  ];
 
   useEffect(() => {
     fetchData();
     loadVoices();
   }, []);
+  
+  // Translate text
+  const translateText = async (text, mantraKey) => {
+    if (!text || selectedLanguage === 'english') {
+      return text; // No translation needed for English
+    }
+    
+    // Check cache first
+    const cacheKey = `${mantraKey}_${selectedLanguage}`;
+    if (translations[cacheKey]) {
+      return translations[cacheKey];
+    }
+    
+    try {
+      const res = await api.post('/api/translate', {
+        text: text,
+        target_lang: selectedLanguage
+      });
+      
+      if (res.data.status === 'ok') {
+        // Cache the translation
+        setTranslations(prev => ({
+          ...prev,
+          [cacheKey]: res.data.translated
+        }));
+        return res.data.translated;
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+    }
+    return text;
+  };
+  
+  // Translate all visible mantras when language changes
+  useEffect(() => {
+    if (selectedLanguage !== 'english' && todayDevotional?.mantras) {
+      translateMantras(todayDevotional.mantras);
+    }
+  }, [selectedLanguage, todayDevotional]);
+  
+  const translateMantras = async (mantrasToTranslate) => {
+    if (selectedLanguage === 'english') return;
+    
+    setTranslating(true);
+    for (const mantra of mantrasToTranslate) {
+      if (mantra.meaning_english) {
+        await translateText(mantra.meaning_english, mantra.name);
+      }
+    }
+    setTranslating(false);
+  };
+  
+  // Get translation for a mantra
+  const getTranslation = (mantra) => {
+    if (selectedLanguage === 'english') {
+      return mantra.meaning_english;
+    }
+    if (selectedLanguage === 'hindi' && mantra.meaning_hindi) {
+      return mantra.meaning_hindi;
+    }
+    const cacheKey = `${mantra.name}_${selectedLanguage}`;
+    return translations[cacheKey] || mantra.meaning_english;
+  };
   
   // Load available voices for TTS
   const loadVoices = () => {
@@ -661,7 +738,7 @@ function MantrasTab({ isDesktop }) {
       </div>
 
       {/* Section Tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+      <div className="flex flex-wrap gap-2 mb-6 pb-2">
         {sections.map((section) => (
           <button
             key={section.id}
@@ -680,38 +757,56 @@ function MantrasTab({ isDesktop }) {
           </button>
         ))}
         
-        {/* Voice Selector Button */}
-        <div className="relative ml-auto">
-          <button
-            onClick={() => setShowVoiceSelector(!showVoiceSelector)}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-cream text-maroon hover:bg-saffron/20 transition-all"
-          >
-            <Volume2 className="w-4 h-4" />
-            <span className="text-sm hidden md:inline">Voice</span>
-          </button>
+        <div className="flex gap-2 ml-auto">
+          {/* Language Selector */}
+          <div className="relative">
+            <select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="appearance-none bg-cream text-maroon px-4 py-2 pr-8 rounded-full text-sm focus:ring-2 focus:ring-saffron outline-none cursor-pointer"
+            >
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.native}
+                </option>
+              ))}
+            </select>
+            <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-maroon rotate-90 pointer-events-none" />
+          </div>
           
-          {showVoiceSelector && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-saffron/20 z-20 p-3">
-              <p className="text-xs text-gray-500 mb-2">Select Voice for Reading</p>
-              <select
-                value={selectedVoice?.name || ''}
-                onChange={(e) => {
-                  const voice = voices.find(v => v.name === e.target.value);
-                  setSelectedVoice(voice);
-                }}
-                className="w-full bg-cream rounded-lg px-3 py-2 text-sm text-maroon focus:ring-2 focus:ring-saffron outline-none"
-              >
-                {voices.map((voice, idx) => (
-                  <option key={idx} value={voice.name}>
-                    {voice.name} ({voice.lang})
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-400 mt-2">
-                Tip: Hindi voices work best for mantras
-              </p>
-            </div>
-          )}
+          {/* Voice Selector Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowVoiceSelector(!showVoiceSelector)}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-cream text-maroon hover:bg-saffron/20 transition-all"
+            >
+              <Volume2 className="w-4 h-4" />
+              <span className="text-sm hidden md:inline">Voice</span>
+            </button>
+            
+            {showVoiceSelector && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-saffron/20 z-20 p-3">
+                <p className="text-xs text-gray-500 mb-2">Select Voice for Reading</p>
+                <select
+                  value={selectedVoice?.name || ''}
+                  onChange={(e) => {
+                    const voice = voices.find(v => v.name === e.target.value);
+                    setSelectedVoice(voice);
+                  }}
+                  className="w-full bg-cream rounded-lg px-3 py-2 text-sm text-maroon focus:ring-2 focus:ring-saffron outline-none"
+                >
+                  {voices.map((voice, idx) => (
+                    <option key={idx} value={voice.name}>
+                      {voice.name} ({voice.lang})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-2">
+                  Tip: Hindi voices work best for mantras
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -799,19 +894,18 @@ function MantrasTab({ isDesktop }) {
                     <p className="text-sm text-gray-700 italic">{mantra.transliteration}</p>
                   </div>
                   
-                  {/* English Meaning/Translation */}
+                  {/* Translation in selected language */}
                   <div className="bg-saffron/5 rounded-lg p-3 mb-3">
-                    <p className="text-xs text-gray-500 mb-1">Translation:</p>
-                    <p className="text-sm text-gray-800">{mantra.meaning_english}</p>
-                  </div>
-                  
-                  {/* Hindi Meaning if available */}
-                  {mantra.meaning_hindi && (
-                    <div className="bg-saffron/5 rounded-lg p-3 mb-3">
-                      <p className="text-xs text-gray-500 mb-1">हिंदी अर्थ:</p>
-                      <p className="text-sm text-gray-800">{mantra.meaning_hindi}</p>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs text-gray-500">
+                        Translation ({languages.find(l => l.code === selectedLanguage)?.native}):
+                      </p>
+                      {translating && (
+                        <Loader2 className="w-3 h-3 text-saffron animate-spin" />
+                      )}
                     </div>
-                  )}
+                    <p className="text-sm text-gray-800">{getTranslation(mantra)}</p>
+                  </div>
                   
                   <button
                     onClick={() => setExpandedMantra(expandedMantra === mantra.name ? null : mantra.name)}
