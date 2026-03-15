@@ -709,12 +709,33 @@ function MantrasTab({ isDesktop }) {
     try {
       const res = await api.get(`/api/devotional/deities/${deityId}`);
       setSelectedDeity(res.data.data);
-      setMantras(res.data.data.mantras || []);
+      const deityMantras = res.data.data.mantras || [];
+      setMantras(deityMantras);
       setStotras(res.data.data.stotras || []);
+      
+      // Translate mantras if not English
+      if (selectedLanguage !== 'english' && deityMantras.length > 0) {
+        for (const mantra of deityMantras) {
+          if (mantra.meaning_english) {
+            translateText(mantra.meaning_english, mantra.name);
+          }
+        }
+      }
     } catch (error) {
       toast.error('Failed to load content');
     }
   };
+
+  // Translate deity mantras when language changes
+  useEffect(() => {
+    if (selectedLanguage !== 'english' && mantras.length > 0 && activeSection === 'deities') {
+      mantras.forEach(mantra => {
+        if (mantra.meaning_english) {
+          translateText(mantra.meaning_english, mantra.name);
+        }
+      });
+    }
+  }, [selectedLanguage, mantras, activeSection]);
 
   const sections = [
     { id: 'today', name: "Today's Worship", icon: Calendar },
@@ -1027,8 +1048,10 @@ function MantrasTab({ isDesktop }) {
                     
                     {/* Translation */}
                     <div className="bg-saffron/5 rounded-lg p-2 mt-2">
-                      <p className="text-xs text-gray-500 mb-1">Translation:</p>
-                      <p className="text-xs text-gray-700">{mantra.meaning_english}</p>
+                      <p className="text-xs text-gray-500 mb-1">
+                        Translation ({languages.find(l => l.code === selectedLanguage)?.native}):
+                      </p>
+                      <p className="text-xs text-gray-700">{getTranslation(mantra)}</p>
                     </div>
                   </div>
                 ))}
@@ -1077,6 +1100,10 @@ function MantrasTab({ isDesktop }) {
           isDesktop={isDesktop} 
           speakMantra={speakMantra} 
           currentlyPlaying={currentlyPlaying}
+          selectedLanguage={selectedLanguage}
+          languages={languages}
+          translations={translations}
+          translateText={translateText}
         />
       )}
     </div>
@@ -1084,15 +1111,45 @@ function MantrasTab({ isDesktop }) {
 }
 
 // All Mantras Sub-component
-function AllMantrasSection({ isDesktop, speakMantra, currentlyPlaying }) {
+function AllMantrasSection({ isDesktop, speakMantra, currentlyPlaying, selectedLanguage, languages, translations, translateText }) {
   const [mantras, setMantras] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [translating, setTranslating] = useState(false);
 
   useEffect(() => {
     fetchAllMantras();
   }, []);
+  
+  // Translate mantras when language changes
+  useEffect(() => {
+    if (selectedLanguage !== 'english' && mantras.length > 0) {
+      translateAllMantras();
+    }
+  }, [selectedLanguage, mantras]);
+  
+  const translateAllMantras = async () => {
+    setTranslating(true);
+    for (const mantra of mantras.slice(0, 10)) { // Translate first 10 visible
+      if (mantra.meaning_english && translateText) {
+        await translateText(mantra.meaning_english, mantra.name);
+      }
+    }
+    setTranslating(false);
+  };
+  
+  // Get translation for a mantra
+  const getTranslation = (mantra) => {
+    if (selectedLanguage === 'english') {
+      return mantra.meaning_english;
+    }
+    if (selectedLanguage === 'hindi' && mantra.meaning_hindi) {
+      return mantra.meaning_hindi;
+    }
+    const cacheKey = `${mantra.name}_${selectedLanguage}`;
+    return translations?.[cacheKey] || mantra.meaning_english;
+  };
 
   const fetchAllMantras = async () => {
     try {
@@ -1196,8 +1253,11 @@ function AllMantrasSection({ isDesktop, speakMantra, currentlyPlaying }) {
             
             {/* Translation */}
             <div className="bg-saffron/5 rounded-lg p-2">
-              <p className="text-xs text-gray-500 mb-1">Translation:</p>
-              <p className="text-xs text-gray-700 line-clamp-3">{mantra.meaning_english}</p>
+              <p className="text-xs text-gray-500 mb-1">
+                Translation ({languages?.find(l => l.code === selectedLanguage)?.native || 'English'}):
+                {translating && <span className="ml-1 text-saffron">(translating...)</span>}
+              </p>
+              <p className="text-xs text-gray-700 line-clamp-3">{getTranslation(mantra)}</p>
             </div>
           </motion.div>
         ))}
