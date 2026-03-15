@@ -149,10 +149,10 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Google Sign In
-  const loginWithGoogle = async () => {
+  // Google Sign In (with optional role for new registrations)
+  const loginWithGoogle = async (selectedRole = null) => {
     try {
-      console.log('Starting Google Sign-In...');
+      console.log('Starting Google Sign-In...', selectedRole ? `with role: ${selectedRole}` : '');
       
       const result = await firebaseGoogleSignIn();
       console.log('Google Sign-In successful:', result.user?.email);
@@ -167,7 +167,8 @@ export function AuthProvider({ children }) {
             firebase_uid: result.user.uid,
             email: result.user.email,
             name: result.user.displayName || result.user.email?.split('@')[0] || 'User',
-            photo_url: result.user.photoURL
+            photo_url: result.user.photoURL,
+            role: selectedRole // Pass role for new users
           });
           
           setFirebaseUser(result.user);

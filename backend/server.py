@@ -1449,6 +1449,7 @@ class FirebaseSyncRequest(BaseModel):
     email: str
     name: str
     photo_url: Optional[str] = None
+    role: Optional[str] = None  # Optional role for new user registration
 
 class FirebaseRegisterRequest(BaseModel):
     firebase_uid: str
@@ -1496,13 +1497,20 @@ async def firebase_sync(data: FirebaseSyncRequest):
                 }
             }
         
-        # Create new user (default role: devotee)
+        # Create new user (use provided role or default to devotee)
+        selected_role = UserRole.DEVOTEE
+        if data.role:
+            try:
+                selected_role = UserRole(data.role)
+            except ValueError:
+                selected_role = UserRole.DEVOTEE
+        
         user_dict = {
             "firebase_uid": data.firebase_uid,
             "email": data.email,
             "name": data.name,
             "photo_url": data.photo_url,
-            "role": UserRole.DEVOTEE,
+            "role": selected_role,
             "is_verified": True,  # Firebase users are pre-verified
             "profile_completed": False,
             "created_at": datetime.now(timezone.utc)
@@ -1510,12 +1518,29 @@ async def firebase_sync(data: FirebaseSyncRequest):
         
         result = await users_collection.insert_one(user_dict)
         
+        # If priest, create priest profile
+        if selected_role == UserRole.PRIEST:
+            priest_profile = {
+                "user_id": str(result.inserted_id),
+                "user_name": data.name,
+                "specializations": [],
+                "languages": ["Hindi", "Sanskrit"],
+                "experience_years": 1,
+                "bio": "",
+                "services": [],
+                "rating": 0.0,
+                "total_reviews": 0,
+                "is_verified": False,
+                "created_at": datetime.now(timezone.utc)
+            }
+            await priests_collection.insert_one(priest_profile)
+        
         return {
             "user": {
                 "id": str(result.inserted_id),
                 "email": data.email,
                 "name": data.name,
-                "role": UserRole.DEVOTEE,
+                "role": selected_role,
                 "firebase_uid": data.firebase_uid,
                 "profile_completed": False
             }
@@ -3145,6 +3170,41 @@ async def verify_astrologer(astrologer_id: str, user: dict = Depends(require_rol
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Astrologer not found")
     return {"message": "Astrologer verified"}
+
+@app.put("/api/admin/users/{user_id}/role")
+async def update_user_role(user_id: str, role: UserRole, admin: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Admin endpoint to update a user's role"""
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Update the user's role
+    await users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"role": role}}
+    )
+    
+    # If changing to priest, create priest profile if not exists
+    if role == UserRole.PRIEST:
+        existing_priest = await priests_collection.find_one({"user_id": user_id})
+        if not existing_priest:
+            priest_profile = {
+                "user_id": user_id,
+                "specializations": [],
+                "languages": ["Hindi", "Sanskrit"],
+                "experience_years": 1,
+                "bio": "",
+                "services": [],
+                "rating": 0.0,
+                "total_reviews": 0,
+                "is_verified": False,
+                "created_at": datetime.now(timezone.utc)
+            }
+            await priests_collection.insert_one(priest_profile)
+    
+    return {"message": f"User role updated to {role}"}
+
+
 
 # ===================== SHOP OWNER ROUTES =====================
 @app.post("/api/shop/register")

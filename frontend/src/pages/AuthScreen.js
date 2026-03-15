@@ -119,10 +119,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (selectedRole = null) => {
     setGoogleLoading(true);
     try {
-      await loginWithGoogle();
+      // Pass the role if registering with Google (from register screen)
+      await loginWithGoogle(selectedRole);
       toast.success('Welcome!');
     } catch (error) {
       if (error.code !== 'auth/popup-closed-by-user') {
@@ -449,6 +450,18 @@ function LoginScreen({ data, setData, onSubmit, loading, showPassword, setShowPa
 }
 
 function RegisterScreen({ data, setData, onSubmit, loading, showPassword, setShowPassword, onBack, onSwitch, onGoogleSignIn, googleLoading }) {
+  const [showRoleSelect, setShowRoleSelect] = useState(false);
+  
+  const handleGoogleClick = () => {
+    // Show role selection before Google Sign-In
+    setShowRoleSelect(true);
+  };
+  
+  const handleRoleSelectGoogle = (role) => {
+    setShowRoleSelect(false);
+    onGoogleSignIn(role);
+  };
+  
   return (
     <motion.div
       className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-sm md:rounded-2xl md:shadow-xl md:border md:border-orange-100 min-h-screen md:min-h-0 md:my-8 flex flex-col"
@@ -457,6 +470,58 @@ function RegisterScreen({ data, setData, onSubmit, loading, showPassword, setSho
       exit={{ opacity: 0, x: 50 }}
       transition={{ duration: 0.3 }}
     >
+      {/* Role Selection Modal for Google Sign-In */}
+      <AnimatePresence>
+        {showRoleSelect && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowRoleSelect(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-6 max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="font-cinzel text-lg font-bold text-maroon mb-2">Select Your Role</h3>
+              <p className="text-sm text-gray-600 mb-4">How will you use Divine App?</p>
+              
+              <div className="space-y-3">
+                {[
+                  { value: 'devotee', label: 'Devotee', desc: 'Book poojas & services', icon: '🙏' },
+                  { value: 'priest', label: 'Priest', desc: 'Offer spiritual services', icon: '🔔' },
+                  { value: 'astrologer', label: 'Astrologer', desc: 'Provide consultations', icon: '⭐' },
+                  { value: 'shop_owner', label: 'Shop Owner', desc: 'Sell pooja items', icon: '🛒' },
+                ].map((role) => (
+                  <button
+                    key={role.value}
+                    onClick={() => handleRoleSelectGoogle(role.value)}
+                    className="w-full flex items-center gap-3 p-4 border border-orange-200 rounded-xl hover:bg-orange-50 hover:border-saffron transition-all text-left"
+                  >
+                    <span className="text-2xl">{role.icon}</span>
+                    <div>
+                      <p className="font-medium text-gray-800">{role.label}</p>
+                      <p className="text-sm text-gray-500">{role.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              
+              <button
+                onClick={() => setShowRoleSelect(false)}
+                className="w-full mt-4 text-gray-500 text-sm hover:text-gray-700"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="px-6 pt-6">
         <button onClick={onBack} className="p-2 -ml-2 text-gray-600 hover:text-maroon transition-colors" data-testid="register-back">
@@ -472,7 +537,7 @@ function RegisterScreen({ data, setData, onSubmit, loading, showPassword, setSho
 
         {/* Google Sign Up */}
         <motion.button
-          onClick={onGoogleSignIn}
+          onClick={handleGoogleClick}
           disabled={googleLoading}
           className="w-full bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl py-4 font-medium flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-70 mb-6"
           initial={{ y: 20, opacity: 0 }}
