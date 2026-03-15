@@ -420,7 +420,15 @@ async def firebase_sync(data: FirebaseSyncRequest):
                     "name": user["name"],
                     "role": user["role"],
                     "firebase_uid": data.firebase_uid,
-                    "is_verified": user.get("is_verified", False)
+                    "is_verified": user.get("is_verified", False),
+                    "phone": user.get("phone"),
+                    "address": user.get("address"),
+                    "city": user.get("city"),
+                    "pincode": user.get("pincode"),
+                    "date_of_birth": user.get("date_of_birth"),
+                    "gotra": user.get("gotra"),
+                    "nakshatra": user.get("nakshatra"),
+                    "profile_completed": user.get("profile_completed", False)
                 }
             }
         
@@ -432,6 +440,7 @@ async def firebase_sync(data: FirebaseSyncRequest):
             "photo_url": data.photo_url,
             "role": UserRole.DEVOTEE,
             "is_verified": True,  # Firebase users are pre-verified
+            "profile_completed": False,
             "created_at": datetime.now(timezone.utc)
         }
         
@@ -443,7 +452,8 @@ async def firebase_sync(data: FirebaseSyncRequest):
                 "email": data.email,
                 "name": data.name,
                 "role": UserRole.DEVOTEE,
-                "firebase_uid": data.firebase_uid
+                "firebase_uid": data.firebase_uid,
+                "profile_completed": False
             }
         }
     except Exception as e:
@@ -459,7 +469,9 @@ async def firebase_sync(data: FirebaseSyncRequest):
                         "name": user["name"],
                         "role": user["role"],
                         "firebase_uid": data.firebase_uid,
-                        "is_verified": user.get("is_verified", False)
+                        "is_verified": user.get("is_verified", False),
+                        "phone": user.get("phone"),
+                        "profile_completed": user.get("profile_completed", False)
                     }
                 }
         raise HTTPException(status_code=500, detail=str(e))
