@@ -424,20 +424,13 @@ import base64
 
 SARVAM_API_KEY = os.environ.get("SARVAM_API_KEY")
 
-# Sarvam AI voice options for Indian languages (actual speaker names from API)
+# Sarvam AI voice options for Indian languages (compatible with bulbul:v2)
 SARVAM_VOICES = [
     {"voice_id": "anushka", "name": "Anushka (Hindi Female)", "language": "hi-IN", "gender": "female", "recommended": True},
     {"voice_id": "manisha", "name": "Manisha (Hindi Female)", "language": "hi-IN", "gender": "female", "recommended": True},
-    {"voice_id": "ritu", "name": "Ritu (Hindi Female)", "language": "hi-IN", "gender": "female"},
-    {"voice_id": "priya", "name": "Priya (Hindi Female)", "language": "hi-IN", "gender": "female"},
-    {"voice_id": "neha", "name": "Neha (Hindi Female)", "language": "hi-IN", "gender": "female"},
-    {"voice_id": "shreya", "name": "Shreya (Hindi Female)", "language": "hi-IN", "gender": "female"},
     {"voice_id": "abhilash", "name": "Abhilash (Hindi Male)", "language": "hi-IN", "gender": "male", "recommended": True},
-    {"voice_id": "rahul", "name": "Rahul (Hindi Male)", "language": "hi-IN", "gender": "male"},
-    {"voice_id": "amit", "name": "Amit (Hindi Male)", "language": "hi-IN", "gender": "male"},
-    {"voice_id": "dev", "name": "Dev (Hindi Male)", "language": "hi-IN", "gender": "male"},
-    {"voice_id": "shubh", "name": "Shubh (Hindi Male)", "language": "hi-IN", "gender": "male"},
-    {"voice_id": "kavitha", "name": "Kavitha (Telugu Female)", "language": "te-IN", "gender": "female"},
+    {"voice_id": "karun", "name": "Karun (Hindi Male)", "language": "hi-IN", "gender": "male"},
+    {"voice_id": "hitesh", "name": "Hitesh (Hindi Male)", "language": "hi-IN", "gender": "male"},
     {"voice_id": "vidya", "name": "Vidya (Kannada Female)", "language": "kn-IN", "gender": "female"},
     {"voice_id": "arya", "name": "Arya (Tamil Female)", "language": "ta-IN", "gender": "female"},
 ]
