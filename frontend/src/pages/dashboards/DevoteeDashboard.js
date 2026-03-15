@@ -1351,78 +1351,53 @@ function AllMantrasSection({ isDesktop, speakMantra, currentlyPlaying, selectedL
   );
 }
 
-// Audio Library Section - Internet Archive Integration
+// Audio Library Section - Vedic Audio Library
 function AudioLibrarySection({ isDesktop }) {
-  const [curatedShlokas, setCuratedShlokas] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
+  const [library, setLibrary] = useState({});
   const [loading, setLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [loadingItem, setLoadingItem] = useState(null);
   const [currentAudio, setCurrentAudio] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState(null);
-  const [activeTab, setActiveTab] = useState('curated'); // 'curated' or 'search'
+  const [expandedCategory, setExpandedCategory] = useState('ESSENTIAL DAILY MANTRAS');
 
   useEffect(() => {
-    fetchCuratedShlokas();
+    fetchLibrary();
     return () => {
-      // Cleanup audio on unmount
       if (audioElement) {
         audioElement.pause();
       }
     };
   }, []);
 
-  const fetchCuratedShlokas = async () => {
+  const fetchLibrary = async () => {
     try {
-      const res = await api.get('/api/archive/curated');
-      setCuratedShlokas(res.data.data || []);
+      const res = await api.get('/api/archive/library');
+      setLibrary(res.data.data || {});
     } catch (error) {
-      toast.error('Failed to load curated shlokas');
+      toast.error('Failed to load audio library');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim() || searchQuery.length < 2) {
-      toast.error('Please enter at least 2 characters');
-      return;
-    }
-    
-    setSearching(true);
-    setActiveTab('search');
+  const playItem = async (itemId, title) => {
+    setLoadingItem(itemId);
     try {
-      const res = await api.get(`/api/archive/search?q=${encodeURIComponent(searchQuery)}&rows=15`);
-      setSearchResults(res.data.data || []);
-      if (res.data.data?.length === 0) {
-        toast.info('No results found. Try different keywords.');
-      }
-    } catch (error) {
-      toast.error('Search failed');
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  const loadItemDetails = async (identifier, title) => {
-    try {
-      const res = await api.get(`/api/archive/metadata/${identifier}`);
-      
-      // Directly play first audio file without showing popup
-      if (res.data.audio_files?.length > 0) {
-        playAudio(res.data.audio_files[0].url, title || res.data.title);
+      const res = await api.get(`/api/archive/play/${itemId}`);
+      if (res.data.audio_url) {
+        playAudio(res.data.audio_url, title);
       } else {
-        toast.error('No audio files found');
+        toast.error('No audio found for this item');
       }
     } catch (error) {
       toast.error('Failed to load audio');
+    } finally {
+      setLoadingItem(null);
     }
   };
 
   const playAudio = (url, title) => {
-    // Stop current audio if playing
     if (audioElement) {
       audioElement.pause();
     }
@@ -1476,39 +1451,19 @@ function AudioLibrarySection({ isDesktop }) {
     );
   }
 
+  const categories = Object.keys(library);
+
   return (
-    <div className="space-y-6">
-      {/* Header with Search */}
+    <div className="space-y-4">
+      {/* Header */}
       <div className="bg-gradient-to-r from-maroon to-maroon/80 rounded-2xl p-6 text-white">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3">
           <Music className="w-8 h-8" />
           <div>
-            <h2 className="font-cinzel text-xl font-bold">Audio Library</h2>
-            <p className="text-white/80 text-sm">Stream mantras & shlokas from Internet Archive</p>
+            <h2 className="font-cinzel text-xl font-bold">Vedic Audio Library</h2>
+            <p className="text-white/80 text-sm">98 sacred texts • Vedas, Upanishads, Mantras & Stotras</p>
           </div>
         </div>
-        
-        {/* Search Form */}
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search mantras, chalisa, bhajans..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-gold"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={searching}
-            className="px-6 py-3 bg-gold text-maroon font-semibold rounded-xl hover:bg-gold/90 transition-all disabled:opacity-50 flex items-center gap-2"
-          >
-            {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            Search
-          </button>
-        </form>
       </div>
 
       {/* Now Playing Bar */}
@@ -1518,114 +1473,77 @@ function AudioLibrarySection({ isDesktop }) {
           animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-r from-saffron/20 to-gold/20 rounded-xl p-4 flex items-center gap-4"
         >
-          <div className="w-12 h-12 bg-saffron rounded-full flex items-center justify-center">
-            <Music className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 bg-saffron rounded-full flex items-center justify-center flex-shrink-0">
+            <Music className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-maroon truncate">{currentAudio.title}</p>
-            <p className="text-sm text-gray-500">Now Playing</p>
+            <p className="font-semibold text-maroon text-sm truncate">{currentAudio.title}</p>
+            <p className="text-xs text-gray-500">Now Playing</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={togglePlayPause}
-              className="p-3 bg-saffron text-white rounded-full hover:bg-saffron/90 transition-all"
+              className="p-2 bg-saffron text-white rounded-full hover:bg-saffron/90 transition-all"
             >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             </button>
             <button
               onClick={stopAudio}
-              className="p-3 bg-maroon/10 text-maroon rounded-full hover:bg-maroon/20 transition-all"
+              className="p-2 bg-maroon/10 text-maroon rounded-full hover:bg-maroon/20 transition-all"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </motion.div>
       )}
 
-      {/* Tab Switcher */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setActiveTab('curated')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-            activeTab === 'curated' ? 'bg-saffron text-white' : 'bg-cream text-maroon hover:bg-saffron/20'
-          }`}
-        >
-          Curated Collection
-        </button>
-        {searchResults.length > 0 && (
-          <button
-            onClick={() => setActiveTab('search')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              activeTab === 'search' ? 'bg-saffron text-white' : 'bg-cream text-maroon hover:bg-saffron/20'
-            }`}
-          >
-            Search Results ({searchResults.length})
-          </button>
-        )}
+      {/* Categories Accordion */}
+      <div className="space-y-2">
+        {categories.map((category) => (
+          <div key={category} className="bg-white rounded-lg border border-saffron/10 overflow-hidden">
+            {/* Category Header */}
+            <button
+              onClick={() => setExpandedCategory(expandedCategory === category ? null : category)}
+              className="w-full flex items-center justify-between p-3 hover:bg-saffron/5 transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-saffron font-bold text-sm">{library[category]?.length || 0}</span>
+                <span className="font-medium text-maroon text-sm">{category}</span>
+              </div>
+              <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${expandedCategory === category ? 'rotate-90' : ''}`} />
+            </button>
+            
+            {/* Category Items */}
+            {expandedCategory === category && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                className="border-t border-saffron/10"
+              >
+                {library[category]?.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-3 p-3 hover:bg-saffron/5 transition-all ${idx !== 0 ? 'border-t border-gray-100' : ''}`}
+                  >
+                    <button
+                      onClick={() => playItem(item.id, item.title)}
+                      disabled={loadingItem === item.id}
+                      className="p-2 bg-saffron text-white rounded-full hover:bg-saffron/90 transition-all flex-shrink-0 disabled:opacity-50"
+                    >
+                      {loadingItem === item.id ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Play className="w-3 h-3" />
+                      )}
+                    </button>
+                    <span className="text-sm text-maroon flex-1">{item.title}</span>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+        ))}
       </div>
-
-      {/* Curated Shlokas - Simple List */}
-      {activeTab === 'curated' && (
-        <div className="space-y-2">
-          {curatedShlokas.map((shloka) => (
-            <motion.div
-              key={shloka.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-lg border border-saffron/10 p-3 flex items-center gap-3 hover:bg-saffron/5 transition-all"
-            >
-              <button
-                onClick={() => loadItemDetails(shloka.identifier, shloka.title)}
-                className="p-2 bg-saffron text-white rounded-full hover:bg-saffron/90 transition-all flex-shrink-0"
-                title="Play"
-              >
-                <Play className="w-4 h-4" />
-              </button>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-maroon text-sm truncate">{shloka.title}</p>
-                <p className="text-xs text-gray-500">{shloka.deity} • {shloka.category}</p>
-              </div>
-              <span className="text-xs text-gray-400 flex-shrink-0">{shloka.duration}</span>
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {/* Search Results - Simple List */}
-      {activeTab === 'search' && (
-        <div className="space-y-2">
-          {searchResults.map((result, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.02 }}
-              className="bg-white rounded-lg border border-saffron/10 p-3 flex items-center gap-3 hover:bg-saffron/5 transition-all"
-            >
-              <button
-                onClick={() => loadItemDetails(result.identifier, result.title)}
-                className="p-2 bg-maroon text-white rounded-full hover:bg-maroon/90 transition-all flex-shrink-0"
-                title="Play"
-              >
-                <Play className="w-4 h-4" />
-              </button>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-maroon text-sm truncate">{result.title}</p>
-                <p className="text-xs text-gray-500 truncate">{result.creator || 'Unknown artist'}</p>
-              </div>
-              <a
-                href={result.page_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-saffron hover:underline flex-shrink-0"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Archive →
-              </a>
-            </motion.div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
