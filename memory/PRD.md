@@ -203,6 +203,23 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Full PostCard support with likes/comments
   - [x] data-testid attributes for testing
 
+- [x] **Real-Time Chat System** (NEW - March 15, 2026)
+  - [x] WebSocket-based real-time messaging
+  - [x] Text + Image message support
+  - [x] Auto chat room creation when booking is confirmed
+  - [x] Auto chat room deactivation when booking is completed/cancelled
+  - [x] Chat room list with last message preview
+  - [x] Unread message badges on Messages tab
+  - [x] Desktop: Side-by-side chat layout
+  - [x] Mobile: Full-screen chat view with back navigation
+  - [x] Typing indicators
+  - [x] Read receipts (double checkmarks)
+  - [x] Date separators in chat history
+  - [x] Messages tab in Devotee Dashboard (sidebar + bottom nav)
+  - [x] Messages tab in Priest Dashboard (sidebar)
+  - [x] Backend APIs: GET/POST /api/chat/rooms, messages, read, unread-count
+  - [x] WebSocket endpoint: /ws/chat/{room_id}?token=JWT
+
 - [x] **Priest Dashboard - FULLY IMPLEMENTED**
   - [x] **Home Tab** - Analytics overview with cards
     - Total Bookings, Completed, Classes, Content Posts stats
@@ -316,13 +333,16 @@ Icons: Custom 3D animated SVGs
 - `frontend/src/contexts/AuthContext.js` - Auth context with Firebase + manual sync
 - `frontend/src/contexts/PaymentContext.js` - IP-based payment gateway selection
 - `frontend/src/components/PaymentComponents.js` - Stripe/Razorpay components
+- `frontend/src/components/Chat/ChatTab.js` - Real-time chat UI components (NEW)
 - `frontend/src/pages/AuthScreen.js` - Centered auth screens
 - `frontend/src/pages/dashboards/PriestDashboard.js` - Complete Priest Dashboard with all features
-- `frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee Dashboard with Feed tab, PostCard (comments/likes)
-- `backend/server.py` - Backend with Firebase sync + Stripe + Priest APIs + Comments/Likes APIs (lines 2647-2772)
+- `frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee Dashboard with Feed tab, PostCard, Chat
+- `backend/server.py` - Backend with Firebase sync + Stripe + Priest APIs + Comments/Likes + Chat APIs
 - `backend/config.py` - Configuration with Stripe keys
+- `backend/database.py` - MongoDB collections including chat_rooms, chat_messages
 - `backend/tests/test_priest_dashboard.py` - Pytest tests for Priest Dashboard
 - `backend/tests/test_post_comments_likes.py` - Pytest tests for Comments & Likes feature
+- `backend/tests/test_chat_feature.py` - Pytest tests for Chat feature (NEW)
 
 ## Preview URLs
 - **Web App**: https://divine-engage-1.preview.emergentagent.com
