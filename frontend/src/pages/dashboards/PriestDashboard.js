@@ -1362,6 +1362,13 @@ function ServicesTab({ services, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
 
+  const handleAddClick = () => {
+    console.log('Add button clicked!');
+    toast.info('Opening add service form...');
+    setEditingService(null);
+    setShowModal(true);
+  };
+
   const deleteService = async (serviceId) => {
     if (!window.confirm('Delete this service?')) return;
     try {
@@ -1373,14 +1380,17 @@ function ServicesTab({ services, onRefresh }) {
     }
   };
 
+  console.log('ServicesTab render - showModal:', showModal);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg font-semibold text-maroon">Services</h2>
         <button 
+          type="button"
           data-testid="add-service-btn"
-          onClick={() => { setEditingService(null); setShowModal(true); }} 
-          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer relative z-10"
+          onClick={handleAddClick}
+          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Add
         </button>
@@ -1654,6 +1664,12 @@ function StreamsTab({ streams, onRefresh }) {
   const live = streams.filter(s => s.status === 'live');
   const past = streams.filter(s => s.status === 'ended');
 
+  const handleScheduleClick = () => {
+    console.log('Schedule button clicked!');
+    toast.info('Opening schedule form...');
+    setShowModal(true);
+  };
+
   const startStream = async (streamId) => {
     try {
       await api.put(`/api/priest/streams/${streamId}/start`);
@@ -1675,14 +1691,17 @@ function StreamsTab({ streams, onRefresh }) {
     }
   };
 
+  console.log('StreamsTab render - showModal:', showModal);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg font-semibold text-maroon">Live Streams</h2>
         <button 
+          type="button"
           data-testid="schedule-stream-btn"
-          onClick={() => setShowModal(true)} 
-          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer relative z-10"
+          onClick={handleScheduleClick}
+          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Schedule
         </button>
