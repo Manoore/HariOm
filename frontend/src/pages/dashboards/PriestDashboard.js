@@ -219,181 +219,349 @@ export default function PriestDashboard() {
   const isMoreTab = moreTabs.some(t => t.id === activeTab);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream to-parchment pb-20 md:pb-6">
+    <div className="min-h-screen bg-gradient-to-b from-cream to-parchment">
       <Toaster position="top-center" richColors />
       
-      {/* Header */}
-      <div className="bg-gradient-to-r from-maroon to-maroon-light px-4 pt-6 pb-4 md:pt-8 md:pb-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 md:gap-4">
-              {/* Profile Photo */}
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
+      {/* Desktop Layout with Sidebar */}
+      <div className="hidden lg:flex">
+        {/* Sidebar */}
+        <aside className="w-64 min-h-screen bg-white border-r border-orange-100 fixed left-0 top-0 bottom-0 z-20">
+          {/* Sidebar Header */}
+          <div className="bg-gradient-to-r from-maroon to-maroon-light p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
                 {priestProfile?.profile_photo ? (
                   <img src={priestProfile.profile_photo} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xl md:text-2xl font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>
+                  <span className="text-xl font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>
                 )}
               </div>
-              <div>
-                <p className="text-white/70 text-xs md:text-sm">Namaste,</p>
-                <h1 className="font-cinzel text-base md:text-xl font-bold text-white">{user?.name || 'Pandit Ji'}</h1>
-                <div className="mt-1 inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">
+              <div className="flex-1 min-w-0">
+                <h2 className="font-cinzel text-sm font-bold text-white truncate">{user?.name || 'Pandit Ji'}</h2>
+                <div className="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full w-fit">
                   <Star className="w-3 h-3 text-gold" />
-                  <span className="text-[10px] md:text-xs font-medium text-white capitalize">
-                    {ROLE_CONFIG[user?.role]?.label || 'Priest'}
-                  </span>
+                  <span className="text-[10px] text-white capitalize">{user?.role || 'Priest'}</span>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button className="w-9 h-9 md:w-10 md:h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors relative">
-                <Bell className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                {bookings.filter(b => b.status === 'pending').length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-red-500 rounded-full text-[10px] md:text-xs text-white flex items-center justify-center">
-                    {bookings.filter(b => b.status === 'pending').length}
-                  </span>
-                )}
-              </button>
-              <button 
-                onClick={logout}
-                className="w-9 h-9 md:w-10 md:h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-red-500/50 transition-colors"
-              >
-                <LogOut className="w-4 h-4 md:w-5 md:h-5 text-white" />
-              </button>
-            </div>
           </div>
 
-          {/* Quick Stats - Only on Home, hidden on mobile */}
-          {activeTab === 'home' && analytics && (
-            <div className="hidden md:grid grid-cols-4 gap-3 mt-4">
-              <StatCard icon={IndianRupee} value={`₹${analytics.stats?.monthly_earnings || 0}`} label="This Month" />
-              <StatCard icon={Calendar} value={bookings.filter(b => b.status === 'pending').length} label="Pending" highlight />
-              <StatCard icon={Users} value={analytics.stats?.total_students || 0} label="Students" />
-              <StatCard icon={Star} value={analytics.stats?.avg_rating || '4.8'} label="Rating" />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Desktop Tab Navigation */}
-      <div className="hidden md:block sticky top-0 z-20 bg-white shadow-sm">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex gap-1 overflow-x-auto py-2 scrollbar-hide">
-            {allTabs.map((tab) => (
+          {/* Navigation Menu */}
+          <nav className="p-3 space-y-1 overflow-y-auto" style={{ height: 'calc(100vh - 120px)' }}>
+            <p className="text-xs font-semibold text-gray-400 uppercase px-3 pt-2 pb-1">Main</p>
+            {mainTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   activeTab === tab.id
                     ? 'bg-saffron text-white shadow-md'
                     : 'text-gray-600 hover:bg-orange-50'
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
+                <tab.icon className="w-5 h-5" />
                 {tab.label}
               </button>
             ))}
-          </div>
-        </div>
-      </div>
 
-      {/* Mobile Current Tab Indicator (Breadcrumb) */}
-      <div className="md:hidden sticky top-0 z-20 bg-white shadow-sm px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {currentTab && <currentTab.icon className="w-5 h-5 text-saffron" />}
-            <span className="font-medium text-gray-800">{currentTab?.label || 'Home'}</span>
-          </div>
-          {isMoreTab && (
+            <p className="text-xs font-semibold text-gray-400 uppercase px-3 pt-4 pb-1">Manage</p>
+            {moreTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-saffron text-white shadow-md'
+                    : 'text-gray-600 hover:bg-orange-50'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Sidebar Footer */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-orange-100 bg-white">
             <button 
-              onClick={() => setActiveTab('home')}
-              className="text-saffron text-sm flex items-center gap-1"
+              onClick={logout}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
             >
-              <ChevronLeft className="w-4 h-4" /> Back
+              <LogOut className="w-5 h-5" />
+              Logout
             </button>
-          )}
-        </div>
-      </div>
+          </div>
+        </aside>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-20 md:pb-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+        {/* Main Content Area */}
+        <main className="flex-1 ml-64">
+          {/* Top Header Bar */}
+          <header className="bg-gradient-to-r from-maroon to-maroon-light px-6 py-4 sticky top-0 z-10">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-white/70 text-sm">Welcome back,</p>
+                <h1 className="font-cinzel text-xl font-bold text-white">{currentTab?.label || 'Dashboard'}</h1>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* Quick Stats Pills */}
+                {activeTab === 'home' && analytics && (
+                  <div className="hidden xl:flex items-center gap-2">
+                    <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2">
+                      <IndianRupee className="w-4 h-4 text-gold" />
+                      <span className="text-sm font-medium text-white">₹{analytics.stats?.monthly_earnings || 0}</span>
+                    </div>
+                    <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2">
+                      <Users className="w-4 h-4 text-gold" />
+                      <span className="text-sm font-medium text-white">{analytics.stats?.total_students || 0} Students</span>
+                    </div>
+                    <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2">
+                      <Star className="w-4 h-4 text-gold fill-gold" />
+                      <span className="text-sm font-medium text-white">{analytics.stats?.avg_rating || '4.8'}</span>
+                    </div>
+                  </div>
+                )}
+                <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors relative">
+                  <Bell className="w-5 h-5 text-white" />
+                  {bookings.filter(b => b.status === 'pending').length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                      {bookings.filter(b => b.status === 'pending').length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </header>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
-        <div className="flex items-center justify-around py-2">
-          {mainTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`flex flex-col items-center gap-1 px-3 py-1 ${
-                activeTab === tab.id ? 'text-saffron' : 'text-gray-500'
-              }`}
-            >
-              <tab.icon className="w-5 h-5" />
-              <span className="text-[10px]">{tab.label}</span>
-            </button>
-          ))}
-          {/* More Menu Button */}
-          <button
-            onClick={() => setShowMoreMenu(!showMoreMenu)}
-            className={`flex flex-col items-center gap-1 px-3 py-1 ${
-              isMoreTab || showMoreMenu ? 'text-saffron' : 'text-gray-500'
-            }`}
-          >
-            <Menu className="w-5 h-5" />
-            <span className="text-[10px]">More</span>
-          </button>
-        </div>
-
-        {/* More Menu Popup */}
-        <AnimatePresence>
-          {showMoreMenu && (
-            <>
-              {/* Backdrop to close menu */}
+          {/* Page Content */}
+          <div className="p-6">
+            <AnimatePresence mode="wait">
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-40"
-                onClick={() => setShowMoreMenu(false)}
-              />
-              <motion.div
+                key={activeTab}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="absolute bottom-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg rounded-t-2xl p-4 z-50"
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
               >
-                <div className="grid grid-cols-4 gap-4">
-                  {moreTabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabChange(tab.id)}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-xl ${
-                        activeTab === tab.id ? 'bg-saffron/10 text-saffron' : 'text-gray-600'
-                      }`}
-                    >
-                      <tab.icon className="w-6 h-6" />
-                      <span className="text-xs">{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
+                {renderContent()}
               </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+            </AnimatePresence>
+          </div>
+        </main>
+      </div>
+
+      {/* Tablet Layout - Compact Sidebar */}
+      <div className="hidden md:flex lg:hidden">
+        {/* Compact Icon Sidebar */}
+        <aside className="w-20 min-h-screen bg-white border-r border-orange-100 fixed left-0 top-0 bottom-0 z-20 flex flex-col">
+          {/* Logo/Avatar */}
+          <div className="bg-gradient-to-r from-maroon to-maroon-light p-3 flex justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
+              {priestProfile?.profile_photo ? (
+                <img src={priestProfile.profile_photo} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-lg font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Icon Navigation */}
+          <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+            {allTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                title={tab.label}
+                className={`w-full flex items-center justify-center p-3 rounded-xl transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-saffron text-white shadow-md'
+                    : 'text-gray-500 hover:bg-orange-50 hover:text-saffron'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+              </button>
+            ))}
+          </nav>
+
+          {/* Logout */}
+          <div className="p-2 border-t border-orange-100">
+            <button 
+              onClick={logout}
+              title="Logout"
+              className="w-full flex items-center justify-center p-3 rounded-xl text-red-500 hover:bg-red-50 transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 ml-20">
+          {/* Header */}
+          <header className="bg-gradient-to-r from-maroon to-maroon-light px-4 py-4 sticky top-0 z-10">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="font-cinzel text-lg font-bold text-white">{currentTab?.label || 'Dashboard'}</h1>
+                <p className="text-white/70 text-xs">{user?.name}</p>
+              </div>
+              <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 relative">
+                <Bell className="w-5 h-5 text-white" />
+                {bookings.filter(b => b.status === 'pending').length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                    {bookings.filter(b => b.status === 'pending').length}
+                  </span>
+                )}
+              </button>
+            </div>
+          </header>
+
+          {/* Page Content */}
+          <div className="p-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {renderContent()}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </main>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="md:hidden pb-20">
+        {/* Mobile Header */}
+        <div className="bg-gradient-to-r from-maroon to-maroon-light px-4 pt-6 pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
+                {priestProfile?.profile_photo ? (
+                  <img src={priestProfile.profile_photo} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>
+                )}
+              </div>
+              <div>
+                <p className="text-white/70 text-xs">Namaste,</p>
+                <h1 className="font-cinzel text-base font-bold text-white">{user?.name || 'Pandit Ji'}</h1>
+                <div className="mt-1 inline-flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full">
+                  <Star className="w-3 h-3 text-gold" />
+                  <span className="text-[10px] font-medium text-white capitalize">{user?.role || 'Priest'}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center relative">
+                <Bell className="w-4 h-4 text-white" />
+                {bookings.filter(b => b.status === 'pending').length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
+                    {bookings.filter(b => b.status === 'pending').length}
+                  </span>
+                )}
+              </button>
+              <button onClick={logout} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+                <LogOut className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Current Tab Indicator */}
+        <div className="sticky top-0 z-20 bg-white shadow-sm px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {currentTab && <currentTab.icon className="w-5 h-5 text-saffron" />}
+              <span className="font-medium text-gray-800">{currentTab?.label || 'Home'}</span>
+            </div>
+            {isMoreTab && (
+              <button onClick={() => setActiveTab('home')} className="text-saffron text-sm flex items-center gap-1">
+                <ChevronLeft className="w-4 h-4" /> Back
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Content */}
+        <div className="px-4 py-4">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
+          <div className="flex items-center justify-around py-2 relative">
+            {mainTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex flex-col items-center gap-1 px-3 py-1 ${
+                  activeTab === tab.id ? 'text-saffron' : 'text-gray-500'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                <span className="text-[10px]">{tab.label}</span>
+              </button>
+            ))}
+            {/* More Menu Button */}
+            <button
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className={`flex flex-col items-center gap-1 px-3 py-1 ${
+                showMoreMenu || isMoreTab ? 'text-saffron' : 'text-gray-500'
+              }`}
+            >
+              <Menu className="w-5 h-5" />
+              <span className="text-[10px]">More</span>
+            </button>
+
+            {/* More Menu Popup */}
+            <AnimatePresence>
+              {showMoreMenu && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowMoreMenu(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="absolute bottom-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg rounded-t-2xl p-4 z-50"
+                  >
+                    <div className="grid grid-cols-4 gap-4">
+                      {moreTabs.map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => handleTabChange(tab.id)}
+                          className={`flex flex-col items-center gap-2 p-3 rounded-xl ${
+                            activeTab === tab.id ? 'bg-saffron/10 text-saffron' : 'text-gray-600'
+                          }`}
+                        >
+                          <tab.icon className="w-6 h-6" />
+                          <span className="text-xs">{tab.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </div>
   );
