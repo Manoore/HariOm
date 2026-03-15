@@ -140,6 +140,10 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Beautiful result displays for Kundali and Matching
   - [x] Mangal Dosha detection with exceptions
   - [x] Ashtakoot Milan with 8 aspects scoring
+  - [x] **Consistent UI theme** (saffron/gold/cream matching rest of app)
+  - [x] **Searchable location input** with India Post Pincode API
+  - [x] 40+ major Indian cities with coordinates
+  - [x] Pincode search returns post office names
 - [x] **Personalized Horoscope on Home Screen**
   - [x] Shows horoscope when user has DOB/nakshatra in profile
   - [x] Profile completion prompt when user hasn't set up astrology details

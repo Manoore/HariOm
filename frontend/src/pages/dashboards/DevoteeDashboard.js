@@ -777,6 +777,15 @@ function AstrologyTab({ isDesktop }) {
   const [personalHoroscope, setPersonalHoroscope] = useState(null);
   const [loading, setLoading] = useState(false);
   
+  // Location search states
+  const [locationSearch, setLocationSearch] = useState('');
+  const [locationResults, setLocationResults] = useState([]);
+  const [searchingLocation, setSearchingLocation] = useState(false);
+  const [brideLocationSearch, setBrideLocationSearch] = useState('');
+  const [brideLocationResults, setBrideLocationResults] = useState([]);
+  const [groomLocationSearch, setGroomLocationSearch] = useState('');
+  const [groomLocationResults, setGroomLocationResults] = useState([]);
+  
   // Kundali states
   const [kundaliForm, setKundaliForm] = useState({
     datetime: '',
@@ -798,6 +807,151 @@ function AstrologyTab({ isDesktop }) {
     groom_longitude: 77.2090
   });
   const [matchingResult, setMatchingResult] = useState(null);
+  
+  // Location coordinates for major cities
+  const CITY_COORDS = {
+    'Delhi': { lat: 28.6139, lon: 77.2090 },
+    'Mumbai': { lat: 19.0760, lon: 72.8777 },
+    'Chennai': { lat: 13.0827, lon: 80.2707 },
+    'Kolkata': { lat: 22.5726, lon: 88.3639 },
+    'Bangalore': { lat: 12.9716, lon: 77.5946 },
+    'Hyderabad': { lat: 17.3850, lon: 78.4867 },
+    'Ahmedabad': { lat: 23.0225, lon: 72.5714 },
+    'Pune': { lat: 18.5204, lon: 73.8567 },
+    'Jaipur': { lat: 26.9124, lon: 75.7873 },
+    'Lucknow': { lat: 26.8467, lon: 80.9462 },
+    'Varanasi': { lat: 25.3176, lon: 82.9739 },
+    'Patna': { lat: 25.5941, lon: 85.1376 },
+    'Bhopal': { lat: 23.2599, lon: 77.4126 },
+    'Indore': { lat: 22.7196, lon: 75.8577 },
+    'Nagpur': { lat: 21.1458, lon: 79.0882 },
+    'Coimbatore': { lat: 11.0168, lon: 76.9558 },
+    'Thiruvananthapuram': { lat: 8.5241, lon: 76.9366 },
+    'Kochi': { lat: 9.9312, lon: 76.2673 },
+    'Visakhapatnam': { lat: 17.6868, lon: 83.2185 },
+    'Surat': { lat: 21.1702, lon: 72.8311 },
+    'Chandigarh': { lat: 30.7333, lon: 76.7794 },
+    'Amritsar': { lat: 31.6340, lon: 74.8723 },
+    'Guwahati': { lat: 26.1445, lon: 91.7362 },
+    'Bhubaneswar': { lat: 20.2961, lon: 85.8245 },
+    'Ranchi': { lat: 23.3441, lon: 85.3096 },
+    'Raipur': { lat: 21.2514, lon: 81.6296 },
+    'Dehradun': { lat: 30.3165, lon: 78.0322 },
+    'Shimla': { lat: 31.1048, lon: 77.1734 },
+    'Srinagar': { lat: 34.0837, lon: 74.7973 },
+    'Agra': { lat: 27.1767, lon: 78.0081 },
+    'Mathura': { lat: 27.4924, lon: 77.6737 },
+    'Haridwar': { lat: 29.9457, lon: 78.1642 },
+    'Rishikesh': { lat: 30.0869, lon: 78.2676 },
+    'Ujjain': { lat: 23.1765, lon: 75.7885 },
+    'Nashik': { lat: 19.9975, lon: 73.7898 },
+    'Tirupati': { lat: 13.6288, lon: 79.4192 },
+    'Madurai': { lat: 9.9252, lon: 78.1198 },
+    'Puri': { lat: 19.8135, lon: 85.8312 },
+    'Dwarka': { lat: 22.2442, lon: 68.9685 },
+    'Ayodhya': { lat: 26.7922, lon: 82.1998 }
+  };
+
+  // Search location by pincode or city name
+  const searchLocation = async (query, type = 'kundali') => {
+    if (!query || query.length < 3) {
+      if (type === 'kundali') setLocationResults([]);
+      else if (type === 'bride') setBrideLocationResults([]);
+      else setGroomLocationResults([]);
+      return;
+    }
+    
+    setSearchingLocation(true);
+    
+    // First check if it matches any city in our list
+    const matchingCities = Object.keys(CITY_COORDS).filter(city => 
+      city.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    if (matchingCities.length > 0) {
+      const results = matchingCities.map(city => ({
+        name: city,
+        state: '',
+        district: city,
+        pincode: '',
+        lat: CITY_COORDS[city].lat,
+        lon: CITY_COORDS[city].lon
+      }));
+      if (type === 'kundali') setLocationResults(results);
+      else if (type === 'bride') setBrideLocationResults(results);
+      else setGroomLocationResults(results);
+      setSearchingLocation(false);
+      return;
+    }
+    
+    // If it's a 6-digit number, search by pincode
+    if (/^\d{6}$/.test(query)) {
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${query}`);
+        const data = await res.json();
+        if (data[0]?.Status === 'Success' && data[0]?.PostOffice) {
+          const results = data[0].PostOffice.slice(0, 5).map(po => ({
+            name: po.Name,
+            state: po.State,
+            district: po.District,
+            pincode: query,
+            // Approximate coordinates based on state capital
+            lat: CITY_COORDS[po.District]?.lat || CITY_COORDS['Delhi'].lat,
+            lon: CITY_COORDS[po.District]?.lon || CITY_COORDS['Delhi'].lon
+          }));
+          if (type === 'kundali') setLocationResults(results);
+          else if (type === 'bride') setBrideLocationResults(results);
+          else setGroomLocationResults(results);
+        }
+      } catch (error) {
+        console.error('Error searching pincode:', error);
+      }
+    } else {
+      // Search by post office name
+      try {
+        const res = await fetch(`https://api.postalpincode.in/postoffice/${query}`);
+        const data = await res.json();
+        if (data[0]?.Status === 'Success' && data[0]?.PostOffice) {
+          const results = data[0].PostOffice.slice(0, 5).map(po => ({
+            name: po.Name,
+            state: po.State,
+            district: po.District,
+            pincode: po.Pincode,
+            lat: CITY_COORDS[po.District]?.lat || CITY_COORDS['Delhi'].lat,
+            lon: CITY_COORDS[po.District]?.lon || CITY_COORDS['Delhi'].lon
+          }));
+          if (type === 'kundali') setLocationResults(results);
+          else if (type === 'bride') setBrideLocationResults(results);
+          else setGroomLocationResults(results);
+        }
+      } catch (error) {
+        console.error('Error searching location:', error);
+      }
+    }
+    setSearchingLocation(false);
+  };
+  
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (locationSearch) searchLocation(locationSearch, 'kundali');
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [locationSearch]);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (brideLocationSearch) searchLocation(brideLocationSearch, 'bride');
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [brideLocationSearch]);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (groomLocationSearch) searchLocation(groomLocationSearch, 'groom');
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [groomLocationSearch]);
 
   useEffect(() => {
     // Fetch personalized horoscope if user has profile data
@@ -906,35 +1060,36 @@ function AstrologyTab({ isDesktop }) {
   ];
 
   return (
-    <div className={`pb-24 lg:pb-8 min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B] ${isDesktop ? 'px-8' : 'px-4'}`}>
-      <div className="pt-6">
-        <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-white mb-2">Astrology Services</h1>
-        <p className="text-gray-400 text-sm mb-6">Vedic astrology powered by Prokerala</p>
+    <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+      <div className="pt-4 pb-6">
+        <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Astrology Services</h1>
+        <p className="text-gray-500 text-sm">Vedic astrology powered by Prokerala</p>
+      </div>
 
-        {/* Section Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {sections.map((section) => (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
-                activeSection === section.id
-                  ? 'bg-indigo-500 text-white'
-                  : 'bg-slate-800/50 text-gray-400 hover:bg-slate-700/50'
-              }`}
-            >
-              <section.icon className="w-4 h-4" />
-              <span className="text-sm">{section.name}</span>
-            </button>
-          ))}
-        </div>
+      {/* Section Tabs */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        {sections.map((section) => (
+          <button
+            key={section.id}
+            onClick={() => setActiveSection(section.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+              activeSection === section.id
+                ? 'bg-saffron text-white'
+                : 'bg-cream text-maroon hover:bg-saffron/20'
+            }`}
+          >
+            <section.icon className="w-4 h-4" />
+            <span className="text-sm">{section.name}</span>
+          </button>
+        ))}
+      </div>
 
         {/* Personal Horoscope Card */}
         {personalHoroscope && activeSection === 'horoscope' && (
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-5 mb-6">
+          <div className="bg-gradient-to-r from-saffron to-gold rounded-2xl p-5 mb-6 shadow-lg">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-white/70 text-sm">Your Daily Prediction</p>
+                <p className="text-white/80 text-sm">Your Daily Prediction</p>
                 <h3 className="text-white font-cinzel text-lg">
                   {personalHoroscope.user_sign_name} ({personalHoroscope.user_sign_hindi})
                 </h3>
@@ -969,12 +1124,12 @@ function AstrologyTab({ isDesktop }) {
                   onClick={() => fetchHoroscope(sign)}
                   className={`p-3 lg:p-4 rounded-2xl text-center transition-all hover:scale-105 ${
                     selectedSign?.name === sign.name
-                      ? 'bg-indigo-500 ring-2 ring-indigo-400'
-                      : 'bg-slate-800/50 hover:bg-slate-700/50'
+                      ? 'bg-saffron ring-2 ring-gold'
+                      : 'bg-cream hover:bg-saffron/20'
                   }`}
                 >
                   <span className={`${isDesktop ? 'text-3xl' : 'text-2xl'} block mb-1`}>{sign.symbol}</span>
-                  <span className="text-xs text-gray-300">{sign.name}</span>
+                  <span className={`text-xs ${selectedSign?.name === sign.name ? 'text-white' : 'text-maroon'}`}>{sign.name}</span>
                 </button>
               ))}
             </div>
@@ -982,25 +1137,25 @@ function AstrologyTab({ isDesktop }) {
             <div>
               {loading && (
                 <div className="flex justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-saffron animate-spin" />
                 </div>
               )}
 
               {horoscope && !loading && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-800/50 rounded-2xl p-6">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-cream rounded-2xl p-6 border border-saffron/20">
                   <div className="text-center mb-4">
                     <span className="text-5xl">{selectedSign?.symbol}</span>
-                    <h2 className="font-cinzel text-xl text-white mt-2">{horoscope.sign_name || selectedSign?.name}</h2>
+                    <h2 className="font-cinzel text-xl text-maroon mt-2">{horoscope.sign_name || selectedSign?.name}</h2>
                   </div>
-                  <p className="text-gray-300 text-center mb-6">{horoscope.data?.daily_prediction?.prediction}</p>
+                  <p className="text-gray-700 text-center mb-6">{horoscope.data?.daily_prediction?.prediction}</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-                      <p className="text-xs text-gray-400">Lucky Number</p>
-                      <p className="text-xl text-white font-bold">{horoscope.data?.daily_prediction?.lucky_number}</p>
+                    <div className="bg-saffron/10 rounded-xl p-3 text-center">
+                      <p className="text-xs text-gray-500">Lucky Number</p>
+                      <p className="text-xl text-maroon font-bold">{horoscope.data?.daily_prediction?.lucky_number}</p>
                     </div>
-                    <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-                      <p className="text-xs text-gray-400">Lucky Color</p>
-                      <p className="text-lg text-white">{horoscope.data?.daily_prediction?.lucky_color}</p>
+                    <div className="bg-saffron/10 rounded-xl p-3 text-center">
+                      <p className="text-xs text-gray-500">Lucky Color</p>
+                      <p className="text-lg text-maroon">{horoscope.data?.daily_prediction?.lucky_color}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -1008,8 +1163,8 @@ function AstrologyTab({ isDesktop }) {
 
               {!horoscope && !loading && !personalHoroscope && (
                 <div className="text-center py-12">
-                  <Sun className="w-16 h-16 text-indigo-400/30 mx-auto mb-4" />
-                  <p className="text-gray-400">Select a sign to see your horoscope</p>
+                  <Sun className="w-16 h-16 text-saffron/30 mx-auto mb-4" />
+                  <p className="text-gray-500">Select a sign to see your horoscope</p>
                 </div>
               )}
             </div>
@@ -1019,51 +1174,80 @@ function AstrologyTab({ isDesktop }) {
         {/* Birth Kundali Section */}
         {activeSection === 'kundali' && (
           <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''}`}>
-            <div className="bg-slate-800/50 rounded-2xl p-6 mb-6">
-              <h3 className="font-cinzel text-lg text-white mb-4">Enter Birth Details</h3>
+            <div className="bg-cream rounded-2xl p-6 mb-6 border border-saffron/20">
+              <h3 className="font-cinzel text-lg text-maroon mb-4">Enter Birth Details</h3>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Date & Time of Birth</label>
+                  <label className="block text-sm text-gray-600 mb-1">Date & Time of Birth</label>
                   <input
                     type="datetime-local"
                     value={kundaliForm.datetime}
                     onChange={(e) => setKundaliForm({ ...kundaliForm, datetime: e.target.value })}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full bg-white border border-saffron/30 rounded-xl px-4 py-3 text-maroon focus:ring-2 focus:ring-saffron outline-none"
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Birth Place</label>
-                  <select
-                    value={kundaliForm.location}
-                    onChange={(e) => {
-                      const locations = {
-                        'Delhi': { lat: 28.6139, lon: 77.2090 },
-                        'Mumbai': { lat: 19.0760, lon: 72.8777 },
-                        'Chennai': { lat: 13.0827, lon: 80.2707 },
-                        'Kolkata': { lat: 22.5726, lon: 88.3639 },
-                        'Bangalore': { lat: 12.9716, lon: 77.5946 },
-                        'Hyderabad': { lat: 17.3850, lon: 78.4867 }
-                      };
-                      const loc = locations[e.target.value];
-                      setKundaliForm({ ...kundaliForm, location: e.target.value, latitude: loc.lat, longitude: loc.lon });
-                    }}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                  >
-                    <option value="Delhi">Delhi</option>
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Chennai">Chennai</option>
-                    <option value="Kolkata">Kolkata</option>
-                    <option value="Bangalore">Bangalore</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                  </select>
+                <div className="relative">
+                  <label className="block text-sm text-gray-600 mb-1">Birth Place (City or Pincode)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={locationSearch || kundaliForm.location}
+                      onChange={(e) => {
+                        setLocationSearch(e.target.value);
+                        if (!e.target.value) {
+                          setLocationResults([]);
+                        }
+                      }}
+                      onFocus={() => setLocationSearch(kundaliForm.location)}
+                      placeholder="Search city or enter 6-digit pincode..."
+                      className="w-full bg-white border border-saffron/30 rounded-xl px-4 py-3 text-maroon focus:ring-2 focus:ring-saffron outline-none pr-10"
+                    />
+                    {searchingLocation && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-saffron animate-spin" />
+                    )}
+                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </div>
+                  
+                  {/* Location Results Dropdown */}
+                  {locationResults.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white rounded-xl shadow-lg border border-saffron/20 max-h-48 overflow-auto">
+                      {locationResults.map((loc, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setKundaliForm({
+                              ...kundaliForm,
+                              location: loc.name + (loc.district ? `, ${loc.district}` : ''),
+                              latitude: loc.lat,
+                              longitude: loc.lon
+                            });
+                            setLocationSearch('');
+                            setLocationResults([]);
+                          }}
+                          className="w-full px-4 py-2 text-left hover:bg-saffron/10 text-sm text-maroon border-b border-gray-100 last:border-0"
+                        >
+                          <span className="font-medium">{loc.name}</span>
+                          {loc.district && <span className="text-gray-500">, {loc.district}</span>}
+                          {loc.state && <span className="text-gray-400"> ({loc.state})</span>}
+                          {loc.pincode && <span className="text-saffron ml-2">{loc.pincode}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
+                
+                {kundaliForm.location && (
+                  <p className="text-xs text-gray-500">
+                    Selected: {kundaliForm.location} ({kundaliForm.latitude.toFixed(4)}°N, {kundaliForm.longitude.toFixed(4)}°E)
+                  </p>
+                )}
 
                 <button
                   onClick={fetchKundali}
                   disabled={loading}
-                  className="w-full bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 transition-colors"
+                  className="w-full bg-saffron hover:bg-saffron/90 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 transition-colors"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Generate Kundali</>}
                 </button>
@@ -1071,26 +1255,26 @@ function AstrologyTab({ isDesktop }) {
             </div>
 
             {kundaliResult && !kundaliResult.error && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-800/50 rounded-2xl p-6">
-                <h3 className="font-cinzel text-lg text-white mb-4">Your Birth Kundali</h3>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-cream rounded-2xl p-6 border border-saffron/20">
+                <h3 className="font-cinzel text-lg text-maroon mb-4">Your Birth Kundali</h3>
                 
                 {/* Nakshatra & Basic Info */}
                 {kundaliResult.data?.nakshatra_details && (
                   <>
-                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-4 mb-4">
+                    <div className="bg-gradient-to-r from-saffron to-gold rounded-xl p-4 mb-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-white/70 text-sm">Nakshatra</span>
+                        <span className="text-white/80 text-sm">Nakshatra</span>
                         <span className="text-white font-semibold">{kundaliResult.data.nakshatra_details.nakshatra?.name}</span>
                       </div>
                       {kundaliResult.data.nakshatra_details.nakshatra?.lord && (
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-white/70 text-sm">Nakshatra Lord</span>
+                          <span className="text-white/80 text-sm">Nakshatra Lord</span>
                           <span className="text-white">{kundaliResult.data.nakshatra_details.nakshatra.lord.vedic_name || kundaliResult.data.nakshatra_details.nakshatra.lord.name}</span>
                         </div>
                       )}
                       {kundaliResult.data.nakshatra_details.nakshatra?.pada && (
                         <div className="flex items-center justify-between">
-                          <span className="text-white/70 text-sm">Pada</span>
+                          <span className="text-white/80 text-sm">Pada</span>
                           <span className="text-white">{kundaliResult.data.nakshatra_details.nakshatra.pada}</span>
                         </div>
                       )}
@@ -1099,20 +1283,20 @@ function AstrologyTab({ isDesktop }) {
                     {/* Rashi Info - using chandra_rasi */}
                     <div className="grid grid-cols-2 gap-3 mb-4">
                       {kundaliResult.data.nakshatra_details.chandra_rasi && (
-                        <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-                          <p className="text-xs text-gray-400 mb-1">Moon Sign (Chandra Rashi)</p>
-                          <p className="text-white font-semibold">{kundaliResult.data.nakshatra_details.chandra_rasi.name}</p>
+                        <div className="bg-saffron/10 rounded-xl p-3 text-center">
+                          <p className="text-xs text-gray-500 mb-1">Moon Sign (Chandra Rashi)</p>
+                          <p className="text-maroon font-semibold">{kundaliResult.data.nakshatra_details.chandra_rasi.name}</p>
                           {kundaliResult.data.nakshatra_details.chandra_rasi.lord && (
-                            <p className="text-indigo-300 text-xs">Lord: {kundaliResult.data.nakshatra_details.chandra_rasi.lord.vedic_name}</p>
+                            <p className="text-saffron text-xs">Lord: {kundaliResult.data.nakshatra_details.chandra_rasi.lord.vedic_name}</p>
                           )}
                         </div>
                       )}
                       {kundaliResult.data.nakshatra_details.soorya_rasi && (
-                        <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-                          <p className="text-xs text-gray-400 mb-1">Sun Sign (Surya Rashi)</p>
-                          <p className="text-white font-semibold">{kundaliResult.data.nakshatra_details.soorya_rasi.name}</p>
+                        <div className="bg-saffron/10 rounded-xl p-3 text-center">
+                          <p className="text-xs text-gray-500 mb-1">Sun Sign (Surya Rashi)</p>
+                          <p className="text-maroon font-semibold">{kundaliResult.data.nakshatra_details.soorya_rasi.name}</p>
                           {kundaliResult.data.nakshatra_details.soorya_rasi.lord && (
-                            <p className="text-indigo-300 text-xs">Lord: {kundaliResult.data.nakshatra_details.soorya_rasi.lord.vedic_name}</p>
+                            <p className="text-saffron text-xs">Lord: {kundaliResult.data.nakshatra_details.soorya_rasi.lord.vedic_name}</p>
                           )}
                         </div>
                       )}
@@ -1120,43 +1304,43 @@ function AstrologyTab({ isDesktop }) {
                     
                     {/* Additional Info */}
                     {kundaliResult.data.nakshatra_details.additional_info && (
-                      <div className="bg-slate-700/30 rounded-xl p-4 mb-4">
-                        <h4 className="text-white text-sm font-medium mb-3">Nakshatra Details</h4>
+                      <div className="bg-white rounded-xl p-4 mb-4 border border-saffron/10">
+                        <h4 className="text-maroon text-sm font-medium mb-3">Nakshatra Details</h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                           {kundaliResult.data.nakshatra_details.additional_info.deity && (
                             <div>
-                              <p className="text-gray-400 text-xs">Deity</p>
-                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.deity}</p>
+                              <p className="text-gray-500 text-xs">Deity</p>
+                              <p className="text-maroon">{kundaliResult.data.nakshatra_details.additional_info.deity}</p>
                             </div>
                           )}
                           {kundaliResult.data.nakshatra_details.additional_info.symbol && (
                             <div>
-                              <p className="text-gray-400 text-xs">Symbol</p>
-                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.symbol}</p>
+                              <p className="text-gray-500 text-xs">Symbol</p>
+                              <p className="text-maroon">{kundaliResult.data.nakshatra_details.additional_info.symbol}</p>
                             </div>
                           )}
                           {kundaliResult.data.nakshatra_details.additional_info.ganam && (
                             <div>
-                              <p className="text-gray-400 text-xs">Gana</p>
-                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.ganam}</p>
+                              <p className="text-gray-500 text-xs">Gana</p>
+                              <p className="text-maroon">{kundaliResult.data.nakshatra_details.additional_info.ganam}</p>
                             </div>
                           )}
                           {kundaliResult.data.nakshatra_details.additional_info.birth_stone && (
                             <div>
-                              <p className="text-gray-400 text-xs">Birth Stone</p>
-                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.birth_stone}</p>
+                              <p className="text-gray-500 text-xs">Birth Stone</p>
+                              <p className="text-maroon">{kundaliResult.data.nakshatra_details.additional_info.birth_stone}</p>
                             </div>
                           )}
                           {kundaliResult.data.nakshatra_details.additional_info.color && (
                             <div>
-                              <p className="text-gray-400 text-xs">Lucky Color</p>
-                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.color}</p>
+                              <p className="text-gray-500 text-xs">Lucky Color</p>
+                              <p className="text-maroon">{kundaliResult.data.nakshatra_details.additional_info.color}</p>
                             </div>
                           )}
                           {kundaliResult.data.nakshatra_details.additional_info.syllables && (
                             <div>
-                              <p className="text-gray-400 text-xs">Name Syllables</p>
-                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.syllables}</p>
+                              <p className="text-gray-500 text-xs">Name Syllables</p>
+                              <p className="text-maroon">{kundaliResult.data.nakshatra_details.additional_info.syllables}</p>
                             </div>
                           )}
                         </div>
@@ -1167,26 +1351,26 @@ function AstrologyTab({ isDesktop }) {
                 
                 {/* Mangal Dosha */}
                 {kundaliResult.data?.mangal_dosha && (
-                  <div className={`rounded-xl p-4 mb-4 ${
-                    kundaliResult.data.mangal_dosha.has_dosha ? 'bg-red-900/30' : 'bg-green-900/30'
+                  <div className={`rounded-xl p-4 mb-4 border ${
+                    kundaliResult.data.mangal_dosha.has_dosha ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
                   }`}>
                     <div className="flex items-center gap-2 mb-2">
                       {kundaliResult.data.mangal_dosha.has_dosha ? (
-                        <span className="text-red-400 text-lg">⚠️</span>
+                        <span className="text-red-500 text-lg">⚠️</span>
                       ) : (
-                        <span className="text-green-400 text-lg">✓</span>
+                        <span className="text-green-500 text-lg">✓</span>
                       )}
-                      <p className="text-white font-medium">Mangal Dosha</p>
+                      <p className="text-maroon font-medium">Mangal Dosha</p>
                       {kundaliResult.data.mangal_dosha.type && (
-                        <span className="text-xs bg-red-800/50 px-2 py-0.5 rounded text-red-200">{kundaliResult.data.mangal_dosha.type}</span>
+                        <span className="text-xs bg-red-100 px-2 py-0.5 rounded text-red-600">{kundaliResult.data.mangal_dosha.type}</span>
                       )}
                     </div>
-                    <p className="text-gray-300 text-sm mb-2">{kundaliResult.data.mangal_dosha.description}</p>
+                    <p className="text-gray-700 text-sm mb-2">{kundaliResult.data.mangal_dosha.description}</p>
                     {kundaliResult.data.mangal_dosha.exceptions?.length > 0 && (
                       <div className="mt-2">
-                        <p className="text-yellow-400 text-xs mb-1">Exceptions:</p>
+                        <p className="text-amber-600 text-xs mb-1">Exceptions:</p>
                         {kundaliResult.data.mangal_dosha.exceptions.slice(0, 2).map((exc, i) => (
-                          <p key={i} className="text-gray-400 text-xs">• {exc}</p>
+                          <p key={i} className="text-gray-500 text-xs">• {exc}</p>
                         ))}
                       </div>
                     )}
@@ -1195,9 +1379,9 @@ function AstrologyTab({ isDesktop }) {
                 
                 {/* Fallback for no data */}
                 {!kundaliResult.data?.nakshatra_details && (
-                  <div className="bg-slate-700/50 rounded-xl p-4">
-                    <p className="text-green-400 text-sm mb-2">✓ Kundali generated successfully</p>
-                    <p className="text-gray-400 text-xs">Detailed planetary positions calculated based on your birth details.</p>
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <p className="text-green-600 text-sm mb-2">✓ Kundali generated successfully</p>
+                    <p className="text-gray-500 text-xs">Detailed planetary positions calculated based on your birth details.</p>
                   </div>
                 )}
               </motion.div>
@@ -1205,10 +1389,10 @@ function AstrologyTab({ isDesktop }) {
             
             {/* Error state */}
             {kundaliResult?.error && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-800/50 rounded-2xl p-6">
-                <div className="bg-red-900/30 rounded-xl p-4">
-                  <p className="text-red-400 text-sm mb-2">⚠️ Service Temporarily Unavailable</p>
-                  <p className="text-gray-400 text-xs">The astrology service is currently unavailable. Please try again later or contact support.</p>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-cream rounded-2xl p-6 border border-saffron/20">
+                <div className="bg-red-50 rounded-xl p-4 border border-red-200">
+                  <p className="text-red-600 text-sm mb-2">⚠️ Service Temporarily Unavailable</p>
+                  <p className="text-gray-500 text-xs">The astrology service is currently unavailable. Please try again later or contact support.</p>
                 </div>
               </motion.div>
             )}
@@ -1218,112 +1402,156 @@ function AstrologyTab({ isDesktop }) {
         {/* Kundali Matching Section */}
         {activeSection === 'matching' && (
           <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''}`}>
-            <div className="bg-slate-800/50 rounded-2xl p-6 mb-6">
-              <h3 className="font-cinzel text-lg text-white mb-4">Bride's Details</h3>
+            <div className="bg-cream rounded-2xl p-6 mb-6 border border-saffron/20">
+              <h3 className="font-cinzel text-lg text-maroon mb-4">Bride's Details</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Date & Time of Birth</label>
+                  <label className="block text-sm text-gray-600 mb-1">Date & Time of Birth</label>
                   <input
                     type="datetime-local"
                     value={matchingForm.bride_datetime}
                     onChange={(e) => setMatchingForm({ ...matchingForm, bride_datetime: e.target.value })}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full bg-white border border-saffron/30 rounded-xl px-4 py-3 text-maroon focus:ring-2 focus:ring-saffron outline-none"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Birth Place</label>
-                  <select
-                    value={matchingForm.bride_location}
-                    onChange={(e) => {
-                      const locations = { 'Delhi': { lat: 28.6139, lon: 77.2090 }, 'Mumbai': { lat: 19.0760, lon: 72.8777 }, 'Chennai': { lat: 13.0827, lon: 80.2707 }, 'Kolkata': { lat: 22.5726, lon: 88.3639 }, 'Bangalore': { lat: 12.9716, lon: 77.5946 }, 'Hyderabad': { lat: 17.3850, lon: 78.4867 } };
-                      const loc = locations[e.target.value];
-                      setMatchingForm({ ...matchingForm, bride_location: e.target.value, bride_latitude: loc.lat, bride_longitude: loc.lon });
-                    }}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white"
-                  >
-                    <option value="Delhi">Delhi</option>
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Chennai">Chennai</option>
-                    <option value="Kolkata">Kolkata</option>
-                    <option value="Bangalore">Bangalore</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                  </select>
+                <div className="relative">
+                  <label className="block text-sm text-gray-600 mb-1">Birth Place (City or Pincode)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={brideLocationSearch || matchingForm.bride_location}
+                      onChange={(e) => {
+                        setBrideLocationSearch(e.target.value);
+                        if (!e.target.value) setBrideLocationResults([]);
+                      }}
+                      onFocus={() => setBrideLocationSearch(matchingForm.bride_location)}
+                      placeholder="Search city or enter 6-digit pincode..."
+                      className="w-full bg-white border border-saffron/30 rounded-xl px-4 py-3 text-maroon focus:ring-2 focus:ring-saffron outline-none pr-10"
+                    />
+                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </div>
+                  {brideLocationResults.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white rounded-xl shadow-lg border border-saffron/20 max-h-48 overflow-auto">
+                      {brideLocationResults.map((loc, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setMatchingForm({
+                              ...matchingForm,
+                              bride_location: loc.name + (loc.district ? `, ${loc.district}` : ''),
+                              bride_latitude: loc.lat,
+                              bride_longitude: loc.lon
+                            });
+                            setBrideLocationSearch('');
+                            setBrideLocationResults([]);
+                          }}
+                          className="w-full px-4 py-2 text-left hover:bg-saffron/10 text-sm text-maroon border-b border-gray-100 last:border-0"
+                        >
+                          <span className="font-medium">{loc.name}</span>
+                          {loc.district && <span className="text-gray-500">, {loc.district}</span>}
+                          {loc.pincode && <span className="text-saffron ml-2">{loc.pincode}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <h3 className="font-cinzel text-lg text-white mb-4 mt-6">Groom's Details</h3>
+              <h3 className="font-cinzel text-lg text-maroon mb-4 mt-6">Groom's Details</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Date & Time of Birth</label>
+                  <label className="block text-sm text-gray-600 mb-1">Date & Time of Birth</label>
                   <input
                     type="datetime-local"
                     value={matchingForm.groom_datetime}
                     onChange={(e) => setMatchingForm({ ...matchingForm, groom_datetime: e.target.value })}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full bg-white border border-saffron/30 rounded-xl px-4 py-3 text-maroon focus:ring-2 focus:ring-saffron outline-none"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Birth Place</label>
-                  <select
-                    value={matchingForm.groom_location}
-                    onChange={(e) => {
-                      const locations = { 'Delhi': { lat: 28.6139, lon: 77.2090 }, 'Mumbai': { lat: 19.0760, lon: 72.8777 }, 'Chennai': { lat: 13.0827, lon: 80.2707 }, 'Kolkata': { lat: 22.5726, lon: 88.3639 }, 'Bangalore': { lat: 12.9716, lon: 77.5946 }, 'Hyderabad': { lat: 17.3850, lon: 78.4867 } };
-                      const loc = locations[e.target.value];
-                      setMatchingForm({ ...matchingForm, groom_location: e.target.value, groom_latitude: loc.lat, groom_longitude: loc.lon });
-                    }}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white"
-                  >
-                    <option value="Delhi">Delhi</option>
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Chennai">Chennai</option>
-                    <option value="Kolkata">Kolkata</option>
-                    <option value="Bangalore">Bangalore</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                  </select>
+                <div className="relative">
+                  <label className="block text-sm text-gray-600 mb-1">Birth Place (City or Pincode)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={groomLocationSearch || matchingForm.groom_location}
+                      onChange={(e) => {
+                        setGroomLocationSearch(e.target.value);
+                        if (!e.target.value) setGroomLocationResults([]);
+                      }}
+                      onFocus={() => setGroomLocationSearch(matchingForm.groom_location)}
+                      placeholder="Search city or enter 6-digit pincode..."
+                      className="w-full bg-white border border-saffron/30 rounded-xl px-4 py-3 text-maroon focus:ring-2 focus:ring-saffron outline-none pr-10"
+                    />
+                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  </div>
+                  {groomLocationResults.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white rounded-xl shadow-lg border border-saffron/20 max-h-48 overflow-auto">
+                      {groomLocationResults.map((loc, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setMatchingForm({
+                              ...matchingForm,
+                              groom_location: loc.name + (loc.district ? `, ${loc.district}` : ''),
+                              groom_latitude: loc.lat,
+                              groom_longitude: loc.lon
+                            });
+                            setGroomLocationSearch('');
+                            setGroomLocationResults([]);
+                          }}
+                          className="w-full px-4 py-2 text-left hover:bg-saffron/10 text-sm text-maroon border-b border-gray-100 last:border-0"
+                        >
+                          <span className="font-medium">{loc.name}</span>
+                          {loc.district && <span className="text-gray-500">, {loc.district}</span>}
+                          {loc.pincode && <span className="text-saffron ml-2">{loc.pincode}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <button
                 onClick={fetchKundaliMatching}
                 disabled={loading}
-                className="w-full bg-pink-500 hover:bg-pink-600 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 transition-colors mt-6"
+                className="w-full bg-saffron hover:bg-saffron/90 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 transition-colors mt-6"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Heart className="w-5 h-5" /> Check Compatibility</>}
               </button>
             </div>
 
             {matchingResult && !matchingResult.error && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-800/50 rounded-2xl p-6">
-                <h3 className="font-cinzel text-lg text-white mb-4">Marriage Compatibility</h3>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-cream rounded-2xl p-6 border border-saffron/20">
+                <h3 className="font-cinzel text-lg text-maroon mb-4">Marriage Compatibility</h3>
                 
                 {/* Overall Score */}
                 {matchingResult.data?.guna_milan && (
                   <div className={`rounded-xl p-5 mb-4 text-center ${
                     matchingResult.data.guna_milan.total_points >= 21 
-                      ? 'bg-gradient-to-r from-green-600 to-emerald-600' 
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
                       : matchingResult.data.guna_milan.total_points >= 18 
-                        ? 'bg-gradient-to-r from-yellow-600 to-amber-600'
-                        : 'bg-gradient-to-r from-pink-600 to-rose-600'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500'
+                        : 'bg-gradient-to-r from-saffron to-gold'
                   }`}>
-                    <p className="text-white/70 text-sm mb-1">Compatibility Score</p>
+                    <p className="text-white/80 text-sm mb-1">Compatibility Score</p>
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-5xl font-bold text-white">{matchingResult.data.guna_milan.total_points}</span>
-                      <span className="text-white/70 text-lg">/{matchingResult.data.guna_milan.maximum_points || 36}</span>
+                      <span className="text-white/80 text-lg">/{matchingResult.data.guna_milan.maximum_points || 36}</span>
                     </div>
-                    <p className="text-white/80 text-sm mt-2">
-                      {matchingResult.data.guna_milan.total_points >= 28 ? '💫 Excellent Match!' : 
-                       matchingResult.data.guna_milan.total_points >= 21 ? '✓ Good Compatibility' : 
-                       matchingResult.data.guna_milan.total_points >= 18 ? '⚠️ Average Match' : '⚠️ Needs Consultation'}
+                    <p className="text-white text-sm mt-2">
+                      {matchingResult.data.guna_milan.total_points >= 28 ? 'Excellent Match!' : 
+                       matchingResult.data.guna_milan.total_points >= 21 ? 'Good Compatibility' : 
+                       matchingResult.data.guna_milan.total_points >= 18 ? 'Average Match' : 'Needs Consultation'}
                     </p>
                   </div>
                 )}
                 
                 {/* Message/Recommendation */}
                 {matchingResult.data?.message && (
-                  <div className={`rounded-xl p-4 mb-4 ${
-                    matchingResult.data.message.type === 'good' ? 'bg-green-900/30' : 'bg-yellow-900/30'
+                  <div className={`rounded-xl p-4 mb-4 border ${
+                    matchingResult.data.message.type === 'good' ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'
                   }`}>
-                    <p className="text-gray-200 text-sm">{matchingResult.data.message.description}</p>
+                    <p className="text-gray-700 text-sm">{matchingResult.data.message.description}</p>
                   </div>
                 )}
                 
@@ -1331,17 +1559,17 @@ function AstrologyTab({ isDesktop }) {
                 {(matchingResult.data?.girl_info || matchingResult.data?.boy_info) && (
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     {matchingResult.data.girl_info && (
-                      <div className="bg-pink-900/20 rounded-xl p-3">
-                        <p className="text-pink-300 text-xs font-medium mb-2">Bride</p>
-                        <p className="text-white text-sm">{matchingResult.data.girl_info.nakshatra?.name}</p>
-                        <p className="text-gray-400 text-xs">{matchingResult.data.girl_info.rasi?.name} Rashi</p>
+                      <div className="bg-pink-50 rounded-xl p-3 border border-pink-200">
+                        <p className="text-pink-600 text-xs font-medium mb-2">Bride</p>
+                        <p className="text-maroon text-sm">{matchingResult.data.girl_info.nakshatra?.name}</p>
+                        <p className="text-gray-500 text-xs">{matchingResult.data.girl_info.rasi?.name} Rashi</p>
                       </div>
                     )}
                     {matchingResult.data.boy_info && (
-                      <div className="bg-blue-900/20 rounded-xl p-3">
-                        <p className="text-blue-300 text-xs font-medium mb-2">Groom</p>
-                        <p className="text-white text-sm">{matchingResult.data.boy_info.nakshatra?.name}</p>
-                        <p className="text-gray-400 text-xs">{matchingResult.data.boy_info.rasi?.name} Rashi</p>
+                      <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
+                        <p className="text-blue-600 text-xs font-medium mb-2">Groom</p>
+                        <p className="text-maroon text-sm">{matchingResult.data.boy_info.nakshatra?.name}</p>
+                        <p className="text-gray-500 text-xs">{matchingResult.data.boy_info.rasi?.name} Rashi</p>
                       </div>
                     )}
                   </div>
@@ -1350,22 +1578,22 @@ function AstrologyTab({ isDesktop }) {
                 {/* Guna Details (Ashtakoot) */}
                 {matchingResult.data?.guna_milan?.guna && (
                   <div className="mb-4">
-                    <h4 className="text-white text-sm font-medium mb-3">Ashtakoot Milan (8 Aspects)</h4>
+                    <h4 className="text-maroon text-sm font-medium mb-3">Ashtakoot Milan (8 Aspects)</h4>
                     <div className="space-y-2">
                       {matchingResult.data.guna_milan.guna.slice(0, 8).map((guna, idx) => (
-                        <div key={idx} className="bg-slate-700/30 rounded-lg p-3 flex justify-between items-center">
+                        <div key={idx} className="bg-white rounded-lg p-3 flex justify-between items-center border border-saffron/10">
                           <div className="flex-1">
-                            <p className="text-white text-sm">{guna.name}</p>
-                            <p className="text-gray-500 text-xs">
+                            <p className="text-maroon text-sm">{guna.name}</p>
+                            <p className="text-gray-400 text-xs">
                               {guna.girl_koot && guna.boy_koot ? `${guna.girl_koot} / ${guna.boy_koot}` : ''}
                             </p>
                           </div>
                           <div className="text-right ml-2">
                             <span className={`font-semibold ${
-                              guna.obtained_points === guna.maximum_points ? 'text-green-400' :
-                              guna.obtained_points > 0 ? 'text-yellow-400' : 'text-red-400'
+                              guna.obtained_points === guna.maximum_points ? 'text-green-600' :
+                              guna.obtained_points > 0 ? 'text-amber-600' : 'text-red-600'
                             }`}>{guna.obtained_points}</span>
-                            <span className="text-gray-500">/{guna.maximum_points}</span>
+                            <span className="text-gray-400">/{guna.maximum_points}</span>
                           </div>
                         </div>
                       ))}
@@ -1375,9 +1603,9 @@ function AstrologyTab({ isDesktop }) {
                 
                 {/* Fallback for no guna data */}
                 {!matchingResult.data?.guna_milan && (
-                  <div className="bg-slate-700/50 rounded-xl p-4">
-                    <p className="text-green-400 text-sm mb-2">✓ Kundali matching analysis complete</p>
-                    <p className="text-gray-400 text-xs">Compatibility analysis based on the provided birth details.</p>
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <p className="text-green-600 text-sm mb-2">✓ Kundali matching analysis complete</p>
+                    <p className="text-gray-500 text-xs">Compatibility analysis based on the provided birth details.</p>
                   </div>
                 )}
               </motion.div>
@@ -1385,16 +1613,15 @@ function AstrologyTab({ isDesktop }) {
             
             {/* Error state for matching */}
             {matchingResult?.error && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-800/50 rounded-2xl p-6">
-                <div className="bg-red-900/30 rounded-xl p-4">
-                  <p className="text-red-400 text-sm mb-2">⚠️ Service Temporarily Unavailable</p>
-                  <p className="text-gray-400 text-xs">The astrology service is currently unavailable. Please try again later or contact support.</p>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-cream rounded-2xl p-6 border border-saffron/20">
+                <div className="bg-red-50 rounded-xl p-4 border border-red-200">
+                  <p className="text-red-600 text-sm mb-2">⚠️ Service Temporarily Unavailable</p>
+                  <p className="text-gray-500 text-xs">The astrology service is currently unavailable. Please try again later or contact support.</p>
                 </div>
               </motion.div>
             )}
           </div>
         )}
-      </div>
     </div>
   );
 }
