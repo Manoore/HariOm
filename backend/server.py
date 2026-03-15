@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Optional, List
 from bson import ObjectId
+from pydantic import BaseModel
 import os
 
 from dotenv import load_dotenv
@@ -300,11 +301,83 @@ async def get_me(user: dict = Depends(get_current_user)):
         "name": user["name"],
         "phone": user.get("phone"),
         "role": user["role"],
-        "is_verified": user.get("is_verified", False)
+        "is_verified": user.get("is_verified", False),
+        "address": user.get("address"),
+        "city": user.get("city"),
+        "pincode": user.get("pincode"),
+        "date_of_birth": user.get("date_of_birth"),
+        "gotra": user.get("gotra"),
+        "nakshatra": user.get("nakshatra"),
+        "profile_completed": user.get("profile_completed", False),
+        "firebase_uid": user.get("firebase_uid")
+    }
+
+# ===================== USER PROFILE UPDATE =====================
+class ProfileUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    pincode: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gotra: Optional[str] = None
+    nakshatra: Optional[str] = None
+
+@app.put("/api/users/profile")
+async def update_profile(data: ProfileUpdateRequest, user: dict = Depends(get_current_user)):
+    """Update user profile"""
+    update_data = {}
+    
+    if data.name:
+        update_data["name"] = data.name
+    if data.phone is not None:
+        update_data["phone"] = data.phone
+    if data.address is not None:
+        update_data["address"] = data.address
+    if data.city is not None:
+        update_data["city"] = data.city
+    if data.pincode is not None:
+        update_data["pincode"] = data.pincode
+    if data.date_of_birth is not None:
+        update_data["date_of_birth"] = data.date_of_birth
+    if data.gotra is not None:
+        update_data["gotra"] = data.gotra
+    if data.nakshatra is not None:
+        update_data["nakshatra"] = data.nakshatra
+    
+    # Mark profile as completed if key fields are filled
+    if data.phone and data.city:
+        update_data["profile_completed"] = True
+    
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    await users_collection.update_one(
+        {"_id": user["_id"]},
+        {"$set": update_data}
+    )
+    
+    # Get updated user
+    updated_user = await users_collection.find_one({"_id": user["_id"]})
+    
+    return {
+        "user": {
+            "id": str(updated_user["_id"]),
+            "email": updated_user["email"],
+            "name": updated_user["name"],
+            "phone": updated_user.get("phone"),
+            "role": updated_user["role"],
+            "is_verified": updated_user.get("is_verified", False),
+            "address": updated_user.get("address"),
+            "city": updated_user.get("city"),
+            "pincode": updated_user.get("pincode"),
+            "date_of_birth": updated_user.get("date_of_birth"),
+            "gotra": updated_user.get("gotra"),
+            "nakshatra": updated_user.get("nakshatra"),
+            "profile_completed": updated_user.get("profile_completed", False)
+        }
     }
 
 # ===================== FIREBASE AUTH ROUTES =====================
-from pydantic import BaseModel
 
 class FirebaseSyncRequest(BaseModel):
     firebase_uid: str

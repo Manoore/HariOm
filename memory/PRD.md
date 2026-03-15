@@ -52,6 +52,16 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [x] Firebase user sync with backend MongoDB
 - [x] Token-based API authentication
 - [x] Centered, card-style auth screens on desktop
+- [x] **First-time Google user onboarding screen** (NEW - March 15, 2026)
+
+### User Profile (NEW - March 15, 2026)
+- [x] Editable profile section for devotees
+- [x] Profile fields: Name, Phone, DOB, Gotra, Nakshatra, City, Pincode, Address
+- [x] Backend PUT /api/users/profile endpoint
+- [x] Profile completion tracking (profile_completed flag)
+- [x] First-time Google login shows profile completion wizard
+- [x] Two-step onboarding: Basic Info → Spiritual Details
+- [x] Skip option for users who want to complete later
 
 ### Payment Gateway (IN PROGRESS)
 - [x] Stripe keys configured

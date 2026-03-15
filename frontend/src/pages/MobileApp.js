@@ -7,6 +7,9 @@ import DevoteeDashboard from './dashboards/DevoteeDashboard';
 import PriestDashboard from './dashboards/PriestDashboard';
 import AdminDashboard from './dashboards/AdminDashboard';
 import ShopOwnerDashboard from './dashboards/ShopOwnerDashboard';
+import { Loader2, User, Phone, MapPin, Calendar, Star, ChevronRight } from 'lucide-react';
+import api from '../lib/api';
+import { Toaster, toast } from 'sonner';
 
 // Check if mobile device
 const useIsMobile = () => {
@@ -18,6 +21,249 @@ const useIsMobile = () => {
   }, []);
   return isMobile;
 };
+
+// Profile Completion Screen for first-time Google users
+function ProfileCompletionScreen({ user, onComplete, onSkip }) {
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    phone: '',
+    city: '',
+    pincode: '',
+    date_of_birth: '',
+    gotra: '',
+    nakshatra: ''
+  });
+  const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState(1);
+
+  const handleSubmit = async () => {
+    if (!formData.phone || !formData.city) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      const res = await api.put('/api/users/profile', formData);
+      toast.success('Profile completed successfully!');
+      onComplete(res.data.user);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast.error('Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-cream to-parchment flex items-center justify-center p-4">
+      <Toaster position="top-center" richColors />
+      
+      <motion.div 
+        className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-orange-100 overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-saffron to-gold p-6 text-white text-center">
+          <motion.div 
+            className="w-16 h-16 bg-white/20 rounded-full mx-auto mb-3 flex items-center justify-center"
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <User className="w-8 h-8" />
+          </motion.div>
+          <h1 className="font-cinzel text-xl font-bold">Complete Your Profile</h1>
+          <p className="text-white/80 text-sm mt-1">Help us personalize your spiritual journey</p>
+        </div>
+
+        {/* Progress */}
+        <div className="px-6 pt-4">
+          <div className="flex gap-2 mb-6">
+            <div className={`flex-1 h-1 rounded-full ${step >= 1 ? 'bg-saffron' : 'bg-gray-200'}`} />
+            <div className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-saffron' : 'bg-gray-200'}`} />
+          </div>
+        </div>
+
+        {/* Step 1: Basic Info */}
+        {step === 1 && (
+          <motion.div 
+            className="px-6 pb-6"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <h2 className="font-cinzel text-lg font-semibold text-maroon mb-4">Basic Information</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <User className="w-4 h-4 inline mr-1" />
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent"
+                  placeholder="Your full name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Phone className="w-4 h-4 inline mr-1" />
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent"
+                  placeholder="+91 XXXXX XXXXX"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <MapPin className="w-4 h-4 inline mr-1" />
+                    City <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent"
+                    placeholder="Your city"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
+                  <input
+                    type="text"
+                    value={formData.pincode}
+                    onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                    className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent"
+                    placeholder="XXXXXX"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setStep(2)}
+              className="w-full mt-6 py-3 bg-saffron text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-saffron-dark transition-colors"
+            >
+              Next <ChevronRight className="w-5 h-5" />
+            </button>
+          </motion.div>
+        )}
+
+        {/* Step 2: Spiritual Info */}
+        {step === 2 && (
+          <motion.div 
+            className="px-6 pb-6"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <h2 className="font-cinzel text-lg font-semibold text-maroon mb-4">Spiritual Details</h2>
+            <p className="text-sm text-gray-500 mb-4">These help priests perform personalized poojas for you</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Calendar className="w-4 h-4 inline mr-1" />
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={formData.date_of_birth}
+                  onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                  className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Star className="w-4 h-4 inline mr-1" />
+                  Gotra
+                </label>
+                <input
+                  type="text"
+                  value={formData.gotra}
+                  onChange={(e) => setFormData({ ...formData, gotra: e.target.value })}
+                  className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent"
+                  placeholder="E.g., Bharadwaja, Kashyapa"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nakshatra</label>
+                <select
+                  value={formData.nakshatra}
+                  onChange={(e) => setFormData({ ...formData, nakshatra: e.target.value })}
+                  className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent"
+                >
+                  <option value="">Select your Nakshatra</option>
+                  <option value="Ashwini">Ashwini</option>
+                  <option value="Bharani">Bharani</option>
+                  <option value="Krittika">Krittika</option>
+                  <option value="Rohini">Rohini</option>
+                  <option value="Mrigashira">Mrigashira</option>
+                  <option value="Ardra">Ardra</option>
+                  <option value="Punarvasu">Punarvasu</option>
+                  <option value="Pushya">Pushya</option>
+                  <option value="Ashlesha">Ashlesha</option>
+                  <option value="Magha">Magha</option>
+                  <option value="Purva Phalguni">Purva Phalguni</option>
+                  <option value="Uttara Phalguni">Uttara Phalguni</option>
+                  <option value="Hasta">Hasta</option>
+                  <option value="Chitra">Chitra</option>
+                  <option value="Swati">Swati</option>
+                  <option value="Vishakha">Vishakha</option>
+                  <option value="Anuradha">Anuradha</option>
+                  <option value="Jyeshtha">Jyeshtha</option>
+                  <option value="Mula">Mula</option>
+                  <option value="Purva Ashadha">Purva Ashadha</option>
+                  <option value="Uttara Ashadha">Uttara Ashadha</option>
+                  <option value="Shravana">Shravana</option>
+                  <option value="Dhanishta">Dhanishta</option>
+                  <option value="Shatabhisha">Shatabhisha</option>
+                  <option value="Purva Bhadrapada">Purva Bhadrapada</option>
+                  <option value="Uttara Bhadrapada">Uttara Bhadrapada</option>
+                  <option value="Revati">Revati</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setStep(1)}
+                className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={saving}
+                className="flex-1 py-3 bg-saffron text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-saffron-dark transition-colors disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Complete'}
+              </button>
+            </div>
+            
+            <button
+              onClick={onSkip}
+              className="w-full mt-3 py-2 text-gray-500 text-sm hover:text-gray-700"
+            >
+              Skip for now
+            </button>
+          </motion.div>
+        )}
+      </motion.div>
+    </div>
+  );
+}
 
 // Splash Screen Component for Mobile
 function SplashScreen({ onComplete }) {
@@ -141,17 +387,46 @@ export default function MobileApp() {
   const [showSplash, setShowSplash] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
-  const { user, loading } = useAuth();
+  const [showProfileCompletion, setShowProfileCompletion] = useState(false);
+  const { user, loading, updateUser } = useAuth();
   const isMobile = useIsMobile();
 
   // Memoize the user role to prevent unnecessary re-renders
   const userRole = useMemo(() => user?.role, [user?.role]);
   const isLoggedIn = useMemo(() => !!user, [!!user]);
+  
+  // Check if user needs to complete profile (first-time Google user)
+  const needsProfileCompletion = useMemo(() => {
+    if (!user) return false;
+    // Show profile completion if:
+    // 1. User has firebase_uid (Google login)
+    // 2. Profile is not completed
+    // 3. No phone number set
+    return user.firebase_uid && !user.profile_completed && !user.phone;
+  }, [user?.firebase_uid, user?.profile_completed, user?.phone]);
+
+  // Show profile completion screen for first-time Google users
+  useEffect(() => {
+    if (needsProfileCompletion && !showProfileCompletion) {
+      setShowProfileCompletion(true);
+    }
+  }, [needsProfileCompletion]);
 
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
     setAuthMode(mode);
     setShowAuth(true);
+  };
+
+  // Handle profile completion
+  const handleProfileComplete = (updatedUser) => {
+    updateUser(updatedUser);
+    setShowProfileCompletion(false);
+  };
+
+  // Handle skip profile completion
+  const handleSkipProfile = () => {
+    setShowProfileCompletion(false);
   };
 
   // Memoize dashboard component based on role
@@ -173,6 +448,18 @@ export default function MobileApp() {
 
   // Determine what to render
   const renderContent = () => {
+    // Show profile completion screen for first-time Google users
+    if (isLoggedIn && showProfileCompletion) {
+      return (
+        <ProfileCompletionScreen 
+          key="profile-completion"
+          user={user} 
+          onComplete={handleProfileComplete}
+          onSkip={handleSkipProfile}
+        />
+      );
+    }
+
     // Mobile flow: Splash → Auth/Welcome → Dashboard
     if (isMobile) {
       if (showSplash) {
