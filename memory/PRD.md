@@ -125,4 +125,4 @@ Icons: Custom 3D animated SVGs
 - `backend/server.py` - Backend with Firebase sync endpoints
 
 ## Preview URLs
-- **Web App**: https://divine-spiritual.preview.emergentagent.com
+- **Web App**: https://bhakti-hub-15.preview.emergentagent.com
