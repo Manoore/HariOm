@@ -13,8 +13,8 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 
 ## User Choices
 - **Authentication**: Firebase (FULLY INTEGRATED)
-- **Payments**: Stripe (real keys configured) + Razorpay (placeholder)
-- **Video Meetings**: Skipped for MVP
+- **Payments**: Stripe (real keys configured) + Razorpay (placeholder) - IP-based selection
+- **Video Meetings**: 100ms Integration (IMPLEMENTED)
 - **Horoscope**: Local calculation service
 - **Design Theme**: Traditional warm (saffron, gold, maroon)
 - **MVP Scope**: All core features together
@@ -219,6 +219,26 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Messages tab in Priest Dashboard (sidebar)
   - [x] Backend APIs: GET/POST /api/chat/rooms, messages, read, unread-count
   - [x] WebSocket endpoint: /ws/chat/{room_id}?token=JWT
+
+- [x] **Video Consultation System with Per-Minute Billing** (NEW - March 15, 2026)
+  - [x] 100ms integration for video calls
+  - [x] User wallet system with recharge
+  - [x] IP-based payment gateway selection (Razorpay for India, Stripe for others)
+  - [x] Per-minute billing for astrologer consultations
+  - [x] Free 5 minutes for new users (admin configurable)
+  - [x] Low balance warning at ₹20 (admin configurable)
+  - [x] 30-second grace period before disconnect (admin configurable)
+  - [x] Auto-disconnect when wallet balance exhausted
+  - [x] Admin dashboard for consultation settings
+  - [x] Astrologer-specific pricing (each sets own rate)
+  - [x] Astrologer availability toggle (online/offline)
+  - [x] Call history for users and astrologers
+  - [x] Transaction history
+  - [x] Platform commission (20% default, admin configurable)
+  - [x] Wallet UI with balance display and recharge
+  - [x] "Call Astrologer" tab in Devotee Dashboard
+  - [x] Backend APIs: wallet, consultation, astrologer profile
+  - [x] WebSocket for real-time billing updates
 
 - [x] **Priest Dashboard - FULLY IMPLEMENTED**
   - [x] **Home Tab** - Analytics overview with cards

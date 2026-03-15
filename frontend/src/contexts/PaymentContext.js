@@ -42,12 +42,34 @@ export function PaymentProvider({ children }) {
     setPaymentMethod(method);
   };
 
+  // Process payment (mock for now - integrate with actual Razorpay/Stripe)
+  const processPayment = async (amount, metadata) => {
+    // In a real implementation, this would:
+    // 1. Create order on backend
+    // 2. Open Razorpay/Stripe payment modal
+    // 3. Handle payment callback
+    // For now, simulate a successful payment
+    
+    return new Promise((resolve) => {
+      // Simulate payment processing
+      setTimeout(() => {
+        resolve({
+          success: true,
+          payment_id: `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          amount: amount,
+          method: paymentMethod
+        });
+      }, 1000);
+    });
+  };
+
   return (
     <PaymentContext.Provider value={{ 
       paymentMethod, 
       country, 
       loading,
       setManualPaymentMethod,
+      processPayment,
       isIndia: country === 'IN'
     }}>
       {children}
