@@ -251,7 +251,7 @@ async def register(user_data: UserCreate):
     
     user_dict = {
         "email": user_data.email,
-        "password": get_password_hash(user_data.password),
+        "password_hash": get_password_hash(user_data.password),
         "name": user_data.name,
         "phone": user_data.phone,
         "role": user_data.role,
@@ -275,7 +275,9 @@ async def register(user_data: UserCreate):
 @app.post("/api/auth/login")
 async def login(credentials: UserLogin):
     user = await users_collection.find_one({"email": credentials.email})
-    if not user or not verify_password(credentials.password, user["password"]):
+    # Check both password fields (password_hash for new users, password for legacy)
+    password_field = user.get("password_hash") or user.get("password") if user else None
+    if not user or not password_field or not verify_password(credentials.password, password_field):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_access_token(data={"sub": str(user["_id"])})
