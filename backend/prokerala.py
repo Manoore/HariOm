@@ -272,10 +272,10 @@ async def get_kundali_matching(
     """Get kundali matching (horoscope matching) for marriage"""
     try:
         params = {
-            "bride_dob": bride_datetime,
-            "bride_coordinates": f"{bride_lat},{bride_lon}",
-            "groom_dob": groom_datetime,
-            "groom_coordinates": f"{groom_lat},{groom_lon}",
+            "girl_dob": bride_datetime,
+            "girl_coordinates": f"{bride_lat},{bride_lon}",
+            "boy_dob": groom_datetime,
+            "boy_coordinates": f"{groom_lat},{groom_lon}",
             "ayanamsa": ayanamsa
         }
         

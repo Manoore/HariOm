@@ -835,8 +835,13 @@ function AstrologyTab({ isDesktop }) {
     }
     setLoading(true);
     try {
+      // Add Indian timezone (+05:30) if not present
+      let datetimeStr = kundaliForm.datetime;
+      if (!datetimeStr.includes('+') && !datetimeStr.includes('Z')) {
+        datetimeStr = datetimeStr + ':00+05:30';
+      }
       const res = await api.post('/api/astrology/birth-kundali', {
-        datetime: kundaliForm.datetime,
+        datetime: datetimeStr,
         latitude: kundaliForm.latitude,
         longitude: kundaliForm.longitude
       });
@@ -862,11 +867,20 @@ function AstrologyTab({ isDesktop }) {
     }
     setLoading(true);
     try {
+      // Add Indian timezone (+05:30) if not present
+      let brideDatetime = matchingForm.bride_datetime;
+      let groomDatetime = matchingForm.groom_datetime;
+      if (!brideDatetime.includes('+') && !brideDatetime.includes('Z')) {
+        brideDatetime = brideDatetime + ':00+05:30';
+      }
+      if (!groomDatetime.includes('+') && !groomDatetime.includes('Z')) {
+        groomDatetime = groomDatetime + ':00+05:30';
+      }
       const res = await api.post('/api/astrology/kundali-matching', {
-        bride_datetime: matchingForm.bride_datetime,
+        bride_datetime: brideDatetime,
         bride_latitude: matchingForm.bride_latitude,
         bride_longitude: matchingForm.bride_longitude,
-        groom_datetime: matchingForm.groom_datetime,
+        groom_datetime: groomDatetime,
         groom_latitude: matchingForm.groom_latitude,
         groom_longitude: matchingForm.groom_longitude
       });
@@ -1056,91 +1070,146 @@ function AstrologyTab({ isDesktop }) {
               </div>
             </div>
 
-            {kundaliResult && (
+            {kundaliResult && !kundaliResult.error && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-800/50 rounded-2xl p-6">
                 <h3 className="font-cinzel text-lg text-white mb-4">Your Birth Kundali</h3>
                 
                 {/* Nakshatra & Basic Info */}
                 {kundaliResult.data?.nakshatra_details && (
-                  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-4 mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-white/70 text-sm">Nakshatra</span>
-                      <span className="text-white font-semibold">{kundaliResult.data.nakshatra_details.nakshatra?.name}</span>
-                    </div>
-                    {kundaliResult.data.nakshatra_details.nakshatra?.lord && (
+                  <>
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-4 mb-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-white/70 text-sm">Lord</span>
-                        <span className="text-white">{kundaliResult.data.nakshatra_details.nakshatra.lord.name}</span>
+                        <span className="text-white/70 text-sm">Nakshatra</span>
+                        <span className="text-white font-semibold">{kundaliResult.data.nakshatra_details.nakshatra?.name}</span>
                       </div>
-                    )}
-                    {kundaliResult.data.nakshatra_details.nakshatra?.pada && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-white/70 text-sm">Pada</span>
-                        <span className="text-white">{kundaliResult.data.nakshatra_details.nakshatra.pada}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Rashi (Moon Sign) */}
-                {kundaliResult.data?.nakshatra_details?.rashi && (
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-                      <p className="text-xs text-gray-400 mb-1">Moon Sign (Rashi)</p>
-                      <p className="text-white font-semibold">{kundaliResult.data.nakshatra_details.rashi.name}</p>
-                    </div>
-                    {kundaliResult.data.nakshatra_details.rashi.lord && (
-                      <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-                        <p className="text-xs text-gray-400 mb-1">Rashi Lord</p>
-                        <p className="text-white font-semibold">{kundaliResult.data.nakshatra_details.rashi.lord.name}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Planet Positions */}
-                {kundaliResult.data?.planet_positions && (
-                  <div className="mb-4">
-                    <h4 className="text-white text-sm font-medium mb-2">Planet Positions</h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      {kundaliResult.data.planet_positions.slice(0, 9).map((planet, idx) => (
-                        <div key={idx} className="bg-slate-700/30 rounded-lg p-2 text-center">
-                          <p className="text-xs text-indigo-300">{planet.name}</p>
-                          <p className="text-white text-sm">{planet.rashi?.name || '-'}</p>
-                          <p className="text-gray-400 text-xs">{planet.degree?.toFixed(1)}°</p>
+                      {kundaliResult.data.nakshatra_details.nakshatra?.lord && (
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-white/70 text-sm">Nakshatra Lord</span>
+                          <span className="text-white">{kundaliResult.data.nakshatra_details.nakshatra.lord.vedic_name || kundaliResult.data.nakshatra_details.nakshatra.lord.name}</span>
                         </div>
-                      ))}
+                      )}
+                      {kundaliResult.data.nakshatra_details.nakshatra?.pada && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/70 text-sm">Pada</span>
+                          <span className="text-white">{kundaliResult.data.nakshatra_details.nakshatra.pada}</span>
+                        </div>
+                      )}
                     </div>
+                    
+                    {/* Rashi Info - using chandra_rasi */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {kundaliResult.data.nakshatra_details.chandra_rasi && (
+                        <div className="bg-slate-700/50 rounded-xl p-3 text-center">
+                          <p className="text-xs text-gray-400 mb-1">Moon Sign (Chandra Rashi)</p>
+                          <p className="text-white font-semibold">{kundaliResult.data.nakshatra_details.chandra_rasi.name}</p>
+                          {kundaliResult.data.nakshatra_details.chandra_rasi.lord && (
+                            <p className="text-indigo-300 text-xs">Lord: {kundaliResult.data.nakshatra_details.chandra_rasi.lord.vedic_name}</p>
+                          )}
+                        </div>
+                      )}
+                      {kundaliResult.data.nakshatra_details.soorya_rasi && (
+                        <div className="bg-slate-700/50 rounded-xl p-3 text-center">
+                          <p className="text-xs text-gray-400 mb-1">Sun Sign (Surya Rashi)</p>
+                          <p className="text-white font-semibold">{kundaliResult.data.nakshatra_details.soorya_rasi.name}</p>
+                          {kundaliResult.data.nakshatra_details.soorya_rasi.lord && (
+                            <p className="text-indigo-300 text-xs">Lord: {kundaliResult.data.nakshatra_details.soorya_rasi.lord.vedic_name}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Additional Info */}
+                    {kundaliResult.data.nakshatra_details.additional_info && (
+                      <div className="bg-slate-700/30 rounded-xl p-4 mb-4">
+                        <h4 className="text-white text-sm font-medium mb-3">Nakshatra Details</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                          {kundaliResult.data.nakshatra_details.additional_info.deity && (
+                            <div>
+                              <p className="text-gray-400 text-xs">Deity</p>
+                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.deity}</p>
+                            </div>
+                          )}
+                          {kundaliResult.data.nakshatra_details.additional_info.symbol && (
+                            <div>
+                              <p className="text-gray-400 text-xs">Symbol</p>
+                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.symbol}</p>
+                            </div>
+                          )}
+                          {kundaliResult.data.nakshatra_details.additional_info.ganam && (
+                            <div>
+                              <p className="text-gray-400 text-xs">Gana</p>
+                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.ganam}</p>
+                            </div>
+                          )}
+                          {kundaliResult.data.nakshatra_details.additional_info.birth_stone && (
+                            <div>
+                              <p className="text-gray-400 text-xs">Birth Stone</p>
+                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.birth_stone}</p>
+                            </div>
+                          )}
+                          {kundaliResult.data.nakshatra_details.additional_info.color && (
+                            <div>
+                              <p className="text-gray-400 text-xs">Lucky Color</p>
+                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.color}</p>
+                            </div>
+                          )}
+                          {kundaliResult.data.nakshatra_details.additional_info.syllables && (
+                            <div>
+                              <p className="text-gray-400 text-xs">Name Syllables</p>
+                              <p className="text-white">{kundaliResult.data.nakshatra_details.additional_info.syllables}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                {/* Mangal Dosha */}
+                {kundaliResult.data?.mangal_dosha && (
+                  <div className={`rounded-xl p-4 mb-4 ${
+                    kundaliResult.data.mangal_dosha.has_dosha ? 'bg-red-900/30' : 'bg-green-900/30'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {kundaliResult.data.mangal_dosha.has_dosha ? (
+                        <span className="text-red-400 text-lg">⚠️</span>
+                      ) : (
+                        <span className="text-green-400 text-lg">✓</span>
+                      )}
+                      <p className="text-white font-medium">Mangal Dosha</p>
+                      {kundaliResult.data.mangal_dosha.type && (
+                        <span className="text-xs bg-red-800/50 px-2 py-0.5 rounded text-red-200">{kundaliResult.data.mangal_dosha.type}</span>
+                      )}
+                    </div>
+                    <p className="text-gray-300 text-sm mb-2">{kundaliResult.data.mangal_dosha.description}</p>
+                    {kundaliResult.data.mangal_dosha.exceptions?.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-yellow-400 text-xs mb-1">Exceptions:</p>
+                        {kundaliResult.data.mangal_dosha.exceptions.slice(0, 2).map((exc, i) => (
+                          <p key={i} className="text-gray-400 text-xs">• {exc}</p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
                 
-                {/* Yoga/Dasha Info if available */}
-                {kundaliResult.data?.yoga_details && (
-                  <div className="bg-slate-700/50 rounded-xl p-4">
-                    <h4 className="text-white text-sm font-medium mb-2">Yogas Present</h4>
-                    <div className="space-y-1">
-                      {kundaliResult.data.yoga_details.slice(0, 5).map((yoga, idx) => (
-                        <p key={idx} className="text-gray-300 text-sm">• {yoga.name}</p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Fallback for raw data */}
-                {!kundaliResult.data?.nakshatra_details && !kundaliResult.error && (
+                {/* Fallback for no data */}
+                {!kundaliResult.data?.nakshatra_details && (
                   <div className="bg-slate-700/50 rounded-xl p-4">
                     <p className="text-green-400 text-sm mb-2">✓ Kundali generated successfully</p>
                     <p className="text-gray-400 text-xs">Detailed planetary positions calculated based on your birth details.</p>
                   </div>
                 )}
-                
-                {/* Error state */}
-                {kundaliResult.error && (
-                  <div className="bg-red-900/30 rounded-xl p-4">
-                    <p className="text-red-400 text-sm mb-2">⚠️ Service Temporarily Unavailable</p>
-                    <p className="text-gray-400 text-xs">The astrology service is currently unavailable. Please try again later or contact support.</p>
-                  </div>
-                )}
+              </motion.div>
+            )}
+            
+            {/* Error state */}
+            {kundaliResult?.error && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-800/50 rounded-2xl p-6">
+                <div className="bg-red-900/30 rounded-xl p-4">
+                  <p className="text-red-400 text-sm mb-2">⚠️ Service Temporarily Unavailable</p>
+                  <p className="text-gray-400 text-xs">The astrology service is currently unavailable. Please try again later or contact support.</p>
+                </div>
               </motion.div>
             )}
           </div>
@@ -1223,40 +1292,80 @@ function AstrologyTab({ isDesktop }) {
               </button>
             </div>
 
-            {matchingResult && (
+            {matchingResult && !matchingResult.error && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-800/50 rounded-2xl p-6">
                 <h3 className="font-cinzel text-lg text-white mb-4">Marriage Compatibility</h3>
                 
                 {/* Overall Score */}
-                {matchingResult.data?.total_points !== undefined && (
-                  <div className="bg-gradient-to-r from-pink-600 to-rose-600 rounded-xl p-5 mb-4 text-center">
+                {matchingResult.data?.guna_milan && (
+                  <div className={`rounded-xl p-5 mb-4 text-center ${
+                    matchingResult.data.guna_milan.total_points >= 21 
+                      ? 'bg-gradient-to-r from-green-600 to-emerald-600' 
+                      : matchingResult.data.guna_milan.total_points >= 18 
+                        ? 'bg-gradient-to-r from-yellow-600 to-amber-600'
+                        : 'bg-gradient-to-r from-pink-600 to-rose-600'
+                  }`}>
                     <p className="text-white/70 text-sm mb-1">Compatibility Score</p>
                     <div className="flex items-center justify-center gap-2">
-                      <span className="text-5xl font-bold text-white">{matchingResult.data.total_points}</span>
-                      <span className="text-white/70 text-lg">/36</span>
+                      <span className="text-5xl font-bold text-white">{matchingResult.data.guna_milan.total_points}</span>
+                      <span className="text-white/70 text-lg">/{matchingResult.data.guna_milan.maximum_points || 36}</span>
                     </div>
                     <p className="text-white/80 text-sm mt-2">
-                      {matchingResult.data.total_points >= 28 ? 'Excellent Match!' : 
-                       matchingResult.data.total_points >= 21 ? 'Good Compatibility' : 
-                       matchingResult.data.total_points >= 18 ? 'Average Match' : 'Needs Remedies'}
+                      {matchingResult.data.guna_milan.total_points >= 28 ? '💫 Excellent Match!' : 
+                       matchingResult.data.guna_milan.total_points >= 21 ? '✓ Good Compatibility' : 
+                       matchingResult.data.guna_milan.total_points >= 18 ? '⚠️ Average Match' : '⚠️ Needs Consultation'}
                     </p>
                   </div>
                 )}
                 
-                {/* Guna Details */}
-                {matchingResult.data?.guna_milan && (
+                {/* Message/Recommendation */}
+                {matchingResult.data?.message && (
+                  <div className={`rounded-xl p-4 mb-4 ${
+                    matchingResult.data.message.type === 'good' ? 'bg-green-900/30' : 'bg-yellow-900/30'
+                  }`}>
+                    <p className="text-gray-200 text-sm">{matchingResult.data.message.description}</p>
+                  </div>
+                )}
+                
+                {/* Couple Info */}
+                {(matchingResult.data?.girl_info || matchingResult.data?.boy_info) && (
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    {matchingResult.data.girl_info && (
+                      <div className="bg-pink-900/20 rounded-xl p-3">
+                        <p className="text-pink-300 text-xs font-medium mb-2">Bride</p>
+                        <p className="text-white text-sm">{matchingResult.data.girl_info.nakshatra?.name}</p>
+                        <p className="text-gray-400 text-xs">{matchingResult.data.girl_info.rasi?.name} Rashi</p>
+                      </div>
+                    )}
+                    {matchingResult.data.boy_info && (
+                      <div className="bg-blue-900/20 rounded-xl p-3">
+                        <p className="text-blue-300 text-xs font-medium mb-2">Groom</p>
+                        <p className="text-white text-sm">{matchingResult.data.boy_info.nakshatra?.name}</p>
+                        <p className="text-gray-400 text-xs">{matchingResult.data.boy_info.rasi?.name} Rashi</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Guna Details (Ashtakoot) */}
+                {matchingResult.data?.guna_milan?.guna && (
                   <div className="mb-4">
-                    <h4 className="text-white text-sm font-medium mb-3">Ashtakoot Analysis</h4>
+                    <h4 className="text-white text-sm font-medium mb-3">Ashtakoot Milan (8 Aspects)</h4>
                     <div className="space-y-2">
-                      {matchingResult.data.guna_milan.slice(0, 8).map((guna, idx) => (
+                      {matchingResult.data.guna_milan.guna.slice(0, 8).map((guna, idx) => (
                         <div key={idx} className="bg-slate-700/30 rounded-lg p-3 flex justify-between items-center">
-                          <div>
+                          <div className="flex-1">
                             <p className="text-white text-sm">{guna.name}</p>
-                            <p className="text-gray-400 text-xs">{guna.description || ''}</p>
+                            <p className="text-gray-500 text-xs">
+                              {guna.girl_koot && guna.boy_koot ? `${guna.girl_koot} / ${guna.boy_koot}` : ''}
+                            </p>
                           </div>
-                          <div className="text-right">
-                            <span className="text-indigo-300 font-semibold">{guna.obtained_points || guna.points}</span>
-                            <span className="text-gray-500">/{guna.max_points || guna.total}</span>
+                          <div className="text-right ml-2">
+                            <span className={`font-semibold ${
+                              guna.obtained_points === guna.maximum_points ? 'text-green-400' :
+                              guna.obtained_points > 0 ? 'text-yellow-400' : 'text-red-400'
+                            }`}>{guna.obtained_points}</span>
+                            <span className="text-gray-500">/{guna.maximum_points}</span>
                           </div>
                         </div>
                       ))}
@@ -1264,42 +1373,23 @@ function AstrologyTab({ isDesktop }) {
                   </div>
                 )}
                 
-                {/* Mangal Dosha */}
-                {matchingResult.data?.mangal_dosha && (
-                  <div className={`rounded-xl p-4 ${
-                    matchingResult.data.mangal_dosha.has_dosha ? 'bg-red-900/30' : 'bg-green-900/30'
-                  }`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      {matchingResult.data.mangal_dosha.has_dosha ? (
-                        <span className="text-red-400">⚠️</span>
-                      ) : (
-                        <span className="text-green-400">✓</span>
-                      )}
-                      <p className="text-white font-medium">Mangal Dosha</p>
-                    </div>
-                    <p className="text-gray-300 text-sm">
-                      {matchingResult.data.mangal_dosha.has_dosha 
-                        ? 'Mangal Dosha detected. Remedies recommended.' 
-                        : 'No Mangal Dosha present in either chart.'}
-                    </p>
-                  </div>
-                )}
-                
-                {/* Fallback for raw response */}
-                {!matchingResult.data?.total_points && !matchingResult.data?.guna_milan && !matchingResult.error && (
+                {/* Fallback for no guna data */}
+                {!matchingResult.data?.guna_milan && (
                   <div className="bg-slate-700/50 rounded-xl p-4">
                     <p className="text-green-400 text-sm mb-2">✓ Kundali matching analysis complete</p>
                     <p className="text-gray-400 text-xs">Compatibility analysis based on the provided birth details.</p>
                   </div>
                 )}
-                
-                {/* Error state */}
-                {matchingResult.error && (
-                  <div className="bg-red-900/30 rounded-xl p-4">
-                    <p className="text-red-400 text-sm mb-2">⚠️ Service Temporarily Unavailable</p>
-                    <p className="text-gray-400 text-xs">The astrology service is currently unavailable. Please try again later or contact support.</p>
-                  </div>
-                )}
+              </motion.div>
+            )}
+            
+            {/* Error state for matching */}
+            {matchingResult?.error && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-800/50 rounded-2xl p-6">
+                <div className="bg-red-900/30 rounded-xl p-4">
+                  <p className="text-red-400 text-sm mb-2">⚠️ Service Temporarily Unavailable</p>
+                  <p className="text-gray-400 text-xs">The astrology service is currently unavailable. Please try again later or contact support.</p>
+                </div>
               </motion.div>
             )}
           </div>
