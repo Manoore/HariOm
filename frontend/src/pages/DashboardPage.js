@@ -4,10 +4,42 @@ import { motion } from 'framer-motion';
 import { 
   Calendar, ShoppingBag, Star, Clock, User, Settings,
   Package, Award, Users, TrendingUp, ChevronRight, Loader2,
-  CheckCircle, XCircle, AlertCircle
+  CheckCircle, XCircle, AlertCircle, Shield, LogOut
 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { Toaster, toast } from 'sonner';
+
+// Role display configuration
+const ROLE_CONFIG = {
+  priest: { label: 'Priest', color: 'bg-maroon', icon: Star },
+  admin: { label: 'Admin', color: 'bg-purple-600', icon: Shield },
+  devotee: { label: 'Devotee', color: 'bg-saffron', icon: User },
+  astrologer: { label: 'Astrologer', color: 'bg-indigo-600', icon: Star },
+  shop_owner: { label: 'Shop Owner', color: 'bg-green-600', icon: ShoppingBag },
+};
+
+// Role Badge Component
+function RoleBadge({ role, light = false }) {
+  const config = ROLE_CONFIG[role] || ROLE_CONFIG.devotee;
+  const Icon = config.icon;
+  
+  if (light) {
+    return (
+      <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+        <Icon className="w-3.5 h-3.5 text-gold" />
+        <span className="text-xs font-medium text-white capitalize">{config.label}</span>
+      </div>
+    );
+  }
+  
+  return (
+    <div className={`inline-flex items-center gap-1.5 ${config.color} px-3 py-1 rounded-full`}>
+      <Icon className="w-3.5 h-3.5 text-white" />
+      <span className="text-xs font-medium text-white capitalize">{config.label}</span>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -32,10 +64,23 @@ export default function DashboardPage() {
 }
 
 function DevoteeDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [welcomeShown, setWelcomeShown] = useState(false);
+
+  // Show welcome toast on first load
+  useEffect(() => {
+    if (user && !welcomeShown) {
+      const roleConfig = ROLE_CONFIG[user.role] || ROLE_CONFIG.devotee;
+      toast.success(`Welcome, ${user.name}!`, {
+        description: `You're logged in as ${roleConfig.label}`,
+        duration: 4000,
+      });
+      setWelcomeShown(true);
+    }
+  }, [user, welcomeShown]);
 
   useEffect(() => {
     fetchData();
@@ -68,6 +113,7 @@ function DevoteeDashboard() {
 
   return (
     <div className="min-h-screen pt-20 pb-24 md:pb-12 bg-gradient-to-b from-cream to-parchment">
+      <Toaster position="top-center" richColors />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -75,10 +121,24 @@ function DevoteeDashboard() {
         >
           {/* Welcome Section */}
           <div className="card p-6 mb-8 bg-gradient-to-r from-saffron to-gold text-white">
-            <h1 className="font-cinzel text-2xl font-bold mb-2">
-              Namaste, {user.name}!
-            </h1>
-            <p className="opacity-90">Welcome to your spiritual dashboard</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="font-cinzel text-2xl font-bold mb-2">
+                  Namaste, {user.name}!
+                </h1>
+                <p className="opacity-90 mb-3">Welcome to your spiritual dashboard</p>
+                {/* Role Badge */}
+                <RoleBadge role={user.role} light />
+              </div>
+              <button 
+                onClick={logout}
+                className="p-2 bg-white/20 rounded-full hover:bg-red-500/50 transition-colors"
+                data-testid="logout-btn"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5 text-white" />
+              </button>
+            </div>
           </div>
 
           {/* Quick Actions */}
@@ -177,9 +237,22 @@ function DevoteeDashboard() {
 }
 
 function PriestDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [welcomeShown, setWelcomeShown] = useState(false);
+
+  // Show welcome toast on first load
+  useEffect(() => {
+    if (user && !welcomeShown) {
+      const roleConfig = ROLE_CONFIG[user.role] || ROLE_CONFIG.priest;
+      toast.success(`Welcome, ${user.name}!`, {
+        description: `You're logged in as ${roleConfig.label}`,
+        duration: 4000,
+      });
+      setWelcomeShown(true);
+    }
+  }, [user, welcomeShown]);
 
   useEffect(() => {
     fetchBookings();
@@ -207,11 +280,25 @@ function PriestDashboard() {
 
   return (
     <div className="min-h-screen pt-20 pb-24 md:pb-12 bg-gradient-to-b from-cream to-parchment">
+      <Toaster position="top-center" richColors />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="card p-6 mb-8 bg-gradient-to-r from-maroon to-maroon-light text-white">
-            <h1 className="font-cinzel text-2xl font-bold mb-2">Priest Dashboard</h1>
-            <p className="opacity-90">Manage your bookings and services</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="font-cinzel text-2xl font-bold mb-2">Priest Dashboard</h1>
+                <p className="opacity-90 mb-3">Manage your bookings and services</p>
+                <RoleBadge role={user?.role} light />
+              </div>
+              <button 
+                onClick={logout}
+                className="p-2 bg-white/20 rounded-full hover:bg-red-500/50 transition-colors"
+                data-testid="logout-btn"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5 text-white" />
+              </button>
+            </div>
           </div>
 
           {/* Stats */}
@@ -309,9 +396,22 @@ function PriestDashboard() {
 }
 
 function ShopOwnerDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [welcomeShown, setWelcomeShown] = useState(false);
+
+  // Show welcome toast on first load
+  useEffect(() => {
+    if (user && !welcomeShown) {
+      const roleConfig = ROLE_CONFIG[user.role] || ROLE_CONFIG.shop_owner;
+      toast.success(`Welcome, ${user.name}!`, {
+        description: `You're logged in as ${roleConfig.label}`,
+        duration: 4000,
+      });
+      setWelcomeShown(true);
+    }
+  }, [user, welcomeShown]);
 
   useEffect(() => {
     fetchProducts();
@@ -330,11 +430,25 @@ function ShopOwnerDashboard() {
 
   return (
     <div className="min-h-screen pt-20 pb-24 md:pb-12 bg-gradient-to-b from-cream to-parchment">
+      <Toaster position="top-center" richColors />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="card p-6 mb-8 bg-gradient-to-r from-gold-dark to-gold text-white">
-            <h1 className="font-cinzel text-2xl font-bold mb-2">Shop Dashboard</h1>
-            <p className="opacity-90">Manage your products and orders</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="font-cinzel text-2xl font-bold mb-2">Shop Dashboard</h1>
+                <p className="opacity-90 mb-3">Manage your products and orders</p>
+                <RoleBadge role={user?.role} light />
+              </div>
+              <button 
+                onClick={logout}
+                className="p-2 bg-white/20 rounded-full hover:bg-red-500/50 transition-colors"
+                data-testid="logout-btn"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5 text-white" />
+              </button>
+            </div>
           </div>
 
           <div className="card p-6">
@@ -368,9 +482,23 @@ function ShopOwnerDashboard() {
 }
 
 function AdminDashboard() {
+  const { user, logout } = useAuth();
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [welcomeShown, setWelcomeShown] = useState(false);
+
+  // Show welcome toast on first load
+  useEffect(() => {
+    if (user && !welcomeShown) {
+      const roleConfig = ROLE_CONFIG[user.role] || ROLE_CONFIG.admin;
+      toast.success(`Welcome, ${user.name}!`, {
+        description: `You're logged in as ${roleConfig.label}`,
+        duration: 4000,
+      });
+      setWelcomeShown(true);
+    }
+  }, [user, welcomeShown]);
 
   useEffect(() => {
     fetchData();
@@ -393,11 +521,25 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen pt-20 pb-24 md:pb-12 bg-gradient-to-b from-cream to-parchment">
+      <Toaster position="top-center" richColors />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="card p-6 mb-8 bg-gradient-to-r from-cosmic-bg to-cosmic-surface text-white">
-            <h1 className="font-cinzel text-2xl font-bold mb-2">Admin Dashboard</h1>
-            <p className="opacity-90">Platform overview and management</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="font-cinzel text-2xl font-bold mb-2">Admin Dashboard</h1>
+                <p className="opacity-90 mb-3">Platform overview and management</p>
+                <RoleBadge role={user?.role} light />
+              </div>
+              <button 
+                onClick={logout}
+                className="p-2 bg-white/20 rounded-full hover:bg-red-500/50 transition-colors"
+                data-testid="logout-btn"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5 text-white" />
+              </button>
+            </div>
           </div>
 
           {loading ? (

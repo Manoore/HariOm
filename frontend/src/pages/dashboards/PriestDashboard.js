@@ -5,11 +5,20 @@ import {
   CheckCircle, XCircle, User, Star, Bell, Loader2, BookOpen,
   Video, FileText, DollarSign, Users, TrendingUp, Plus, Edit,
   Trash2, Play, Square, Eye, Heart, CalendarDays, BarChart3,
-  Mic, Save, X, ChevronDown, AlertCircle
+  Mic, Save, X, ChevronDown, AlertCircle, Shield
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
+
+// Role display configuration
+const ROLE_CONFIG = {
+  priest: { label: 'Priest', color: 'bg-maroon', icon: Star },
+  admin: { label: 'Admin', color: 'bg-purple-600', icon: Shield },
+  devotee: { label: 'Devotee', color: 'bg-saffron', icon: User },
+  astrologer: { label: 'Astrologer', color: 'bg-indigo-600', icon: Star },
+  shop_owner: { label: 'Shop Owner', color: 'bg-green-600', icon: Users },
+};
 
 // Tab Components
 const tabs = [
@@ -36,6 +45,7 @@ export default function PriestDashboard() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('home');
   const [loading, setLoading] = useState(true);
+  const [welcomeShown, setWelcomeShown] = useState(false);
 
   // Data states
   const [analytics, setAnalytics] = useState(null);
@@ -50,6 +60,18 @@ export default function PriestDashboard() {
   const [showContentModal, setShowContentModal] = useState(false);
   const [showStreamModal, setShowStreamModal] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
+
+  // Show welcome toast on first load
+  useEffect(() => {
+    if (user && !welcomeShown) {
+      const roleConfig = ROLE_CONFIG[user.role] || ROLE_CONFIG.devotee;
+      toast.success(`Welcome, ${user.name}!`, {
+        description: `You're logged in as ${roleConfig.label}`,
+        duration: 4000,
+      });
+      setWelcomeShown(true);
+    }
+  }, [user, welcomeShown]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -127,6 +149,15 @@ export default function PriestDashboard() {
             <div>
               <p className="text-white/70 text-sm">Namaste,</p>
               <h1 className="font-cinzel text-xl font-bold text-white">{user?.name || 'Pandit Ji'}</h1>
+              {/* Role Badge */}
+              {user?.role && (
+                <div className="mt-2 inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                  <Star className="w-3.5 h-3.5 text-gold" />
+                  <span className="text-xs font-medium text-white capitalize">
+                    {ROLE_CONFIG[user.role]?.label || user.role}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
@@ -135,6 +166,7 @@ export default function PriestDashboard() {
               <button 
                 onClick={logout}
                 className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-red-500/50 transition-colors"
+                data-testid="logout-btn"
               >
                 <LogOut className="w-5 h-5 text-white" />
               </button>
