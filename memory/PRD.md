@@ -162,4 +162,4 @@ Icons: Custom 3D animated SVGs
 - `backend/config.py` - Configuration with Stripe keys
 
 ## Preview URLs
-- **Web App**: https://bhakti-hub-15.preview.emergentagent.com
+- **Web App**: https://dharma-hub-11.preview.emergentagent.com

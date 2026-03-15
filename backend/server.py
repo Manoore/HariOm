@@ -30,8 +30,9 @@ from auth import (
     get_password_hash, verify_password, create_access_token,
     get_current_user, get_optional_user, require_role
 )
-from horoscope_service import get_daily_horoscope, generate_birth_chart, get_zodiac_sign
+from horoscope_service import get_daily_horoscope as local_daily_horoscope, generate_birth_chart, get_zodiac_sign
 from config import settings
+import prokerala
 
 from emergentintegrations.payments.stripe.checkout import (
     StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
@@ -921,8 +922,164 @@ async def get_user_orders(user: dict = Depends(get_current_user)):
 # ===================== HOROSCOPE ROUTES =====================
 @app.get("/api/horoscope/daily/{zodiac_sign}")
 async def get_daily_horoscope_api(zodiac_sign: str):
-    horoscope = get_daily_horoscope(zodiac_sign)
-    return horoscope
+    """Get daily horoscope for a zodiac sign using Prokerala API"""
+    try:
+        horoscope = await prokerala.get_daily_horoscope(zodiac_sign.lower())
+        return horoscope
+    except Exception as e:
+        print(f"Prokerala API error, using fallback: {e}")
+        return prokerala.get_fallback_horoscope(zodiac_sign.lower())
+
+@app.get("/api/horoscope/personalized")
+async def get_personalized_horoscope(user: dict = Depends(get_current_user)):
+    """Get personalized daily horoscope based on user's nakshatra or DOB"""
+    # Determine the user's zodiac sign
+    sign = None
+    
+    # First try nakshatra (Vedic astrology)
+    if user.get("nakshatra"):
+        sign = prokerala.get_rashi_from_nakshatra(user["nakshatra"])
+    
+    # Fallback to DOB (Western astrology)
+    if not sign and user.get("date_of_birth"):
+        sign = prokerala.get_rashi_from_date(user["date_of_birth"])
+    
+    if not sign:
+        sign = "aries"  # Default fallback
+    
+    try:
+        horoscope = await prokerala.get_daily_horoscope(sign)
+        rashi_info = prokerala.RASHI_NAMES.get(sign, {"en": sign.title(), "hi": sign.title()})
+        horoscope["user_sign"] = sign
+        horoscope["user_sign_name"] = rashi_info["en"]
+        horoscope["user_sign_hindi"] = rashi_info["hi"]
+        horoscope["user_nakshatra"] = user.get("nakshatra")
+        return horoscope
+    except Exception as e:
+        print(f"Error getting personalized horoscope: {e}")
+        fallback = prokerala.get_fallback_horoscope(sign)
+        fallback["user_sign"] = sign
+        fallback["user_nakshatra"] = user.get("nakshatra")
+        return fallback
+
+class KundaliRequest(BaseModel):
+    datetime: str  # ISO format: 2004-02-12T15:19:21+05:30
+    latitude: float
+    longitude: float
+    ayanamsa: int = 1
+
+@app.post("/api/astrology/birth-kundali")
+async def get_birth_kundali(data: KundaliRequest, user: dict = Depends(get_optional_user)):
+    """Get birth kundali (birth chart) using Prokerala API"""
+    try:
+        result = await prokerala.get_birth_kundali(
+            data.datetime,
+            data.latitude,
+            data.longitude,
+            data.ayanamsa
+        )
+        
+        # Save to user profile if logged in
+        if user:
+            await users_collection.update_one(
+                {"_id": user["_id"]},
+                {"$set": {
+                    "birth_kundali": result,
+                    "birth_coordinates": {"lat": data.latitude, "lon": data.longitude}
+                }}
+            )
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class KundaliMatchingRequest(BaseModel):
+    bride_datetime: str
+    bride_latitude: float
+    bride_longitude: float
+    groom_datetime: str
+    groom_latitude: float
+    groom_longitude: float
+    ayanamsa: int = 1
+
+@app.post("/api/astrology/kundali-matching")
+async def get_kundali_matching(data: KundaliMatchingRequest, user: dict = Depends(get_optional_user)):
+    """Get kundali matching for marriage compatibility using Prokerala API"""
+    try:
+        result = await prokerala.get_kundali_matching(
+            data.bride_datetime,
+            data.bride_latitude,
+            data.bride_longitude,
+            data.groom_datetime,
+            data.groom_latitude,
+            data.groom_longitude,
+            data.ayanamsa
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/astrology/panchang")
+async def get_panchang(
+    latitude: float = Query(default=28.6139),  # Default: Delhi
+    longitude: float = Query(default=77.2090)
+):
+    """Get today's Panchang (Hindu calendar)"""
+    try:
+        today = datetime.now(timezone.utc)
+        datetime_str = today.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        
+        result = await prokerala.get_panchang(datetime_str, latitude, longitude)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/astrology/mangal-dosha")
+async def check_mangal_dosha(data: KundaliRequest, user: dict = Depends(get_optional_user)):
+    """Check for Mangal Dosha (Mars affliction)"""
+    try:
+        result = await prokerala.get_mangal_dosha(
+            data.datetime,
+            data.latitude,
+            data.longitude
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/horoscope/nakshatras")
+async def get_nakshatras():
+    """Get list of all 27 Nakshatras with their details"""
+    nakshatras = [
+        {"name": "Ashwini", "rashi": "Aries", "lord": "Ketu", "symbol": "Horse head"},
+        {"name": "Bharani", "rashi": "Aries", "lord": "Venus", "symbol": "Yoni"},
+        {"name": "Krittika", "rashi": "Aries/Taurus", "lord": "Sun", "symbol": "Razor"},
+        {"name": "Rohini", "rashi": "Taurus", "lord": "Moon", "symbol": "Cart"},
+        {"name": "Mrigashira", "rashi": "Taurus/Gemini", "lord": "Mars", "symbol": "Deer head"},
+        {"name": "Ardra", "rashi": "Gemini", "lord": "Rahu", "symbol": "Teardrop"},
+        {"name": "Punarvasu", "rashi": "Gemini/Cancer", "lord": "Jupiter", "symbol": "Bow"},
+        {"name": "Pushya", "rashi": "Cancer", "lord": "Saturn", "symbol": "Flower"},
+        {"name": "Ashlesha", "rashi": "Cancer", "lord": "Mercury", "symbol": "Serpent"},
+        {"name": "Magha", "rashi": "Leo", "lord": "Ketu", "symbol": "Throne"},
+        {"name": "Purva Phalguni", "rashi": "Leo", "lord": "Venus", "symbol": "Hammock"},
+        {"name": "Uttara Phalguni", "rashi": "Leo/Virgo", "lord": "Sun", "symbol": "Bed"},
+        {"name": "Hasta", "rashi": "Virgo", "lord": "Moon", "symbol": "Hand"},
+        {"name": "Chitra", "rashi": "Virgo/Libra", "lord": "Mars", "symbol": "Pearl"},
+        {"name": "Swati", "rashi": "Libra", "lord": "Rahu", "symbol": "Coral"},
+        {"name": "Vishakha", "rashi": "Libra/Scorpio", "lord": "Jupiter", "symbol": "Archway"},
+        {"name": "Anuradha", "rashi": "Scorpio", "lord": "Saturn", "symbol": "Lotus"},
+        {"name": "Jyeshtha", "rashi": "Scorpio", "lord": "Mercury", "symbol": "Earring"},
+        {"name": "Mula", "rashi": "Sagittarius", "lord": "Ketu", "symbol": "Root"},
+        {"name": "Purva Ashadha", "rashi": "Sagittarius", "lord": "Venus", "symbol": "Fan"},
+        {"name": "Uttara Ashadha", "rashi": "Sagittarius/Capricorn", "lord": "Sun", "symbol": "Tusk"},
+        {"name": "Shravana", "rashi": "Capricorn", "lord": "Moon", "symbol": "Ear"},
+        {"name": "Dhanishta", "rashi": "Capricorn/Aquarius", "lord": "Mars", "symbol": "Drum"},
+        {"name": "Shatabhisha", "rashi": "Aquarius", "lord": "Rahu", "symbol": "Circle"},
+        {"name": "Purva Bhadrapada", "rashi": "Aquarius/Pisces", "lord": "Jupiter", "symbol": "Sword"},
+        {"name": "Uttara Bhadrapada", "rashi": "Pisces", "lord": "Saturn", "symbol": "Twins"},
+        {"name": "Revati", "rashi": "Pisces", "lord": "Mercury", "symbol": "Fish"}
+    ]
+    return {"nakshatras": nakshatras}
 
 @app.post("/api/horoscope/birth-chart")
 async def generate_birth_chart_api(data: BirthDetails, user: dict = Depends(get_optional_user)):

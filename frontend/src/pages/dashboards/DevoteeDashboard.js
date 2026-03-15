@@ -228,6 +228,7 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const [festivals, setFestivals] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [horoscope, setHoroscope] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -236,16 +237,28 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
 
   const fetchData = async () => {
     try {
-      const [priestsRes, festivalsRes, bookingsRes, ordersRes] = await Promise.all([
+      const requests = [
         api.get('/api/priests?limit=3'),
         api.get('/api/festivals'),
         api.get('/api/bookings'),
         api.get('/api/orders')
-      ]);
-      setPriests(priestsRes.data.priests || []);
-      setFestivals((festivalsRes.data.festivals || []).slice(0, 3));
-      setBookings((bookingsRes.data.bookings || []).slice(0, 3));
-      setOrders((ordersRes.data.orders || []).slice(0, 3));
+      ];
+      
+      // Fetch personalized horoscope if user has nakshatra or DOB
+      if (user?.nakshatra || user?.date_of_birth) {
+        requests.push(api.get('/api/horoscope/personalized'));
+      }
+      
+      const results = await Promise.all(requests);
+      
+      setPriests(results[0].data.priests || []);
+      setFestivals((results[1].data.festivals || []).slice(0, 3));
+      setBookings((results[2].data.bookings || []).slice(0, 3));
+      setOrders((results[3].data.orders || []).slice(0, 3));
+      
+      if (results[4]) {
+        setHoroscope(results[4].data);
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -268,6 +281,72 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
           </h1>
         </button>
       </div>
+
+      {/* Personalized Daily Horoscope */}
+      {horoscope && (
+        <div className="mb-6">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-5 text-white shadow-lg">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h2 className="font-cinzel text-lg font-semibold">Today's Horoscope</h2>
+                <p className="text-white/80 text-sm">
+                  {horoscope.user_sign_name} ({horoscope.user_sign_hindi})
+                  {horoscope.user_nakshatra && ` • ${horoscope.user_nakshatra}`}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <Star className="w-6 h-6 text-yellow-300 fill-yellow-300" />
+              </div>
+            </div>
+            <p className="text-white/90 text-sm leading-relaxed mb-4">
+              {horoscope.data?.daily_prediction?.prediction || "Today brings positive energy your way. Trust your instincts and embrace new opportunities."}
+            </p>
+            <div className="flex gap-4 text-sm">
+              {horoscope.data?.daily_prediction?.lucky_number && (
+                <div className="bg-white/20 px-3 py-1 rounded-full">
+                  Lucky No: {horoscope.data.daily_prediction.lucky_number}
+                </div>
+              )}
+              {horoscope.data?.daily_prediction?.lucky_color && (
+                <div className="bg-white/20 px-3 py-1 rounded-full">
+                  Color: {horoscope.data.daily_prediction.lucky_color}
+                </div>
+              )}
+            </div>
+            <button 
+              onClick={() => setActiveTab('astrology')}
+              className="mt-4 text-sm text-white/80 hover:text-white flex items-center gap-1"
+            >
+              View full horoscope <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Prompt to complete profile if no horoscope data */}
+      {!horoscope && !loading && (
+        <div className="mb-6">
+          <div className="bg-gradient-to-r from-orange-100 to-amber-100 rounded-2xl p-5 border border-orange-200">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-saffron/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <Star className="w-6 h-6 text-saffron" />
+              </div>
+              <div>
+                <h3 className="font-cinzel text-maroon font-semibold mb-1">Get Your Daily Horoscope</h3>
+                <p className="text-gray-600 text-sm mb-3">
+                  Complete your profile with your date of birth or nakshatra to receive personalized horoscope predictions.
+                </p>
+                <button 
+                  onClick={() => setActiveTab('profile')}
+                  className="text-sm text-saffron font-medium hover:underline flex items-center gap-1"
+                >
+                  Complete Profile <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions with 3D Icons */}
       <div className={`grid ${isDesktop ? 'grid-cols-4 gap-6' : 'grid-cols-4 gap-3'} mb-8`}>
@@ -677,6 +756,8 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
 
 // Astrology Tab
 function AstrologyTab({ isDesktop }) {
+  const { user } = useAuth();
+  const [activeSection, setActiveSection] = useState('horoscope');
   const [signs] = useState([
     { name: 'Aries', symbol: '♈', dates: 'Mar 21 - Apr 19' },
     { name: 'Taurus', symbol: '♉', dates: 'Apr 20 - May 20' },
@@ -693,7 +774,46 @@ function AstrologyTab({ isDesktop }) {
   ]);
   const [selectedSign, setSelectedSign] = useState(null);
   const [horoscope, setHoroscope] = useState(null);
+  const [personalHoroscope, setPersonalHoroscope] = useState(null);
   const [loading, setLoading] = useState(false);
+  
+  // Kundali states
+  const [kundaliForm, setKundaliForm] = useState({
+    datetime: '',
+    latitude: 28.6139,
+    longitude: 77.2090,
+    location: 'Delhi'
+  });
+  const [kundaliResult, setKundaliResult] = useState(null);
+  
+  // Kundali Matching states
+  const [matchingForm, setMatchingForm] = useState({
+    bride_datetime: '',
+    bride_location: 'Delhi',
+    bride_latitude: 28.6139,
+    bride_longitude: 77.2090,
+    groom_datetime: '',
+    groom_location: 'Delhi',
+    groom_latitude: 28.6139,
+    groom_longitude: 77.2090
+  });
+  const [matchingResult, setMatchingResult] = useState(null);
+
+  useEffect(() => {
+    // Fetch personalized horoscope if user has profile data
+    if (user?.nakshatra || user?.date_of_birth) {
+      fetchPersonalHoroscope();
+    }
+  }, [user]);
+
+  const fetchPersonalHoroscope = async () => {
+    try {
+      const res = await api.get('/api/horoscope/personalized');
+      setPersonalHoroscope(res.data);
+    } catch (error) {
+      console.error('Error fetching personal horoscope:', error);
+    }
+  };
 
   const fetchHoroscope = async (sign) => {
     setSelectedSign(sign);
@@ -708,79 +828,482 @@ function AstrologyTab({ isDesktop }) {
     }
   };
 
+  const fetchKundali = async () => {
+    if (!kundaliForm.datetime) {
+      toast.error('Please enter date and time of birth');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await api.post('/api/astrology/birth-kundali', {
+        datetime: kundaliForm.datetime,
+        latitude: kundaliForm.latitude,
+        longitude: kundaliForm.longitude
+      });
+      if (res.data.error) {
+        toast.error('Unable to generate kundali. Please try again later.');
+        setKundaliResult({ error: true });
+      } else {
+        setKundaliResult(res.data);
+        toast.success('Birth Kundali generated!');
+      }
+    } catch (error) {
+      toast.error('Failed to generate kundali');
+      setKundaliResult({ error: true });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchKundaliMatching = async () => {
+    if (!matchingForm.bride_datetime || !matchingForm.groom_datetime) {
+      toast.error('Please enter both birth details');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await api.post('/api/astrology/kundali-matching', {
+        bride_datetime: matchingForm.bride_datetime,
+        bride_latitude: matchingForm.bride_latitude,
+        bride_longitude: matchingForm.bride_longitude,
+        groom_datetime: matchingForm.groom_datetime,
+        groom_latitude: matchingForm.groom_latitude,
+        groom_longitude: matchingForm.groom_longitude
+      });
+      if (res.data.error) {
+        toast.error('Unable to match kundalis. Please try again later.');
+        setMatchingResult({ error: true });
+      } else {
+        setMatchingResult(res.data);
+        toast.success('Kundali matching complete!');
+      }
+    } catch (error) {
+      toast.error('Failed to perform kundali matching');
+      setMatchingResult({ error: true });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sections = [
+    { id: 'horoscope', name: 'Daily Horoscope', icon: Sun },
+    { id: 'kundali', name: 'Birth Kundali', icon: Star },
+    { id: 'matching', name: 'Kundali Matching', icon: Heart }
+  ];
+
   return (
     <div className={`pb-24 lg:pb-8 min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B] ${isDesktop ? 'px-8' : 'px-4'}`}>
       <div className="pt-6">
-        <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-white mb-2">Daily Horoscope</h1>
-        <p className="text-gray-400 text-sm mb-6">Select your zodiac sign</p>
+        <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-white mb-2">Astrology Services</h1>
+        <p className="text-gray-400 text-sm mb-6">Vedic astrology powered by Prokerala</p>
 
-        <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''}`}>
-          {/* Zodiac Grid */}
-          <div className={`grid ${isDesktop ? 'grid-cols-4' : 'grid-cols-4'} gap-3 mb-6`}>
-            {signs.map((sign) => (
-              <button
-                key={sign.name}
-                onClick={() => fetchHoroscope(sign)}
-                className={`p-3 lg:p-4 rounded-2xl text-center transition-all hover:scale-105 ${
-                  selectedSign?.name === sign.name
-                    ? 'bg-indigo-500 ring-2 ring-indigo-400'
-                    : 'bg-slate-800/50 hover:bg-slate-700/50'
-                }`}
-              >
-                <span className={`${isDesktop ? 'text-3xl' : 'text-2xl'} block mb-1`}>{sign.symbol}</span>
-                <span className="text-xs text-gray-300">{sign.name}</span>
-              </button>
-            ))}
-          </div>
+        {/* Section Tabs */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                activeSection === section.id
+                  ? 'bg-indigo-500 text-white'
+                  : 'bg-slate-800/50 text-gray-400 hover:bg-slate-700/50'
+              }`}
+            >
+              <section.icon className="w-4 h-4" />
+              <span className="text-sm">{section.name}</span>
+            </button>
+          ))}
+        </div>
 
-          {/* Horoscope Result */}
-          <div>
-            {loading && (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+        {/* Personal Horoscope Card */}
+        {personalHoroscope && activeSection === 'horoscope' && (
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-5 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-white/70 text-sm">Your Daily Prediction</p>
+                <h3 className="text-white font-cinzel text-lg">
+                  {personalHoroscope.user_sign_name} ({personalHoroscope.user_sign_hindi})
+                </h3>
               </div>
-            )}
+              <div className="text-4xl">{signs.find(s => s.name.toLowerCase() === personalHoroscope.user_sign)?.symbol}</div>
+            </div>
+            <p className="text-white/90 text-sm mb-4">
+              {personalHoroscope.data?.daily_prediction?.prediction}
+            </p>
+            <div className="flex gap-3">
+              {personalHoroscope.data?.daily_prediction?.lucky_number && (
+                <span className="bg-white/20 px-3 py-1 rounded-full text-white text-xs">
+                  Lucky: {personalHoroscope.data.daily_prediction.lucky_number}
+                </span>
+              )}
+              {personalHoroscope.data?.daily_prediction?.lucky_color && (
+                <span className="bg-white/20 px-3 py-1 rounded-full text-white text-xs">
+                  {personalHoroscope.data.daily_prediction.lucky_color}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
-            {horoscope && !loading && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-slate-800/50 rounded-2xl p-6"
-              >
-                <div className="text-center mb-4">
-                  <span className="text-5xl">{selectedSign?.symbol}</span>
-                  <h2 className="font-cinzel text-xl text-white mt-2">{horoscope.zodiac_sign}</h2>
+        {/* Daily Horoscope Section */}
+        {activeSection === 'horoscope' && (
+          <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''}`}>
+            <div className={`grid ${isDesktop ? 'grid-cols-4' : 'grid-cols-4'} gap-3 mb-6`}>
+              {signs.map((sign) => (
+                <button
+                  key={sign.name}
+                  onClick={() => fetchHoroscope(sign)}
+                  className={`p-3 lg:p-4 rounded-2xl text-center transition-all hover:scale-105 ${
+                    selectedSign?.name === sign.name
+                      ? 'bg-indigo-500 ring-2 ring-indigo-400'
+                      : 'bg-slate-800/50 hover:bg-slate-700/50'
+                  }`}
+                >
+                  <span className={`${isDesktop ? 'text-3xl' : 'text-2xl'} block mb-1`}>{sign.symbol}</span>
+                  <span className="text-xs text-gray-300">{sign.name}</span>
+                </button>
+              ))}
+            </div>
+
+            <div>
+              {loading && (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
                 </div>
-                <p className="text-gray-300 text-center mb-6">{horoscope.daily_prediction}</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-gray-400">Lucky Number</p>
-                    <p className="text-xl text-white font-bold">{horoscope.lucky_number}</p>
+              )}
+
+              {horoscope && !loading && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-800/50 rounded-2xl p-6">
+                  <div className="text-center mb-4">
+                    <span className="text-5xl">{selectedSign?.symbol}</span>
+                    <h2 className="font-cinzel text-xl text-white mt-2">{horoscope.sign_name || selectedSign?.name}</h2>
                   </div>
-                  <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-gray-400">Lucky Color</p>
-                    <p className="text-lg text-white">{horoscope.lucky_color}</p>
+                  <p className="text-gray-300 text-center mb-6">{horoscope.data?.daily_prediction?.prediction}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-700/50 rounded-xl p-3 text-center">
+                      <p className="text-xs text-gray-400">Lucky Number</p>
+                      <p className="text-xl text-white font-bold">{horoscope.data?.daily_prediction?.lucky_number}</p>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-xl p-3 text-center">
+                      <p className="text-xs text-gray-400">Lucky Color</p>
+                      <p className="text-lg text-white">{horoscope.data?.daily_prediction?.lucky_color}</p>
+                    </div>
                   </div>
-                  <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-gray-400">Mood</p>
-                    <p className="text-lg text-white">{horoscope.mood}</p>
-                  </div>
-                  <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-gray-400">Compatibility</p>
-                    <p className="text-lg text-white">{horoscope.compatibility}</p>
-                  </div>
+                </motion.div>
+              )}
+
+              {!horoscope && !loading && !personalHoroscope && (
+                <div className="text-center py-12">
+                  <Sun className="w-16 h-16 text-indigo-400/30 mx-auto mb-4" />
+                  <p className="text-gray-400">Select a sign to see your horoscope</p>
                 </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Birth Kundali Section */}
+        {activeSection === 'kundali' && (
+          <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''}`}>
+            <div className="bg-slate-800/50 rounded-2xl p-6 mb-6">
+              <h3 className="font-cinzel text-lg text-white mb-4">Enter Birth Details</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Date & Time of Birth</label>
+                  <input
+                    type="datetime-local"
+                    value={kundaliForm.datetime}
+                    onChange={(e) => setKundaliForm({ ...kundaliForm, datetime: e.target.value })}
+                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Birth Place</label>
+                  <select
+                    value={kundaliForm.location}
+                    onChange={(e) => {
+                      const locations = {
+                        'Delhi': { lat: 28.6139, lon: 77.2090 },
+                        'Mumbai': { lat: 19.0760, lon: 72.8777 },
+                        'Chennai': { lat: 13.0827, lon: 80.2707 },
+                        'Kolkata': { lat: 22.5726, lon: 88.3639 },
+                        'Bangalore': { lat: 12.9716, lon: 77.5946 },
+                        'Hyderabad': { lat: 17.3850, lon: 78.4867 }
+                      };
+                      const loc = locations[e.target.value];
+                      setKundaliForm({ ...kundaliForm, location: e.target.value, latitude: loc.lat, longitude: loc.lon });
+                    }}
+                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    <option value="Delhi">Delhi</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Kolkata">Kolkata</option>
+                    <option value="Bangalore">Bangalore</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={fetchKundali}
+                  disabled={loading}
+                  className="w-full bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 transition-colors"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Generate Kundali</>}
+                </button>
+              </div>
+            </div>
+
+            {kundaliResult && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-800/50 rounded-2xl p-6">
+                <h3 className="font-cinzel text-lg text-white mb-4">Your Birth Kundali</h3>
+                
+                {/* Nakshatra & Basic Info */}
+                {kundaliResult.data?.nakshatra_details && (
+                  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-4 mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-white/70 text-sm">Nakshatra</span>
+                      <span className="text-white font-semibold">{kundaliResult.data.nakshatra_details.nakshatra?.name}</span>
+                    </div>
+                    {kundaliResult.data.nakshatra_details.nakshatra?.lord && (
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-white/70 text-sm">Lord</span>
+                        <span className="text-white">{kundaliResult.data.nakshatra_details.nakshatra.lord.name}</span>
+                      </div>
+                    )}
+                    {kundaliResult.data.nakshatra_details.nakshatra?.pada && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-white/70 text-sm">Pada</span>
+                        <span className="text-white">{kundaliResult.data.nakshatra_details.nakshatra.pada}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Rashi (Moon Sign) */}
+                {kundaliResult.data?.nakshatra_details?.rashi && (
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-slate-700/50 rounded-xl p-3 text-center">
+                      <p className="text-xs text-gray-400 mb-1">Moon Sign (Rashi)</p>
+                      <p className="text-white font-semibold">{kundaliResult.data.nakshatra_details.rashi.name}</p>
+                    </div>
+                    {kundaliResult.data.nakshatra_details.rashi.lord && (
+                      <div className="bg-slate-700/50 rounded-xl p-3 text-center">
+                        <p className="text-xs text-gray-400 mb-1">Rashi Lord</p>
+                        <p className="text-white font-semibold">{kundaliResult.data.nakshatra_details.rashi.lord.name}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Planet Positions */}
+                {kundaliResult.data?.planet_positions && (
+                  <div className="mb-4">
+                    <h4 className="text-white text-sm font-medium mb-2">Planet Positions</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {kundaliResult.data.planet_positions.slice(0, 9).map((planet, idx) => (
+                        <div key={idx} className="bg-slate-700/30 rounded-lg p-2 text-center">
+                          <p className="text-xs text-indigo-300">{planet.name}</p>
+                          <p className="text-white text-sm">{planet.rashi?.name || '-'}</p>
+                          <p className="text-gray-400 text-xs">{planet.degree?.toFixed(1)}°</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Yoga/Dasha Info if available */}
+                {kundaliResult.data?.yoga_details && (
+                  <div className="bg-slate-700/50 rounded-xl p-4">
+                    <h4 className="text-white text-sm font-medium mb-2">Yogas Present</h4>
+                    <div className="space-y-1">
+                      {kundaliResult.data.yoga_details.slice(0, 5).map((yoga, idx) => (
+                        <p key={idx} className="text-gray-300 text-sm">• {yoga.name}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Fallback for raw data */}
+                {!kundaliResult.data?.nakshatra_details && !kundaliResult.error && (
+                  <div className="bg-slate-700/50 rounded-xl p-4">
+                    <p className="text-green-400 text-sm mb-2">✓ Kundali generated successfully</p>
+                    <p className="text-gray-400 text-xs">Detailed planetary positions calculated based on your birth details.</p>
+                  </div>
+                )}
+                
+                {/* Error state */}
+                {kundaliResult.error && (
+                  <div className="bg-red-900/30 rounded-xl p-4">
+                    <p className="text-red-400 text-sm mb-2">⚠️ Service Temporarily Unavailable</p>
+                    <p className="text-gray-400 text-xs">The astrology service is currently unavailable. Please try again later or contact support.</p>
+                  </div>
+                )}
               </motion.div>
             )}
+          </div>
+        )}
 
-            {!horoscope && !loading && (
-              <div className="text-center py-12">
-                <Sun className="w-16 h-16 text-indigo-400/30 mx-auto mb-4" />
-                <p className="text-gray-400">Select a sign to see your horoscope</p>
+        {/* Kundali Matching Section */}
+        {activeSection === 'matching' && (
+          <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''}`}>
+            <div className="bg-slate-800/50 rounded-2xl p-6 mb-6">
+              <h3 className="font-cinzel text-lg text-white mb-4">Bride's Details</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Date & Time of Birth</label>
+                  <input
+                    type="datetime-local"
+                    value={matchingForm.bride_datetime}
+                    onChange={(e) => setMatchingForm({ ...matchingForm, bride_datetime: e.target.value })}
+                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Birth Place</label>
+                  <select
+                    value={matchingForm.bride_location}
+                    onChange={(e) => {
+                      const locations = { 'Delhi': { lat: 28.6139, lon: 77.2090 }, 'Mumbai': { lat: 19.0760, lon: 72.8777 }, 'Chennai': { lat: 13.0827, lon: 80.2707 }, 'Kolkata': { lat: 22.5726, lon: 88.3639 }, 'Bangalore': { lat: 12.9716, lon: 77.5946 }, 'Hyderabad': { lat: 17.3850, lon: 78.4867 } };
+                      const loc = locations[e.target.value];
+                      setMatchingForm({ ...matchingForm, bride_location: e.target.value, bride_latitude: loc.lat, bride_longitude: loc.lon });
+                    }}
+                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white"
+                  >
+                    <option value="Delhi">Delhi</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Kolkata">Kolkata</option>
+                    <option value="Bangalore">Bangalore</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                  </select>
+                </div>
               </div>
+
+              <h3 className="font-cinzel text-lg text-white mb-4 mt-6">Groom's Details</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Date & Time of Birth</label>
+                  <input
+                    type="datetime-local"
+                    value={matchingForm.groom_datetime}
+                    onChange={(e) => setMatchingForm({ ...matchingForm, groom_datetime: e.target.value })}
+                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Birth Place</label>
+                  <select
+                    value={matchingForm.groom_location}
+                    onChange={(e) => {
+                      const locations = { 'Delhi': { lat: 28.6139, lon: 77.2090 }, 'Mumbai': { lat: 19.0760, lon: 72.8777 }, 'Chennai': { lat: 13.0827, lon: 80.2707 }, 'Kolkata': { lat: 22.5726, lon: 88.3639 }, 'Bangalore': { lat: 12.9716, lon: 77.5946 }, 'Hyderabad': { lat: 17.3850, lon: 78.4867 } };
+                      const loc = locations[e.target.value];
+                      setMatchingForm({ ...matchingForm, groom_location: e.target.value, groom_latitude: loc.lat, groom_longitude: loc.lon });
+                    }}
+                    className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white"
+                  >
+                    <option value="Delhi">Delhi</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Kolkata">Kolkata</option>
+                    <option value="Bangalore">Bangalore</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                onClick={fetchKundaliMatching}
+                disabled={loading}
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 transition-colors mt-6"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Heart className="w-5 h-5" /> Check Compatibility</>}
+              </button>
+            </div>
+
+            {matchingResult && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-800/50 rounded-2xl p-6">
+                <h3 className="font-cinzel text-lg text-white mb-4">Marriage Compatibility</h3>
+                
+                {/* Overall Score */}
+                {matchingResult.data?.total_points !== undefined && (
+                  <div className="bg-gradient-to-r from-pink-600 to-rose-600 rounded-xl p-5 mb-4 text-center">
+                    <p className="text-white/70 text-sm mb-1">Compatibility Score</p>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-5xl font-bold text-white">{matchingResult.data.total_points}</span>
+                      <span className="text-white/70 text-lg">/36</span>
+                    </div>
+                    <p className="text-white/80 text-sm mt-2">
+                      {matchingResult.data.total_points >= 28 ? 'Excellent Match!' : 
+                       matchingResult.data.total_points >= 21 ? 'Good Compatibility' : 
+                       matchingResult.data.total_points >= 18 ? 'Average Match' : 'Needs Remedies'}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Guna Details */}
+                {matchingResult.data?.guna_milan && (
+                  <div className="mb-4">
+                    <h4 className="text-white text-sm font-medium mb-3">Ashtakoot Analysis</h4>
+                    <div className="space-y-2">
+                      {matchingResult.data.guna_milan.slice(0, 8).map((guna, idx) => (
+                        <div key={idx} className="bg-slate-700/30 rounded-lg p-3 flex justify-between items-center">
+                          <div>
+                            <p className="text-white text-sm">{guna.name}</p>
+                            <p className="text-gray-400 text-xs">{guna.description || ''}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-indigo-300 font-semibold">{guna.obtained_points || guna.points}</span>
+                            <span className="text-gray-500">/{guna.max_points || guna.total}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Mangal Dosha */}
+                {matchingResult.data?.mangal_dosha && (
+                  <div className={`rounded-xl p-4 ${
+                    matchingResult.data.mangal_dosha.has_dosha ? 'bg-red-900/30' : 'bg-green-900/30'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      {matchingResult.data.mangal_dosha.has_dosha ? (
+                        <span className="text-red-400">⚠️</span>
+                      ) : (
+                        <span className="text-green-400">✓</span>
+                      )}
+                      <p className="text-white font-medium">Mangal Dosha</p>
+                    </div>
+                    <p className="text-gray-300 text-sm">
+                      {matchingResult.data.mangal_dosha.has_dosha 
+                        ? 'Mangal Dosha detected. Remedies recommended.' 
+                        : 'No Mangal Dosha present in either chart.'}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Fallback for raw response */}
+                {!matchingResult.data?.total_points && !matchingResult.data?.guna_milan && !matchingResult.error && (
+                  <div className="bg-slate-700/50 rounded-xl p-4">
+                    <p className="text-green-400 text-sm mb-2">✓ Kundali matching analysis complete</p>
+                    <p className="text-gray-400 text-xs">Compatibility analysis based on the provided birth details.</p>
+                  </div>
+                )}
+                
+                {/* Error state */}
+                {matchingResult.error && (
+                  <div className="bg-red-900/30 rounded-xl p-4">
+                    <p className="text-red-400 text-sm mb-2">⚠️ Service Temporarily Unavailable</p>
+                    <p className="text-gray-400 text-xs">The astrology service is currently unavailable. Please try again later or contact support.</p>
+                  </div>
+                )}
+              </motion.div>
             )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
