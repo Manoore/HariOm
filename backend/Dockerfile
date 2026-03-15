@@ -15,8 +15,14 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install emergentintegrations from private index
+RUN pip install --no-cache-dir emergentintegrations --extra-index-url https://d33sy5i8bnduwe.cloudfront.net/simple/
+
 # Copy application code
 COPY . .
+
+# Create uploads directory
+RUN mkdir -p /app/uploads
 
 # Expose port 8080 (Cloud Run default)
 EXPOSE 8080
