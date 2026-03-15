@@ -122,18 +122,21 @@ function Sidebar({ activeTab, setActiveTab, user }) {
         </div>
       </div>
 
-      {/* User Info */}
-      <div className="p-4 border-b border-orange-100">
+      {/* User Info - Clickable to go to profile */}
+      <button 
+        onClick={() => setActiveTab('profile')}
+        className="p-4 border-b border-orange-100 w-full text-left hover:bg-orange-50 transition-colors"
+      >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white font-cinzel">
             {user?.name?.charAt(0)}
           </div>
           <div>
-            <p className="font-medium text-gray-800">{user?.name}</p>
+            <p className="font-medium text-gray-800 hover:text-saffron transition-colors">{user?.name}</p>
             <p className="text-xs text-gray-500">{user?.role}</p>
           </div>
         </div>
-      </div>
+      </button>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
@@ -223,6 +226,8 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const { user } = useAuth();
   const [priests, setPriests] = useState([]);
   const [festivals, setFestivals] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -231,12 +236,16 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
 
   const fetchData = async () => {
     try {
-      const [priestsRes, festivalsRes] = await Promise.all([
+      const [priestsRes, festivalsRes, bookingsRes, ordersRes] = await Promise.all([
         api.get('/api/priests?limit=3'),
-        api.get('/api/festivals')
+        api.get('/api/festivals'),
+        api.get('/api/bookings'),
+        api.get('/api/orders')
       ]);
       setPriests(priestsRes.data.priests || []);
       setFestivals((festivalsRes.data.festivals || []).slice(0, 3));
+      setBookings((bookingsRes.data.bookings || []).slice(0, 3));
+      setOrders((ordersRes.data.orders || []).slice(0, 3));
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -246,10 +255,18 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
 
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
-      {/* Header */}
+      {/* Header - Name is clickable */}
       <div className="pt-4 pb-6">
         <p className="text-gray-500 text-sm">Namaste,</p>
-        <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">{user?.name || 'Devotee'}</h1>
+        <button 
+          onClick={() => setActiveTab('profile')}
+          className="text-left hover:opacity-80 transition-opacity"
+          data-testid="home-user-name"
+        >
+          <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon hover:text-saffron transition-colors">
+            {user?.name || 'Devotee'}
+          </h1>
+        </button>
       </div>
 
       {/* Quick Actions with 3D Icons */}
@@ -270,6 +287,105 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
             <span className={`${isDesktop ? 'text-base mt-2' : 'text-xs mt-1'} text-gray-600`}>{item.label}</span>
           </button>
         ))}
+      </div>
+
+      {/* My Bookings & My Orders Row */}
+      <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''} mb-8`}>
+        {/* My Bookings */}
+        <div className="mb-6 lg:mb-0">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="font-cinzel text-lg font-semibold text-maroon">My Bookings</h2>
+            <button onClick={() => setActiveTab('profile')} className="text-saffron text-sm hover:underline">
+              View all
+            </button>
+          </div>
+          {bookings.length === 0 ? (
+            <div className="bg-white rounded-2xl p-6 text-center border border-orange-50">
+              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">No bookings yet</p>
+              <button 
+                onClick={() => setActiveTab('priests')}
+                className="mt-3 text-saffron text-sm font-medium hover:underline"
+              >
+                Book a Priest
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {bookings.map((booking) => (
+                <div key={booking.id} className="bg-white rounded-xl p-4 border border-orange-50 shadow-sm">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold text-gray-800">{booking.service_name}</p>
+                      <p className="text-sm text-gray-500">{booking.priest_name}</p>
+                      {booking.scheduled_date && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(booking.scheduled_date).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                      booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                      booking.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {booking.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* My Orders */}
+        <div className="mb-6 lg:mb-0">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="font-cinzel text-lg font-semibold text-maroon">My Orders</h2>
+            <button onClick={() => setActiveTab('profile')} className="text-saffron text-sm hover:underline">
+              View all
+            </button>
+          </div>
+          {orders.length === 0 ? (
+            <div className="bg-white rounded-2xl p-6 text-center border border-orange-50">
+              <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">No orders yet</p>
+              <button 
+                onClick={() => setActiveTab('shop')}
+                className="mt-3 text-saffron text-sm font-medium hover:underline"
+              >
+                Visit Pooja Store
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {orders.map((order) => (
+                <div key={order.id} className="bg-white rounded-xl p-4 border border-orange-50 shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <Package className="w-5 h-5 text-saffron" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Order #{order.id?.slice(-6)}</p>
+                        <p className="text-sm text-gray-500">₹{order.total_amount}</p>
+                      </div>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                      order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                      order.status === 'processing' ? 'bg-purple-100 text-purple-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''}`}>

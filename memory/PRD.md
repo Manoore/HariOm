@@ -62,6 +62,9 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [x] First-time Google login shows profile completion wizard
 - [x] Two-step onboarding: Basic Info → Spiritual Details
 - [x] Skip option for users who want to complete later
+- [x] **My Bookings & My Orders on Home screen** (NEW)
+- [x] **Clickable user name in sidebar → Profile page** (NEW)
+- [x] **Clickable user name in Home header → Profile page** (NEW)
 
 ### Payment Gateway (IN PROGRESS)
 - [x] Stripe keys configured
