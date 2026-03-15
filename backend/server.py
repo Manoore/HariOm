@@ -1788,7 +1788,7 @@ async def update_booking_status(booking_id: str, status: BookingStatus, user: di
     return {"message": "Booking status updated"}
 
 # ===================== PRIEST DASHBOARD - CLASSES =====================
-from database import priest_classes_collection, priest_availability_collection, priest_content_collection, priest_streams_collection
+from database import priest_classes_collection, priest_availability_collection, priest_content_collection, priest_streams_collection, priest_portfolio_collection, priest_services_collection
 
 @app.get("/api/priest/classes")
 async def get_priest_classes(user: dict = Depends(require_role([UserRole.PRIEST]))):
@@ -2143,6 +2143,305 @@ async def end_stream(stream_id: str, user: dict = Depends(require_role([UserRole
         {"$set": {"status": "ended", "ended_at": datetime.now(timezone.utc)}}
     )
     return {"message": "Stream ended", "status": "ended"}
+
+
+# ===================== PRIEST PROFILE MANAGEMENT =====================
+@app.get("/api/priest/profile")
+async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get priest's own profile"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        # Create default profile
+        priest = {
+            "user_id": str(user["_id"]),
+            "specializations": [],
+            "languages": ["Hindi", "Sanskrit"],
+            "experience_years": 1,
+            "bio": "",
+            "work_locations": [],
+            "service_areas": [],
+            "base_price": 1100,
+            "profile_photo": None,
+            "is_verified": False,
+            "created_at": datetime.now(timezone.utc)
+        }
+        await priests_collection.insert_one(priest)
+    
+    return {
+        "id": str(priest.get("_id", "")),
+        "specializations": priest.get("specializations", []),
+        "languages": priest.get("languages", ["Hindi", "Sanskrit"]),
+        "experience_years": priest.get("experience_years", 1),
+        "bio": priest.get("bio", ""),
+        "work_locations": priest.get("work_locations", []),
+        "service_areas": priest.get("service_areas", []),
+        "base_price": priest.get("base_price", 1100),
+        "profile_photo": priest.get("profile_photo"),
+        "is_verified": priest.get("is_verified", False),
+        "address": priest.get("address", ""),
+        "city": priest.get("city", ""),
+        "state": priest.get("state", ""),
+        "pincode": priest.get("pincode", "")
+    }
+
+@app.put("/api/priest/profile")
+async def update_priest_profile(request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Update priest's profile"""
+    data = await request.json()
+    
+    update_data = {}
+    allowed_fields = [
+        "bio", "specializations", "languages", "experience_years", 
+        "work_locations", "service_areas", "base_price", "profile_photo",
+        "address", "city", "state", "pincode", "phone", "email"
+    ]
+    
+    for field in allowed_fields:
+        if field in data:
+            update_data[field] = data[field]
+    
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    await priests_collection.update_one(
+        {"user_id": str(user["_id"])},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    # Also update user email/phone if provided
+    if "email" in data or "phone" in data:
+        user_update = {}
+        if "email" in data:
+            user_update["email"] = data["email"]
+        if "phone" in data:
+            user_update["phone"] = data["phone"]
+        await users_collection.update_one(
+            {"_id": user["_id"]},
+            {"$set": user_update}
+        )
+    
+    return {"message": "Profile updated successfully"}
+
+# ===================== PRIEST REVIEWS =====================
+@app.get("/api/priest/reviews")
+async def get_priest_reviews(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get reviews for the priest"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        return {"reviews": [], "avg_rating": 0, "total_reviews": 0}
+    
+    # Get reviews from bookings collection
+    cursor = bookings_collection.find({
+        "priest_id": str(priest["_id"]),
+        "review": {"$exists": True}
+    }).sort("created_at", -1)
+    
+    reviews = []
+    total_rating = 0
+    async for booking in cursor:
+        review = booking.get("review", {})
+        if review:
+            reviews.append({
+                "id": str(booking["_id"]),
+                "user_name": booking.get("user_name", "Anonymous"),
+                "service_name": booking.get("service_name", ""),
+                "rating": review.get("rating", 5),
+                "comment": review.get("comment", ""),
+                "created_at": review.get("created_at", booking.get("created_at")).isoformat() if isinstance(review.get("created_at", booking.get("created_at")), datetime) else str(review.get("created_at", booking.get("created_at")))
+            })
+            total_rating += review.get("rating", 5)
+    
+    avg_rating = round(total_rating / len(reviews), 1) if reviews else 0
+    
+    return {
+        "reviews": reviews,
+        "avg_rating": avg_rating,
+        "total_reviews": len(reviews)
+    }
+
+# ===================== PRIEST PORTFOLIO =====================
+@app.get("/api/priest/portfolio")
+async def get_priest_portfolio(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get priest's portfolio items"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        return {"items": []}
+    
+    cursor = priest_portfolio_collection.find({"priest_id": str(priest["_id"])}).sort("created_at", -1)
+    items = []
+    async for item in cursor:
+        items.append({
+            "id": str(item["_id"]),
+            "title": item.get("title", ""),
+            "description": item.get("description", ""),
+            "type": item.get("type", "image"),
+            "url": item.get("url", ""),
+            "created_at": item.get("created_at").isoformat() if isinstance(item.get("created_at"), datetime) else str(item.get("created_at"))
+        })
+    
+    return {"items": items}
+
+@app.post("/api/priest/portfolio")
+async def add_portfolio_item(request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Add portfolio item"""
+    data = await request.json()
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    item = {
+        "priest_id": str(priest["_id"]),
+        "title": data.get("title", ""),
+        "description": data.get("description", ""),
+        "type": data.get("type", "image"),
+        "url": data.get("url", ""),
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await priest_portfolio_collection.insert_one(item)
+    return {"message": "Portfolio item added", "id": str(result.inserted_id)}
+
+@app.delete("/api/priest/portfolio/{item_id}")
+async def delete_portfolio_item(item_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Delete portfolio item"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    item = await priest_portfolio_collection.find_one({"_id": ObjectId(item_id)})
+    
+    if not item or item["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    await priest_portfolio_collection.delete_one({"_id": ObjectId(item_id)})
+    return {"message": "Portfolio item deleted"}
+
+# ===================== PRIEST SERVICES =====================
+@app.get("/api/priest/services")
+async def get_priest_services(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get priest's services"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        return {"services": []}
+    
+    cursor = priest_services_collection.find({"priest_id": str(priest["_id"])}).sort("created_at", -1)
+    services = []
+    async for service in cursor:
+        services.append({
+            "id": str(service["_id"]),
+            "name": service.get("name", ""),
+            "description": service.get("description", ""),
+            "category": service.get("category", "Pooja"),
+            "duration_minutes": service.get("duration_minutes", 60),
+            "price": service.get("price", 1100),
+            "is_available": service.get("is_available", True),
+            "created_at": service.get("created_at").isoformat() if isinstance(service.get("created_at"), datetime) else str(service.get("created_at"))
+        })
+    
+    return {"services": services}
+
+@app.post("/api/priest/services")
+async def add_priest_service(request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Add a new service"""
+    data = await request.json()
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    service = {
+        "priest_id": str(priest["_id"]),
+        "name": data.get("name", ""),
+        "description": data.get("description", ""),
+        "category": data.get("category", "Pooja"),
+        "duration_minutes": data.get("duration_minutes", 60),
+        "price": data.get("price", 1100),
+        "is_available": data.get("is_available", True),
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await priest_services_collection.insert_one(service)
+    return {"message": "Service added", "id": str(result.inserted_id)}
+
+@app.put("/api/priest/services/{service_id}")
+async def update_priest_service(service_id: str, request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Update a service"""
+    data = await request.json()
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    service = await priest_services_collection.find_one({"_id": ObjectId(service_id)})
+    
+    if not service or service["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    update_fields = ["name", "description", "category", "duration_minutes", "price", "is_available"]
+    update_data = {k: data[k] for k in update_fields if k in data}
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    await priest_services_collection.update_one(
+        {"_id": ObjectId(service_id)},
+        {"$set": update_data}
+    )
+    return {"message": "Service updated"}
+
+@app.delete("/api/priest/services/{service_id}")
+async def delete_priest_service(service_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Delete a service"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    service = await priest_services_collection.find_one({"_id": ObjectId(service_id)})
+    
+    if not service or service["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    await priest_services_collection.delete_one({"_id": ObjectId(service_id)})
+    return {"message": "Service deleted"}
+
+# ===================== PRIEST EARNINGS =====================
+@app.get("/api/priest/earnings")
+async def get_priest_earnings(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get priest's earnings summary and transactions"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        return {
+            "total_earnings": 0,
+            "monthly_earnings": 0,
+            "pending_payouts": 0,
+            "transactions": []
+        }
+    
+    # Get completed bookings
+    cursor = bookings_collection.find({
+        "priest_id": str(priest["_id"]),
+        "status": "completed"
+    }).sort("created_at", -1).limit(50)
+    
+    total_earnings = 0
+    monthly_earnings = 0
+    transactions = []
+    current_month = datetime.now(timezone.utc).month
+    current_year = datetime.now(timezone.utc).year
+    
+    async for booking in cursor:
+        amount = booking.get("price", 0)
+        total_earnings += amount
+        
+        booking_date = booking.get("created_at")
+        if isinstance(booking_date, datetime):
+            if booking_date.month == current_month and booking_date.year == current_year:
+                monthly_earnings += amount
+        
+        transactions.append({
+            "id": str(booking["_id"]),
+            "description": booking.get("service_name", "Booking"),
+            "amount": amount,
+            "type": "credit",
+            "date": booking_date.isoformat() if isinstance(booking_date, datetime) else str(booking_date),
+            "status": "completed"
+        })
+    
+    return {
+        "total_earnings": total_earnings,
+        "monthly_earnings": monthly_earnings,
+        "pending_payouts": 0,  # Would be calculated based on payout schedule
+        "transactions": transactions[:20]  # Limit to 20 most recent
+    }
+
+
 
 # ===================== PUBLIC - VIEW PRIEST CONTENT =====================
 @app.get("/api/content/priest/{priest_id}")

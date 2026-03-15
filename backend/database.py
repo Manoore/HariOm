@@ -27,6 +27,8 @@ priest_classes_collection = db["priest_classes"]
 priest_availability_collection = db["priest_availability"]
 priest_content_collection = db["priest_content"]
 priest_streams_collection = db["priest_streams"]
+priest_portfolio_collection = db["priest_portfolio"]
+priest_services_collection = db["priest_services"]
 
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]
