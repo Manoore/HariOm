@@ -29,6 +29,7 @@ export function AuthProvider({ children }) {
   const [firebaseUser, setFirebaseUser] = useState(null);
   const syncInProgress = useRef(false);
   const initialLoadDone = useRef(false);
+  const lastSyncedUid = useRef(null); // Track which Firebase UID we last synced
 
   useEffect(() => {
     // Listen to Firebase auth state changes
@@ -39,10 +40,10 @@ export function AuthProvider({ children }) {
       if (fbUser) {
         setFirebaseUser(fbUser);
         
-        // Only sync if we don't already have user data or it's a different user
-        const currentUser = user;
-        if (!currentUser || currentUser.firebase_uid !== fbUser.uid) {
+        // Only sync if this is a NEW Firebase user (different UID than last sync)
+        if (lastSyncedUid.current !== fbUser.uid) {
           syncInProgress.current = true;
+          lastSyncedUid.current = fbUser.uid;
           
           try {
             const idToken = await fbUser.getIdToken();
@@ -80,6 +81,7 @@ export function AuthProvider({ children }) {
         if (!hasToken && !hasUser) {
           setFirebaseUser(null);
           setUser(null);
+          lastSyncedUid.current = null;
         }
         // If we have token/user but no Firebase user, keep the legacy session
       }
@@ -91,7 +93,7 @@ export function AuthProvider({ children }) {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, []); // Empty dependency array - only run once on mount
 
   // Login with email/password using Firebase
   const login = async (email, password) => {
@@ -204,6 +206,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('divine_user');
     setUser(null);
     setFirebaseUser(null);
+    lastSyncedUid.current = null;
   };
 
   // Update user data
