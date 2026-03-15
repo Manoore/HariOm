@@ -148,6 +148,17 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Shows horoscope when user has DOB/nakshatra in profile
   - [x] Profile completion prompt when user hasn't set up astrology details
 
+### P1.6 (Completed - March 15, 2026)
+- [x] **Mantras & Shlokas Section**
+  - [x] "Today's Worship" - Shows deity based on day of week (e.g., Sunday = Surya)
+  - [x] "By Deity" - Browse 11 deities with colored borders
+  - [x] "All Mantras" - Search and filter 26+ mantras
+  - [x] Sanskrit text with transliteration and meaning
+  - [x] Benefits and best chanting time shown
+  - [x] Free/Premium tier badges
+  - [x] Stotras section (Hanuman Chalisa, etc.)
+  - [x] Connected to devotional_content MongoDB database
+
 ### P2 (Medium Priority)
 - [ ] Astrologer/Priest/Shop Owner complete dashboards
 - [ ] Product reviews and ratings

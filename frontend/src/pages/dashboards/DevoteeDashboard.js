@@ -4,7 +4,7 @@ import {
   Home, Star, Sun, ShoppingBag, User, Calendar, MapPin,
   Bell, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
-  CheckCircle, ArrowRight, Loader2, X, Menu
+  CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -99,6 +99,7 @@ function Sidebar({ activeTab, setActiveTab, user }) {
   
   const tabs = [
     { id: 'home', icon: Home, label: 'Home' },
+    { id: 'mantras', icon: BookOpen, label: 'Mantras & Shlokas' },
     { id: 'priests', icon: Star, label: 'Book Priests' },
     { id: 'astrology', icon: Sun, label: 'Astrology' },
     { id: 'shop', icon: ShoppingBag, label: 'Pooja Store' },
@@ -185,7 +186,7 @@ function BottomNav({ activeTab, setActiveTab }) {
   
   const tabs = [
     { id: 'home', icon: Home, label: 'Home' },
-    { id: 'priests', icon: Star, label: 'Priests' },
+    { id: 'mantras', icon: BookOpen, label: 'Mantras' },
     { id: 'astrology', icon: Sun, label: 'Astrology' },
     { id: 'shop', icon: ShoppingBag, label: 'Shop' },
     { id: 'profile', icon: User, label: 'Profile' },
@@ -519,6 +520,401 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Mantras & Shlokas Tab Content
+function MantrasTab({ isDesktop }) {
+  const [deities, setDeities] = useState([]);
+  const [selectedDeity, setSelectedDeity] = useState(null);
+  const [mantras, setMantras] = useState([]);
+  const [stotras, setStotras] = useState([]);
+  const [todayDevotional, setTodayDevotional] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState('today');
+  const [expandedMantra, setExpandedMantra] = useState(null);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [deitiesRes, todayRes] = await Promise.all([
+        api.get('/api/devotional/deities'),
+        api.get('/api/devotional/today')
+      ]);
+      setDeities(deitiesRes.data.data || []);
+      setTodayDevotional(todayRes.data.data);
+    } catch (error) {
+      console.error('Error fetching devotional content:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDeityContent = async (deityId) => {
+    try {
+      const res = await api.get(`/api/devotional/deities/${deityId}`);
+      setSelectedDeity(res.data.data);
+      setMantras(res.data.data.mantras || []);
+      setStotras(res.data.data.stotras || []);
+    } catch (error) {
+      toast.error('Failed to load content');
+    }
+  };
+
+  const sections = [
+    { id: 'today', name: "Today's Worship", icon: Calendar },
+    { id: 'deities', name: 'By Deity', icon: Star },
+    { id: 'all', name: 'All Mantras', icon: BookOpen },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Loader2 className="w-8 h-8 text-saffron animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+      <div className="pt-4 pb-6">
+        <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Mantras & Shlokas</h1>
+        <p className="text-gray-500 text-sm">Sacred texts for daily worship</p>
+      </div>
+
+      {/* Section Tabs */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        {sections.map((section) => (
+          <button
+            key={section.id}
+            onClick={() => {
+              setActiveSection(section.id);
+              setSelectedDeity(null);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+              activeSection === section.id
+                ? 'bg-saffron text-white'
+                : 'bg-cream text-maroon hover:bg-saffron/20'
+            }`}
+          >
+            <section.icon className="w-4 h-4" />
+            <span className="text-sm">{section.name}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Today's Worship Section */}
+      {activeSection === 'today' && todayDevotional && (
+        <div className="space-y-6">
+          {/* Today's Deity Card */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-saffron to-gold rounded-2xl p-6 text-white"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-white/80 text-sm">{todayDevotional.day} • {todayDevotional.day_hindi}</p>
+                <h2 className="font-cinzel text-2xl">{todayDevotional.deity?.name}</h2>
+                <p className="text-white/70 text-sm">{todayDevotional.deity?.name_hindi}</p>
+              </div>
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-3xl">🙏</span>
+              </div>
+            </div>
+            <p className="text-white/90 text-sm">{todayDevotional.deity?.description}</p>
+            <div className="flex gap-2 mt-4">
+              <span className="bg-white/20 px-3 py-1 rounded-full text-xs">
+                Planet: {todayDevotional.planet}
+              </span>
+              <span className="bg-white/20 px-3 py-1 rounded-full text-xs">
+                {todayDevotional.deity?.mantra_count} Mantras
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Today's Mantras */}
+          <div>
+            <h3 className="font-cinzel text-lg text-maroon mb-4">Today's Mantras</h3>
+            <div className="space-y-4">
+              {todayDevotional.mantras?.map((mantra, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="bg-cream rounded-2xl p-5 border border-saffron/20"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className="font-semibold text-maroon">{mantra.name}</h4>
+                      <p className="text-gray-500 text-xs">{mantra.name_hindi}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      mantra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
+                    }`}>
+                      {mantra.tier === 'free' ? 'Free' : 'Premium'}
+                    </span>
+                  </div>
+                  
+                  <div className="bg-white rounded-xl p-4 mb-3">
+                    <p className="text-lg text-maroon font-sanskrit text-center leading-relaxed">
+                      {mantra.sanskrit}
+                    </p>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 italic mb-2">{mantra.transliteration}</p>
+                  <p className="text-sm text-gray-700">{mantra.meaning_english}</p>
+                  
+                  <button
+                    onClick={() => setExpandedMantra(expandedMantra === mantra.name ? null : mantra.name)}
+                    className="text-saffron text-sm mt-3 flex items-center gap-1"
+                  >
+                    {expandedMantra === mantra.name ? 'Show less' : 'Show benefits'}
+                    <ChevronRight className={`w-4 h-4 transition-transform ${expandedMantra === mantra.name ? 'rotate-90' : ''}`} />
+                  </button>
+                  
+                  {expandedMantra === mantra.name && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      className="mt-3 pt-3 border-t border-saffron/10"
+                    >
+                      <p className="text-xs text-gray-500 mb-2">Benefits:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {mantra.benefits?.map((benefit, i) => (
+                          <span key={i} className="text-xs bg-saffron/10 text-maroon px-2 py-1 rounded-full">
+                            {benefit}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        <Clock className="w-3 h-3 inline mr-1" />
+                        Best time: {mantra.best_time}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Chant {mantra.chant_count} times for best results
+                      </p>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* By Deity Section */}
+      {activeSection === 'deities' && (
+        <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''}`}>
+          {/* Deity List */}
+          <div className={`grid ${isDesktop ? 'grid-cols-2' : 'grid-cols-3'} gap-3 mb-6`}>
+            {deities.map((deity) => (
+              <button
+                key={deity.id}
+                onClick={() => fetchDeityContent(deity.id)}
+                className={`p-3 rounded-2xl text-center transition-all ${
+                  selectedDeity?.id === deity.id
+                    ? 'bg-saffron text-white ring-2 ring-gold'
+                    : 'bg-cream text-maroon hover:bg-saffron/20'
+                }`}
+                style={{ borderLeft: `4px solid ${deity.color}` }}
+              >
+                <p className="font-semibold text-sm">{deity.name.replace('Lord ', '')}</p>
+                <p className="text-xs opacity-70">{deity.name_hindi}</p>
+                <p className="text-xs mt-1">{deity.mantra_count} mantras</p>
+              </button>
+            ))}
+          </div>
+
+          {/* Selected Deity Content */}
+          {selectedDeity && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <div className="bg-cream rounded-2xl p-5 border border-saffron/20 mb-4">
+                <h3 className="font-cinzel text-xl text-maroon">{selectedDeity.name}</h3>
+                <p className="text-gray-500 text-sm">{selectedDeity.name_sanskrit}</p>
+                <p className="text-gray-600 text-sm mt-2">{selectedDeity.description}</p>
+                <div className="flex gap-2 mt-3">
+                  <span className="text-xs bg-saffron/10 text-maroon px-2 py-1 rounded-full">
+                    {selectedDeity.associated_day}
+                  </span>
+                  <span className="text-xs bg-saffron/10 text-maroon px-2 py-1 rounded-full">
+                    Planet: {selectedDeity.associated_planet}
+                  </span>
+                </div>
+              </div>
+
+              {/* Mantras for selected deity */}
+              <h4 className="font-cinzel text-lg text-maroon mb-3">Mantras</h4>
+              <div className="space-y-3">
+                {mantras.map((mantra, idx) => (
+                  <div key={idx} className="bg-white rounded-xl p-4 border border-saffron/10">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-semibold text-maroon">{mantra.name}</p>
+                        <p className="text-xs text-gray-500">{mantra.type?.replace('_', ' ')}</p>
+                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        mantra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
+                      }`}>
+                        {mantra.tier}
+                      </span>
+                    </div>
+                    <div className="bg-cream rounded-lg p-3 my-2">
+                      <p className="text-maroon text-center">{mantra.sanskrit}</p>
+                    </div>
+                    <p className="text-xs text-gray-600 italic">{mantra.transliteration}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Stotras for selected deity */}
+              {stotras.length > 0 && (
+                <>
+                  <h4 className="font-cinzel text-lg text-maroon mb-3 mt-6">Stotras & Prayers</h4>
+                  <div className="space-y-3">
+                    {stotras.map((stotra, idx) => (
+                      <div key={idx} className="bg-white rounded-xl p-4 border border-saffron/10">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-semibold text-maroon">{stotra.name}</p>
+                            <p className="text-xs text-gray-500">{stotra.name_hindi}</p>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            stotra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
+                          }`}>
+                            {stotra.tier}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2">{stotra.description}</p>
+                        <div className="flex gap-2 mt-2">
+                          <span className="text-xs text-gray-500">{stotra.verse_count} verses</span>
+                          {stotra.audio_available && (
+                            <span className="text-xs text-saffron flex items-center gap-1">
+                              <Volume2 className="w-3 h-3" /> Audio
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          )}
+        </div>
+      )}
+
+      {/* All Mantras Section */}
+      {activeSection === 'all' && (
+        <AllMantrasSection isDesktop={isDesktop} />
+      )}
+    </div>
+  );
+}
+
+// All Mantras Sub-component
+function AllMantrasSection({ isDesktop }) {
+  const [mantras, setMantras] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+
+  useEffect(() => {
+    fetchAllMantras();
+  }, []);
+
+  const fetchAllMantras = async () => {
+    try {
+      const res = await api.get('/api/devotional/mantras');
+      setMantras(res.data.data || []);
+    } catch (error) {
+      console.error('Error fetching mantras:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const mantraTypes = [...new Set(mantras.map(m => m.type))].filter(Boolean);
+  
+  const filteredMantras = mantras.filter(m => {
+    const matchesSearch = m.name.toLowerCase().includes(filter.toLowerCase()) ||
+                         m.sanskrit?.includes(filter) ||
+                         m.deity_id?.toLowerCase().includes(filter.toLowerCase());
+    const matchesType = !typeFilter || m.type === typeFilter;
+    return matchesSearch && matchesType;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="w-6 h-6 text-saffron animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Search and Filter */}
+      <div className="flex gap-3 mb-6">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search mantras..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-cream rounded-xl text-maroon focus:ring-2 focus:ring-saffron outline-none"
+          />
+        </div>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="bg-cream px-4 py-2 rounded-xl text-maroon focus:ring-2 focus:ring-saffron outline-none"
+        >
+          <option value="">All Types</option>
+          {mantraTypes.map(type => (
+            <option key={type} value={type}>{type?.replace('_', ' ')}</option>
+          ))}
+        </select>
+      </div>
+
+      <p className="text-sm text-gray-500 mb-4">{filteredMantras.length} mantras found</p>
+
+      {/* Mantras Grid */}
+      <div className={`grid ${isDesktop ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
+        {filteredMantras.map((mantra, idx) => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05 }}
+            className="bg-cream rounded-xl p-4 border border-saffron/10"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <p className="font-semibold text-maroon">{mantra.name}</p>
+                <p className="text-xs text-gray-500 capitalize">{mantra.deity_id} • {mantra.type?.replace('_', ' ')}</p>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                mantra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
+              }`}>
+                {mantra.tier}
+              </span>
+            </div>
+            <div className="bg-white rounded-lg p-3 my-2">
+              <p className="text-maroon text-center text-sm">{mantra.sanskrit}</p>
+            </div>
+            <p className="text-xs text-gray-600 italic">{mantra.transliteration}</p>
+            <p className="text-xs text-gray-700 mt-2 line-clamp-2">{mantra.meaning_english}</p>
+          </motion.div>
+        ))}
       </div>
     </div>
   );
@@ -1990,6 +2386,7 @@ export default function DevoteeDashboard() {
         {activeTab === 'home' && (
           <HomeTab setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} isDesktop={isDesktop} />
         )}
+        {activeTab === 'mantras' && <MantrasTab isDesktop={isDesktop} />}
         {activeTab === 'priests' && (
           <PriestsTab setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} isDesktop={isDesktop} />
         )}

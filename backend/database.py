@@ -4,7 +4,10 @@ from config import settings
 client = AsyncIOMotorClient(settings.MONGO_URL)
 db = client[settings.DB_NAME]
 
-# Collections
+# Devotional Content Database
+devotional_db = client["devotional_content"]
+
+# Collections - Main Database
 users_collection = db["users"]
 priests_collection = db["priests"]
 astrologers_collection = db["astrologers"]
@@ -18,6 +21,12 @@ festivals_collection = db["festivals"]
 temples_collection = db["temples"]
 reviews_collection = db["reviews"]
 cart_collection = db["carts"]
+
+# Collections - Devotional Content
+deities_collection = devotional_db["deities"]
+mantras_collection = devotional_db["mantras"]
+stotras_collection = devotional_db["stotras"]
+daily_schedule_collection = devotional_db["daily_schedule"]
 
 async def init_db():
     """Initialize database indexes"""

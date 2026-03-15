@@ -15,7 +15,8 @@ from database import (
     init_db, users_collection, priests_collection, astrologers_collection,
     shops_collection, products_collection, bookings_collection, orders_collection,
     payment_transactions_collection, cart_collection, reviews_collection,
-    festivals_collection, temples_collection
+    festivals_collection, temples_collection,
+    deities_collection, mantras_collection, stotras_collection, daily_schedule_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -335,6 +336,117 @@ async def place_details(place_id: str):
                 return {"status": "error", "message": data.get("status")}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Places API error: {str(e)}")
+
+# ===================== DEVOTIONAL CONTENT ROUTES =====================
+@app.get("/api/devotional/deities")
+async def get_deities():
+    """Get all deities"""
+    cursor = deities_collection.find({}, {"_id": 0})
+    deities = await cursor.to_list(length=50)
+    return {"status": "ok", "data": deities}
+
+@app.get("/api/devotional/deities/{deity_id}")
+async def get_deity(deity_id: str):
+    """Get a specific deity with its mantras"""
+    deity = await deities_collection.find_one({"id": deity_id}, {"_id": 0})
+    if not deity:
+        raise HTTPException(status_code=404, detail="Deity not found")
+    
+    # Get mantras for this deity
+    cursor = mantras_collection.find({"deity_id": deity_id}, {"_id": 0})
+    mantras = await cursor.to_list(length=50)
+    
+    # Get stotras for this deity
+    cursor = stotras_collection.find({"deity_id": deity_id}, {"_id": 0})
+    stotras = await cursor.to_list(length=50)
+    
+    return {
+        "status": "ok",
+        "data": {
+            **deity,
+            "mantras": mantras,
+            "stotras": stotras
+        }
+    }
+
+@app.get("/api/devotional/mantras")
+async def get_mantras(deity_id: Optional[str] = None, type: Optional[str] = None, tier: Optional[str] = None):
+    """Get mantras with optional filters"""
+    query = {"is_active": True}
+    if deity_id:
+        query["deity_id"] = deity_id
+    if type:
+        query["type"] = type
+    if tier:
+        query["tier"] = tier
+    
+    cursor = mantras_collection.find(query, {"_id": 0})
+    mantras = await cursor.to_list(length=100)
+    return {"status": "ok", "data": mantras, "count": len(mantras)}
+
+@app.get("/api/devotional/mantras/{deity_id}/{mantra_type}")
+async def get_specific_mantra(deity_id: str, mantra_type: str):
+    """Get a specific mantra by deity and type"""
+    mantra = await mantras_collection.find_one(
+        {"deity_id": deity_id, "type": mantra_type},
+        {"_id": 0}
+    )
+    if not mantra:
+        raise HTTPException(status_code=404, detail="Mantra not found")
+    return {"status": "ok", "data": mantra}
+
+@app.get("/api/devotional/stotras")
+async def get_stotras(deity_id: Optional[str] = None, type: Optional[str] = None, tier: Optional[str] = None):
+    """Get stotras with optional filters"""
+    query = {"is_active": True}
+    if deity_id:
+        query["deity_id"] = deity_id
+    if type:
+        query["type"] = type
+    if tier:
+        query["tier"] = tier
+    
+    cursor = stotras_collection.find(query, {"_id": 0})
+    stotras = await cursor.to_list(length=50)
+    return {"status": "ok", "data": stotras, "count": len(stotras)}
+
+@app.get("/api/devotional/daily-schedule")
+async def get_daily_schedule():
+    """Get daily worship schedule"""
+    cursor = daily_schedule_collection.find({}, {"_id": 0})
+    schedule = await cursor.to_list(length=7)
+    return {"status": "ok", "data": schedule}
+
+@app.get("/api/devotional/today")
+async def get_today_devotional():
+    """Get today's recommended deity and mantras based on day of week"""
+    from datetime import datetime
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    today = days[datetime.now().weekday()]
+    
+    # Get today's schedule
+    schedule = await daily_schedule_collection.find_one({"day": today}, {"_id": 0})
+    if not schedule:
+        return {"status": "ok", "data": None}
+    
+    # Get primary deity details
+    deity = await deities_collection.find_one({"id": schedule.get("primary_deity")}, {"_id": 0})
+    
+    # Get mantras for the deity
+    cursor = mantras_collection.find({"deity_id": schedule.get("primary_deity"), "tier": "free"}, {"_id": 0}).limit(3)
+    mantras = await cursor.to_list(length=3)
+    
+    return {
+        "status": "ok",
+        "data": {
+            "day": today,
+            "day_hindi": schedule.get("day_hindi"),
+            "color": schedule.get("color"),
+            "planet": schedule.get("planet"),
+            "deity": deity,
+            "mantras": mantras
+        }
+    }
 
 # ===================== AUTH ROUTES =====================
 @app.post("/api/auth/register")
