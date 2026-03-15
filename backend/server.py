@@ -1787,6 +1787,407 @@ async def update_booking_status(booking_id: str, status: BookingStatus, user: di
     )
     return {"message": "Booking status updated"}
 
+# ===================== PRIEST DASHBOARD - CLASSES =====================
+from database import priest_classes_collection, priest_availability_collection, priest_content_collection, priest_streams_collection
+
+@app.get("/api/priest/classes")
+async def get_priest_classes(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get all classes created by priest"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    cursor = priest_classes_collection.find({"priest_id": str(priest["_id"])}).sort("created_at", -1)
+    classes = []
+    async for cls in cursor:
+        classes.append({
+            "id": str(cls["_id"]),
+            "title": cls["title"],
+            "description": cls["description"],
+            "class_type": cls["class_type"],
+            "duration_minutes": cls["duration_minutes"],
+            "price": cls["price"],
+            "max_students": cls["max_students"],
+            "enrolled_count": cls.get("enrolled_count", 0),
+            "schedule": cls.get("schedule", []),
+            "category": cls.get("category", "General"),
+            "is_active": cls.get("is_active", True),
+            "created_at": cls["created_at"].isoformat() if isinstance(cls["created_at"], datetime) else cls["created_at"]
+        })
+    return {"classes": classes}
+
+@app.post("/api/priest/classes")
+async def create_priest_class(request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Create a new class"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    data = await request.json()
+    
+    class_dict = {
+        "priest_id": str(priest["_id"]),
+        "priest_name": user["name"],
+        "title": data.get("title"),
+        "description": data.get("description", ""),
+        "class_type": data.get("class_type", "online"),  # online / offline / both
+        "duration_minutes": data.get("duration_minutes", 60),
+        "price": data.get("price", 0),
+        "max_students": data.get("max_students", 20),
+        "enrolled_count": 0,
+        "schedule": data.get("schedule", []),  # [{"day": "Monday", "time": "10:00"}]
+        "category": data.get("category", "General"),
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await priest_classes_collection.insert_one(class_dict)
+    return {"message": "Class created", "class_id": str(result.inserted_id)}
+
+@app.put("/api/priest/classes/{class_id}")
+async def update_priest_class(class_id: str, request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Update a class"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
+    
+    if not cls or cls["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    data = await request.json()
+    update_data = {k: v for k, v in data.items() if k in [
+        "title", "description", "class_type", "duration_minutes", 
+        "price", "max_students", "schedule", "category", "is_active"
+    ]}
+    
+    await priest_classes_collection.update_one(
+        {"_id": ObjectId(class_id)},
+        {"$set": update_data}
+    )
+    return {"message": "Class updated"}
+
+@app.delete("/api/priest/classes/{class_id}")
+async def delete_priest_class(class_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Delete a class"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
+    
+    if not cls or cls["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    await priest_classes_collection.delete_one({"_id": ObjectId(class_id)})
+    return {"message": "Class deleted"}
+
+# ===================== PRIEST DASHBOARD - AVAILABILITY =====================
+@app.get("/api/priest/availability")
+async def get_priest_availability(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get priest's availability settings"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    availability = await priest_availability_collection.find_one({"priest_id": str(priest["_id"])})
+    
+    if not availability:
+        # Return default availability
+        return {
+            "online_slots": [],
+            "offline_slots": [],
+            "blocked_dates": [],
+            "default_duration": 60
+        }
+    
+    return {
+        "online_slots": availability.get("online_slots", []),
+        "offline_slots": availability.get("offline_slots", []),
+        "blocked_dates": availability.get("blocked_dates", []),
+        "default_duration": availability.get("default_duration", 60)
+    }
+
+@app.post("/api/priest/availability")
+async def update_priest_availability(request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Update priest's availability"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    data = await request.json()
+    
+    availability_dict = {
+        "priest_id": str(priest["_id"]),
+        "online_slots": data.get("online_slots", []),  # [{"day": "Monday", "start": "09:00", "end": "17:00"}]
+        "offline_slots": data.get("offline_slots", []),
+        "blocked_dates": data.get("blocked_dates", []),  # ["2026-03-20", "2026-03-21"]
+        "default_duration": data.get("default_duration", 60),
+        "updated_at": datetime.now(timezone.utc)
+    }
+    
+    await priest_availability_collection.update_one(
+        {"priest_id": str(priest["_id"])},
+        {"$set": availability_dict},
+        upsert=True
+    )
+    return {"message": "Availability updated"}
+
+# ===================== PRIEST DASHBOARD - ANALYTICS =====================
+@app.get("/api/priest/analytics")
+async def get_priest_analytics(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get priest's dashboard analytics"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    priest_id = str(priest["_id"])
+    
+    # Get booking stats
+    all_bookings = await bookings_collection.find({"priest_id": priest_id}).to_list(None)
+    
+    total_bookings = len(all_bookings)
+    pending_bookings = len([b for b in all_bookings if b["status"] == "pending"])
+    confirmed_bookings = len([b for b in all_bookings if b["status"] == "confirmed"])
+    completed_bookings = len([b for b in all_bookings if b["status"] == "completed"])
+    cancelled_bookings = len([b for b in all_bookings if b["status"] == "cancelled"])
+    
+    # Calculate earnings
+    total_earnings = sum(b.get("price", 0) for b in all_bookings if b["status"] == "completed")
+    
+    # This month's earnings
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    this_month_bookings = [b for b in all_bookings if b["status"] == "completed" and b.get("created_at", now) >= month_start]
+    monthly_earnings = sum(b.get("price", 0) for b in this_month_bookings)
+    
+    # Get classes stats
+    classes = await priest_classes_collection.find({"priest_id": priest_id}).to_list(None)
+    total_classes = len(classes)
+    total_students = sum(c.get("enrolled_count", 0) for c in classes)
+    
+    # Get content stats
+    content_count = await priest_content_collection.count_documents({"priest_id": priest_id})
+    
+    # Get ratings
+    reviews = await reviews_collection.find({"priest_id": priest_id}).to_list(None)
+    avg_rating = sum(r.get("rating", 0) for r in reviews) / len(reviews) if reviews else 0
+    
+    # Recent bookings
+    recent_bookings = sorted(all_bookings, key=lambda x: x.get("created_at", now), reverse=True)[:5]
+    recent_list = []
+    for b in recent_bookings:
+        recent_list.append({
+            "id": str(b["_id"]),
+            "service_name": b["service_name"],
+            "status": b["status"],
+            "price": b.get("price", 0),
+            "date": b.get("booking_date").isoformat() if isinstance(b.get("booking_date"), datetime) else b.get("booking_date", "")
+        })
+    
+    return {
+        "stats": {
+            "total_bookings": total_bookings,
+            "pending_bookings": pending_bookings,
+            "confirmed_bookings": confirmed_bookings,
+            "completed_bookings": completed_bookings,
+            "cancelled_bookings": cancelled_bookings,
+            "total_earnings": total_earnings,
+            "monthly_earnings": monthly_earnings,
+            "total_classes": total_classes,
+            "total_students": total_students,
+            "content_count": content_count,
+            "avg_rating": round(avg_rating, 1),
+            "total_reviews": len(reviews)
+        },
+        "recent_bookings": recent_list
+    }
+
+# ===================== PRIEST DASHBOARD - CONTENT (MANTRAS/CHANTS) =====================
+@app.get("/api/priest/content")
+async def get_priest_content(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get all content posted by priest"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    cursor = priest_content_collection.find({"priest_id": str(priest["_id"])}).sort("created_at", -1)
+    content_list = []
+    async for content in cursor:
+        content_list.append({
+            "id": str(content["_id"]),
+            "title": content["title"],
+            "description": content.get("description", ""),
+            "content_type": content["content_type"],  # text, audio, video
+            "category": content.get("category", "General"),
+            "text_content": content.get("text_content", ""),
+            "media_url": content.get("media_url", ""),
+            "views": content.get("views", 0),
+            "likes": content.get("likes", 0),
+            "is_published": content.get("is_published", True),
+            "created_at": content["created_at"].isoformat() if isinstance(content["created_at"], datetime) else content["created_at"]
+        })
+    return {"content": content_list}
+
+@app.post("/api/priest/content")
+async def create_priest_content(request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Post new content (mantra/chant)"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    data = await request.json()
+    
+    content_dict = {
+        "priest_id": str(priest["_id"]),
+        "priest_name": user["name"],
+        "title": data.get("title"),
+        "description": data.get("description", ""),
+        "content_type": data.get("content_type", "text"),  # text, audio, video
+        "category": data.get("category", "Mantra"),
+        "text_content": data.get("text_content", ""),
+        "media_url": data.get("media_url", ""),
+        "views": 0,
+        "likes": 0,
+        "is_published": data.get("is_published", True),
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await priest_content_collection.insert_one(content_dict)
+    return {"message": "Content posted", "content_id": str(result.inserted_id)}
+
+@app.delete("/api/priest/content/{content_id}")
+async def delete_priest_content(content_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Delete content"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    content = await priest_content_collection.find_one({"_id": ObjectId(content_id)})
+    
+    if not content or content["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    await priest_content_collection.delete_one({"_id": ObjectId(content_id)})
+    return {"message": "Content deleted"}
+
+# ===================== PRIEST DASHBOARD - LIVE STREAMING =====================
+@app.get("/api/priest/streams")
+async def get_priest_streams(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get priest's live streams"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    cursor = priest_streams_collection.find({"priest_id": str(priest["_id"])}).sort("created_at", -1)
+    streams = []
+    async for stream in cursor:
+        streams.append({
+            "id": str(stream["_id"]),
+            "title": stream["title"],
+            "description": stream.get("description", ""),
+            "stream_type": stream.get("stream_type", "puja"),
+            "status": stream.get("status", "scheduled"),  # scheduled, live, ended
+            "scheduled_at": stream.get("scheduled_at").isoformat() if isinstance(stream.get("scheduled_at"), datetime) else stream.get("scheduled_at", ""),
+            "started_at": stream.get("started_at").isoformat() if isinstance(stream.get("started_at"), datetime) else stream.get("started_at"),
+            "ended_at": stream.get("ended_at").isoformat() if isinstance(stream.get("ended_at"), datetime) else stream.get("ended_at"),
+            "viewer_count": stream.get("viewer_count", 0),
+            "max_viewers": stream.get("max_viewers", 0),
+            "created_at": stream["created_at"].isoformat() if isinstance(stream["created_at"], datetime) else stream["created_at"]
+        })
+    return {"streams": streams}
+
+@app.post("/api/priest/streams")
+async def create_stream(request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Schedule or start a live stream"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    data = await request.json()
+    
+    stream_dict = {
+        "priest_id": str(priest["_id"]),
+        "priest_name": user["name"],
+        "title": data.get("title"),
+        "description": data.get("description", ""),
+        "stream_type": data.get("stream_type", "puja"),  # puja, class, discourse, aarti
+        "status": "scheduled",
+        "scheduled_at": datetime.fromisoformat(data["scheduled_at"]) if data.get("scheduled_at") else datetime.now(timezone.utc),
+        "viewer_count": 0,
+        "max_viewers": 0,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await priest_streams_collection.insert_one(stream_dict)
+    return {"message": "Stream scheduled", "stream_id": str(result.inserted_id)}
+
+@app.put("/api/priest/streams/{stream_id}/start")
+async def start_stream(stream_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Start a live stream"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    stream = await priest_streams_collection.find_one({"_id": ObjectId(stream_id)})
+    
+    if not stream or stream["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Stream not found")
+    
+    await priest_streams_collection.update_one(
+        {"_id": ObjectId(stream_id)},
+        {"$set": {"status": "live", "started_at": datetime.now(timezone.utc)}}
+    )
+    return {"message": "Stream started", "status": "live"}
+
+@app.put("/api/priest/streams/{stream_id}/end")
+async def end_stream(stream_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """End a live stream"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    stream = await priest_streams_collection.find_one({"_id": ObjectId(stream_id)})
+    
+    if not stream or stream["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Stream not found")
+    
+    await priest_streams_collection.update_one(
+        {"_id": ObjectId(stream_id)},
+        {"$set": {"status": "ended", "ended_at": datetime.now(timezone.utc)}}
+    )
+    return {"message": "Stream ended", "status": "ended"}
+
+# ===================== PUBLIC - VIEW PRIEST CONTENT =====================
+@app.get("/api/content/priest/{priest_id}")
+async def get_public_priest_content(priest_id: str, skip: int = 0, limit: int = 20):
+    """Get published content from a priest (public)"""
+    cursor = priest_content_collection.find({
+        "priest_id": priest_id,
+        "is_published": True
+    }).skip(skip).limit(limit).sort("created_at", -1)
+    
+    content_list = []
+    async for content in cursor:
+        content_list.append({
+            "id": str(content["_id"]),
+            "title": content["title"],
+            "description": content.get("description", ""),
+            "content_type": content["content_type"],
+            "category": content.get("category", "General"),
+            "text_content": content.get("text_content", ""),
+            "media_url": content.get("media_url", ""),
+            "priest_name": content.get("priest_name", ""),
+            "views": content.get("views", 0),
+            "likes": content.get("likes", 0),
+            "created_at": content["created_at"].isoformat() if isinstance(content["created_at"], datetime) else content["created_at"]
+        })
+    return {"content": content_list}
+
+@app.get("/api/streams/live")
+async def get_live_streams():
+    """Get all currently live streams (public)"""
+    cursor = priest_streams_collection.find({"status": "live"})
+    streams = []
+    async for stream in cursor:
+        streams.append({
+            "id": str(stream["_id"]),
+            "title": stream["title"],
+            "description": stream.get("description", ""),
+            "stream_type": stream.get("stream_type", "puja"),
+            "priest_name": stream.get("priest_name", ""),
+            "priest_id": stream["priest_id"],
+            "viewer_count": stream.get("viewer_count", 0),
+            "started_at": stream.get("started_at").isoformat() if isinstance(stream.get("started_at"), datetime) else stream.get("started_at")
+        })
+    return {"streams": streams}
+
 # ===================== MARKETPLACE ROUTES =====================
 @app.get("/api/products")
 async def get_products(

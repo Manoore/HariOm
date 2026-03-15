@@ -22,6 +22,12 @@ temples_collection = db["temples"]
 reviews_collection = db["reviews"]
 cart_collection = db["carts"]
 
+# Priest Dashboard Collections
+priest_classes_collection = db["priest_classes"]
+priest_availability_collection = db["priest_availability"]
+priest_content_collection = db["priest_content"]
+priest_streams_collection = db["priest_streams"]
+
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]
 mantras_collection = devotional_db["mantras"]

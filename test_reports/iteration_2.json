@@ -5,7 +5,7 @@
     "infrastructure_issues": [
       {
         "component": "External URL Routing",
-        "issue": "https://vedic-portal-2.preview.emergentagent.com returns 404 for all API endpoints",
+        "issue": "https://divine-priest-dash.preview.emergentagent.com returns 404 for all API endpoints",
         "impact": "Frontend cannot connect to backend APIs causing login/data loading failures",
         "fix_priority": "CRITICAL",
         "details": "All API tests pass on localhost:8001 but external URL is not routing properly"
@@ -74,14 +74,14 @@
       "ui_components": "✅ All components render correctly with proper styling"
     },
     "external_url_tests": {
-      "health_check": "❌ 404 - https://vedic-portal-2.preview.emergentagent.com/api/health",
+      "health_check": "❌ 404 - https://divine-priest-dash.preview.emergentagent.com/api/health",
       "all_api_endpoints": "❌ All return 404 - external URL routing not working"
     }
   },
   
   "updated_files": ["/app/comprehensive_backend_test.py"],
   
-  "action_item_for_main_agent": "CRITICAL: Fix external URL deployment/routing issue. The Kubernetes ingress or external URL mapping for https://vedic-portal-2.preview.emergentagent.com is not working - all API calls return 404. Backend is fully functional on localhost:8001 with 100% test success. Need to fix external URL routing so frontend can connect to backend APIs. This is the only issue preventing the app from working completely.",
+  "action_item_for_main_agent": "CRITICAL: Fix external URL deployment/routing issue. The Kubernetes ingress or external URL mapping for https://divine-priest-dash.preview.emergentagent.com is not working - all API calls return 404. Backend is fully functional on localhost:8001 with 100% test success. Need to fix external URL routing so frontend can connect to backend APIs. This is the only issue preventing the app from working completely.",
   
   "mocked_api_status": {
     "firebase_auth": "MOCKED - Placeholder credentials in use",
