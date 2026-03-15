@@ -158,6 +158,8 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Free/Premium tier badges
   - [x] Stotras section (Hanuman Chalisa, etc.)
   - [x] Connected to devotional_content MongoDB database
+  - [x] **Multi-language Translation** (English, Hindi, Telugu, Tamil, Kannada, Malayalam) - Works across ALL sections
+  - [x] **Sarvam AI Text-to-Speech** - Authentic Indian voices (Anushka, Abhilash, etc.) for mantra recitation
 
 ### P2 (Medium Priority)
 - [ ] Astrologer/Priest/Shop Owner complete dashboards
@@ -177,10 +179,12 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 ## Tech Stack
 ```
 Frontend: React 18, Tailwind CSS, Framer Motion, Firebase SDK
-Backend: FastAPI, Motor (MongoDB async driver), Stripe SDK
+Backend: FastAPI, Motor (MongoDB async driver), Stripe SDK, Sarvam AI SDK
 Database: MongoDB Atlas
 Auth: Firebase Auth (Google + Email/Password)
 Payments: Stripe (test keys active), Razorpay (placeholder)
+TTS: Sarvam AI (Indian voices - Hindi, Telugu, Tamil, Kannada, Malayalam)
+Translation: Google Translate API with MyMemory fallback
 Mobile: React Native with Expo
 Icons: Custom 3D animated SVGs
 ```
