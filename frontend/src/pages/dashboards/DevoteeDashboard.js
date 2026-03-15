@@ -789,72 +789,28 @@ function AstrologyTab({ isDesktop }) {
   // Kundali states
   const [kundaliForm, setKundaliForm] = useState({
     datetime: '',
-    latitude: 28.6139,
-    longitude: 77.2090,
-    location: 'Delhi'
+    latitude: null,
+    longitude: null,
+    location: ''
   });
   const [kundaliResult, setKundaliResult] = useState(null);
   
   // Kundali Matching states
   const [matchingForm, setMatchingForm] = useState({
     bride_datetime: '',
-    bride_location: 'Delhi',
-    bride_latitude: 28.6139,
-    bride_longitude: 77.2090,
+    bride_location: '',
+    bride_latitude: null,
+    bride_longitude: null,
     groom_datetime: '',
-    groom_location: 'Delhi',
-    groom_latitude: 28.6139,
-    groom_longitude: 77.2090
+    groom_location: '',
+    groom_latitude: null,
+    groom_longitude: null
   });
   const [matchingResult, setMatchingResult] = useState(null);
-  
-  // Location coordinates for major cities
-  const CITY_COORDS = {
-    'Delhi': { lat: 28.6139, lon: 77.2090 },
-    'Mumbai': { lat: 19.0760, lon: 72.8777 },
-    'Chennai': { lat: 13.0827, lon: 80.2707 },
-    'Kolkata': { lat: 22.5726, lon: 88.3639 },
-    'Bangalore': { lat: 12.9716, lon: 77.5946 },
-    'Hyderabad': { lat: 17.3850, lon: 78.4867 },
-    'Ahmedabad': { lat: 23.0225, lon: 72.5714 },
-    'Pune': { lat: 18.5204, lon: 73.8567 },
-    'Jaipur': { lat: 26.9124, lon: 75.7873 },
-    'Lucknow': { lat: 26.8467, lon: 80.9462 },
-    'Varanasi': { lat: 25.3176, lon: 82.9739 },
-    'Patna': { lat: 25.5941, lon: 85.1376 },
-    'Bhopal': { lat: 23.2599, lon: 77.4126 },
-    'Indore': { lat: 22.7196, lon: 75.8577 },
-    'Nagpur': { lat: 21.1458, lon: 79.0882 },
-    'Coimbatore': { lat: 11.0168, lon: 76.9558 },
-    'Thiruvananthapuram': { lat: 8.5241, lon: 76.9366 },
-    'Kochi': { lat: 9.9312, lon: 76.2673 },
-    'Visakhapatnam': { lat: 17.6868, lon: 83.2185 },
-    'Surat': { lat: 21.1702, lon: 72.8311 },
-    'Chandigarh': { lat: 30.7333, lon: 76.7794 },
-    'Amritsar': { lat: 31.6340, lon: 74.8723 },
-    'Guwahati': { lat: 26.1445, lon: 91.7362 },
-    'Bhubaneswar': { lat: 20.2961, lon: 85.8245 },
-    'Ranchi': { lat: 23.3441, lon: 85.3096 },
-    'Raipur': { lat: 21.2514, lon: 81.6296 },
-    'Dehradun': { lat: 30.3165, lon: 78.0322 },
-    'Shimla': { lat: 31.1048, lon: 77.1734 },
-    'Srinagar': { lat: 34.0837, lon: 74.7973 },
-    'Agra': { lat: 27.1767, lon: 78.0081 },
-    'Mathura': { lat: 27.4924, lon: 77.6737 },
-    'Haridwar': { lat: 29.9457, lon: 78.1642 },
-    'Rishikesh': { lat: 30.0869, lon: 78.2676 },
-    'Ujjain': { lat: 23.1765, lon: 75.7885 },
-    'Nashik': { lat: 19.9975, lon: 73.7898 },
-    'Tirupati': { lat: 13.6288, lon: 79.4192 },
-    'Madurai': { lat: 9.9252, lon: 78.1198 },
-    'Puri': { lat: 19.8135, lon: 85.8312 },
-    'Dwarka': { lat: 22.2442, lon: 68.9685 },
-    'Ayodhya': { lat: 26.7922, lon: 82.1998 }
-  };
 
-  // Search location by pincode or city name
+  // Search location using Google Places API
   const searchLocation = async (query, type = 'kundali') => {
-    if (!query || query.length < 3) {
+    if (!query || query.length < 2) {
       if (type === 'kundali') setLocationResults([]);
       else if (type === 'bride') setBrideLocationResults([]);
       else setGroomLocationResults([]);
@@ -863,72 +819,71 @@ function AstrologyTab({ isDesktop }) {
     
     setSearchingLocation(true);
     
-    // First check if it matches any city in our list
-    const matchingCities = Object.keys(CITY_COORDS).filter(city => 
-      city.toLowerCase().includes(query.toLowerCase())
-    );
-    
-    if (matchingCities.length > 0) {
-      const results = matchingCities.map(city => ({
-        name: city,
-        state: '',
-        district: city,
-        pincode: '',
-        lat: CITY_COORDS[city].lat,
-        lon: CITY_COORDS[city].lon
-      }));
-      if (type === 'kundali') setLocationResults(results);
-      else if (type === 'bride') setBrideLocationResults(results);
-      else setGroomLocationResults(results);
-      setSearchingLocation(false);
-      return;
-    }
-    
-    // If it's a 6-digit number, search by pincode
-    if (/^\d{6}$/.test(query)) {
-      try {
-        const res = await fetch(`https://api.postalpincode.in/pincode/${query}`);
-        const data = await res.json();
-        if (data[0]?.Status === 'Success' && data[0]?.PostOffice) {
-          const results = data[0].PostOffice.slice(0, 5).map(po => ({
-            name: po.Name,
-            state: po.State,
-            district: po.District,
-            pincode: query,
-            // Approximate coordinates based on state capital
-            lat: CITY_COORDS[po.District]?.lat || CITY_COORDS['Delhi'].lat,
-            lon: CITY_COORDS[po.District]?.lon || CITY_COORDS['Delhi'].lon
-          }));
-          if (type === 'kundali') setLocationResults(results);
-          else if (type === 'bride') setBrideLocationResults(results);
-          else setGroomLocationResults(results);
-        }
-      } catch (error) {
-        console.error('Error searching pincode:', error);
+    try {
+      // Use Google Places Autocomplete API via backend
+      const res = await api.get(`/api/places/autocomplete?query=${encodeURIComponent(query)}`);
+      
+      if (res.data.status === 'ok' && res.data.results) {
+        const results = res.data.results.map(place => ({
+          place_id: place.place_id,
+          name: place.main_text || place.description,
+          description: place.description,
+          secondary_text: place.secondary_text
+        }));
+        
+        if (type === 'kundali') setLocationResults(results);
+        else if (type === 'bride') setBrideLocationResults(results);
+        else setGroomLocationResults(results);
       }
-    } else {
-      // Search by post office name
-      try {
-        const res = await fetch(`https://api.postalpincode.in/postoffice/${query}`);
-        const data = await res.json();
-        if (data[0]?.Status === 'Success' && data[0]?.PostOffice) {
-          const results = data[0].PostOffice.slice(0, 5).map(po => ({
-            name: po.Name,
-            state: po.State,
-            district: po.District,
-            pincode: po.Pincode,
-            lat: CITY_COORDS[po.District]?.lat || CITY_COORDS['Delhi'].lat,
-            lon: CITY_COORDS[po.District]?.lon || CITY_COORDS['Delhi'].lon
-          }));
-          if (type === 'kundali') setLocationResults(results);
-          else if (type === 'bride') setBrideLocationResults(results);
-          else setGroomLocationResults(results);
-        }
-      } catch (error) {
-        console.error('Error searching location:', error);
-      }
+    } catch (error) {
+      console.error('Error searching location:', error);
     }
     setSearchingLocation(false);
+  };
+  
+  // Get place details with coordinates
+  const selectLocation = async (place, type = 'kundali') => {
+    try {
+      const res = await api.get(`/api/places/details/${place.place_id}`);
+      
+      if (res.data.status === 'ok' && res.data.data) {
+        const { name, formatted_address, latitude, longitude, city, state, country } = res.data.data;
+        const locationName = city || name || formatted_address;
+        const fullLocation = [city, state, country].filter(Boolean).join(', ');
+        
+        if (type === 'kundali') {
+          setKundaliForm({
+            ...kundaliForm,
+            location: fullLocation || locationName,
+            latitude: latitude,
+            longitude: longitude
+          });
+          setLocationSearch('');
+          setLocationResults([]);
+        } else if (type === 'bride') {
+          setMatchingForm({
+            ...matchingForm,
+            bride_location: fullLocation || locationName,
+            bride_latitude: latitude,
+            bride_longitude: longitude
+          });
+          setBrideLocationSearch('');
+          setBrideLocationResults([]);
+        } else {
+          setMatchingForm({
+            ...matchingForm,
+            groom_location: fullLocation || locationName,
+            groom_latitude: latitude,
+            groom_longitude: longitude
+          });
+          setGroomLocationSearch('');
+          setGroomLocationResults([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error getting place details:', error);
+      toast.error('Failed to get location details');
+    }
   };
   
   // Debounced search
@@ -987,6 +942,10 @@ function AstrologyTab({ isDesktop }) {
       toast.error('Please enter date and time of birth');
       return;
     }
+    if (!kundaliForm.latitude || !kundaliForm.longitude) {
+      toast.error('Please select a birth place from the search results');
+      return;
+    }
     setLoading(true);
     try {
       // Add Indian timezone (+05:30) if not present
@@ -1016,7 +975,11 @@ function AstrologyTab({ isDesktop }) {
 
   const fetchKundaliMatching = async () => {
     if (!matchingForm.bride_datetime || !matchingForm.groom_datetime) {
-      toast.error('Please enter both birth details');
+      toast.error('Please enter both birth date/time');
+      return;
+    }
+    if (!matchingForm.bride_latitude || !matchingForm.groom_latitude) {
+      toast.error('Please select birth places for both bride and groom');
       return;
     }
     setLoading(true);
@@ -1189,7 +1152,7 @@ function AstrologyTab({ isDesktop }) {
                 </div>
                 
                 <div className="relative">
-                  <label className="block text-sm text-gray-600 mb-1">Birth Place (City or Pincode)</label>
+                  <label className="block text-sm text-gray-600 mb-1">Birth Place (Search any city worldwide)</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -1200,14 +1163,17 @@ function AstrologyTab({ isDesktop }) {
                           setLocationResults([]);
                         }
                       }}
-                      onFocus={() => setLocationSearch(kundaliForm.location)}
-                      placeholder="Search city or enter 6-digit pincode..."
+                      onFocus={() => {
+                        if (kundaliForm.location) setLocationSearch('');
+                      }}
+                      placeholder="Search any city (e.g., New York, Delhi, London)..."
                       className="w-full bg-white border border-saffron/30 rounded-xl px-4 py-3 text-maroon focus:ring-2 focus:ring-saffron outline-none pr-10"
                     />
-                    {searchingLocation && (
+                    {searchingLocation ? (
                       <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-saffron animate-spin" />
+                    ) : (
+                      <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     )}
-                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   </div>
                   
                   {/* Location Results Dropdown */}
@@ -1216,29 +1182,18 @@ function AstrologyTab({ isDesktop }) {
                       {locationResults.map((loc, idx) => (
                         <button
                           key={idx}
-                          onClick={() => {
-                            setKundaliForm({
-                              ...kundaliForm,
-                              location: loc.name + (loc.district ? `, ${loc.district}` : ''),
-                              latitude: loc.lat,
-                              longitude: loc.lon
-                            });
-                            setLocationSearch('');
-                            setLocationResults([]);
-                          }}
+                          onClick={() => selectLocation(loc, 'kundali')}
                           className="w-full px-4 py-2 text-left hover:bg-saffron/10 text-sm text-maroon border-b border-gray-100 last:border-0"
                         >
                           <span className="font-medium">{loc.name}</span>
-                          {loc.district && <span className="text-gray-500">, {loc.district}</span>}
-                          {loc.state && <span className="text-gray-400"> ({loc.state})</span>}
-                          {loc.pincode && <span className="text-saffron ml-2">{loc.pincode}</span>}
+                          {loc.secondary_text && <span className="text-gray-500 ml-1">{loc.secondary_text}</span>}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
                 
-                {kundaliForm.location && (
+                {kundaliForm.location && kundaliForm.latitude && (
                   <p className="text-xs text-gray-500">
                     Selected: {kundaliForm.location} ({kundaliForm.latitude.toFixed(4)}°N, {kundaliForm.longitude.toFixed(4)}°E)
                   </p>
@@ -1415,7 +1370,7 @@ function AstrologyTab({ isDesktop }) {
                   />
                 </div>
                 <div className="relative">
-                  <label className="block text-sm text-gray-600 mb-1">Birth Place (City or Pincode)</label>
+                  <label className="block text-sm text-gray-600 mb-1">Birth Place (Search any city worldwide)</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -1424,8 +1379,10 @@ function AstrologyTab({ isDesktop }) {
                         setBrideLocationSearch(e.target.value);
                         if (!e.target.value) setBrideLocationResults([]);
                       }}
-                      onFocus={() => setBrideLocationSearch(matchingForm.bride_location)}
-                      placeholder="Search city or enter 6-digit pincode..."
+                      onFocus={() => {
+                        if (matchingForm.bride_location) setBrideLocationSearch('');
+                      }}
+                      placeholder="Search any city (e.g., New York, Delhi)..."
                       className="w-full bg-white border border-saffron/30 rounded-xl px-4 py-3 text-maroon focus:ring-2 focus:ring-saffron outline-none pr-10"
                     />
                     <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -1435,21 +1392,11 @@ function AstrologyTab({ isDesktop }) {
                       {brideLocationResults.map((loc, idx) => (
                         <button
                           key={idx}
-                          onClick={() => {
-                            setMatchingForm({
-                              ...matchingForm,
-                              bride_location: loc.name + (loc.district ? `, ${loc.district}` : ''),
-                              bride_latitude: loc.lat,
-                              bride_longitude: loc.lon
-                            });
-                            setBrideLocationSearch('');
-                            setBrideLocationResults([]);
-                          }}
+                          onClick={() => selectLocation(loc, 'bride')}
                           className="w-full px-4 py-2 text-left hover:bg-saffron/10 text-sm text-maroon border-b border-gray-100 last:border-0"
                         >
                           <span className="font-medium">{loc.name}</span>
-                          {loc.district && <span className="text-gray-500">, {loc.district}</span>}
-                          {loc.pincode && <span className="text-saffron ml-2">{loc.pincode}</span>}
+                          {loc.secondary_text && <span className="text-gray-500 ml-1">{loc.secondary_text}</span>}
                         </button>
                       ))}
                     </div>
@@ -1469,7 +1416,7 @@ function AstrologyTab({ isDesktop }) {
                   />
                 </div>
                 <div className="relative">
-                  <label className="block text-sm text-gray-600 mb-1">Birth Place (City or Pincode)</label>
+                  <label className="block text-sm text-gray-600 mb-1">Birth Place (Search any city worldwide)</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -1478,8 +1425,10 @@ function AstrologyTab({ isDesktop }) {
                         setGroomLocationSearch(e.target.value);
                         if (!e.target.value) setGroomLocationResults([]);
                       }}
-                      onFocus={() => setGroomLocationSearch(matchingForm.groom_location)}
-                      placeholder="Search city or enter 6-digit pincode..."
+                      onFocus={() => {
+                        if (matchingForm.groom_location) setGroomLocationSearch('');
+                      }}
+                      placeholder="Search any city (e.g., London, Mumbai)..."
                       className="w-full bg-white border border-saffron/30 rounded-xl px-4 py-3 text-maroon focus:ring-2 focus:ring-saffron outline-none pr-10"
                     />
                     <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -1489,21 +1438,11 @@ function AstrologyTab({ isDesktop }) {
                       {groomLocationResults.map((loc, idx) => (
                         <button
                           key={idx}
-                          onClick={() => {
-                            setMatchingForm({
-                              ...matchingForm,
-                              groom_location: loc.name + (loc.district ? `, ${loc.district}` : ''),
-                              groom_latitude: loc.lat,
-                              groom_longitude: loc.lon
-                            });
-                            setGroomLocationSearch('');
-                            setGroomLocationResults([]);
-                          }}
+                          onClick={() => selectLocation(loc, 'groom')}
                           className="w-full px-4 py-2 text-left hover:bg-saffron/10 text-sm text-maroon border-b border-gray-100 last:border-0"
                         >
                           <span className="font-medium">{loc.name}</span>
-                          {loc.district && <span className="text-gray-500">, {loc.district}</span>}
-                          {loc.pincode && <span className="text-saffron ml-2">{loc.pincode}</span>}
+                          {loc.secondary_text && <span className="text-gray-500 ml-1">{loc.secondary_text}</span>}
                         </button>
                       ))}
                     </div>
