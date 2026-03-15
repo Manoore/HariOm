@@ -47,6 +47,9 @@ astrologer_profiles_collection = db["astrologer_profiles"]
 # System Configuration Collection (for admin-editable settings)
 system_config_collection = db["system_config"]
 
+# Product Reviews Collection
+product_reviews_collection = db["product_reviews"]
+
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]
 mantras_collection = devotional_db["mantras"]
@@ -74,3 +77,7 @@ async def init_db():
     await consultation_calls_collection.create_index([("user_id", 1), ("created_at", -1)])
     await consultation_calls_collection.create_index([("astrologer_id", 1), ("created_at", -1)])
     await astrologer_profiles_collection.create_index("user_id", unique=True)
+    # Product reviews indexes
+    await product_reviews_collection.create_index([("product_id", 1), ("created_at", -1)])
+    await product_reviews_collection.create_index([("user_id", 1)])
+    await product_reviews_collection.create_index([("product_id", 1), ("user_id", 1)], unique=True)

@@ -305,6 +305,25 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Backend APIs: /api/checkout, /api/cart/summary, /api/orders/{id}
   - [x] File uploads: /api/upload/image, /api/upload/video
 
+- [x] **Product Reviews & Ratings** (NEW - March 15, 2026)
+  - [x] Verified purchase requirement - only customers who bought can review
+  - [x] 1-5 star rating with visual star picker
+  - [x] Written review with optional photo attachments
+  - [x] Rating summary with distribution bar chart
+  - [x] Mark reviews as helpful
+  - [x] Edit/Delete own reviews
+  - [x] Sort reviews by recent, helpful, rating
+  - [x] Product rating auto-updates on new reviews
+  - [x] Backend APIs: POST/GET /api/products/{id}/reviews, GET /api/products/{id}/can-review
+  - [x] Frontend: ProductReviews component with WriteReviewModal
+
+- [x] **Backend Refactoring** (March 15, 2026)
+  - [x] Created modular routes directory structure
+  - [x] Separated routes into: auth, users, shop, products, orders, cart, chat, admin, posts, uploads, reviews
+  - [x] Each route file is self-contained with its own dependencies
+  - [x] Maintains backward compatibility with existing API endpoints
+  - [x] Easier to maintain and extend
+
 - [x] **Priest Dashboard - FULLY IMPLEMENTED**
   - [x] **Home Tab** - Analytics overview with cards
     - Total Bookings, Completed, Classes, Content Posts stats
@@ -411,7 +430,31 @@ Icons: Custom 3D animated SVGs
 - **Admin**: admin@divineapp.com / admin123
 - **Devotee**: devotee@test.com / test1234
 - **Priest**: pandit.sharma@divineapp.com / priest123
+- **Shop Owner**: shop@test.com / test1234
 - **Google Sign-In**: Any Google account
+
+## Backend Architecture (Modular Routes - March 15, 2026)
+```
+/app/backend/
+├── server.py              # Main FastAPI app (includes routers)
+├── routes/
+│   ├── __init__.py        # Router exports
+│   ├── auth.py            # Authentication (register, login, firebase-sync)
+│   ├── users.py           # User profile management
+│   ├── shop.py            # Shop owner dashboard APIs
+│   ├── products.py        # Product listing/details
+│   ├── orders.py          # Checkout and order management
+│   ├── cart.py            # Shopping cart
+│   ├── chat.py            # Real-time chat
+│   ├── admin.py           # Admin dashboard & settings
+│   ├── posts.py           # Social feed/posts
+│   ├── uploads.py         # File uploads (image/video)
+│   └── reviews.py         # Product reviews & ratings (NEW)
+├── database.py            # MongoDB collections
+├── models.py              # Pydantic models
+├── auth.py                # JWT auth utilities
+└── system_config.py       # Admin-editable config
+```
 
 ## Key Files
 - `frontend/src/lib/firebase.js` - Firebase configuration and auth functions
@@ -438,6 +481,8 @@ Icons: Custom 3D animated SVGs
 - `backend/tests/test_chat_feature.py` - Pytest tests for Chat feature
 - `backend/tests/test_system_config.py` - Pytest tests for System Config APIs
 - `backend/tests/test_shop_checkout.py` - Pytest tests for Shop Owner and Checkout APIs (NEW)
+- `frontend/src/components/Reviews/ProductReviews.js` - Product reviews UI components (NEW)
+- `backend/routes/reviews.py` - Product reviews API (NEW)
 
 ## Preview URLs
 - **Web App**: https://priest-hub-1.preview.emergentagent.com

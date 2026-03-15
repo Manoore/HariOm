@@ -17,7 +17,8 @@ from database import (
     shops_collection, products_collection, bookings_collection, orders_collection,
     payment_transactions_collection, cart_collection, reviews_collection,
     festivals_collection, temples_collection,
-    deities_collection, mantras_collection, stotras_collection, daily_schedule_collection
+    deities_collection, mantras_collection, stotras_collection, daily_schedule_collection,
+    product_reviews_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -40,6 +41,9 @@ import prokerala
 from emergentintegrations.payments.stripe.checkout import (
     StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 )
+
+# Import modular routers
+from routes.reviews import router as reviews_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -68,6 +72,12 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Mount static files for serving uploaded images
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+
+# Include modular routers
+# Note: The reviews router is new and modular
+# Other routes remain in this file for backward compatibility
+# Future refactoring will move more routes to the routes/ directory
+app.include_router(reviews_router)
 
 @app.post("/api/upload/image")
 async def upload_image(
