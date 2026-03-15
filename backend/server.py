@@ -1867,10 +1867,40 @@ async def update_booking_status(booking_id: str, status: BookingStatus, user: di
     if not (priest and str(priest["_id"]) == booking["priest_id"]) and booking["user_id"] != str(user["_id"]):
         raise HTTPException(status_code=403, detail="Not authorized")
     
+    old_status = booking.get("status", "pending")
+    
     await bookings_collection.update_one(
         {"_id": ObjectId(booking_id)},
         {"$set": {"status": status}}
     )
+    
+    # Auto-create chat room when booking is confirmed
+    if status == BookingStatus.CONFIRMED and old_status != "confirmed":
+        # Get devotee info
+        devotee = await users_collection.find_one({"_id": ObjectId(booking["user_id"])})
+        # Get priest info
+        priest_doc = await priests_collection.find_one({"_id": ObjectId(booking["priest_id"])})
+        priest_user = await users_collection.find_one({"_id": ObjectId(priest_doc["user_id"])}) if priest_doc else None
+        
+        if devotee and priest_user:
+            booking_date = booking.get("booking_date")
+            date_str = booking_date.strftime("%B %d, %Y") if hasattr(booking_date, 'strftime') else str(booking_date)
+            context = f"{booking.get('service_name', 'Pooja')} on {date_str}"
+            
+            await create_chat_room(
+                room_type="booking",
+                reference_id=booking_id,
+                participant1_id=str(devotee["_id"]),
+                participant1_name=devotee.get("name", "Devotee"),
+                participant2_id=str(priest_user["_id"]),
+                participant2_name=priest_user.get("name", "Priest"),
+                context=context
+            )
+    
+    # Auto-deactivate chat room when booking is completed or cancelled
+    if status in [BookingStatus.COMPLETED, BookingStatus.CANCELLED]:
+        await deactivate_chat_room("booking", booking_id)
+    
     return {"message": "Booking status updated"}
 
 # ===================== PRIEST DASHBOARD - CLASSES =====================
@@ -2964,6 +2994,7 @@ async def create_order(data: OrderCreate, user: dict = Depends(get_current_user)
     
     items = []
     total = 0
+    shop_ids = set()
     for cart_item in cart["items"]:
         product = await products_collection.find_one({"_id": ObjectId(cart_item["product_id"])})
         if product:
@@ -2974,8 +3005,11 @@ async def create_order(data: OrderCreate, user: dict = Depends(get_current_user)
                 "name": product["name"],
                 "price": product["price"],
                 "quantity": cart_item["quantity"],
-                "subtotal": item_total
+                "subtotal": item_total,
+                "shop_id": product.get("shop_id")
             })
+            if product.get("shop_id"):
+                shop_ids.add(product.get("shop_id"))
     
     order_dict = {
         "user_id": str(user["_id"]),
@@ -2985,13 +3019,69 @@ async def create_order(data: OrderCreate, user: dict = Depends(get_current_user)
         "status": OrderStatus.PENDING,
         "payment_method": data.payment_method,
         "payment_status": "pending",
+        "shop_ids": list(shop_ids),
         "created_at": datetime.now(timezone.utc)
     }
     
     result = await orders_collection.insert_one(order_dict)
+    order_id = str(result.inserted_id)
+    
+    # Create chat rooms with each shop owner
+    for shop_id in shop_ids:
+        shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
+        if shop:
+            shop_owner = await users_collection.find_one({"_id": ObjectId(shop["owner_id"])})
+            if shop_owner:
+                context = f"Order #{order_id[:8]} - {len(items)} item(s)"
+                await create_chat_room(
+                    room_type="order",
+                    reference_id=order_id,
+                    participant1_id=str(user["_id"]),
+                    participant1_name=user.get("name", "Customer"),
+                    participant2_id=str(shop_owner["_id"]),
+                    participant2_name=shop.get("name", shop_owner.get("name", "Shop")),
+                    context=context
+                )
+    
     await cart_collection.delete_one({"user_id": str(user["_id"])})
     
-    return {"message": "Order created", "order_id": str(result.inserted_id), "total": total}
+    return {"message": "Order created", "order_id": order_id, "total": total}
+
+@app.put("/api/orders/{order_id}/status")
+async def update_order_status(order_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Update order status (shop owner or admin)"""
+    order = await orders_collection.find_one({"_id": ObjectId(order_id)})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Check authorization - shop owner or admin
+    is_shop_owner = False
+    for shop_id in order.get("shop_ids", []):
+        shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
+        if shop and shop["owner_id"] == str(user["_id"]):
+            is_shop_owner = True
+            break
+    
+    if not is_shop_owner and user.get("role") != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    data = await request.json()
+    new_status = data.get("status")
+    
+    valid_statuses = ["pending", "paid", "shipped", "delivered", "cancelled"]
+    if new_status not in valid_statuses:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    
+    await orders_collection.update_one(
+        {"_id": ObjectId(order_id)},
+        {"$set": {"status": new_status}}
+    )
+    
+    # Deactivate chat when order is delivered or cancelled
+    if new_status in ["delivered", "cancelled"]:
+        await deactivate_chat_room("order", order_id)
+    
+    return {"message": "Order status updated"}
 
 @app.get("/api/orders")
 async def get_user_orders(user: dict = Depends(get_current_user)):
@@ -3576,6 +3666,366 @@ async def get_my_products(user: dict = Depends(require_role([UserRole.SHOP_OWNER
             "rating": product.get("rating", 0)
         })
     return {"products": products}
+
+# ===================== REAL-TIME CHAT SYSTEM =====================
+from fastapi import WebSocket, WebSocketDisconnect
+from database import chat_rooms_collection, chat_messages_collection
+import json
+
+# WebSocket connection manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: dict[str, list[WebSocket]] = {}  # room_id -> list of websockets
+    
+    async def connect(self, websocket: WebSocket, room_id: str):
+        await websocket.accept()
+        if room_id not in self.active_connections:
+            self.active_connections[room_id] = []
+        self.active_connections[room_id].append(websocket)
+    
+    def disconnect(self, websocket: WebSocket, room_id: str):
+        if room_id in self.active_connections:
+            if websocket in self.active_connections[room_id]:
+                self.active_connections[room_id].remove(websocket)
+            if not self.active_connections[room_id]:
+                del self.active_connections[room_id]
+    
+    async def broadcast_to_room(self, room_id: str, message: dict):
+        if room_id in self.active_connections:
+            for connection in self.active_connections[room_id]:
+                try:
+                    await connection.send_json(message)
+                except:
+                    pass
+
+manager = ConnectionManager()
+
+# Helper function to create chat room
+async def create_chat_room(room_type: str, reference_id: str, participant1_id: str, participant1_name: str, 
+                           participant2_id: str, participant2_name: str, context: str = ""):
+    """Create a new chat room for booking or order"""
+    # Check if room already exists
+    existing_query = {"booking_id": reference_id} if room_type == "booking" else {"order_id": reference_id}
+    existing = await chat_rooms_collection.find_one(existing_query)
+    if existing:
+        return str(existing["_id"])
+    
+    room_data = {
+        "type": room_type,  # "booking" or "order"
+        "booking_id": reference_id if room_type == "booking" else None,
+        "order_id": reference_id if room_type == "order" else None,
+        "participants": [participant1_id, participant2_id],
+        "participant_details": {
+            participant1_id: {"name": participant1_name, "role": "devotee"},
+            participant2_id: {"name": participant2_name, "role": "priest" if room_type == "booking" else "shop_owner"}
+        },
+        "context": context,  # e.g., "Satyanarayana Pooja on March 20, 2026"
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc),
+        "last_message_at": datetime.now(timezone.utc),
+        "unread_count": {participant1_id: 0, participant2_id: 0}
+    }
+    result = await chat_rooms_collection.insert_one(room_data)
+    return str(result.inserted_id)
+
+# Helper function to deactivate chat room
+async def deactivate_chat_room(room_type: str, reference_id: str):
+    """Deactivate a chat room when booking/order is completed"""
+    query = {"booking_id": reference_id} if room_type == "booking" else {"order_id": reference_id}
+    await chat_rooms_collection.update_one(
+        query,
+        {"$set": {"is_active": False, "deactivated_at": datetime.now(timezone.utc)}}
+    )
+
+@app.websocket("/ws/chat/{room_id}")
+async def websocket_chat(websocket: WebSocket, room_id: str):
+    """WebSocket endpoint for real-time chat"""
+    # Get token from query params
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4001)
+        return
+    
+    # Verify token and get user
+    try:
+        from auth import decode_token
+        payload = decode_token(token)
+        user_id = payload.get("sub")
+        user = await users_collection.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            await websocket.close(code=4001)
+            return
+    except:
+        await websocket.close(code=4001)
+        return
+    
+    # Verify user is participant in this room
+    room = await chat_rooms_collection.find_one({"_id": ObjectId(room_id)})
+    if not room or str(user["_id"]) not in room["participants"]:
+        await websocket.close(code=4003)
+        return
+    
+    await manager.connect(websocket, room_id)
+    
+    try:
+        while True:
+            data = await websocket.receive_json()
+            
+            if data.get("type") == "message":
+                # Save message to database
+                message_data = {
+                    "room_id": room_id,
+                    "sender_id": str(user["_id"]),
+                    "sender_name": user.get("name", "User"),
+                    "content": data.get("content", ""),
+                    "image_url": data.get("image_url", ""),
+                    "created_at": datetime.now(timezone.utc),
+                    "read_by": [str(user["_id"])]
+                }
+                result = await chat_messages_collection.insert_one(message_data)
+                
+                # Update room's last message time and unread counts
+                other_participant = [p for p in room["participants"] if p != str(user["_id"])][0]
+                await chat_rooms_collection.update_one(
+                    {"_id": ObjectId(room_id)},
+                    {
+                        "$set": {"last_message_at": datetime.now(timezone.utc)},
+                        "$inc": {f"unread_count.{other_participant}": 1}
+                    }
+                )
+                
+                # Broadcast to all participants
+                broadcast_message = {
+                    "type": "new_message",
+                    "message": {
+                        "id": str(result.inserted_id),
+                        "sender_id": str(user["_id"]),
+                        "sender_name": user.get("name", "User"),
+                        "content": data.get("content", ""),
+                        "image_url": data.get("image_url", ""),
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+                await manager.broadcast_to_room(room_id, broadcast_message)
+            
+            elif data.get("type") == "typing":
+                # Broadcast typing indicator
+                await manager.broadcast_to_room(room_id, {
+                    "type": "typing",
+                    "user_id": str(user["_id"]),
+                    "user_name": user.get("name", "User")
+                })
+            
+            elif data.get("type") == "read":
+                # Mark messages as read
+                await chat_messages_collection.update_many(
+                    {"room_id": room_id, "read_by": {"$ne": str(user["_id"])}},
+                    {"$addToSet": {"read_by": str(user["_id"])}}
+                )
+                await chat_rooms_collection.update_one(
+                    {"_id": ObjectId(room_id)},
+                    {"$set": {f"unread_count.{str(user['_id'])}": 0}}
+                )
+    
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, room_id)
+
+# REST API endpoints for chat
+@app.get("/api/chat/rooms")
+async def get_chat_rooms(user: dict = Depends(get_current_user)):
+    """Get all chat rooms for the current user"""
+    cursor = chat_rooms_collection.find({
+        "participants": str(user["_id"])
+    }).sort("last_message_at", -1)
+    
+    rooms = []
+    async for room in cursor:
+        # Get last message
+        last_message = await chat_messages_collection.find_one(
+            {"room_id": str(room["_id"])},
+            sort=[("created_at", -1)]
+        )
+        
+        # Get other participant details
+        other_id = [p for p in room["participants"] if p != str(user["_id"])][0]
+        other_details = room.get("participant_details", {}).get(other_id, {"name": "User", "role": "unknown"})
+        
+        rooms.append({
+            "id": str(room["_id"]),
+            "type": room["type"],
+            "booking_id": room.get("booking_id"),
+            "order_id": room.get("order_id"),
+            "context": room.get("context", ""),
+            "is_active": room.get("is_active", True),
+            "other_participant": {
+                "id": other_id,
+                "name": other_details.get("name", "User"),
+                "role": other_details.get("role", "unknown")
+            },
+            "unread_count": room.get("unread_count", {}).get(str(user["_id"]), 0),
+            "last_message": {
+                "content": last_message.get("content", "") if last_message else "",
+                "sender_id": last_message.get("sender_id", "") if last_message else "",
+                "created_at": last_message["created_at"].isoformat() if last_message else None
+            } if last_message else None,
+            "created_at": room["created_at"].isoformat(),
+            "last_message_at": room.get("last_message_at", room["created_at"]).isoformat()
+        })
+    
+    return {"rooms": rooms}
+
+@app.get("/api/chat/rooms/{room_id}")
+async def get_chat_room(room_id: str, user: dict = Depends(get_current_user)):
+    """Get a specific chat room"""
+    room = await chat_rooms_collection.find_one({"_id": ObjectId(room_id)})
+    if not room:
+        raise HTTPException(status_code=404, detail="Chat room not found")
+    
+    if str(user["_id"]) not in room["participants"]:
+        raise HTTPException(status_code=403, detail="Not authorized to view this chat")
+    
+    # Get other participant details
+    other_id = [p for p in room["participants"] if p != str(user["_id"])][0]
+    other_details = room.get("participant_details", {}).get(other_id, {"name": "User", "role": "unknown"})
+    
+    return {
+        "id": str(room["_id"]),
+        "type": room["type"],
+        "booking_id": room.get("booking_id"),
+        "order_id": room.get("order_id"),
+        "context": room.get("context", ""),
+        "is_active": room.get("is_active", True),
+        "other_participant": {
+            "id": other_id,
+            "name": other_details.get("name", "User"),
+            "role": other_details.get("role", "unknown")
+        },
+        "created_at": room["created_at"].isoformat()
+    }
+
+@app.get("/api/chat/rooms/{room_id}/messages")
+async def get_chat_messages(room_id: str, skip: int = 0, limit: int = 50, user: dict = Depends(get_current_user)):
+    """Get messages for a chat room"""
+    room = await chat_rooms_collection.find_one({"_id": ObjectId(room_id)})
+    if not room:
+        raise HTTPException(status_code=404, detail="Chat room not found")
+    
+    if str(user["_id"]) not in room["participants"]:
+        raise HTTPException(status_code=403, detail="Not authorized to view this chat")
+    
+    cursor = chat_messages_collection.find({"room_id": room_id}).sort("created_at", -1).skip(skip).limit(limit)
+    
+    messages = []
+    async for msg in cursor:
+        messages.append({
+            "id": str(msg["_id"]),
+            "sender_id": msg["sender_id"],
+            "sender_name": msg.get("sender_name", "User"),
+            "content": msg.get("content", ""),
+            "image_url": msg.get("image_url", ""),
+            "created_at": msg["created_at"].isoformat(),
+            "is_read": str(user["_id"]) in msg.get("read_by", [])
+        })
+    
+    # Mark messages as read
+    await chat_messages_collection.update_many(
+        {"room_id": room_id, "read_by": {"$ne": str(user["_id"])}},
+        {"$addToSet": {"read_by": str(user["_id"])}}
+    )
+    await chat_rooms_collection.update_one(
+        {"_id": ObjectId(room_id)},
+        {"$set": {f"unread_count.{str(user['_id'])}": 0}}
+    )
+    
+    return {"messages": list(reversed(messages))}  # Return in chronological order
+
+@app.post("/api/chat/rooms/{room_id}/messages")
+async def send_chat_message(room_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Send a message to a chat room (REST fallback for WebSocket)"""
+    room = await chat_rooms_collection.find_one({"_id": ObjectId(room_id)})
+    if not room:
+        raise HTTPException(status_code=404, detail="Chat room not found")
+    
+    if str(user["_id"]) not in room["participants"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    if not room.get("is_active", True):
+        raise HTTPException(status_code=400, detail="This chat has ended")
+    
+    data = await request.json()
+    
+    if not data.get("content") and not data.get("image_url"):
+        raise HTTPException(status_code=400, detail="Message must have content or image")
+    
+    message_data = {
+        "room_id": room_id,
+        "sender_id": str(user["_id"]),
+        "sender_name": user.get("name", "User"),
+        "content": data.get("content", ""),
+        "image_url": data.get("image_url", ""),
+        "created_at": datetime.now(timezone.utc),
+        "read_by": [str(user["_id"])]
+    }
+    result = await chat_messages_collection.insert_one(message_data)
+    
+    # Update room's last message time and unread counts
+    other_participant = [p for p in room["participants"] if p != str(user["_id"])][0]
+    await chat_rooms_collection.update_one(
+        {"_id": ObjectId(room_id)},
+        {
+            "$set": {"last_message_at": datetime.now(timezone.utc)},
+            "$inc": {f"unread_count.{other_participant}": 1}
+        }
+    )
+    
+    # Broadcast via WebSocket if connected
+    broadcast_message = {
+        "type": "new_message",
+        "message": {
+            "id": str(result.inserted_id),
+            "sender_id": str(user["_id"]),
+            "sender_name": user.get("name", "User"),
+            "content": data.get("content", ""),
+            "image_url": data.get("image_url", ""),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+    }
+    await manager.broadcast_to_room(room_id, broadcast_message)
+    
+    return {
+        "message": "Message sent",
+        "data": broadcast_message["message"]
+    }
+
+@app.put("/api/chat/rooms/{room_id}/read")
+async def mark_messages_read(room_id: str, user: dict = Depends(get_current_user)):
+    """Mark all messages in a room as read"""
+    room = await chat_rooms_collection.find_one({"_id": ObjectId(room_id)})
+    if not room:
+        raise HTTPException(status_code=404, detail="Chat room not found")
+    
+    if str(user["_id"]) not in room["participants"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    await chat_messages_collection.update_many(
+        {"room_id": room_id, "read_by": {"$ne": str(user["_id"])}},
+        {"$addToSet": {"read_by": str(user["_id"])}}
+    )
+    await chat_rooms_collection.update_one(
+        {"_id": ObjectId(room_id)},
+        {"$set": {f"unread_count.{str(user['_id'])}": 0}}
+    )
+    
+    return {"message": "Messages marked as read"}
+
+@app.get("/api/chat/unread-count")
+async def get_total_unread_count(user: dict = Depends(get_current_user)):
+    """Get total unread message count across all rooms"""
+    cursor = chat_rooms_collection.find({"participants": str(user["_id"])})
+    total = 0
+    async for room in cursor:
+        total += room.get("unread_count", {}).get(str(user["_id"]), 0)
+    return {"unread_count": total}
 
 if __name__ == "__main__":
     import uvicorn

@@ -33,6 +33,10 @@ priest_posts_collection = db["priest_posts"]
 post_comments_collection = db["post_comments"]
 post_likes_collection = db["post_likes"]
 
+# Chat Collections
+chat_rooms_collection = db["chat_rooms"]
+chat_messages_collection = db["chat_messages"]
+
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]
 mantras_collection = devotional_db["mantras"]
@@ -49,3 +53,8 @@ async def init_db():
     await products_collection.create_index("shop_id")
     await bookings_collection.create_index([("user_id", 1), ("status", 1)])
     await orders_collection.create_index([("user_id", 1), ("created_at", -1)])
+    # Chat indexes
+    await chat_rooms_collection.create_index([("participants", 1)])
+    await chat_rooms_collection.create_index([("booking_id", 1)])
+    await chat_rooms_collection.create_index([("order_id", 1)])
+    await chat_messages_collection.create_index([("room_id", 1), ("created_at", -1)])

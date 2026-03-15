@@ -113,3 +113,14 @@ def require_role(allowed_roles: list):
             )
         return user
     return role_checker
+
+def decode_token(token: str) -> dict:
+    """Decode and verify JWT token, return payload"""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )

@@ -5,12 +5,13 @@ import {
   Bell, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
   CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
-  Camera, MessageCircle, Send, Image as ImageIcon, Rss
+  Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { Toaster, toast } from 'sonner';
+import ChatTab from '../../components/Chat/ChatTab';
 
 // 3D Animated Devotional SVG Icons
 const BellIcon3D = ({ size = "w-8 h-8" }) => (
@@ -94,12 +95,13 @@ const useIsDesktop = () => {
 };
 
 // Sidebar Navigation for Desktop
-function Sidebar({ activeTab, setActiveTab, user }) {
+function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
   const { cartCount } = useCart();
   const { logout } = useAuth();
   
   const tabs = [
     { id: 'home', icon: Home, label: 'Home' },
+    { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages },
     { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
     { id: 'mantras', icon: BookOpen, label: 'Mantras & Shlokas' },
     { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
@@ -162,6 +164,11 @@ function Sidebar({ activeTab, setActiveTab, user }) {
                   {cartCount}
                 </span>
               )}
+              {tab.id === 'messages' && tab.badge > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                  {tab.badge > 9 ? '9+' : tab.badge}
+                </span>
+              )}
             </div>
             <span>{tab.label}</span>
           </button>
@@ -184,13 +191,13 @@ function Sidebar({ activeTab, setActiveTab, user }) {
 }
 
 // Bottom Navigation Component for Mobile
-function BottomNav({ activeTab, setActiveTab }) {
+function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
   const { cartCount } = useCart();
   
   const tabs = [
     { id: 'home', icon: Home, label: 'Home' },
+    { id: 'messages', icon: MessageSquare, label: 'Chat', badge: unreadMessages },
     { id: 'feed', icon: Rss, label: 'Feed' },
-    { id: 'astrology', icon: Sun, label: 'Astrology' },
     { id: 'shop', icon: ShoppingBag, label: 'Shop' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];
@@ -212,6 +219,11 @@ function BottomNav({ activeTab, setActiveTab }) {
               {tab.id === 'shop' && cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-saffron text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
                   {cartCount}
+                </span>
+              )}
+              {tab.id === 'messages' && tab.badge > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                  {tab.badge > 9 ? '9+' : tab.badge}
                 </span>
               )}
             </div>
@@ -3776,21 +3788,38 @@ function ProfileTab({ isDesktop }) {
 export default function DevoteeDashboard() {
   const [activeTab, setActiveTab] = useState('home');
   const [selectedPriest, setSelectedPriest] = useState(null);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const { user } = useAuth();
   const isDesktop = useIsDesktop();
+
+  // Load unread message count
+  useEffect(() => {
+    loadUnreadCount();
+    const interval = setInterval(loadUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadUnreadCount = async () => {
+    try {
+      const res = await api.get('/api/chat/unread-count');
+      setUnreadMessages(res.data.unread_count || 0);
+    } catch (error) {
+      // Silently fail - user might not be logged in yet
+    }
+  };
 
   // Handle priest detail view
   if (activeTab === 'priest-detail' && selectedPriest) {
     return (
       <div className={`min-h-screen bg-gradient-to-b from-cream to-parchment ${isDesktop ? 'lg:pl-64' : ''}`}>
         <Toaster position="top-center" richColors />
-        {isDesktop && <Sidebar activeTab="priests" setActiveTab={setActiveTab} user={user} />}
+        {isDesktop && <Sidebar activeTab="priests" setActiveTab={setActiveTab} user={user} unreadMessages={unreadMessages} />}
         <PriestDetailView 
           priest={selectedPriest} 
           onBack={() => { setSelectedPriest(null); setActiveTab('priests'); }}
           isDesktop={isDesktop}
         />
-        {!isDesktop && <BottomNav activeTab="priests" setActiveTab={setActiveTab} />}
+        {!isDesktop && <BottomNav activeTab="priests" setActiveTab={setActiveTab} unreadMessages={unreadMessages} />}
       </div>
     );
   }
@@ -3799,12 +3828,13 @@ export default function DevoteeDashboard() {
     <div className={`min-h-screen bg-gradient-to-b from-cream to-parchment ${isDesktop ? 'lg:pl-64' : ''}`}>
       <Toaster position="top-center" richColors />
       
-      {isDesktop && <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />}
+      {isDesktop && <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} unreadMessages={unreadMessages} />}
       
       <div className={activeTab === 'astrology' ? '' : ''}>
         {activeTab === 'home' && (
           <HomeTab setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} isDesktop={isDesktop} />
         )}
+        {activeTab === 'messages' && <ChatTab isDesktop={isDesktop} />}
         {activeTab === 'feed' && <FeedTab isDesktop={isDesktop} />}
         {activeTab === 'mantras' && <MantrasTab isDesktop={isDesktop} />}
         {activeTab === 'calendar' && <CalendarTab isDesktop={isDesktop} />}
@@ -3816,7 +3846,7 @@ export default function DevoteeDashboard() {
         {activeTab === 'profile' && <ProfileTab isDesktop={isDesktop} />}
       </div>
       
-      {!isDesktop && <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />}
+      {!isDesktop && <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} unreadMessages={unreadMessages} />}
     </div>
   );
 }

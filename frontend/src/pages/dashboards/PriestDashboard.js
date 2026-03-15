@@ -13,6 +13,7 @@ import {
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
+import ChatTab from '../../components/Chat/ChatTab';
 
 // Role display configuration
 const ROLE_CONFIG = {
@@ -26,6 +27,7 @@ const ROLE_CONFIG = {
 // Tab configurations - split into main and more
 const mainTabs = [
   { id: 'home', label: 'Home', icon: Home },
+  { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'posts', label: 'Posts', icon: Send },
   { id: 'bookings', label: 'Bookings', icon: Calendar },
   { id: 'profile', label: 'Profile', icon: User },
@@ -177,6 +179,8 @@ export default function PriestDashboard() {
     switch (activeTab) {
       case 'home':
         return <HomeTab analytics={analytics} bookings={bookings} panchang={panchang} festivals={festivals} posts={posts} updateStatus={updateBookingStatus} />;
+      case 'messages':
+        return <ChatTab isDesktop={true} />;
       case 'posts':
         return <PostsTab posts={posts} onRefresh={fetchDashboardData} />;
       case 'profile':
