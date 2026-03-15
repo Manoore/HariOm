@@ -129,7 +129,7 @@ function AdminBottomNav({ activeTab, setActiveTab }) {
 }
 
 // Overview Tab
-function OverviewTab({ stats, users, isDesktop }) {
+function OverviewTab({ stats, users, isDesktop, loading }) {
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       {/* Stats Grid */}
@@ -138,22 +138,30 @@ function OverviewTab({ stats, users, isDesktop }) {
         <div className={`grid ${isDesktop ? 'grid-cols-4' : 'grid-cols-2'} gap-4`}>
           <div className="bg-slate-800/50 rounded-2xl p-4 lg:p-6">
             <Users className="w-8 h-8 text-indigo-400 mb-2" />
-            <p className="text-2xl lg:text-3xl font-bold text-white">{stats?.total_users || 0}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-white">
+              {loading ? <span className="animate-pulse">...</span> : (stats?.total_users || 0)}
+            </p>
             <p className="text-slate-400 text-sm">Total Users</p>
           </div>
           <div className="bg-slate-800/50 rounded-2xl p-4 lg:p-6">
             <Star className="w-8 h-8 text-yellow-400 mb-2" />
-            <p className="text-2xl lg:text-3xl font-bold text-white">{stats?.total_priests || 0}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-white">
+              {loading ? <span className="animate-pulse">...</span> : (stats?.total_priests || 0)}
+            </p>
             <p className="text-slate-400 text-sm">Priests</p>
           </div>
           <div className="bg-slate-800/50 rounded-2xl p-4 lg:p-6">
             <ShoppingBag className="w-8 h-8 text-green-400 mb-2" />
-            <p className="text-2xl lg:text-3xl font-bold text-white">{stats?.total_products || 0}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-white">
+              {loading ? <span className="animate-pulse">...</span> : (stats?.total_products || 0)}
+            </p>
             <p className="text-slate-400 text-sm">Products</p>
           </div>
           <div className="bg-slate-800/50 rounded-2xl p-4 lg:p-6">
             <Calendar className="w-8 h-8 text-orange-400 mb-2" />
-            <p className="text-2xl lg:text-3xl font-bold text-white">{stats?.total_bookings || 0}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-white">
+              {loading ? <span className="animate-pulse">...</span> : (stats?.total_bookings || 0)}
+            </p>
             <p className="text-slate-400 text-sm">Bookings</p>
           </div>
         </div>
@@ -201,11 +209,16 @@ function OverviewTab({ stats, users, isDesktop }) {
 }
 
 // Users Tab
-function UsersTab({ users, isDesktop }) {
+function UsersTab({ users, isDesktop, loading }) {
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       <div className="pt-4">
         <h2 className="font-cinzel text-xl font-semibold text-white mb-4">All Users</h2>
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+          </div>
+        ) : (
         <div className={`${isDesktop ? 'grid grid-cols-2 xl:grid-cols-3 gap-4' : 'space-y-3'}`}>
           {users.map((u) => (
             <div key={u.id} className="bg-slate-800/50 rounded-xl p-4">
@@ -234,13 +247,14 @@ function UsersTab({ users, isDesktop }) {
             </div>
           ))}
         </div>
+        )}
       </div>
     </div>
   );
 }
 
 // Priests Tab
-function PriestsTab({ priests, isDesktop }) {
+function PriestsTab({ priests, isDesktop, loading }) {
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       <div className="pt-4">
@@ -296,7 +310,7 @@ function PriestsTab({ priests, isDesktop }) {
 }
 
 // Products Tab
-function ProductsTab({ products, isDesktop }) {
+function ProductsTab({ products, isDesktop, loading }) {
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       <div className="pt-4">
@@ -332,7 +346,7 @@ function ProductsTab({ products, isDesktop }) {
 }
 
 // Bookings Tab
-function BookingsTab({ bookings, isDesktop }) {
+function BookingsTab({ bookings, isDesktop, loading }) {
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       <div className="pt-4">
@@ -418,7 +432,7 @@ export default function AdminDashboard() {
       {!isDesktop && (
         <div className="px-4 pt-8 pb-6">
           <p className="text-slate-400 text-sm">Admin Dashboard</p>
-          <h1 className="font-cinzel text-2xl font-bold text-white">{user?.name}</h1>
+          <h1 className="font-cinzel text-2xl font-bold text-white">{user?.name || 'Admin'}</h1>
         </div>
       )}
 
@@ -427,7 +441,7 @@ export default function AdminDashboard() {
         <div className="px-8 pt-8 pb-4 flex items-center justify-between">
           <div>
             <p className="text-slate-400 text-sm">Admin Dashboard</p>
-            <h1 className="font-cinzel text-2xl font-bold text-white">{user?.name}</h1>
+            <h1 className="font-cinzel text-2xl font-bold text-white">{user?.name || 'Admin'}</h1>
           </div>
           <button className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors">
             <Bell className="w-5 h-5" />
@@ -435,19 +449,12 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-        </div>
-      ) : (
-        <>
-          {activeTab === 'overview' && <OverviewTab stats={stats} users={users} isDesktop={isDesktop} />}
-          {activeTab === 'users' && <UsersTab users={users} isDesktop={isDesktop} />}
-          {activeTab === 'priests' && <PriestsTab priests={priests} isDesktop={isDesktop} />}
-          {activeTab === 'products' && <ProductsTab products={products} isDesktop={isDesktop} />}
-          {activeTab === 'bookings' && <BookingsTab bookings={bookings} isDesktop={isDesktop} />}
-        </>
-      )}
+      {/* Content - show skeleton/loading states inside tabs instead of full page spinner */}
+      {activeTab === 'overview' && <OverviewTab stats={stats} users={users} isDesktop={isDesktop} loading={loading} />}
+      {activeTab === 'users' && <UsersTab users={users} isDesktop={isDesktop} loading={loading} />}
+      {activeTab === 'priests' && <PriestsTab priests={priests} isDesktop={isDesktop} loading={loading} />}
+      {activeTab === 'products' && <ProductsTab products={products} isDesktop={isDesktop} loading={loading} />}
+      {activeTab === 'bookings' && <BookingsTab bookings={bookings} isDesktop={isDesktop} loading={loading} />}
 
       {/* Mobile Logout - shown only on overview */}
       {!isDesktop && activeTab === 'overview' && (

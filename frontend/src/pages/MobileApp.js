@@ -144,6 +144,9 @@ export default function MobileApp() {
   const { user, loading } = useAuth();
   const isMobile = useIsMobile();
 
+  // Check if we have cached user to avoid loading flash
+  const hasCachedUser = localStorage.getItem('divine_user');
+
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
     setAuthMode(mode);
@@ -160,7 +163,8 @@ export default function MobileApp() {
       );
     }
 
-    if (loading) {
+    // Show loading only if no cached user AND still loading
+    if (loading && !hasCachedUser) {
       return (
         <div className="fixed inset-0 bg-cream flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-saffron border-t-transparent rounded-full animate-spin" />
@@ -169,16 +173,18 @@ export default function MobileApp() {
     }
 
     // Not logged in - show auth screen
-    if (!user) {
+    if (!user && !hasCachedUser) {
       return <AuthScreen />;
     }
 
-    // Logged in - show appropriate dashboard based on role
-    return renderDashboard(user.role);
+    // Logged in (or have cached user) - show appropriate dashboard based on role
+    const userRole = user?.role || (hasCachedUser ? JSON.parse(hasCachedUser)?.role : 'devotee');
+    return renderDashboard(userRole);
   }
 
   // Desktop/Web flow: Landing Page → Auth → Dashboard
-  if (loading) {
+  // Show loading only if no cached user AND still loading
+  if (loading && !hasCachedUser) {
     return (
       <div className="fixed inset-0 bg-cream flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-saffron border-t-transparent rounded-full animate-spin" />
@@ -186,9 +192,10 @@ export default function MobileApp() {
     );
   }
 
-  // Logged in user on web - show dashboard
-  if (user) {
-    return renderDashboard(user.role);
+  // Logged in user on web (or have cached user) - show dashboard
+  if (user || hasCachedUser) {
+    const userRole = user?.role || (hasCachedUser ? JSON.parse(hasCachedUser)?.role : 'devotee');
+    return renderDashboard(userRole);
   }
 
   // Not logged in on web
