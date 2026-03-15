@@ -666,10 +666,10 @@ function MantrasTab({ isDesktop }) {
     window.speechSynthesis.onvoiceschanged = loadAvailableVoices;
   };
   
-  // Audio element ref for ElevenLabs playback
+  // Audio element ref for Sarvam AI playback
   const audioRef = React.useRef(null);
   
-  // Speak mantra text using ElevenLabs or browser fallback
+  // Speak mantra text using Sarvam AI or browser fallback
   const speakMantra = async (mantra, textType = 'transliteration') => {
     if (isSpeaking) {
       // Stop current playback
@@ -689,9 +689,9 @@ function MantrasTab({ isDesktop }) {
       return;
     }
     
-    // Check if using ElevenLabs voice
+    // Check if using Sarvam AI voice
     if (selectedVoice && selectedVoice.voice_id && !selectedVoice.voice_id.startsWith('browser_')) {
-      // Use ElevenLabs API
+      // Use Sarvam AI API
       setIsSpeaking(true);
       setCurrentlyPlaying(mantra.name);
       
@@ -723,7 +723,7 @@ function MantrasTab({ isDesktop }) {
           throw new Error('Invalid audio response');
         }
       } catch (error) {
-        console.error('ElevenLabs TTS error:', error);
+        console.error('Sarvam AI TTS error:', error);
         setIsSpeaking(false);
         setCurrentlyPlaying(null);
         toast.error('Voice generation failed. Try again.');
