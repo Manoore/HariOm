@@ -219,7 +219,6 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   const resetPhoneAuth = () => {
     setOtpSent(false);
     setOtp('');
-    recaptchaInitialized.current = false;
   };
 
   return (
