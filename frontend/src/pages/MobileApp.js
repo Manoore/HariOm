@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import AuthScreen from './AuthScreen';
 import LandingPage from './LandingPage';
 import DevoteeDashboard from './dashboards/DevoteeDashboard';
+import AstrologerDashboard from './dashboards/AstrologerDashboard';
 import PriestDashboard from './dashboards/PriestDashboard';
 import AdminDashboard from './dashboards/AdminDashboard';
 import ShopOwnerDashboard from './dashboards/ShopOwnerDashboard';
@@ -448,7 +449,7 @@ export default function MobileApp() {
       case 'shop_owner':
         return ShopOwnerDashboard;
       case 'astrologer':
-        return DevoteeDashboard;
+        return AstrologerDashboard;
       default:
         return DevoteeDashboard;
     }

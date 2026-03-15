@@ -567,3 +567,140 @@ async def get_call_history(user_id: str, role: str = "user", limit: int = 20, sk
         })
     
     return calls
+
+# ===================== ASTROLOGER DASHBOARD =====================
+
+async def get_astrologer_dashboard_stats(user_id: str) -> Dict[str, Any]:
+    """Get dashboard statistics for an astrologer"""
+    from datetime import timedelta
+    
+    profile = await get_astrologer_profile(user_id)
+    if not profile:
+        return None
+    
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - timedelta(days=today_start.weekday())
+    month_start = today_start.replace(day=1)
+    
+    # Get all completed calls
+    all_calls = await consultation_calls_collection.find({
+        "astrologer_user_id": user_id,
+        "status": "completed"
+    }).to_list(None)
+    
+    # Calculate stats
+    total_calls = len(all_calls)
+    total_earnings = sum(call.get("astrologer_earning", 0) for call in all_calls)
+    total_minutes = sum(call.get("duration_seconds", 0) for call in all_calls) // 60
+    
+    # Today's stats
+    today_calls = [c for c in all_calls if c["started_at"].replace(tzinfo=timezone.utc) >= today_start]
+    today_earnings = sum(call.get("astrologer_earning", 0) for call in today_calls)
+    today_minutes = sum(call.get("duration_seconds", 0) for call in today_calls) // 60
+    
+    # This week's stats
+    week_calls = [c for c in all_calls if c["started_at"].replace(tzinfo=timezone.utc) >= week_start]
+    week_earnings = sum(call.get("astrologer_earning", 0) for call in week_calls)
+    
+    # This month's stats
+    month_calls = [c for c in all_calls if c["started_at"].replace(tzinfo=timezone.utc) >= month_start]
+    month_earnings = sum(call.get("astrologer_earning", 0) for call in month_calls)
+    
+    # Active calls (currently in progress)
+    active_calls = await consultation_calls_collection.count_documents({
+        "astrologer_user_id": user_id,
+        "status": "active"
+    })
+    
+    # Pending balance (not yet paid out)
+    pending_balance = total_earnings  # In real app, subtract already paid out
+    
+    return {
+        "profile": profile,
+        "stats": {
+            "total_calls": total_calls,
+            "total_earnings": total_earnings,
+            "total_minutes": total_minutes,
+            "today_calls": len(today_calls),
+            "today_earnings": today_earnings,
+            "today_minutes": today_minutes,
+            "week_calls": len(week_calls),
+            "week_earnings": week_earnings,
+            "month_calls": len(month_calls),
+            "month_earnings": month_earnings,
+            "active_calls": active_calls,
+            "pending_balance": pending_balance,
+            "avg_call_duration": total_minutes // total_calls if total_calls > 0 else 0
+        }
+    }
+
+async def get_astrologer_earnings_report(user_id: str, period: str = "week") -> Dict[str, Any]:
+    """Get detailed earnings report for an astrologer"""
+    from datetime import timedelta
+    
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    if period == "day":
+        start_date = today_start
+        group_format = "%H:00"
+    elif period == "week":
+        start_date = today_start - timedelta(days=6)
+        group_format = "%Y-%m-%d"
+    elif period == "month":
+        start_date = today_start - timedelta(days=29)
+        group_format = "%Y-%m-%d"
+    else:
+        start_date = today_start - timedelta(days=6)
+        group_format = "%Y-%m-%d"
+    
+    # Get calls in period
+    calls = await consultation_calls_collection.find({
+        "astrologer_user_id": user_id,
+        "status": "completed",
+        "started_at": {"$gte": start_date}
+    }).sort("started_at", 1).to_list(None)
+    
+    # Group by date/hour
+    earnings_by_period = {}
+    for call in calls:
+        call_date = call["started_at"]
+        if call_date.tzinfo is None:
+            call_date = call_date.replace(tzinfo=timezone.utc)
+        period_key = call_date.strftime(group_format)
+        
+        if period_key not in earnings_by_period:
+            earnings_by_period[period_key] = {
+                "calls": 0,
+                "earnings": 0,
+                "minutes": 0
+            }
+        
+        earnings_by_period[period_key]["calls"] += 1
+        earnings_by_period[period_key]["earnings"] += call.get("astrologer_earning", 0)
+        earnings_by_period[period_key]["minutes"] += call.get("duration_seconds", 0) // 60
+    
+    # Convert to list
+    chart_data = [
+        {"period": k, **v}
+        for k, v in sorted(earnings_by_period.items())
+    ]
+    
+    # Summary
+    total_earnings = sum(c.get("astrologer_earning", 0) for c in calls)
+    total_calls = len(calls)
+    total_minutes = sum(c.get("duration_seconds", 0) for c in calls) // 60
+    
+    return {
+        "period": period,
+        "start_date": start_date.isoformat(),
+        "end_date": now.isoformat(),
+        "summary": {
+            "total_earnings": total_earnings,
+            "total_calls": total_calls,
+            "total_minutes": total_minutes,
+            "avg_earning_per_call": total_earnings / total_calls if total_calls > 0 else 0
+        },
+        "chart_data": chart_data
+    }

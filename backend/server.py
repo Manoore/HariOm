@@ -4032,7 +4032,8 @@ from video_consultation import (
     get_system_settings, update_system_settings,
     get_user_wallet, add_wallet_balance, get_wallet_transactions,
     get_astrologer_profile, update_astrologer_profile, get_available_astrologers,
-    start_consultation_call, process_call_minute, end_consultation_call, get_call_history
+    start_consultation_call, process_call_minute, end_consultation_call, get_call_history,
+    get_astrologer_dashboard_stats, get_astrologer_earnings_report
 )
 
 # Admin Settings Endpoints
@@ -4119,6 +4120,38 @@ async def set_astrologer_availability(request: Request, user: dict = Depends(get
     is_available = data.get("is_available", False)
     profile = await update_astrologer_profile(str(user["_id"]), {"is_available": is_available})
     return {"is_available": profile["is_available"]}
+
+# Astrologer Dashboard Endpoints
+@app.get("/api/astrologer/dashboard")
+async def get_astrologer_dashboard(user: dict = Depends(get_current_user)):
+    """Get astrologer dashboard with stats"""
+    if user.get("role") != "astrologer":
+        raise HTTPException(status_code=403, detail="Astrologer access required")
+    
+    data = await get_astrologer_dashboard_stats(str(user["_id"]))
+    if not data:
+        raise HTTPException(status_code=404, detail="Astrologer profile not found")
+    return data
+
+@app.get("/api/astrologer/earnings")
+async def get_astrologer_earnings(period: str = "week", user: dict = Depends(get_current_user)):
+    """Get astrologer earnings report"""
+    if user.get("role") != "astrologer":
+        raise HTTPException(status_code=403, detail="Astrologer access required")
+    
+    if period not in ["day", "week", "month"]:
+        period = "week"
+    
+    return await get_astrologer_earnings_report(str(user["_id"]), period)
+
+@app.get("/api/astrologer/calls")
+async def get_astrologer_calls(skip: int = 0, limit: int = 20, user: dict = Depends(get_current_user)):
+    """Get astrologer's call history"""
+    if user.get("role") != "astrologer":
+        raise HTTPException(status_code=403, detail="Astrologer access required")
+    
+    calls = await get_call_history(str(user["_id"]), "astrologer", limit, skip)
+    return {"calls": calls}
 
 # Video Consultation Endpoints
 @app.post("/api/consultation/start")

@@ -9,6 +9,7 @@ import {
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
+import AstrologerDashboard from './dashboards/AstrologerDashboard';
 
 // Role display configuration
 const ROLE_CONFIG = {
@@ -56,6 +57,8 @@ export default function DashboardPage() {
       return <AdminDashboard />;
     case 'priest':
       return <PriestDashboard />;
+    case 'astrologer':
+      return <AstrologerDashboard />;
     case 'shop_owner':
       return <ShopOwnerDashboard />;
     default:
