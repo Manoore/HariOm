@@ -241,7 +241,7 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
     try {
       const requests = [
         api.get('/api/priests?limit=3'),
-        api.get('/api/festivals'),
+        api.get('/api/festivals/upcoming?limit=3'),
         api.get('/api/bookings'),
         api.get('/api/orders')
       ];
@@ -254,7 +254,7 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       const results = await Promise.all(requests);
       
       setPriests(results[0].data.priests || []);
-      setFestivals((results[1].data.festivals || []).slice(0, 3));
+      setFestivals(results[1].data.festivals || []);
       setBookings((results[2].data.bookings || []).slice(0, 3));
       setOrders((results[3].data.orders || []).slice(0, 3));
       
@@ -375,18 +375,41 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
         <div className="mb-6">
           <div className="flex justify-between items-center mb-3">
             <h2 className="font-cinzel text-lg font-semibold text-maroon">Upcoming Festivals</h2>
+            <button onClick={() => setActiveTab('calendar')} className="text-saffron text-sm">
+              View all
+            </button>
           </div>
-          <div className={`${isDesktop ? 'grid grid-cols-1 gap-4' : 'flex gap-3 overflow-x-auto pb-2 -mx-4 px-4'} scrollbar-hide`}>
-            {festivals.map((festival) => (
+          <div className={`${isDesktop ? 'grid grid-cols-1 gap-3' : 'flex gap-3 overflow-x-auto pb-2 -mx-4 px-4'} scrollbar-hide`}>
+            {festivals.map((festival, idx) => (
               <div 
-                key={festival.id}
-                className={`${isDesktop ? '' : 'flex-shrink-0 w-40'} bg-gradient-to-br from-saffron to-gold rounded-2xl p-4 text-white`}
+                key={idx}
+                className={`${isDesktop ? '' : 'flex-shrink-0 w-44'} bg-gradient-to-br ${
+                  festival.is_today ? 'from-gold to-amber-500' : 
+                  festival.is_tomorrow ? 'from-saffron to-orange-500' : 
+                  'from-maroon to-maroon/80'
+                } rounded-2xl p-4 text-white`}
               >
-                <Calendar className="w-5 h-5 mb-2 opacity-80" />
+                <div className="flex items-start justify-between mb-2">
+                  <Calendar className="w-5 h-5 opacity-80" />
+                  {festival.is_today && (
+                    <span className="bg-white/30 text-xs px-2 py-0.5 rounded-full">Today!</span>
+                  )}
+                  {festival.is_tomorrow && (
+                    <span className="bg-white/30 text-xs px-2 py-0.5 rounded-full">Tomorrow</span>
+                  )}
+                </div>
                 <p className="font-semibold text-sm">{festival.name}</p>
-                <p className="text-xs opacity-80">{festival.date}</p>
+                <p className="text-xs opacity-80 mt-1">{festival.display_date}</p>
+                <p className="text-xs opacity-70 mt-0.5">
+                  {festival.days_until === 0 ? 'Today' : `${festival.days_until} days away`}
+                </p>
               </div>
             ))}
+            {festivals.length === 0 && (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                Loading festivals...
+              </div>
+            )}
           </div>
         </div>
 
