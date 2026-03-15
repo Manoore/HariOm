@@ -12,7 +12,7 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - Festival calendar and temple directory
 
 ## User Choices
-- **Authentication**: Firebase (placeholder - user to provide keys later)
+- **Authentication**: Firebase (NOW INTEGRATED!)
 - **Payments**: Stripe (international) + Razorpay (India)
 - **Video Meetings**: Skipped for MVP
 - **Horoscope**: Local calculation service
@@ -25,38 +25,39 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - **Backend**: Python FastAPI
 - **Database**: MongoDB
 - **Styling**: Tailwind CSS with custom traditional theme
+- **Authentication**: Firebase Auth (email/password + Google Sign-In)
 - **Mobile**: React Native with Expo (separate project at /app/divine-mobile)
 
-## App Flows
+## Firebase Configuration (March 15, 2026)
+- **Project ID**: divine-104d4
+- **Auth Domain**: divine-104d4.firebaseapp.com
+- **Features Enabled**:
+  - Email/Password authentication
+  - Google Sign-In
+  - User sync with backend database
 
-### Web Flow (Desktop/Tablet)
-1. **Marketing Landing Page** → Full landing page with 3D animated devotional icons
-2. **Login/Sign Up** → Authentication with user type selection
-3. **Dashboard** → Role-specific dashboard with sidebar navigation
+## What's Been Implemented
 
-### Mobile Flow (Phone)
-1. **Splash Screen** → Animated Divine logo with lamp
-2. **Welcome Screen** → 3D animated feature icons, Get Started / Login buttons
-3. **Login/Register** → Authentication with user type dropdown
-4. **Dashboard** → Role-specific dashboard with bottom navigation
+### Firebase Authentication (COMPLETE)
+- [x] Firebase SDK installed and configured
+- [x] Email/Password authentication
+- [x] Google Sign-In with popup
+- [x] Firebase user sync with backend MongoDB
+- [x] Token-based API authentication
+- [x] Login screen with Google button
+- [x] Register screen with Google button
+- [x] Welcome screen with Google button
+- [x] Legacy login fallback for existing users
 
-## What's Been Implemented (March 2026)
-
-### UI Updates - 3D Animated Icons
-- [x] Removed ALL emojis from the app
-- [x] Created custom 3D animated SVG icons:
-  - **DiyaIcon** - Animated oil lamp with flickering flame
-  - **OmIcon** - Sacred Om symbol with rotation
-  - **KalashIcon** - Traditional kalash with floating animation
-  - **TempleIcon** - Hindu temple with 3D perspective
-  - **BellIcon** - Temple bell with swinging animation
-  - **ConchIcon** - Shankh/Conch shell
-  - **ZodiacIcon** - Rotating zodiac wheel
-  - **CartIcon** - Pooja basket with bouncing animation
-- [x] Applied icons across Landing Page, Auth Screen, and Dashboards
+### UI Updates
+- [x] Animated Aarti (Harathi) on landing page - bottom-right corner
+- [x] Clickable DIVINE logo scrolls to top (navbar and footer)
+- [x] 3D animated SVG devotional icons throughout the app
+- [x] No emojis used anywhere
 
 ### Backend APIs (100% Working)
 - [x] User authentication (register/login/profile)
+- [x] Firebase sync endpoints (/api/auth/firebase-sync, /api/auth/firebase-register)
 - [x] Priests CRUD with services
 - [x] Bookings system
 - [x] Products/Marketplace
@@ -67,32 +68,26 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [x] Admin stats and management
 
 ### Frontend (100% Complete)
-- [x] Web Marketing Landing Page with 3D icons
+- [x] Web Marketing Landing Page with 3D icons and animated Aarti
+- [x] Firebase Auth integration (Google + Email/Password)
 - [x] Splash screen with animated Divine logo
 - [x] Welcome screen with 3D feature icons
-- [x] Login/Register screens with user type dropdown
-- [x] **Devotee Dashboard** - Responsive with 3D quick action icons
-- [x] **Admin Dashboard** - Responsive with sidebar
+- [x] Login/Register screens with Google Sign-In
+- [x] Devotee Dashboard - Responsive
+- [x] Admin Dashboard - Responsive
 - [x] Priest Dashboard
 - [x] Shop Owner Dashboard
 
-### Mobile (Expo) - Partially Complete
-- [x] Project setup at /app/divine-mobile
-- [x] Navigation structure
-- [x] Auth context and screens
-- [x] DevoteeDashboard with tabs
-- [ ] Expo preview not working in cloud environment (requires EXPO_TOKEN)
-
 ## Prioritized Backlog
 
-### P0 (Critical)
-- [ ] Firebase Authentication integration (user to provide credentials)
-- [ ] Expo authentication for mobile preview (user to provide EXPO_TOKEN)
+### P0 (Critical) - COMPLETED
+- [x] Firebase Authentication integration ✅
 
 ### P1 (High Priority)
 - [ ] Razorpay payment integration with real keys
 - [ ] Priest booking payment flow
 - [ ] Push notifications for bookings
+- [ ] Expo mobile preview (requires EXPO_TOKEN)
 
 ### P2 (Medium Priority)
 - [ ] Astrologer dashboard
@@ -109,26 +104,25 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 
 ## Tech Stack
 ```
-Frontend: React 18, Tailwind CSS, Framer Motion
-Backend: FastAPI, Motor (MongoDB async driver)
+Frontend: React 18, Tailwind CSS, Framer Motion, Firebase SDK
+Backend: FastAPI, Motor (MongoDB async driver), firebase-admin
 Database: MongoDB
-Auth: JWT (Firebase integration pending)
+Auth: Firebase Auth (Google + Email/Password)
 Payments: Stripe (configured), Razorpay (pending keys)
 Mobile: React Native with Expo
 Icons: Custom 3D animated SVGs
 ```
 
 ## Test Credentials
-- **Admin**: admin@divineapp.com / admin123
-- **Devotee**: test.devotee@divineapp.com / devotee123
+- **Admin**: admin@divineapp.com / admin123 (legacy)
+- **Google Sign-In**: Use any Google account
 
 ## Key Files
-- `frontend/src/pages/LandingPage.js` - Web marketing landing page with 3D icons
-- `frontend/src/pages/AuthScreen.js` - Authentication with 3D feature icons
-- `frontend/src/pages/dashboards/DevoteeDashboard.js` - Dashboard with 3D quick actions
-- `frontend/src/pages/dashboards/AdminDashboard.js` - Admin dashboard
-- `divine-mobile/` - React Native Expo project
+- `frontend/src/lib/firebase.js` - Firebase configuration and auth functions
+- `frontend/src/contexts/AuthContext.js` - Auth context with Firebase integration
+- `frontend/src/pages/LandingPage.js` - Landing page with Aarti animation
+- `frontend/src/pages/AuthScreen.js` - Auth screens with Google Sign-In
+- `backend/server.py` - Backend with Firebase sync endpoints
 
 ## Preview URLs
 - **Web App**: https://divine-spiritual.preview.emergentagent.com
-- **Expo QR Code**: https://divine-spiritual.preview.emergentagent.com/expo-qr.html (requires EXPO_TOKEN)

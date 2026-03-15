@@ -301,6 +301,132 @@ async def get_me(user: dict = Depends(get_current_user)):
         "is_verified": user.get("is_verified", False)
     }
 
+# ===================== FIREBASE AUTH ROUTES =====================
+from pydantic import BaseModel
+
+class FirebaseSyncRequest(BaseModel):
+    firebase_uid: str
+    email: str
+    name: str
+    photo_url: Optional[str] = None
+
+class FirebaseRegisterRequest(BaseModel):
+    firebase_uid: str
+    email: str
+    name: str
+    phone: Optional[str] = None
+    role: str = "devotee"
+
+@app.post("/api/auth/firebase-sync")
+async def firebase_sync(data: FirebaseSyncRequest):
+    """Sync Firebase user with backend - create if not exists, return existing if found"""
+    # Check if user already exists by firebase_uid or email
+    user = await users_collection.find_one({
+        "$or": [
+            {"firebase_uid": data.firebase_uid},
+            {"email": data.email}
+        ]
+    })
+    
+    if user:
+        # Update firebase_uid if not set
+        if not user.get("firebase_uid"):
+            await users_collection.update_one(
+                {"_id": user["_id"]},
+                {"$set": {"firebase_uid": data.firebase_uid}}
+            )
+        
+        return {
+            "user": {
+                "id": str(user["_id"]),
+                "email": user["email"],
+                "name": user["name"],
+                "role": user["role"],
+                "is_verified": user.get("is_verified", False)
+            }
+        }
+    
+    # Create new user (default role: devotee)
+    user_dict = {
+        "firebase_uid": data.firebase_uid,
+        "email": data.email,
+        "name": data.name,
+        "photo_url": data.photo_url,
+        "role": UserRole.DEVOTEE,
+        "is_verified": True,  # Firebase users are pre-verified
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await users_collection.insert_one(user_dict)
+    
+    return {
+        "user": {
+            "id": str(result.inserted_id),
+            "email": data.email,
+            "name": data.name,
+            "role": UserRole.DEVOTEE
+        }
+    }
+
+@app.post("/api/auth/firebase-register")
+async def firebase_register(data: FirebaseRegisterRequest):
+    """Register a new user from Firebase with specific role"""
+    # Check if user already exists
+    existing = await users_collection.find_one({
+        "$or": [
+            {"firebase_uid": data.firebase_uid},
+            {"email": data.email}
+        ]
+    })
+    
+    if existing:
+        # Update role if needed
+        if existing.get("role") != data.role:
+            await users_collection.update_one(
+                {"_id": existing["_id"]},
+                {"$set": {"role": data.role, "firebase_uid": data.firebase_uid}}
+            )
+        
+        return {
+            "user": {
+                "id": str(existing["_id"]),
+                "email": existing["email"],
+                "name": existing["name"],
+                "role": data.role,
+                "is_verified": existing.get("is_verified", False)
+            }
+        }
+    
+    # Create new user with specified role
+    role_map = {
+        "devotee": UserRole.DEVOTEE,
+        "priest": UserRole.PRIEST,
+        "astrologer": UserRole.ASTROLOGER,
+        "shop_owner": UserRole.SHOP_OWNER,
+        "admin": UserRole.ADMIN
+    }
+    
+    user_dict = {
+        "firebase_uid": data.firebase_uid,
+        "email": data.email,
+        "name": data.name,
+        "phone": data.phone,
+        "role": role_map.get(data.role, UserRole.DEVOTEE),
+        "is_verified": True,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await users_collection.insert_one(user_dict)
+    
+    return {
+        "user": {
+            "id": str(result.inserted_id),
+            "email": data.email,
+            "name": data.name,
+            "role": user_dict["role"]
+        }
+    }
+
 @app.put("/api/auth/profile")
 async def update_profile(update_data: UserUpdate, user: dict = Depends(get_current_user)):
     update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
