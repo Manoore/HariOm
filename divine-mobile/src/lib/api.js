@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Backend API URL
-const API_BASE_URL = 'https://dharma-hub-11.preview.emergentagent.com';
+const API_BASE_URL = 'https://vedic-portal-2.preview.emergentagent.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
