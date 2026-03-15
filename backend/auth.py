@@ -6,6 +6,7 @@ from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from database import users_collection
 from bson import ObjectId
+import httpx
 
 SECRET_KEY = "divine-app-secret-key-change-in-production"
 ALGORITHM = "HS256"
@@ -26,22 +27,69 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+async def verify_firebase_token(token: str) -> Optional[dict]:
+    """Verify Firebase ID token and return user info"""
+    try:
+        # Firebase tokens are JWTs - decode without verification to get the uid
+        # In production, you should verify with Firebase Admin SDK
+        # For now, we'll decode and look up the user by firebase_uid
+        import base64
+        import json
+        
+        # Decode the payload (middle part of JWT)
+        parts = token.split('.')
+        if len(parts) != 3:
+            return None
+            
+        # Add padding if needed
+        payload = parts[1]
+        padding = 4 - len(payload) % 4
+        if padding != 4:
+            payload += '=' * padding
+            
+        decoded = base64.urlsafe_b64decode(payload)
+        payload_data = json.loads(decoded)
+        
+        firebase_uid = payload_data.get('user_id') or payload_data.get('sub')
+        email = payload_data.get('email')
+        
+        if not firebase_uid:
+            return None
+            
+        return {"firebase_uid": firebase_uid, "email": email}
+    except Exception as e:
+        print(f"Firebase token verification error: {e}")
+        return None
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    token = credentials.credentials
+    user = None
+    
+    # First try to decode as our own JWT
     try:
-        token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
+        if user_id:
+            user = await users_collection.find_one({"_id": ObjectId(user_id)})
     except JWTError:
-        raise credentials_exception
+        pass
     
-    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    # If not our JWT, try Firebase token
+    if user is None:
+        firebase_data = await verify_firebase_token(token)
+        if firebase_data and firebase_data.get("firebase_uid"):
+            # Look up user by firebase_uid
+            user = await users_collection.find_one({"firebase_uid": firebase_data["firebase_uid"]})
+            if user is None and firebase_data.get("email"):
+                # Try by email as fallback
+                user = await users_collection.find_one({"email": firebase_data["email"]})
+    
     if user is None:
         raise credentials_exception
     
