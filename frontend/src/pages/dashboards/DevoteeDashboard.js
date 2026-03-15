@@ -289,105 +289,6 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
         ))}
       </div>
 
-      {/* My Bookings & My Orders Row */}
-      <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''} mb-8`}>
-        {/* My Bookings */}
-        <div className="mb-6 lg:mb-0">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="font-cinzel text-lg font-semibold text-maroon">My Bookings</h2>
-            <button onClick={() => setActiveTab('profile')} className="text-saffron text-sm hover:underline">
-              View all
-            </button>
-          </div>
-          {bookings.length === 0 ? (
-            <div className="bg-white rounded-2xl p-6 text-center border border-orange-50">
-              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">No bookings yet</p>
-              <button 
-                onClick={() => setActiveTab('priests')}
-                className="mt-3 text-saffron text-sm font-medium hover:underline"
-              >
-                Book a Priest
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {bookings.map((booking) => (
-                <div key={booking.id} className="bg-white rounded-xl p-4 border border-orange-50 shadow-sm">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold text-gray-800">{booking.service_name}</p>
-                      <p className="text-sm text-gray-500">{booking.priest_name}</p>
-                      {booking.scheduled_date && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          {new Date(booking.scheduled_date).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                      booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                      booking.status === 'completed' ? 'bg-blue-100 text-blue-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {booking.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* My Orders */}
-        <div className="mb-6 lg:mb-0">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="font-cinzel text-lg font-semibold text-maroon">My Orders</h2>
-            <button onClick={() => setActiveTab('profile')} className="text-saffron text-sm hover:underline">
-              View all
-            </button>
-          </div>
-          {orders.length === 0 ? (
-            <div className="bg-white rounded-2xl p-6 text-center border border-orange-50">
-              <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">No orders yet</p>
-              <button 
-                onClick={() => setActiveTab('shop')}
-                className="mt-3 text-saffron text-sm font-medium hover:underline"
-              >
-                Visit Pooja Store
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {orders.map((order) => (
-                <div key={order.id} className="bg-white rounded-xl p-4 border border-orange-50 shadow-sm">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        <Package className="w-5 h-5 text-saffron" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800">Order #{order.id?.slice(-6)}</p>
-                        <p className="text-sm text-gray-500">₹{order.total_amount}</p>
-                      </div>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                      order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                      order.status === 'processing' ? 'bg-purple-100 text-purple-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {order.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
       <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''}`}>
         {/* Upcoming Festivals */}
         <div className="mb-6">
@@ -442,6 +343,99 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-300" />
                 </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* My Bookings & My Orders Row - At Bottom */}
+      <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''} mt-4`}>
+        {/* My Bookings */}
+        <div className="mb-6 lg:mb-0">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="font-cinzel text-lg font-semibold text-maroon">My Bookings</h2>
+          </div>
+          {bookings.length === 0 ? (
+            <div className="bg-white rounded-2xl p-6 text-center border border-orange-50">
+              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">No bookings yet</p>
+              <button 
+                onClick={() => setActiveTab('priests')}
+                className="mt-3 text-saffron text-sm font-medium hover:underline"
+              >
+                Book a Priest
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {bookings.map((booking) => (
+                <div key={booking.id} className="bg-white rounded-xl p-4 border border-orange-50 shadow-sm">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold text-gray-800">{booking.service_name}</p>
+                      <p className="text-sm text-gray-500">{booking.priest_name}</p>
+                      {booking.scheduled_date && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(booking.scheduled_date).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                      booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                      booking.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {booking.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* My Orders */}
+        <div className="mb-6 lg:mb-0">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="font-cinzel text-lg font-semibold text-maroon">My Orders</h2>
+          </div>
+          {orders.length === 0 ? (
+            <div className="bg-white rounded-2xl p-6 text-center border border-orange-50">
+              <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">No orders yet</p>
+              <button 
+                onClick={() => setActiveTab('shop')}
+                className="mt-3 text-saffron text-sm font-medium hover:underline"
+              >
+                Visit Pooja Store
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {orders.map((order) => (
+                <div key={order.id} className="bg-white rounded-xl p-4 border border-orange-50 shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <Package className="w-5 h-5 text-saffron" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Order #{order.id?.slice(-6)}</p>
+                        <p className="text-sm text-gray-500">₹{order.total_amount}</p>
+                      </div>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                      order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                      order.status === 'processing' ? 'bg-purple-100 text-purple-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -890,8 +884,6 @@ function ShopTab({ isDesktop }) {
 // Profile Tab
 function ProfileTab({ isDesktop }) {
   const { user, logout, updateUser } = useAuth();
-  const [bookings, setBookings] = useState([]);
-  const [orders, setOrders] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -904,10 +896,6 @@ function ProfileTab({ isDesktop }) {
     gotra: user?.gotra || '',
     nakshatra: user?.nakshatra || ''
   });
-
-  useEffect(() => {
-    fetchUserData();
-  }, []);
 
   useEffect(() => {
     if (user) {
@@ -923,19 +911,6 @@ function ProfileTab({ isDesktop }) {
       });
     }
   }, [user]);
-
-  const fetchUserData = async () => {
-    try {
-      const [bookingsRes, ordersRes] = await Promise.all([
-        api.get('/api/bookings'),
-        api.get('/api/orders')
-      ]);
-      setBookings(bookingsRes.data.bookings || []);
-      setOrders(ordersRes.data.orders || []);
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -1184,73 +1159,6 @@ function ProfileTab({ isDesktop }) {
             )}
           </div>
         )}
-
-        <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''}`}>
-          {/* My Bookings */}
-          <div className="mb-6">
-            <h2 className="font-cinzel text-lg font-semibold text-maroon mb-3">My Bookings</h2>
-            {bookings.length === 0 ? (
-              <div className="bg-white rounded-xl p-8 text-center border border-orange-50">
-                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-400">No bookings yet</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {bookings.slice(0, 5).map((booking) => (
-                  <div key={booking.id} className="bg-white rounded-xl p-4 border border-orange-50">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold text-gray-800">{booking.service_name}</p>
-                        <p className="text-sm text-gray-500">{booking.priest_name}</p>
-                      </div>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        {booking.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* My Orders */}
-          <div className="mb-6">
-            <h2 className="font-cinzel text-lg font-semibold text-maroon mb-3">My Orders</h2>
-            {orders.length === 0 ? (
-              <div className="bg-white rounded-xl p-8 text-center border border-orange-50">
-                <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-400">No orders yet</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {orders.slice(0, 5).map((order) => (
-                  <div key={order.id} className="bg-white rounded-xl p-4 border border-orange-50">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <Package className="w-8 h-8 text-saffron" />
-                        <div>
-                          <p className="font-semibold text-gray-800">Order #{order.id.slice(-6)}</p>
-                          <p className="text-sm text-gray-500">₹{order.total_amount}</p>
-                        </div>
-                      </div>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                        order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                        'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Actions - Only show on mobile */}
         {!isDesktop && (
