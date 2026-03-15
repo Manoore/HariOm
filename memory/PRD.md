@@ -240,6 +240,21 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Backend APIs: wallet, consultation, astrologer profile
   - [x] WebSocket for real-time billing updates
 
+- [x] **Astrologer Dashboard** (NEW - March 15, 2026)
+  - [x] Dashboard home with performance overview
+  - [x] Stats cards: Today's Earnings, Minutes, Week, Month
+  - [x] Total Earnings card with consultations and minutes
+  - [x] Call History tab with detailed call logs
+  - [x] Earnings Report tab with Day/Week/Month filters
+  - [x] Earnings Breakdown chart visualization
+  - [x] Profile management with editable rate per minute
+  - [x] Specializations and Languages management (add/remove)
+  - [x] Online/Offline availability toggle
+  - [x] Messages tab (shared ChatTab component)
+  - [x] Role-based routing to AstrologerDashboard
+  - [x] Backend APIs: dashboard, earnings, calls
+  - [x] Responsive design for mobile and desktop
+
 - [x] **Priest Dashboard - FULLY IMPLEMENTED**
   - [x] **Home Tab** - Analytics overview with cards
     - Total Bookings, Completed, Classes, Content Posts stats
