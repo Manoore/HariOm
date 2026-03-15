@@ -183,6 +183,26 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
   - [x] Powered by Swiss Ephemeris (pyswisseph) for astronomical calculations
 
 ### P1.8 (Completed - March 15, 2026)
+- [x] **Comments & Likes Feature for Posts** (NEW)
+  - [x] Like/unlike posts with heart icon toggle
+  - [x] Comment on posts with text and/or images
+  - [x] Comment image upload via /api/upload/image
+  - [x] Delete own comments
+  - [x] View comments for any post
+  - [x] Like status check API
+  - [x] Real-time like count updates
+  - [x] Toast notifications for actions
+  - [x] Backend APIs: POST/GET/DELETE /api/posts/{id}/comments, POST /api/posts/{id}/like, GET /api/posts/{id}/like-status
+  - [x] PostCard component with full interaction support
+
+- [x] **Dedicated Feed Tab** (NEW)
+  - [x] "Spiritual Feed" tab added to desktop sidebar
+  - [x] "Feed" tab added to mobile bottom navigation
+  - [x] FeedTab component with paginated post loading
+  - [x] "Load More" button for pagination
+  - [x] Full PostCard support with likes/comments
+  - [x] data-testid attributes for testing
+
 - [x] **Priest Dashboard - FULLY IMPLEMENTED**
   - [x] **Home Tab** - Analytics overview with cards
     - Total Bookings, Completed, Classes, Content Posts stats
@@ -287,7 +307,7 @@ Icons: Custom 3D animated SVGs
 
 ## Test Credentials
 - **Admin**: admin@divineapp.com / admin123
-- **Devotee**: devotee@divineapp.com / devotee123
+- **Devotee**: devotee@test.com / test1234
 - **Priest**: pandit.sharma@divineapp.com / priest123
 - **Google Sign-In**: Any Google account
 
@@ -297,10 +317,12 @@ Icons: Custom 3D animated SVGs
 - `frontend/src/contexts/PaymentContext.js` - IP-based payment gateway selection
 - `frontend/src/components/PaymentComponents.js` - Stripe/Razorpay components
 - `frontend/src/pages/AuthScreen.js` - Centered auth screens
-- `frontend/src/pages/dashboards/PriestDashboard.js` - NEW: Complete Priest Dashboard with all features
-- `backend/server.py` - Backend with Firebase sync + Stripe + Priest APIs (lines 1790-2145)
+- `frontend/src/pages/dashboards/PriestDashboard.js` - Complete Priest Dashboard with all features
+- `frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee Dashboard with Feed tab, PostCard (comments/likes)
+- `backend/server.py` - Backend with Firebase sync + Stripe + Priest APIs + Comments/Likes APIs (lines 2647-2772)
 - `backend/config.py` - Configuration with Stripe keys
-- `backend/tests/test_priest_dashboard.py` - NEW: Pytest tests for Priest Dashboard
+- `backend/tests/test_priest_dashboard.py` - Pytest tests for Priest Dashboard
+- `backend/tests/test_post_comments_likes.py` - Pytest tests for Comments & Likes feature
 
 ## Preview URLs
 - **Web App**: https://divine-engage-1.preview.emergentagent.com
