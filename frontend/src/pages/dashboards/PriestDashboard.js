@@ -570,6 +570,60 @@ function PostsTab({ posts, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
   const [newPost, setNewPost] = useState({ content: '', image_url: '' });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload a valid image (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image too large. Maximum size is 5MB.');
+      return;
+    }
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target.result);
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post('/api/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setNewPost({ ...newPost, image_url: response.data.url });
+      toast.success('Image uploaded!');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload image');
+      setImagePreview(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    setNewPost({ ...newPost, image_url: '' });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const createPost = async () => {
     if (!newPost.content.trim()) {
@@ -581,6 +635,7 @@ function PostsTab({ posts, onRefresh }) {
       await api.post('/api/priest/posts', newPost);
       toast.success('Post published!');
       setNewPost({ content: '', image_url: '' });
+      setImagePreview(null);
       setShowModal(false);
       onRefresh();
     } catch (error) {
@@ -599,6 +654,12 @@ function PostsTab({ posts, onRefresh }) {
     } catch (error) {
       toast.error('Failed to delete');
     }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setNewPost({ content: '', image_url: '' });
+    setImagePreview(null);
   };
 
   return (
@@ -675,11 +736,11 @@ function PostsTab({ posts, onRefresh }) {
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              className="bg-white rounded-2xl max-w-lg w-full"
+              className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
             >
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
                 <h2 className="font-cinzel text-lg font-semibold text-maroon">Create Post</h2>
-                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-lg">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -693,25 +754,71 @@ function PostsTab({ posts, onRefresh }) {
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50 resize-none"
                 />
                 
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">Image URL (optional)</label>
+                {/* Image Upload Section */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Add Image (optional)</label>
+                  
+                  {/* Hidden file input */}
                   <input
-                    type="url"
-                    value={newPost.image_url}
-                    onChange={(e) => setNewPost({ ...newPost, image_url: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    className="hidden"
                   />
+                  
+                  {/* Image Preview or Upload Button */}
+                  {imagePreview || newPost.image_url ? (
+                    <div className="relative">
+                      <img 
+                        src={imagePreview || newPost.image_url} 
+                        alt="Preview" 
+                        className="w-full h-48 object-cover rounded-xl border border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      {uploading && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+                          <Loader2 className="w-8 h-8 text-white animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="w-full p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-saffron hover:bg-orange-50 transition-colors flex flex-col items-center gap-2 text-gray-500"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-8 h-8 animate-spin text-saffron" />
+                          <span className="text-sm">Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="w-8 h-8 text-gray-400" />
+                          <span className="text-sm">Click to upload image</span>
+                          <span className="text-xs text-gray-400">JPEG, PNG, GIF, WebP (max 5MB)</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
               
-              <div className="p-4 border-t border-gray-100 flex justify-end gap-3">
-                <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600">
+              <div className="p-4 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white">
+                <button onClick={closeModal} className="px-4 py-2 text-gray-600">
                   Cancel
                 </button>
                 <button
                   onClick={createPost}
-                  disabled={saving}
+                  disabled={saving || uploading}
                   className="px-6 py-2 bg-saffron text-white rounded-xl disabled:opacity-50 flex items-center gap-2"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

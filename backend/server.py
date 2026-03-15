@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException, Depends, Request, Query
+from fastapi import FastAPI, HTTPException, Depends, Request, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Optional, List
@@ -55,6 +56,62 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ===================== FILE UPLOADS SETUP =====================
+import uuid
+import shutil
+from pathlib import Path
+
+# Create uploads directory if it doesn't exist
+UPLOADS_DIR = Path("/app/backend/uploads")
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Mount static files for serving uploaded images
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+
+@app.post("/api/upload/image")
+async def upload_image(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
+    """Upload an image file and return the URL"""
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.")
+    
+    # Validate file size (max 5MB)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB.")
+    
+    # Generate unique filename
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    unique_filename = f"{uuid.uuid4()}.{ext}"
+    file_path = UPLOADS_DIR / unique_filename
+    
+    # Save file
+    with open(file_path, "wb") as f:
+        f.write(contents)
+    
+    # Get the base URL from environment or construct it
+    backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
+    if not backend_url:
+        backend_url = "https://priest-hub.preview.emergentagent.com"
+    
+    # Return the URL
+    image_url = f"{backend_url}/api/uploads/{unique_filename}"
+    
+    return {"url": image_url, "filename": unique_filename}
+
+@app.get("/api/uploads/{filename}")
+async def get_uploaded_file(filename: str):
+    """Serve uploaded files"""
+    from fastapi.responses import FileResponse
+    file_path = UPLOADS_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path)
 
 # ===================== SEED DATA =====================
 async def seed_initial_data():
