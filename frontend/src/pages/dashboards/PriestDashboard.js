@@ -317,7 +317,7 @@ export default function PriestDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-4 md:py-6">
+      <div className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-20 md:pb-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -361,27 +361,37 @@ export default function PriestDashboard() {
         {/* More Menu Popup */}
         <AnimatePresence>
           {showMoreMenu && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="absolute bottom-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg rounded-t-2xl p-4"
-            >
-              <div className="grid grid-cols-4 gap-4">
-                {moreTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-xl ${
-                      activeTab === tab.id ? 'bg-saffron/10 text-saffron' : 'text-gray-600'
-                    }`}
-                  >
-                    <tab.icon className="w-6 h-6" />
-                    <span className="text-xs">{tab.label}</span>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
+            <>
+              {/* Backdrop to close menu */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-40"
+                onClick={() => setShowMoreMenu(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="absolute bottom-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg rounded-t-2xl p-4 z-50"
+              >
+                <div className="grid grid-cols-4 gap-4">
+                  {moreTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-xl ${
+                        activeTab === tab.id ? 'bg-saffron/10 text-saffron' : 'text-gray-600'
+                      }`}
+                    >
+                      <tab.icon className="w-6 h-6" />
+                      <span className="text-xs">{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </div>
@@ -1367,7 +1377,11 @@ function ServicesTab({ services, onRefresh }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg font-semibold text-maroon">Services</h2>
-        <button onClick={() => { setEditingService(null); setShowModal(true); }} className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm">
+        <button 
+          data-testid="add-service-btn"
+          onClick={() => { setEditingService(null); setShowModal(true); }} 
+          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer relative z-10"
+        >
           <Plus className="w-4 h-4" /> Add
         </button>
       </div>
@@ -1665,7 +1679,11 @@ function StreamsTab({ streams, onRefresh }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg font-semibold text-maroon">Live Streams</h2>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm">
+        <button 
+          data-testid="schedule-stream-btn"
+          onClick={() => setShowModal(true)} 
+          className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-lg text-sm hover:bg-saffron/90 active:scale-95 transition-all cursor-pointer relative z-10"
+        >
           <Plus className="w-4 h-4" /> Schedule
         </button>
       </div>
