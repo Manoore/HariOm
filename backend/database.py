@@ -37,6 +37,13 @@ post_likes_collection = db["post_likes"]
 chat_rooms_collection = db["chat_rooms"]
 chat_messages_collection = db["chat_messages"]
 
+# Video Consultation Collections
+system_settings_collection = db["system_settings"]
+user_wallets_collection = db["user_wallets"]
+wallet_transactions_collection = db["wallet_transactions"]
+consultation_calls_collection = db["consultation_calls"]
+astrologer_profiles_collection = db["astrologer_profiles"]
+
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]
 mantras_collection = devotional_db["mantras"]
@@ -58,3 +65,9 @@ async def init_db():
     await chat_rooms_collection.create_index([("booking_id", 1)])
     await chat_rooms_collection.create_index([("order_id", 1)])
     await chat_messages_collection.create_index([("room_id", 1), ("created_at", -1)])
+    # Wallet indexes
+    await user_wallets_collection.create_index("user_id", unique=True)
+    await wallet_transactions_collection.create_index([("user_id", 1), ("created_at", -1)])
+    await consultation_calls_collection.create_index([("user_id", 1), ("created_at", -1)])
+    await consultation_calls_collection.create_index([("astrologer_id", 1), ("created_at", -1)])
+    await astrologer_profiles_collection.create_index("user_id", unique=True)

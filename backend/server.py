@@ -4027,6 +4027,243 @@ async def get_total_unread_count(user: dict = Depends(get_current_user)):
         total += room.get("unread_count", {}).get(str(user["_id"]), 0)
     return {"unread_count": total}
 
+# ===================== VIDEO CONSULTATION APIs =====================
+from video_consultation import (
+    get_system_settings, update_system_settings,
+    get_user_wallet, add_wallet_balance, get_wallet_transactions,
+    get_astrologer_profile, update_astrologer_profile, get_available_astrologers,
+    start_consultation_call, process_call_minute, end_consultation_call, get_call_history
+)
+
+# Admin Settings Endpoints
+@app.get("/api/admin/consultation-settings")
+async def get_consultation_settings(user: dict = Depends(get_current_user)):
+    """Get consultation system settings (admin only)"""
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    settings = await get_system_settings()
+    return {k: v for k, v in settings.items() if k != "_id"}
+
+@app.put("/api/admin/consultation-settings")
+async def update_consultation_settings(request: Request, user: dict = Depends(get_current_user)):
+    """Update consultation system settings (admin only)"""
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    data = await request.json()
+    settings = await update_system_settings(data)
+    return {k: v for k, v in settings.items() if k != "_id"}
+
+# Wallet Endpoints
+@app.get("/api/wallet")
+async def get_wallet(user: dict = Depends(get_current_user)):
+    """Get current user's wallet"""
+    return await get_user_wallet(str(user["_id"]))
+
+@app.get("/api/wallet/transactions")
+async def get_transactions(skip: int = 0, limit: int = 50, user: dict = Depends(get_current_user)):
+    """Get wallet transaction history"""
+    transactions = await get_wallet_transactions(str(user["_id"]), limit, skip)
+    return {"transactions": transactions}
+
+@app.post("/api/wallet/recharge")
+async def recharge_wallet(request: Request, user: dict = Depends(get_current_user)):
+    """Add balance to wallet after successful payment"""
+    data = await request.json()
+    amount = data.get("amount", 0)
+    payment_id = data.get("payment_id")
+    payment_method = data.get("payment_method", "razorpay")
+    
+    settings = await get_system_settings()
+    if amount < settings["min_recharge_amount"]:
+        raise HTTPException(status_code=400, detail=f"Minimum recharge amount is ₹{settings['min_recharge_amount']}")
+    
+    wallet = await add_wallet_balance(str(user["_id"]), amount, payment_id, payment_method)
+    return {"message": "Wallet recharged successfully", "wallet": wallet}
+
+# Astrologer Endpoints
+@app.get("/api/astrologers/available")
+async def list_available_astrologers():
+    """Get list of available astrologers"""
+    astrologers = await get_available_astrologers()
+    return {"astrologers": astrologers}
+
+@app.get("/api/astrologer/profile")
+async def get_my_astrologer_profile(user: dict = Depends(get_current_user)):
+    """Get current astrologer's profile"""
+    if user.get("role") != "astrologer":
+        raise HTTPException(status_code=403, detail="Astrologer access required")
+    profile = await get_astrologer_profile(str(user["_id"]))
+    if not profile:
+        # Create default profile
+        profile = await update_astrologer_profile(str(user["_id"]), {
+            "rate_per_minute": 10,
+            "is_available": False
+        })
+    return profile
+
+@app.put("/api/astrologer/profile")
+async def update_my_astrologer_profile(request: Request, user: dict = Depends(get_current_user)):
+    """Update current astrologer's profile"""
+    if user.get("role") != "astrologer":
+        raise HTTPException(status_code=403, detail="Astrologer access required")
+    data = await request.json()
+    profile = await update_astrologer_profile(str(user["_id"]), data)
+    return profile
+
+@app.put("/api/astrologer/availability")
+async def set_astrologer_availability(request: Request, user: dict = Depends(get_current_user)):
+    """Set astrologer online/offline status"""
+    if user.get("role") != "astrologer":
+        raise HTTPException(status_code=403, detail="Astrologer access required")
+    data = await request.json()
+    is_available = data.get("is_available", False)
+    profile = await update_astrologer_profile(str(user["_id"]), {"is_available": is_available})
+    return {"is_available": profile["is_available"]}
+
+# Video Consultation Endpoints
+@app.post("/api/consultation/start")
+async def start_call(request: Request, user: dict = Depends(get_current_user)):
+    """Start a video consultation with an astrologer"""
+    data = await request.json()
+    astrologer_user_id = data.get("astrologer_user_id")
+    
+    if not astrologer_user_id:
+        raise HTTPException(status_code=400, detail="Astrologer ID required")
+    
+    try:
+        result = await start_consultation_call(str(user["_id"]), astrologer_user_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/consultation/{call_id}/process-minute")
+async def process_minute(call_id: str, user: dict = Depends(get_current_user)):
+    """Process billing for one minute of consultation"""
+    result = await process_call_minute(call_id)
+    return result
+
+@app.post("/api/consultation/{call_id}/end")
+async def end_call(call_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """End a consultation call"""
+    data = await request.json()
+    reason = data.get("reason", "normal")
+    
+    try:
+        result = await end_consultation_call(call_id, reason)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/consultation/history")
+async def consultation_history(skip: int = 0, limit: int = 20, user: dict = Depends(get_current_user)):
+    """Get user's consultation history"""
+    role = "astrologer" if user.get("role") == "astrologer" else "user"
+    calls = await get_call_history(str(user["_id"]), role, limit, skip)
+    return {"calls": calls}
+
+@app.get("/api/consultation/settings")
+async def get_public_consultation_settings():
+    """Get public consultation settings (for frontend)"""
+    settings = await get_system_settings()
+    return {
+        "min_recharge_amount": settings["min_recharge_amount"],
+        "low_balance_warning": settings["low_balance_warning"],
+        "grace_period_seconds": settings["grace_period_seconds"],
+        "free_minutes_new_users": settings["free_minutes_new_users"] if settings["free_minutes_enabled"] else 0
+    }
+
+# WebSocket for Real-time Billing Updates
+active_call_connections: dict = {}  # call_id -> list of websockets
+
+@app.websocket("/ws/consultation/{call_id}")
+async def websocket_consultation(websocket: WebSocket, call_id: str):
+    """WebSocket for real-time billing updates during consultation"""
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4001)
+        return
+    
+    try:
+        from auth import decode_token
+        payload = decode_token(token)
+        user_id = payload.get("sub")
+    except:
+        await websocket.close(code=4001)
+        return
+    
+    await websocket.accept()
+    
+    if call_id not in active_call_connections:
+        active_call_connections[call_id] = []
+    active_call_connections[call_id].append(websocket)
+    
+    try:
+        # Start billing loop for this connection
+        while True:
+            # Wait for 60 seconds then process billing
+            await asyncio.sleep(60)
+            
+            # Process minute billing
+            result = await process_call_minute(call_id)
+            
+            # Broadcast to all connections for this call
+            for ws in active_call_connections.get(call_id, []):
+                try:
+                    await ws.send_json({
+                        "type": "billing_update",
+                        **result
+                    })
+                except:
+                    pass
+            
+            # Check if call should end
+            if result.get("status") == "insufficient_balance":
+                # Start grace period
+                settings = await get_system_settings()
+                grace_period = settings["grace_period_seconds"]
+                
+                # Send grace period warning
+                for ws in active_call_connections.get(call_id, []):
+                    try:
+                        await ws.send_json({
+                            "type": "grace_period",
+                            "seconds_remaining": grace_period,
+                            "message": f"Balance exhausted! Call will end in {grace_period} seconds. Recharge now!"
+                        })
+                    except:
+                        pass
+                
+                # Wait for grace period
+                await asyncio.sleep(grace_period)
+                
+                # Check balance again
+                from video_consultation import get_user_wallet
+                wallet = await get_user_wallet(user_id)
+                
+                if wallet["balance"] <= 0 and wallet.get("free_minutes", 0) <= 0:
+                    # End the call
+                    await end_consultation_call(call_id, "insufficient_balance")
+                    
+                    for ws in active_call_connections.get(call_id, []):
+                        try:
+                            await ws.send_json({
+                                "type": "call_ended",
+                                "reason": "insufficient_balance",
+                                "message": "Call ended due to insufficient balance"
+                            })
+                        except:
+                            pass
+                    break
+    
+    except WebSocketDisconnect:
+        pass
+    finally:
+        if call_id in active_call_connections:
+            if websocket in active_call_connections[call_id]:
+                active_call_connections[call_id].remove(websocket)
+            if not active_call_connections[call_id]:
+                del active_call_connections[call_id]
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
