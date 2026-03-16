@@ -238,7 +238,7 @@ async def confirm_payment(order_id: str, user: dict = Depends(get_current_user))
         {
             "$set": {
                 "payment_status": "paid",
-                "status": OrderStatus.CONFIRMED,
+                "status": OrderStatus.PAID,
                 "paid_at": datetime.now(timezone.utc)
             }
         }
@@ -311,7 +311,7 @@ async def stripe_webhook(request: Request):
                 {
                     "$set": {
                         "payment_status": "paid",
-                        "status": OrderStatus.CONFIRMED,
+                        "status": OrderStatus.PAID,
                         "paid_at": datetime.now(timezone.utc),
                         "stripe_payment_intent": session.get("payment_intent")
                     }
