@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../constants/theme';
 
@@ -216,7 +216,7 @@ const SplashScreen = ({ onFinish }) => {
           {/* Left Diya */}
           <AnimatedDiya style={styles.diyaLeft} />
 
-          {/* Temple Image */}
+          {/* Temple Logo - Using Om Symbol instead of image for faster loading */}
           <Animated.View
             style={[
               styles.templeContainer,
@@ -226,11 +226,9 @@ const SplashScreen = ({ onFinish }) => {
               },
             ]}
           >
-            <Image
-              source={require('../../assets/temple-logo.png')}
-              style={styles.templeImage}
-              resizeMode="contain"
-            />
+            <View style={styles.logoCircle}>
+              <Text style={styles.logoOm}>ॐ</Text>
+            </View>
           </Animated.View>
 
           {/* Right Diya */}
@@ -326,10 +324,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  templeImage: {
-    width: width * 0.6,
-    height: width * 0.6,
-    borderRadius: 16,
+  logoCircle: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderWidth: 3,
+    borderColor: COLORS.gold,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: COLORS.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+  },
+  logoOm: {
+    fontSize: 80,
+    color: COLORS.gold,
+    textShadowColor: 'rgba(255, 215, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
   },
   diyaContainer: {
     alignItems: 'center',

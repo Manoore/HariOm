@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Image,
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,15 +19,11 @@ import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
-// Temple Logo Component with Image
+// Temple Logo Component with Om Symbol (no external image for faster loading)
 const TempleLogo = () => (
   <View style={styles.logoContainer}>
-    <View style={styles.imageWrapper}>
-      <Image
-        source={require('../../assets/temple-logo.png')}
-        style={styles.templeImage}
-        resizeMode="contain"
-      />
+    <View style={styles.logoCircle}>
+      <Text style={styles.logoOm}>ॐ</Text>
     </View>
     <Text style={styles.logoText}>DIVINE</Text>
     <Text style={styles.logoSubtext}>Sri Anantha Padmanabha Swamy</Text>
@@ -304,16 +299,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  imageWrapper: {
-    width: 100,
-    height: 100,
-    borderRadius: 16,
-    overflow: 'hidden',
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 153, 51, 0.15)',
+    borderWidth: 2,
+    borderColor: COLORS.saffron,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  templeImage: {
-    width: '100%',
-    height: '100%',
+  logoOm: {
+    fontSize: 44,
+    color: COLORS.saffron,
   },
   logoText: {
     fontSize: 28,
