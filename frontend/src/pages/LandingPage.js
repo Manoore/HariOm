@@ -41,47 +41,30 @@ const CAROUSEL_IMAGES = [
   }
 ];
 
-// Temple Logo SVG Component
-const TempleLogo = ({ className = "", onClick }) => (
-  <motion.svg 
-    viewBox="0 0 60 60" 
-    className={`cursor-pointer ${className}`}
-    onClick={onClick}
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-  >
-    <defs>
-      <linearGradient id="templeLogoGold" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#FFD700" />
-        <stop offset="50%" stopColor="#FFA500" />
-        <stop offset="100%" stopColor="#B8860B" />
-      </linearGradient>
-      <linearGradient id="templeLogoStone" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#DEB887" />
-        <stop offset="100%" stopColor="#CD853F" />
-      </linearGradient>
-    </defs>
-    {/* Temple base */}
-    <rect x="8" y="45" width="44" height="10" rx="2" fill="url(#templeLogoStone)" />
-    {/* Temple body */}
-    <rect x="12" y="28" width="36" height="17" fill="url(#templeLogoStone)" />
-    {/* Temple pillars */}
-    <rect x="15" y="30" width="4" height="13" fill="#8B4513" />
-    <rect x="41" y="30" width="4" height="13" fill="#8B4513" />
-    {/* Temple door */}
-    <rect x="25" y="33" width="10" height="12" rx="5" fill="#4A3728" />
-    {/* Temple roof tier 1 */}
-    <polygon points="30,20 48,28 12,28" fill="url(#templeLogoGold)" />
-    {/* Temple roof tier 2 */}
-    <polygon points="30,12 42,20 18,20" fill="url(#templeLogoGold)" />
-    {/* Temple spire */}
-    <polygon points="30,3 35,12 25,12" fill="url(#templeLogoGold)" />
-    {/* Kalash on top */}
-    <circle cx="30" cy="5" r="3" fill="#FFD700" />
-    {/* Om symbol */}
-    <text x="30" y="41" fontSize="8" fill="#FFD700" textAnchor="middle" fontWeight="bold">ॐ</text>
-  </motion.svg>
-);
+// Temple Logo Component with Image
+const TempleLogo = ({ className = "", onClick, size = "medium" }) => {
+  const sizeClasses = {
+    small: "w-10 h-10",
+    medium: "w-14 h-14",
+    large: "w-20 h-20",
+    xlarge: "w-28 h-28"
+  };
+  
+  return (
+    <motion.div 
+      className={`cursor-pointer ${className}`}
+      onClick={onClick}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <img 
+        src="/temple-logo.jpg" 
+        alt="Sri Anantha Padmanabha Swamy Temple"
+        className={`${sizeClasses[size]} rounded-lg border-2 border-gold shadow-lg object-cover`}
+      />
+    </motion.div>
+  );
+};
 
 // Image Carousel Component
 const ImageCarousel = () => {
@@ -534,8 +517,11 @@ export default function LandingPage({ onGetStarted }) {
               className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
               data-testid="logo-scroll-top"
             >
-              <TempleLogo className="w-12 h-12" onClick={scrollToTop} />
-              <span className="font-cinzel text-2xl font-bold text-maroon">DIVINE</span>
+              <TempleLogo size="small" onClick={scrollToTop} />
+              <div className="flex flex-col">
+                <span className="font-cinzel text-xl font-bold text-maroon">DIVINE</span>
+                <span className="text-[10px] text-gray-500 -mt-1">Sri Padmanabha</span>
+              </div>
             </button>
 
             {/* Desktop Navigation */}
@@ -1174,8 +1160,11 @@ export default function LandingPage({ onGetStarted }) {
                   onClick={scrollToTop}
                   className="flex items-center gap-3 mb-4 hover:opacity-80 transition-opacity cursor-pointer"
                 >
-                  <TempleLogo className="w-12 h-12" onClick={scrollToTop} />
-                  <span className="font-cinzel text-xl font-bold">DIVINE</span>
+                  <TempleLogo size="medium" onClick={scrollToTop} />
+                  <div className="flex flex-col">
+                    <span className="font-cinzel text-xl font-bold">DIVINE</span>
+                    <span className="text-[10px] text-gray-400">Sri Anantha Padmanabha</span>
+                  </div>
                 </button>
                 <p className="text-gray-400 text-sm mb-4">
                   Your complete spiritual ecosystem for Hindu rituals, astrology, and sacred services.

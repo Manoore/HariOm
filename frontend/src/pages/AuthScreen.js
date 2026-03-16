@@ -326,27 +326,34 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="mb-8"
+          className="mb-6"
         >
-          <div className="w-28 h-28 relative">
-            <svg viewBox="0 0 100 100" className="w-full h-full">
-              <ellipse cx="50" cy="85" rx="30" ry="8" fill="#B8860B" />
-              <path d="M30 85 Q30 70 35 60 L65 60 Q70 70 70 85" fill="#FFD700" />
-              <ellipse cx="50" cy="60" rx="18" ry="6" fill="#FFD700" />
-              <path d="M50 55 Q45 40 50 25 Q55 40 50 55" fill="#FF9933" />
-              <ellipse cx="50" cy="30" rx="4" ry="6" fill="#FFEB3B" />
-            </svg>
+          <div className="w-32 h-32 rounded-xl overflow-hidden border-3 border-gold shadow-2xl">
+            <img 
+              src="/temple-logo.jpg" 
+              alt="Sri Anantha Padmanabha Swamy Temple"
+              className="w-full h-full object-cover"
+            />
           </div>
         </motion.div>
 
         <motion.h1 
-          className="font-cinzel text-3xl font-bold text-maroon mb-2"
+          className="font-cinzel text-3xl font-bold text-maroon mb-1"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
           DIVINE
         </motion.h1>
+        
+        <motion.p 
+          className="text-xs text-gray-500 italic mb-2"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.35 }}
+        >
+          Sri Anantha Padmanabha Swamy
+        </motion.p>
         
         <motion.p 
           className="text-gray-600 text-center max-w-xs mb-8"
@@ -449,9 +456,16 @@ function LoginScreen({
       </div>
 
       <div className="flex-1 px-6 md:px-8 pt-4 pb-6">
-        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <h1 className="font-cinzel text-2xl font-bold text-maroon mb-2">Welcome Back</h1>
-          <p className="text-gray-600 mb-6">Sign in to continue your spiritual journey</p>
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center gap-4 mb-6">
+          <img 
+            src="/temple-logo.jpg" 
+            alt="Divine"
+            className="w-14 h-14 rounded-lg border-2 border-gold shadow-md object-cover"
+          />
+          <div>
+            <h1 className="font-cinzel text-2xl font-bold text-maroon">Welcome Back</h1>
+            <p className="text-gray-600 text-sm">Sign in to continue your spiritual journey</p>
+          </div>
         </motion.div>
 
         {/* Auth Method Toggle */}
@@ -792,9 +806,16 @@ function RegisterScreen({
       </div>
 
       <div className="flex-1 px-6 md:px-8 pt-4 pb-6 overflow-y-auto">
-        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <h1 className="font-cinzel text-2xl font-bold text-maroon mb-2">Create Account</h1>
-          <p className="text-gray-600 mb-6">Join our spiritual community</p>
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center gap-4 mb-6">
+          <img 
+            src="/temple-logo.jpg" 
+            alt="Divine"
+            className="w-14 h-14 rounded-lg border-2 border-gold shadow-md object-cover"
+          />
+          <div>
+            <h1 className="font-cinzel text-2xl font-bold text-maroon">Create Account</h1>
+            <p className="text-gray-600 text-sm">Join our spiritual community</p>
+          </div>
         </motion.div>
 
         {/* Auth Method Toggle */}
