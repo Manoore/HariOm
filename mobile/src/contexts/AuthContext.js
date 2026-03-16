@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { authAPI, setAuthToken, getAuthToken } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -90,9 +90,14 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      console.log('Logging out...');
       await setAuthToken(null);
-      await SecureStore.deleteItemAsync('user');
       setUser(null);
+      // Clear any cached data
+      if (Platform.OS === 'web') {
+        localStorage.removeItem('user');
+      }
+      console.log('Logout successful');
     } catch (err) {
       console.log('Logout error:', err);
     }
