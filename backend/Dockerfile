@@ -6,6 +6,7 @@ WORKDIR /app
 
 # Install system dependencies comprehensively
 # Including libraries needed for:
+# - bcrypt (password hashing)
 # - pyswisseph (C compilation)
 # - cryptography (SSL/TLS)
 # - Pillow (image processing)
@@ -22,13 +23,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg-dev \
     zlib1g-dev \
     libpng-dev \
+    cargo \
+    rustc \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
 # Install Python dependencies
+# Note: bcrypt needs to be compiled with rust/cargo for newer versions
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir bcrypt==4.0.1 && \
     pip install --no-cache-dir -r requirements.txt
 
 # Install emergentintegrations from private index
