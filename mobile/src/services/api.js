@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 // API Base URL - same as web app
-const API_BASE_URL = 'https://pooja-store-test.preview.emergentagent.com';
+const API_BASE_URL = 'https://priest-booking-4.preview.emergentagent.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

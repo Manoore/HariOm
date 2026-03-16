@@ -9,40 +9,43 @@ The user wants to build a Divine App, a digital platform connecting users with H
 -   **Additional Features:** Spiritual content feed, festival reminders, temple info, animated Aarti, location-based services, multi-language support, real-time chat, and per-minute video consultations.
 -   **UI/UX:** Traditional/Warm theme, personalized devotee home screen, and role-specific dashboards.
 -   **Admin Management:** All critical settings, including API keys, platform fees, and taxes should be manageable from an Admin Dashboard without requiring code changes.
+-   **Mobile App:** The user has requested a native mobile app to be built alongside the existing web application.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack platform with a React frontend and a FastAPI backend. Key features include:
--   **Authentication:** Multi-faceted login system supporting Email/Password, Google Sign-In, and international Phone Number with OTP verification.
--   **Role-Based Dashboards:** Functional dashboards for Admin, Devotee, Priest, Astrologer, and Shop Owner.
--   **E-commerce & Pooja Store:** A complete e-commerce flow with product browsing, a shopping cart, and a multi-step checkout process with Stripe integration.
--   **Admin-Managed System:** A comprehensive admin UI for securely managing third-party API keys, and dynamically setting a platform fee and taxes, which are then reflected in the checkout total.
--   **Product Management:** Shop owners can manage products (with image/video uploads), inventory, and orders. Customers can leave ratings and reviews on products they've purchased.
--   **Address Autocomplete:** The checkout address form integrates with an Indian Pincode API to auto-populate the City and State fields.
--   **Real-time Features:** An interactive Spiritual Updates feed and a WebSocket-based chat system.
--   **Video Consultation:** A per-minute video calling system for astrologers.
--   **Sarvam AI TTS feature has been completely removed** from the codebase as per the user's request.
+The project consists of two separate frontends (Web and Mobile) that share a single backend.
+-   **Web App:** A full-stack application with a React frontend and FastAPI backend. It features multi-faceted authentication (Email, Google, Phone), role-based dashboards, a complete e-commerce flow with a cart and Stripe-integrated checkout, an admin panel for managing fees/taxes, and an Indian Pincode API for address autofill. The branding was recently updated with a new logo.
+-   **Mobile App:** A new React Native + Expo mobile application has been scaffolded in the  directory. It includes a devotional splash screen, login screen, basic navigation (Home, Store, Astrology, Profile), and context providers for Auth and Cart. The UI and branding match the web app. The user has successfully previewed the app on their device via Expo Go.
+-   **Backend:** A FastAPI server with MongoDB, providing APIs for both the web and mobile frontends.
 
 **Last working item**:
--   **Last item agent was working:** Implementing a user request for dynamic, admin-configurable fees and taxes in the checkout process, along with an Indian Pincode API to auto-fill address details.
-    -   1. **Admin Controls:** Added UI in the Admin Dashboard to set a platform fee percentage and tax details (name and percentage).
-    -   2. **Dynamic Checkout:** Updated the checkout flow to fetch these settings and display a detailed breakdown of Subtotal, Platform Fee, and Taxes in the order summary.
-    -   3. **Address Autocomplete:** Created a backend endpoint to query an Indian Pincode API and integrated it into the checkout form to auto-populate City and State fields.
--   **Status:** USER VERIFICATION PENDING
--   **Agent Testing Done:** Y
--   **Which testing method agent to use?** Frontend testing agent. The agent should test the full checkout flow to verify:
-    1.  The pincode auto-fill functionality in the address form.
-    2.  The correct calculation and display of platform fees and taxes in the order summary.
-    3.  The final amount passed to Stripe matches the total including fees and taxes.
--   **User Testing Done:** N
+-   **Last item agent was working:** The agent was helping the user deploy the web application. After successfully deploying the frontend to Firebase Hosting, the user reported that backend-dependent actions (like adding to cart) were failing. The agent diagnosed that this is because the backend is still running on the temporary Emergent preview server and has not been deployed to a permanent production environment.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** NA. This is a deployment architecture problem. The next step is to discuss and execute a backend deployment strategy (e.g., to Google Cloud Run) with the user.
+-   **User Testing Done:** Y
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Google Sign-in on new preview domains (P1 - BLOCKED)
--   **Issue 2:** Expo Mobile App Preview (P2 - BLOCKED)
+-   **Issue 1:** Deployed Firebase web app is non-functional due to a missing production backend (P0)
+-   **Issue 2:** Google Sign-in on new preview domains (P1 - BLOCKED)
 
 **Issues Detail:**
--   **Issue 1: Google Sign-in on new preview domains**
+-   **Issue 1: Deployed Firebase web app is non-functional due to a missing production backend**
+    -   **Attempted fixes:** The agent identified that the Firebase-hosted frontend is correctly trying to call the backend, but the backend only exists on a temporary preview server, not in a permanent production environment.
+    -   **Next debug checklist:**
+        1.  Explain to the user that the backend needs to be deployed to a production-hosting service (like Google Cloud Run) to work with the Firebase-hosted frontend.
+        2.  Discuss backend deployment options with the user.
+        3.  Guide the user through the chosen backend deployment process.
+        4.  Update the frontend's  to point to the new production backend URL.
+        5.  Re-deploy the frontend to Firebase with the updated URL.
+    -   **Why fix this issue and what will be achieved with the fix?** This will make the user's publicly deployed web application fully functional.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue:** N/A
+
+-   **Issue 2: Google Sign-in on new preview domains**
     -   **Attempted fixes:** This is an environmental constraint. The fix requires the user to manually authorize the new preview domain in their Firebase/Google Cloud console.
     -   **Next debug checklist:** Instruct the user to add the new preview domain to the authorized list in Firebase Authentication settings.
     -   **Why fix this issue and what will be achieved with the fix?** Enables Google authentication for testing on new preview environments.
@@ -51,110 +54,100 @@ The application is a full-stack platform with a React frontend and a FastAPI bac
     -   **Should Test frontend/backend/both after fix?** Frontend
     -   **Blocked on other issue:** N/A
 
--   **Issue 2: Expo Mobile App Preview is Not Working**
-    -   **Attempted fixes:** The user has agreed to postpone native app development, so no fix was attempted.
-    -   **Next debug checklist:** Blocked until the user provides an  and prioritizes mobile app development.
-    -   **Why fix this issue and what will be achieved with the fix?** Allows for previewing and developing the native mobile application.
-    -   **Status:** BLOCKED
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Frontend
-    -   **Blocked on other issue:** N/A
-
 **In progress Task List**:
--   There are no tasks currently in progress.
+-   **Task 1: Native Mobile App Development**
+    -   **Where to resume:** The basic structure, navigation, and several screens (, , , , ) have been created in the  directory. Navigation and button clicks have been wired up. The next step is to connect these screens to the backend API to fetch and display real data (e.g., products in the store, user profile information) and implement core functionality like login, add to cart, etc.
+    -   **What will be achieved with this?** A functional native mobile app for users.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Frontend (Mobile)
+    -   **Blocked on something:** Backend deployment (Issue 1) is not a hard blocker but is a parallel priority.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **(P1) Spiritual Articles:** Build a blog/article section. Sourcing options (AI-generated vs. Priest-written) have been discussed with the user.
--   **(P2) Temple Directory:** Create a searchable database of Hindu temples with details like location, timings, and photos.
--   **(P2) Curated YouTube Video Player:** Replace the removed TTS feature with an embedded YouTube player for mantra recitations.
+-   **(P1) Spiritual Articles:** Build a blog/article section for the web and mobile apps.
+-   **(P2) Temple Directory:** Create a searchable database of Hindu temples.
+-   **(P2) Curated YouTube Video Player:** Replace the removed TTS feature with an embedded YouTube player for mantras.
 
 **Future Tasks:**
--   **(P2) Build Native Mobile App:** Convert/rebuild the application using React Native + Expo.
--   **(P3) Refactor Checkout Logic:** Move checkout, payment confirmation, and webhook endpoints from  to  to align with the modular architecture.
+-   **(P2) Complete Native Mobile App:** Finish all features for the mobile app and prepare for App Store/Play Store submission.
+-   **(P3) Refactor Checkout Logic:** Move checkout, payment confirmation, and webhook endpoints from  to .
 
 **Completed work in this session**
--   **Phone Number Authentication (DONE):** Implemented Firebase Phone Auth for sign-in/up, complete with an international country code selector, and fixed multiple reCAPTCHA/domain authorization bugs.
--   **Sarvam AI TTS Removal (DONE):** Successfully removed all backend endpoints, frontend UI elements, and dependencies related to the Sarvam AI text-to-speech feature.
--   **Shopping Cart & Checkout Bug Fixes (DONE):**
-    -   Resolved a backend crash when calculating the cart summary for products with no images.
-    -   Fixed the Stripe integration to handle users who registered with a phone number instead of an email.
-    -   Ensured the shopping cart is cleared from both the database and the frontend UI after a successful checkout.
-    -   Corrected a payment confirmation failure caused by using an invalid order status ( instead of ).
--   **Stripe Payment Integration (DONE):** Fully integrated Stripe into the checkout flow, replacing a non-functional Razorpay placeholder.
--   **Dynamic Fees & Pincode Autocomplete (DONE):** Added admin controls for platform fees/taxes and integrated an Indian Pincode API for address auto-filling during checkout.
+-   **Native Mobile App Scaffolding (DONE):** Created a new React Native + Expo project in .
+-   **Mobile App Structure (DONE):** Implemented basic navigation, screens (Login, Home, Store, Profile, etc.), Auth/Cart contexts, and a devotional splash screen.
+-   **Mobile App Preview (DONE):** Debugged and resolved multiple Expo SDK version conflicts (cycling through SDKs 55, 52, 51, and 54) to successfully generate a working Expo Go preview for the user, using their provided .
+-   **Mobile App Navigation (DONE):** Fixed all  handlers and navigation links across all created screens, making the UI interactive.
+-   **Unified Branding (DONE):** Updated both the web and mobile apps to use a new user-provided logo (Sri Anantha Padmanabha Swamy Temple) on splash screens, login pages, and headers.
+-   **UI Cleanup (DONE):** Removed unwanted background colors and borders from the new logo for a cleaner, transparent look on both platforms.
+-   **Web App Production Build (DONE):** Fixed a build error ( icon not found) and successfully created a production build of the frontend.
+-   **Firebase Frontend Deployment (DONE):** Guided the user through obtaining a Firebase CI token and used it to deploy the web app frontend to Firebase Hosting.
 
 **Earlier issues found/mentioned but not fixed**
--   None. All previously mentioned issues have been addressed or resolved.
+-   None.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** Google Sign-in on new preview domains, Expo Mobile App Preview.
--   **Recurrence count:** 4+
--   **Status:** BLOCKED
+-   **Recurrence count:** 5+
+-   **Status:** BLOCKED (Google Sign-in), IN PROGRESS (Expo preview is working via token but is a recurring setup challenge).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 -   **Backend:** FastAPI
--   **Frontend:** React
+-   **Frontend (Web):** React
+-   **Frontend (Mobile):** React Native, Expo
 -   **Database:** MongoDB Atlas
 -   **Authentication:** Firebase (Email/Password, Google, Phone Auth with reCAPTCHA)
--   **Payments:** Stripe (Checkout Sessions, Webhooks)
--   **Real-time:** WebSockets
--   **External APIs:** Indian Pincode API for address lookup.
--   **Security:**  library for encrypting secrets in DB.
+-   **Payments:** Stripe
+-   **Deployment (Web):** Firebase Hosting (Frontend only so far)
+-   **Deployment (Mobile):** Expo Go (for preview)
 
 **key DB schema**
--   **system_config:** Now includes keys for , , and .
--   **users:** Can now have a  instead of an .
+-   No changes in this session.
 
 **changes in tech stack**
--   None.
+-   **Added:** React Native and Expo for mobile app development.
 
 **All files of reference**
--   : Contains critical checkout, payment confirmation, and fee/tax calculation logic.
--   : Main UI for the new phone authentication flow.
--   : Contains the UI for the address form (with pincode logic) and the order summary (with fee/tax breakdown).
--   : UI for managing the new platform fee and tax settings.
--   : Manages state and logic for all authentication methods.
--   : Handles the redirect from Stripe after payment success or cancellation.
+-   : The main entry point for the new mobile application.
+-   : Configuration file for the Expo project, including SDK version and splash screen settings.
+-   : Defines the navigation structure (tabs and stacks) for the mobile app.
+-   : Directory containing all the newly created screens for the mobile app.
+-   : Web app auth screen, modified for the new logo.
+-   : Web app header, modified for the new logo.
+-   , : Configuration files for Firebase deployment.
 
 **Areas that need refactoring**:
--   **Checkout Logic Consolidation:** The primary checkout logic (), payment confirmation (), and Stripe webhook () were implemented directly in . To improve modularity and adhere to the established architecture, this logic should be moved into the  file.
+-   **Checkout Logic Consolidation:** The primary checkout logic in  should be moved to  to improve modularity.
 
 **key api endpoints**
--   : (POST) Creates an order and a Stripe checkout session. Includes fee/tax calculation.
--   : (POST) Confirms an order's payment status after successful Stripe redirect.
--   : (POST) Listens for events from Stripe (e.g., ).
--   : (GET) Fetches city and state for a given Indian pincode.
--   : (GET) Provides the current platform fee and tax settings to the frontend.
--   : (POST) Updated to handle user creation/login via phone number.
+-   No new endpoints were created in this session.
 
 **Critical Info for New Agent**
--   **Phone Auth is the New Default:** Phone number authentication is now a primary login method. Be mindful that user documents in the database may have a  field instead of an . The Stripe checkout flow was specifically patched to handle this scenario.
--   **Checkout Logic is in :** Due to routing conflicts during development, most of the new Stripe checkout, fee calculation, and payment confirmation logic resides in the main  file, NOT in . Look here first when debugging the checkout flow.
--   **Dynamic Fees & Taxes:** The final price at checkout is calculated by adding a platform fee and taxes. These values are not hardcoded; they are fetched from the  collection in the database and can be changed by the admin at any time.
--   **Firebase Domain Authorization is Manual:** For phone authentication's reCAPTCHA to work on a new preview environment, you MUST instruct the user to add the preview domain (e.g., ) to the list of Authorized domains in their Firebase project settings. This is a recurring manual step for every new preview URL.
+-   **IMMEDIATE PRIORITY:** The user's live website, deployed on Firebase Hosting, is broken. This is because the backend was not deployed to a production environment. Your first task is to explain this to the user and guide them through deploying the backend (e.g., to Google Cloud Run) and updating the frontend config to point to the new backend URL.
+-   **Mobile App Development:** A new React Native app exists in . It has a UI shell but needs its functionality connected to the backend.
+-   **Expo Previews:** Running  in this environment requires an  to create a public tunnel. The user has provided one which is in the message history: . The command to use it is .
+-   **User's Local CLI:** The user's local Windows machine has a PATH issue with the Firebase CLI. Instruct them to use  or  instead of just .
 
 **documents and test reports created in this job**
--    (updated with removal of Sarvam AI and addition of Phone Auth)
+-    (updated)
+-    (created for mobile preview)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Request:** Add admin-managed platform fees/taxes and a pincode API for address autocomplete. (COMPLETED)
-2.  **Error:** Payment confirmation fails with a 500 error after checkout. (RESOLVED)
-3.  **Error:** React warning Cannot update a component while rendering... after checkout redirect. (RESOLVED)
-4.  **Bug Report:** Cart is not being cleared after a successful checkout. (RESOLVED)
-5.  **Confirmation:** User agreed to the implemented solution for phone-only users at Stripe checkout. (COMPLETE)
-6.  **Error Report:** Firebase phone auth fails due to . (RESOLVED by instructing user to authorize domain).
-7.  **Error Report:** Firebase phone auth fails due to . (RESOLVED)
-8.  **Request:** Add international country code support to phone authentication. (COMPLETED)
-9.  **Bug Report:** Cart is not showing items and checkout is broken. (RESOLVED)
-10. **Request:** Implement Stripe as the primary payment provider. (COMPLETED)
+1.  ****: User was unable to find the code download button. (RESOLVED)
+2.  ****: User reported their local Firebase CLI was not working. (RESOLVED by providing  and full path workarounds).
+3.  ****: User confirmed they are logged into Firebase CLI. (COMPLETE)
+4.  ****: User provided the Firebase CI token. (COMPLETE)
+5.  **Agent confirms deployment**: Agent deployed the frontend to Firebase. (COMPLETE)
+6.  ****: User reports that the live Firebase website is not working correctly. This is the current P0 issue. (PENDING)
+7.  Agent confirms only frontend was deployed and backend is the issue. (PENDING)
+8.  Agent confirms  is pointing to the preview URL. (PENDING)
+9.  Agent suggests backend deployment options. (PENDING)
 
 **Project Health Check:**
 -   **Broken:**
-    -   Native mobile app preview (intentionally postponed by the user).
+    -   The live web application deployed on Firebase Hosting is non-functional because it cannot connect to a production backend.
 -   **Mocked:**
     -   None.
 
@@ -163,26 +156,25 @@ The application is a full-stack platform with a React frontend and a FastAPI bac
 -   **Firebase Hosting:** Frontend hosting.
 -   **Firebase Authentication:** User login (Email/Password, Google, Phone).
 -   **MongoDB Atlas:** Database.
--   **Stripe:** Primary payment gateway (Checkout Sessions).
+-   **Stripe:** Primary payment gateway.
 -   **Razorpay:** Secondary payment option (UI present, but flow defaults to Stripe).
 -   **100ms:** Video/audio calls for consultations.
 -   **Prokerala Astrology API:** Astrology data.
--   **pincode-api.com:** Used for Indian address autocomplete.
+-   **pincode-api.com:** Indian address autocomplete.
+-   **Expo:** Mobile app development and previewing.
 -   : Python library for encrypting secrets.
 
 **Testing status**
 -   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** NO
--   **Known regressions:** None.
+-   **Known regressions:** The entire live web app is non-functional due to the deployment issue.
 
 **Credentials to test flow:**
 -   **User:**  / 
 -   **Admin:**  / 
--   **Stripe Test Card:**
-    -   Card Number: 
-    -   Expiry: Any future date (e.g., )
-    -   CVC: Any 3 digits (e.g., )
+-   **Stripe Test Card:**  | Expiry: Future Date | CVC: Any 3 digits.
 
 **What agent forgot to execute**
--   The agent implemented significant checkout and payment logic directly in  to resolve an immediate routing issue, but this contradicts the established modular architecture where such logic should be in . The agent did not schedule a follow-up refactoring task to move this code and align it with the project's structure.</analysis>
+-   The agent did not proactively plan for backend deployment when the user asked to deploy the frontend. They only reacted after the user reported the resulting issue. A complete deployment plan should have included both frontend and backend steps.
+-   The pending task to refactor checkout logic from  into  was not addressed.</analysis>

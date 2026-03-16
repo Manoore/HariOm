@@ -538,7 +538,7 @@ Icons: Custom 3D animated SVGs
 - `backend/routes/reviews.py` - Product reviews API (NEW)
 
 ## Preview URLs
-- **Web App**: https://pooja-store-test.preview.emergentagent.com
+- **Web App**: https://priest-booking-4.preview.emergentagent.com
 - **Mobile App**: Run `npx expo start` from `/app/mobile/` and scan QR with Expo Go app
 
 ## Mobile App Structure (`/app/mobile/`)
