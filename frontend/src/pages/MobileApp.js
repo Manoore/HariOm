@@ -403,6 +403,31 @@ export default function MobileApp() {
   const userRole = useMemo(() => user?.role, [user?.role]);
   const isLoggedIn = useMemo(() => !!user, [!!user]);
 
+  // Handle payment redirect - check if coming from Stripe payment
+  useEffect(() => {
+    const path = window.location.pathname;
+    const searchParams = new URLSearchParams(window.location.search);
+    
+    // Check for payment success redirect
+    if (path === '/payment/success' || searchParams.get('session_id')) {
+      // User is returning from Stripe payment - show dashboard
+      setShowDashboard(true);
+      toast.success('Payment successful! Your order has been confirmed.', {
+        duration: 5000,
+      });
+      // Clear the URL
+      window.history.replaceState({}, document.title, '/');
+    } else if (path === '/payment/cancel') {
+      // User cancelled payment - show dashboard
+      setShowDashboard(true);
+      toast.error('Payment was cancelled. Your cart items are still saved.', {
+        duration: 5000,
+      });
+      // Clear the URL
+      window.history.replaceState({}, document.title, '/');
+    }
+  }, []);
+
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
     setAuthMode(mode);
