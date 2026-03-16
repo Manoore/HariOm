@@ -684,7 +684,7 @@ export default function LandingPage({ onGetStarted }) {
                     <span className="font-semibold text-gray-800">4.9 Rating</span>
                   </div>
                 </div>
-                <div className="absolute -right-8 bottom-32 bg-white rounded-2xl p-4 shadow-xl animate-float" style={{animationDelay: '1s'}}>
+                <div className="absolute -right-4 bottom-48 bg-white rounded-2xl p-4 shadow-xl animate-float" style={{animationDelay: '1s'}}>
                   <div className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-green-500" />
                     <span className="font-semibold text-gray-800">Verified Priests</span>
