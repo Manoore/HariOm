@@ -10,6 +10,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { usePayment } from '../../contexts/PaymentContext';
 import { toast } from 'sonner';
+import AddressAutocomplete from '../AddressAutocomplete';
 
 // Cart Sidebar Component
 export function CartSidebar({ isOpen, onClose, onCheckout }) {
@@ -528,13 +529,20 @@ export function CheckoutPage({ onBack, onComplete }) {
                 </div>
                 
                 <div>
-                  <label className="text-sm text-gray-600 mb-1 block">City *</label>
-                  <input
-                    type="text"
+                  <AddressAutocomplete
+                    label="City *"
                     value={formData.shipping_city}
-                    onChange={(e) => setFormData({...formData, shipping_city: e.target.value})}
-                    className={`w-full px-4 py-3 rounded-xl border border-orange-100 focus:ring-2 focus:ring-saffron/50 focus:border-saffron outline-none ${formData.shipping_city && formData.shipping_pincode.length === 6 ? 'bg-gray-50' : ''}`}
-                    placeholder="Enter city"
+                    onChange={(value) => setFormData({...formData, shipping_city: value})}
+                    onSelect={(placeDetails) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        shipping_city: placeDetails.city || placeDetails.main_text || prev.shipping_city,
+                        shipping_address: placeDetails.formatted_address || placeDetails.address || prev.shipping_address,
+                        shipping_state: placeDetails.state || prev.shipping_state
+                      }));
+                    }}
+                    placeholder="Search for your city..."
+                    testId="checkout-city-input"
                     required
                   />
                 </div>
@@ -546,7 +554,7 @@ export function CheckoutPage({ onBack, onComplete }) {
                     onChange={(e) => setFormData({...formData, shipping_address: e.target.value})}
                     rows={3}
                     className="w-full px-4 py-3 rounded-xl border border-orange-100 focus:ring-2 focus:ring-saffron/50 focus:border-saffron outline-none resize-none"
-                    placeholder="House/Flat No, Street, Landmark"
+                    placeholder="House/Flat No, Street, Landmark (auto-filled from city)"
                     required
                   />
                 </div>

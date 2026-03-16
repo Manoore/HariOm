@@ -14,6 +14,7 @@ import { Toaster, toast } from 'sonner';
 import ChatTab from '../../components/Chat/ChatTab';
 import { WalletCard, RechargeModal, TransactionHistory } from '../../components/Wallet/WalletComponents';
 import { AstrologerList, PreCallCheck, VideoCallScreen } from '../../components/VideoConsultation/VideoConsultation';
+import AddressAutocomplete from '../../components/AddressAutocomplete';
 
 // 3D Animated Devotional SVG Icons
 const BellIcon3D = ({ size = "w-8 h-8" }) => (
@@ -3906,15 +3907,22 @@ function ProfileTab({ isDesktop }) {
                 </select>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                <input
-                  type="text"
+              <div className={isDesktop ? 'col-span-2' : ''}>
+                <AddressAutocomplete
+                  label="City / Location"
                   value={editForm.city}
-                  onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                  className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent"
-                  placeholder="Your city"
-                  data-testid="profile-city-input"
+                  onChange={(value) => setEditForm({ ...editForm, city: value })}
+                  onSelect={(placeDetails) => {
+                    // Auto-fill city, pincode, and address from selected place
+                    setEditForm(prev => ({
+                      ...prev,
+                      city: placeDetails.city || placeDetails.main_text || prev.city,
+                      address: placeDetails.formatted_address || placeDetails.address || prev.address,
+                      pincode: prev.pincode // Keep existing pincode as Google doesn't always provide it
+                    }));
+                  }}
+                  placeholder="Search for your city..."
+                  testId="profile-city-input"
                 />
               </div>
               
@@ -3937,7 +3945,7 @@ function ProfileTab({ isDesktop }) {
                   onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                   rows={3}
                   className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent resize-none"
-                  placeholder="Your complete address"
+                  placeholder="Your complete address (auto-filled from city selection)"
                   data-testid="profile-address-input"
                 />
               </div>

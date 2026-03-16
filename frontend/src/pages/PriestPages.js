@@ -8,6 +8,7 @@ import {
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 
 export function PriestsListPage() {
   const [priests, setPriests] = useState([]);
@@ -408,14 +409,15 @@ export function PriestDetailPage() {
 
                 {bookingType === 'home_visit' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                    <textarea
+                    <AddressAutocomplete
+                      label="Address"
                       value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="input-field"
-                      rows={3}
-                      placeholder="Enter your complete address"
-                      data-testid="booking-address"
+                      onChange={(value) => setAddress(value)}
+                      onSelect={(placeDetails) => {
+                        setAddress(placeDetails.formatted_address || placeDetails.address || address);
+                      }}
+                      placeholder="Search for your address..."
+                      testId="booking-address"
                     />
                   </div>
                 )}
