@@ -396,6 +396,7 @@ export default function MobileApp() {
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   const [showProfileCompletion, setShowProfileCompletion] = useState(false);
+  const [profileSkipped, setProfileSkipped] = useState(false); // Track if user skipped profile completion
   const [showDashboard, setShowDashboard] = useState(false); // Track if user wants to see dashboard
   const { user, loading, updateUser } = useAuth();
   const isMobile = useIsMobile();
@@ -415,14 +416,15 @@ export default function MobileApp() {
   }, [user?.firebase_uid, user?.profile_completed, user?.phone]);
 
   // Show/hide profile completion screen based on needs - only when user is trying to access dashboard
+  // And only if they haven't skipped it already
   useEffect(() => {
-    if (needsProfileCompletion && showDashboard && !showProfileCompletion) {
+    if (needsProfileCompletion && showDashboard && !showProfileCompletion && !profileSkipped) {
       setShowProfileCompletion(true);
     } else if (!needsProfileCompletion && showProfileCompletion) {
       // Profile was completed, hide the screen
       setShowProfileCompletion(false);
     }
-  }, [needsProfileCompletion, showProfileCompletion, showDashboard]);
+  }, [needsProfileCompletion, showProfileCompletion, showDashboard, profileSkipped]);
 
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
@@ -445,6 +447,7 @@ export default function MobileApp() {
   // Handle skip profile completion
   const handleSkipProfile = () => {
     setShowProfileCompletion(false);
+    setProfileSkipped(true); // Remember that user skipped, don't show again this session
   };
   
   // Handle going back to landing page
