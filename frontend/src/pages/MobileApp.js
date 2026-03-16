@@ -395,8 +395,6 @@ export default function MobileApp() {
   const [showSplash, setShowSplash] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
-  const [showProfileCompletion, setShowProfileCompletion] = useState(false);
-  const [profileSkipped, setProfileSkipped] = useState(false); // Track if user skipped profile completion
   const [showDashboard, setShowDashboard] = useState(false); // Track if user wants to see dashboard
   const { user, loading, updateUser } = useAuth();
   const isMobile = useIsMobile();
@@ -404,27 +402,6 @@ export default function MobileApp() {
   // Memoize the user role to prevent unnecessary re-renders
   const userRole = useMemo(() => user?.role, [user?.role]);
   const isLoggedIn = useMemo(() => !!user, [!!user]);
-  
-  // Check if user needs to complete profile (first-time Google user)
-  const needsProfileCompletion = useMemo(() => {
-    if (!user) return false;
-    // Show profile completion if:
-    // 1. User has firebase_uid (Google login)
-    // 2. Profile is not completed
-    // 3. No phone number set
-    return user.firebase_uid && !user.profile_completed && !user.phone;
-  }, [user?.firebase_uid, user?.profile_completed, user?.phone]);
-
-  // Show/hide profile completion screen based on needs - only when user is trying to access dashboard
-  // And only if they haven't skipped it already
-  useEffect(() => {
-    if (needsProfileCompletion && showDashboard && !showProfileCompletion && !profileSkipped) {
-      setShowProfileCompletion(true);
-    } else if (!needsProfileCompletion && showProfileCompletion) {
-      // Profile was completed, hide the screen
-      setShowProfileCompletion(false);
-    }
-  }, [needsProfileCompletion, showProfileCompletion, showDashboard, profileSkipped]);
 
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
@@ -433,23 +410,6 @@ export default function MobileApp() {
     setShowDashboard(true); // User wants to access dashboard after login
   };
 
-  // Handle profile completion
-  const handleProfileComplete = (updatedUser) => {
-    // Ensure profile_completed is set
-    const userWithProfileComplete = {
-      ...updatedUser,
-      profile_completed: true
-    };
-    updateUser(userWithProfileComplete);
-    setShowProfileCompletion(false);
-  };
-
-  // Handle skip profile completion
-  const handleSkipProfile = () => {
-    setShowProfileCompletion(false);
-    setProfileSkipped(true); // Remember that user skipped, don't show again this session
-  };
-  
   // Handle going back to landing page
   const handleBackToLanding = () => {
     setShowAuth(false);
@@ -475,18 +435,6 @@ export default function MobileApp() {
 
   // Determine what to render
   const renderContent = () => {
-    // Show profile completion screen for first-time Google users (only when trying to access dashboard)
-    if (isLoggedIn && showProfileCompletion && showDashboard) {
-      return (
-        <ProfileCompletionScreen 
-          key="profile-completion"
-          user={user} 
-          onComplete={handleProfileComplete}
-          onSkip={handleSkipProfile}
-        />
-      );
-    }
-
     // Mobile flow: Splash → Auth/Welcome → Dashboard
     if (isMobile) {
       if (showSplash) {
