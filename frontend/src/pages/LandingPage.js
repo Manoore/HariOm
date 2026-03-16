@@ -66,39 +66,72 @@ const TempleLogo = ({ className = "", onClick, size = "medium" }) => {
   );
 };
 
-// Image Carousel Component
+// Image Carousel Component - Smooth crossfade without flash
 const ImageCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % CAROUSEL_IMAGES.length);
+      setIsTransitioning(true);
+      setNextIndex((currentIndex + 1) % CAROUSEL_IMAGES.length);
+      
+      // After transition completes, update current index
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % CAROUSEL_IMAGES.length);
+        setIsTransitioning(false);
+      }, 1000);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [currentIndex]);
 
-  const goToSlide = (index) => setCurrentIndex(index);
-  const goPrev = () => setCurrentIndex((prev) => (prev - 1 + CAROUSEL_IMAGES.length) % CAROUSEL_IMAGES.length);
-  const goNext = () => setCurrentIndex((prev) => (prev + 1) % CAROUSEL_IMAGES.length);
+  const goToSlide = (index) => {
+    if (index !== currentIndex) {
+      setIsTransitioning(true);
+      setNextIndex(index);
+      setTimeout(() => {
+        setCurrentIndex(index);
+        setIsTransitioning(false);
+      }, 1000);
+    }
+  };
+  
+  const goPrev = () => {
+    const newIndex = (currentIndex - 1 + CAROUSEL_IMAGES.length) % CAROUSEL_IMAGES.length;
+    goToSlide(newIndex);
+  };
+  
+  const goNext = () => {
+    const newIndex = (currentIndex + 1) % CAROUSEL_IMAGES.length;
+    goToSlide(newIndex);
+  };
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 1 }}
-          className="absolute inset-0"
-        >
-          <div 
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${CAROUSEL_IMAGES[currentIndex].url})` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-maroon/90 via-maroon/70 to-maroon/50" />
-        </motion.div>
-      </AnimatePresence>
+      {/* Current image - always visible */}
+      <div className="absolute inset-0">
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+          style={{ 
+            backgroundImage: `url(${CAROUSEL_IMAGES[currentIndex].url})`,
+            opacity: isTransitioning ? 0 : 1
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-maroon/90 via-maroon/70 to-maroon/50" />
+      </div>
+      
+      {/* Next image - fades in during transition */}
+      <div 
+        className="absolute inset-0 transition-opacity duration-1000"
+        style={{ opacity: isTransitioning ? 1 : 0 }}
+      >
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${CAROUSEL_IMAGES[nextIndex].url})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-maroon/90 via-maroon/70 to-maroon/50" />
+      </div>
 
       {/* Navigation Arrows */}
       <button 
@@ -648,36 +681,8 @@ export default function LandingPage({ onGetStarted }) {
                       <p className="text-gray-500 text-xs">Namaste,</p>
                       <p className="font-cinzel text-lg font-bold text-maroon">Welcome to Divine</p>
                       
-                      {/* User Types - Horizontal Row */}
-                      <div className="flex items-center justify-between mt-4 bg-white rounded-xl p-2 shadow-sm">
-                        <div className="flex flex-col items-center px-2">
-                          <div className="w-8 h-8 bg-saffron/20 rounded-full flex items-center justify-center">
-                            <Users className="w-4 h-4 text-saffron" />
-                          </div>
-                          <span className="text-[10px] text-gray-600 mt-1">Devotee</span>
-                        </div>
-                        <div className="flex flex-col items-center px-2">
-                          <div className="w-8 h-8 bg-maroon/20 rounded-full flex items-center justify-center">
-                            <Star className="w-4 h-4 text-maroon" />
-                          </div>
-                          <span className="text-[10px] text-gray-600 mt-1">Priest</span>
-                        </div>
-                        <div className="flex flex-col items-center px-2">
-                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                            <Sun className="w-4 h-4 text-purple-600" />
-                          </div>
-                          <span className="text-[10px] text-gray-600 mt-1">Astrologer</span>
-                        </div>
-                        <div className="flex flex-col items-center px-2">
-                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                            <ShoppingBag className="w-4 h-4 text-green-600" />
-                          </div>
-                          <span className="text-[10px] text-gray-600 mt-1">Shop</span>
-                        </div>
-                      </div>
-                      
                       {/* Service Icons */}
-                      <div className="grid grid-cols-4 gap-2 mt-3">
+                      <div className="grid grid-cols-4 gap-2 mt-4">
                         <div className="bg-white rounded-xl p-2.5 text-center shadow-sm">
                           <BellIcon className="w-5 h-5 mx-auto" animate={false} />
                           <span className="text-[9px] text-gray-500">Pooja</span>
@@ -705,7 +710,16 @@ export default function LandingPage({ onGetStarted }) {
                           <div className="w-10 h-10 bg-saffron rounded-full flex items-center justify-center text-white font-bold">P</div>
                           <div>
                             <p className="font-semibold text-sm text-gray-800">Pandit Sharma</p>
-                            <p className="text-xs text-gray-500">Vedic Rituals</p>
+                            <p className="text-xs text-gray-500">Vedic Rituals • 4.9★</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2 bg-white rounded-xl p-3 shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">A</div>
+                          <div>
+                            <p className="font-semibold text-sm text-gray-800">Astrologer Raj</p>
+                            <p className="text-xs text-gray-500">Vedic Astrology • Online</p>
                           </div>
                         </div>
                       </div>
@@ -713,48 +727,56 @@ export default function LandingPage({ onGetStarted }) {
                   </div>
                 </div>
                 
-                {/* Floating elements - positioned on sides */}
+                {/* Floating User Type Badges - Outside the phone */}
                 <motion.div 
-                  className="absolute -left-16 top-24 bg-white rounded-2xl p-3 shadow-xl"
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute -left-24 top-16 bg-white rounded-2xl px-4 py-3 shadow-xl border border-saffron/20"
+                  animate={{ y: [0, -10, 0], x: [0, 3, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-gold fill-gold" />
-                    <span className="font-semibold text-gray-800 text-sm">4.9 Rating</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-saffron/20 rounded-full flex items-center justify-center">
+                      <Users className="w-5 h-5 text-saffron" />
+                    </div>
+                    <span className="font-semibold text-gray-800">Devotee</span>
                   </div>
                 </motion.div>
                 
                 <motion.div 
-                  className="absolute -right-16 top-40 bg-white rounded-2xl p-3 shadow-xl"
-                  animate={{ y: [0, 8, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                  className="absolute -right-24 top-32 bg-white rounded-2xl px-4 py-3 shadow-xl border border-maroon/20"
+                  animate={{ y: [0, 8, 0], x: [0, -3, 0] }}
+                  transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 >
-                  <div className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-500" />
-                    <span className="font-semibold text-gray-800 text-sm">Verified</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-maroon/20 rounded-full flex items-center justify-center">
+                      <Star className="w-5 h-5 text-maroon" />
+                    </div>
+                    <span className="font-semibold text-gray-800">Priest</span>
                   </div>
                 </motion.div>
                 
                 <motion.div 
-                  className="absolute -left-12 bottom-32 bg-white rounded-2xl p-3 shadow-xl"
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                  className="absolute -left-20 bottom-48 bg-white rounded-2xl px-4 py-3 shadow-xl border border-purple-200"
+                  animate={{ y: [0, -8, 0], x: [0, -2, 0] }}
+                  transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                 >
-                  <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-saffron" />
-                    <span className="font-semibold text-gray-800 text-sm">50K+ Users</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Sun className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <span className="font-semibold text-gray-800">Astrologer</span>
                   </div>
                 </motion.div>
                 
                 <motion.div 
-                  className="absolute -right-12 bottom-52 bg-white rounded-2xl p-3 shadow-xl"
-                  animate={{ y: [0, 6, 0] }}
-                  transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                  className="absolute -right-20 bottom-32 bg-white rounded-2xl px-4 py-3 shadow-xl border border-green-200"
+                  animate={{ y: [0, 10, 0], x: [0, 2, 0] }}
+                  transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
                 >
-                  <div className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-purple-500" />
-                    <span className="font-semibold text-gray-800 text-sm">500+ Priests</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <ShoppingBag className="w-5 h-5 text-green-600" />
+                    </div>
+                    <span className="font-semibold text-gray-800">Shop</span>
                   </div>
                 </motion.div>
               </div>
