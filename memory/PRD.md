@@ -25,8 +25,12 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - **Backend**: Python FastAPI
 - **Database**: MongoDB Atlas (user's cloud instance)
 - **Styling**: Tailwind CSS with custom traditional theme
-- **Authentication**: Firebase Auth (email/password + Google Sign-In)
-- **Mobile**: React Native with Expo (separate project at /app/divine-mobile)
+- **Authentication**: Firebase Auth (email/password + Google Sign-In + Phone OTP)
+- **Mobile**: React Native with Expo (project at `/app/mobile/`)
+  - Expo SDK 55
+  - React Navigation for navigation
+  - Same API backend as web
+  - Devotional splash screen with temple, diyas, Om symbol
 
 ## Firebase Configuration (March 15, 2026)
 - **Project ID**: divine-104d4
@@ -421,14 +425,47 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - [ ] Search and filter improvements
 - [ ] Image upload for products/priests
 
-### P3 (Future/Nice to Have)
-- [ ] Video consultation integration
-- [ ] Multi-language support
+### P2.5 (React Native Mobile App - December 2025)
+- [x] **Expo Project Setup** - `/app/mobile/` directory
+- [x] **Same Design System** - Matching colors (saffron, gold, maroon, cream)
+- [x] **Devotional Splash Screen** - Animated temple icon with diyas, Om symbol, floating particles
+- [x] **Core Screens Implemented:**
+  - [x] SplashScreen - Beautiful animated entrance with temple, diyas, Om symbols
+  - [x] LoginScreen - Email/Password auth with role selection
+  - [x] HomeScreen - Dashboard with quick actions, priests, products, festivals
+  - [x] StoreScreen - Product grid with categories, search, filters
+  - [x] CartScreen - Full cart management with quantity controls
+  - [x] ProfileScreen - User profile with menu sections and logout
+  - [x] AstrologyScreen - Zodiac signs, cosmic theme, astrologer cards
+- [x] **Navigation** - Bottom tabs (Home, Store, Astrology, Profile) + Stack navigation
+- [x] **Reusable Components:**
+  - Button, GoldButton (gradient)
+  - Input, SearchInput
+  - ProductCard, PriestCard, FestivalCard, ServiceCard
+- [x] **Context Providers:**
+  - AuthContext - Login, register, logout, Firebase sync
+  - CartContext - Add, update, remove, clear cart
+- [x] **API Service** - Full API integration matching web backend
+- [x] **Dependencies Installed:**
+  - @react-navigation/native, @react-navigation/native-stack, @react-navigation/bottom-tabs
+  - expo-linear-gradient, expo-font, @expo/vector-icons
+  - react-native-reanimated, react-native-gesture-handler
+  - react-native-svg, react-native-safe-area-context
+  - expo-secure-store, expo-av, expo-image-picker
+  - axios for API calls
+- [ ] Phone authentication flow (to be ported from web)
+- [ ] Google Sign-In integration
+- [ ] Full checkout flow with Stripe
+- [ ] Chat feature
+- [ ] Video consultation
 - [ ] Push notifications
+
+### P3 (Future/Nice to Have)
+- [ ] Complete mobile app feature parity with web
+- [ ] App Store / Play Store deployment (requires Apple Developer & Google Play accounts)
+- [ ] Push notifications integration
 - [ ] Social sharing
 - [ ] Referral system
-- [ ] Mobile App (requires EXPO_TOKEN)
-- [ ] App Store / Play Store deployment
 
 ## Tech Stack
 ```
@@ -502,3 +539,34 @@ Icons: Custom 3D animated SVGs
 
 ## Preview URLs
 - **Web App**: https://pooja-store-test.preview.emergentagent.com
+- **Mobile App**: Run `npx expo start` from `/app/mobile/` and scan QR with Expo Go app
+
+## Mobile App Structure (`/app/mobile/`)
+```
+/app/mobile/
+├── App.js                     # Root component with providers
+├── app.json                   # Expo configuration
+├── package.json               # Dependencies
+└── src/
+    ├── components/            # Reusable UI components
+    │   ├── Button.js          # Primary, secondary, gold buttons
+    │   ├── Cards.js           # Product, Priest, Festival, Service cards
+    │   └── Input.js           # Text input, search input
+    ├── constants/
+    │   └── theme.js           # Colors, fonts, sizes, gradients
+    ├── contexts/
+    │   ├── AuthContext.js     # Authentication state
+    │   └── CartContext.js     # Shopping cart state
+    ├── navigation/
+    │   └── AppNavigator.js    # Tab + Stack navigation
+    ├── screens/
+    │   ├── SplashScreen.js    # Animated devotional splash
+    │   ├── LoginScreen.js     # Auth with email/password
+    │   ├── HomeScreen.js      # Dashboard home
+    │   ├── StoreScreen.js     # Pooja store
+    │   ├── CartScreen.js      # Shopping cart
+    │   ├── ProfileScreen.js   # User profile
+    │   └── AstrologyScreen.js # Astrology features
+    └── services/
+        └── api.js             # API client with all endpoints
+```

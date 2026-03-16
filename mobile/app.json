@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Divine App",
+    "slug": "divine-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#800000"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.divineapp.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#800000",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.divineapp.mobile"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "divine-app-mobile"
+      }
+    }
+  }
+}
