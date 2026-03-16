@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { PaymentProvider } from './contexts/PaymentContext';
@@ -9,15 +9,25 @@ import './App.css';
 
 // Payment redirect handler component
 function PaymentHandler({ children }) {
+  const hasHandledPayment = useRef(false);
+  
   useEffect(() => {
+    // Prevent running twice in strict mode
+    if (hasHandledPayment.current) return;
+    
     const handlePaymentRedirect = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const paymentStatus = urlParams.get('payment');
       const orderId = urlParams.get('order_id');
       
       if (paymentStatus && orderId) {
-        // Clear URL parameters
+        hasHandledPayment.current = true;
+        
+        // Clear URL parameters first
         window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // Small delay to ensure component is fully mounted before showing toast
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         if (paymentStatus === 'success') {
           try {
