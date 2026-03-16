@@ -206,6 +206,7 @@ export function CartSidebar({ isOpen, onClose, onCheckout }) {
 export function CheckoutPage({ onBack, onComplete }) {
   const { user } = useAuth();
   const { paymentGateway } = usePayment();
+  const { refreshCart } = useCart();
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -254,11 +255,18 @@ export function CheckoutPage({ onBack, onComplete }) {
           order_number: res.data.order_number,
           total: res.data.total
         }));
+        // Clear cart count in context (backend already cleared the cart)
+        if (refreshCart) {
+          refreshCart();
+        }
         // Redirect to Stripe checkout page
         window.location.href = res.data.checkout_url;
       } else {
         // Non-Stripe flow (if needed in future)
         toast.success('Order placed successfully!');
+        if (refreshCart) {
+          refreshCart();
+        }
         onComplete(res.data);
       }
     } catch (error) {

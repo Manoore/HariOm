@@ -4103,6 +4103,10 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
             {"$set": {"stripe_session_id": checkout_session.id}}
         )
         
+        # Clear cart after successful checkout session creation
+        # (Order is saved, even if payment fails user can retry from order history)
+        await cart_collection.delete_one({"user_id": str(user["_id"])})
+        
         return {
             "message": "Checkout session created",
             "order_id": order_id,
