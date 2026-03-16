@@ -12,9 +12,9 @@ from auth import get_current_user
 
 router = APIRouter(prefix="/api", tags=["Uploads"])
 
-# Create uploads directory
-UPLOADS_DIR = Path("/app/backend/uploads")
-UPLOADS_DIR.mkdir(exist_ok=True)
+# Create uploads directory - use relative path that works in both local and Docker
+UPLOADS_DIR = Path(__file__).parent.parent / "uploads"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.post("/upload/image")
 async def upload_image(

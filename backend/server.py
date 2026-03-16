@@ -70,8 +70,8 @@ import uuid
 import shutil
 from pathlib import Path
 
-# Create uploads directory if it doesn't exist
-UPLOADS_DIR = Path("/app/backend/uploads")
+# Create uploads directory if it doesn't exist - use relative path for Docker compatibility
+UPLOADS_DIR = Path(__file__).parent / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Mount static files for serving uploaded images
