@@ -58,9 +58,9 @@ const TempleLogo = ({ className = "", onClick, size = "medium" }) => {
       whileTap={{ scale: 0.95 }}
     >
       <img 
-        src="/temple-logo.jpg" 
+        src="/temple-logo.png" 
         alt="Sri Anantha Padmanabha Swamy Temple"
-        className={`${sizeClasses[size]} rounded-lg border-2 border-gold shadow-lg object-cover`}
+        className={`${sizeClasses[size]} rounded-lg object-cover`}
       />
     </motion.div>
   );

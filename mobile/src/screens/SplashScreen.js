@@ -226,9 +226,8 @@ const SplashScreen = ({ onFinish }) => {
               },
             ]}
           >
-            <View style={styles.imageGlow} />
             <Image
-              source={require('../../assets/temple-logo.jpg')}
+              source={require('../../assets/temple-logo.png')}
               style={styles.templeImage}
               resizeMode="contain"
             />
@@ -327,20 +326,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  imageGlow: {
-    position: 'absolute',
-    width: width * 0.75,
-    height: width * 0.75,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    top: -10,
-  },
   templeImage: {
-    width: width * 0.7,
-    height: width * 0.7,
+    width: width * 0.6,
+    height: width * 0.6,
     borderRadius: 16,
-    borderWidth: 3,
-    borderColor: COLORS.gold,
   },
   diyaContainer: {
     alignItems: 'center',

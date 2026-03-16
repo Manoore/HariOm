@@ -25,7 +25,7 @@ const TempleLogo = () => (
   <View style={styles.logoContainer}>
     <View style={styles.imageWrapper}>
       <Image
-        source={require('../../assets/temple-logo.jpg')}
+        source={require('../../assets/temple-logo.png')}
         style={styles.templeImage}
         resizeMode="contain"
       />
@@ -305,15 +305,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   imageWrapper: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 100,
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 12,
-    borderWidth: 3,
-    borderColor: COLORS.maroon,
-    backgroundColor: COLORS.white,
-    ...SHADOWS.large,
   },
   templeImage: {
     width: '100%',

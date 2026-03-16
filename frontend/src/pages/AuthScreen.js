@@ -328,9 +328,9 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
           transition={{ delay: 0.2 }}
           className="mb-6"
         >
-          <div className="w-32 h-32 rounded-xl overflow-hidden border-3 border-gold shadow-2xl">
+          <div className="w-32 h-32 rounded-xl overflow-hidden">
             <img 
-              src="/temple-logo.jpg" 
+              src="/temple-logo.png" 
               alt="Sri Anantha Padmanabha Swamy Temple"
               className="w-full h-full object-cover"
             />
@@ -458,9 +458,9 @@ function LoginScreen({
       <div className="flex-1 px-6 md:px-8 pt-4 pb-6">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center gap-4 mb-6">
           <img 
-            src="/temple-logo.jpg" 
+            src="/temple-logo.png" 
             alt="Divine"
-            className="w-14 h-14 rounded-lg border-2 border-gold shadow-md object-cover"
+            className="w-14 h-14 rounded-lg object-cover"
           />
           <div>
             <h1 className="font-cinzel text-2xl font-bold text-maroon">Welcome Back</h1>
@@ -808,9 +808,9 @@ function RegisterScreen({
       <div className="flex-1 px-6 md:px-8 pt-4 pb-6 overflow-y-auto">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center gap-4 mb-6">
           <img 
-            src="/temple-logo.jpg" 
+            src="/temple-logo.png" 
             alt="Divine"
-            className="w-14 h-14 rounded-lg border-2 border-gold shadow-md object-cover"
+            className="w-14 h-14 rounded-lg object-cover"
           />
           <div>
             <h1 className="font-cinzel text-2xl font-bold text-maroon">Create Account</h1>
