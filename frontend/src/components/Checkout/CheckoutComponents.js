@@ -371,8 +371,9 @@ export function CheckoutPage({ onBack, onComplete }) {
         }
       }
       
-      // If checkout_url is returned (Stripe), redirect to Stripe checkout
-      if (res.data.checkout_url) {
+      // If checkout_url or url is returned (Stripe), redirect to Stripe checkout
+      const stripeUrl = res.data.checkout_url || res.data.url;
+      if (stripeUrl) {
         toast.success('Redirecting to payment...');
         // Store order info before redirect
         localStorage.setItem('pending_order', JSON.stringify({
@@ -385,7 +386,7 @@ export function CheckoutPage({ onBack, onComplete }) {
           refreshCart();
         }
         // Redirect to Stripe checkout page
-        window.location.href = res.data.checkout_url;
+        window.location.href = stripeUrl;
       } else {
         // Non-Stripe flow (if needed in future)
         toast.success('Order placed successfully!');

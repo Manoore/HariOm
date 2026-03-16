@@ -695,19 +695,6 @@ function LoginScreen({
             )}
           </div>
         )}
-
-        {/* Demo Credentials */}
-        {authMethod === 'email' && (
-          <motion.div 
-            className="mt-6 p-4 bg-orange-50 rounded-xl"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <p className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</p>
-            <p className="text-xs text-gray-500">Admin: admin@divineapp.com / admin123</p>
-          </motion.div>
-        )}
       </div>
 
       <div className="px-6 md:px-8 pb-6 text-center">
