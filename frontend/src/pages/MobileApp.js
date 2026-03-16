@@ -465,8 +465,14 @@ export default function MobileApp() {
       );
     }
 
-    // Show auth screen if user clicked login/register
-    if (showAuth) {
+    // IMPORTANT: Check if user is logged in AND wants dashboard FIRST
+    // This ensures navigation to dashboard after successful login
+    if (isLoggedIn && showDashboard && DashboardComponent) {
+      return <DashboardComponent key={`dashboard-${userRole}`} />;
+    }
+
+    // Show auth screen if user clicked login/register (and not yet logged in)
+    if (showAuth && !isLoggedIn) {
       return (
         <AuthScreen 
           key="auth"
@@ -477,12 +483,7 @@ export default function MobileApp() {
       );
     }
 
-    // Show dashboard only if user is logged in AND wants to see dashboard
-    if (isLoggedIn && showDashboard && DashboardComponent) {
-      return <DashboardComponent key={`dashboard-${userRole}`} />;
-    }
-
-    // Default: Show landing page (even if logged in, they can browse landing page)
+    // Default: Show landing page
     return <LandingPage key="landing" onGetStarted={handleGetStarted} />;
   };
 
