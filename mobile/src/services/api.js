@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 // API Base URL - Production Cloud Run backend
 const API_BASE_URL = 'https://divine-backend-149993395431.asia-south1.run.app';
@@ -12,21 +13,43 @@ const api = axios.create({
   },
 });
 
-// Token management
+// Token management - use localStorage on web, SecureStore on native
 let authToken = null;
+
+const isWeb = Platform.OS === 'web';
 
 export const setAuthToken = async (token) => {
   authToken = token;
-  if (token) {
-    await SecureStore.setItemAsync('authToken', token);
-  } else {
-    await SecureStore.deleteItemAsync('authToken');
+  try {
+    if (token) {
+      if (isWeb) {
+        localStorage.setItem('authToken', token);
+      } else {
+        await SecureStore.setItemAsync('authToken', token);
+      }
+    } else {
+      if (isWeb) {
+        localStorage.removeItem('authToken');
+      } else {
+        await SecureStore.deleteItemAsync('authToken');
+      }
+    }
+  } catch (error) {
+    console.log('Token storage error:', error);
   }
 };
 
 export const getAuthToken = async () => {
   if (!authToken) {
-    authToken = await SecureStore.getItemAsync('authToken');
+    try {
+      if (isWeb) {
+        authToken = localStorage.getItem('authToken');
+      } else {
+        authToken = await SecureStore.getItemAsync('authToken');
+      }
+    } catch (error) {
+      console.log('Token retrieval error:', error);
+    }
   }
   return authToken;
 };
