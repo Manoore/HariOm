@@ -1,6 +1,11 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+
+// Only import SecureStore on native platforms
+let SecureStore = null;
+if (Platform.OS !== 'web') {
+  SecureStore = require('expo-secure-store');
+}
 
 // API Base URL - Production Cloud Run backend
 const API_BASE_URL = 'https://divine-backend-149993395431.asia-south1.run.app';
@@ -24,13 +29,13 @@ export const setAuthToken = async (token) => {
     if (token) {
       if (isWeb) {
         localStorage.setItem('authToken', token);
-      } else {
+      } else if (SecureStore) {
         await SecureStore.setItemAsync('authToken', token);
       }
     } else {
       if (isWeb) {
         localStorage.removeItem('authToken');
-      } else {
+      } else if (SecureStore) {
         await SecureStore.deleteItemAsync('authToken');
       }
     }
@@ -44,7 +49,7 @@ export const getAuthToken = async () => {
     try {
       if (isWeb) {
         authToken = localStorage.getItem('authToken');
-      } else {
+      } else if (SecureStore) {
         authToken = await SecureStore.getItemAsync('authToken');
       }
     } catch (error) {
