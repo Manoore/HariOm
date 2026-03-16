@@ -396,6 +396,7 @@ export default function MobileApp() {
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   const [showProfileCompletion, setShowProfileCompletion] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false); // Track if user wants to see dashboard
   const { user, loading, updateUser } = useAuth();
   const isMobile = useIsMobile();
 
@@ -413,20 +414,21 @@ export default function MobileApp() {
     return user.firebase_uid && !user.profile_completed && !user.phone;
   }, [user?.firebase_uid, user?.profile_completed, user?.phone]);
 
-  // Show/hide profile completion screen based on needs
+  // Show/hide profile completion screen based on needs - only when user is trying to access dashboard
   useEffect(() => {
-    if (needsProfileCompletion && !showProfileCompletion) {
+    if (needsProfileCompletion && showDashboard && !showProfileCompletion) {
       setShowProfileCompletion(true);
     } else if (!needsProfileCompletion && showProfileCompletion) {
       // Profile was completed, hide the screen
       setShowProfileCompletion(false);
     }
-  }, [needsProfileCompletion, showProfileCompletion]);
+  }, [needsProfileCompletion, showProfileCompletion, showDashboard]);
 
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
     setAuthMode(mode);
     setShowAuth(true);
+    setShowDashboard(true); // User wants to access dashboard after login
   };
 
   // Handle profile completion
@@ -443,6 +445,12 @@ export default function MobileApp() {
   // Handle skip profile completion
   const handleSkipProfile = () => {
     setShowProfileCompletion(false);
+  };
+  
+  // Handle going back to landing page
+  const handleBackToLanding = () => {
+    setShowAuth(false);
+    setShowDashboard(false);
   };
 
   // Memoize dashboard component based on role
@@ -464,8 +472,8 @@ export default function MobileApp() {
 
   // Determine what to render
   const renderContent = () => {
-    // Show profile completion screen for first-time Google users
-    if (isLoggedIn && showProfileCompletion) {
+    // Show profile completion screen for first-time Google users (only when trying to access dashboard)
+    if (isLoggedIn && showProfileCompletion && showDashboard) {
       return (
         <ProfileCompletionScreen 
           key="profile-completion"
@@ -497,8 +505,8 @@ export default function MobileApp() {
       return DashboardComponent ? <DashboardComponent key={`dashboard-${userRole}`} /> : null;
     }
 
-    // Desktop/Web flow
-    if (loading && !isLoggedIn) {
+    // Desktop/Web flow - Always show landing page first unless user explicitly wants dashboard
+    if (loading) {
       return (
         <div key="loading" className="fixed inset-0 bg-cream flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-saffron border-t-transparent rounded-full animate-spin" />
@@ -506,21 +514,24 @@ export default function MobileApp() {
       );
     }
 
-    if (isLoggedIn && DashboardComponent) {
-      return <DashboardComponent key={`dashboard-${userRole}`} />;
-    }
-
+    // Show auth screen if user clicked login/register
     if (showAuth) {
       return (
         <AuthScreen 
           key="auth"
           initialMode={authMode} 
-          onBack={() => setShowAuth(false)} 
+          onBack={handleBackToLanding} 
           showBackButton={true}
         />
       );
     }
 
+    // Show dashboard only if user is logged in AND wants to see dashboard
+    if (isLoggedIn && showDashboard && DashboardComponent) {
+      return <DashboardComponent key={`dashboard-${userRole}`} />;
+    }
+
+    // Default: Show landing page (even if logged in, they can browse landing page)
     return <LandingPage key="landing" onGetStarted={handleGetStarted} />;
   };
 
