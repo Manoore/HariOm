@@ -4,20 +4,31 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies (including those needed for pyswisseph)
-RUN apt-get update && apt-get install -y \
+# Install system dependencies comprehensively
+# Including libraries needed for:
+# - pyswisseph (C compilation)
+# - cryptography (SSL/TLS)
+# - Pillow (image processing)
+# - General Python C extensions
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     make \
     libffi-dev \
     curl \
+    build-essential \
+    python3-dev \
+    libssl-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libpng-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
 # Install emergentintegrations from private index
@@ -36,10 +47,11 @@ EXPOSE 8080
 ENV PORT=8080
 ENV HOST=0.0.0.0
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+# Health check with longer start period for slow imports
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
     CMD curl -f http://localhost:8080/api/health || exit 1
 
-# Run the application
-CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
+# Run the startup script for better error diagnostics
+CMD ["python", "-u", "start.py"]
