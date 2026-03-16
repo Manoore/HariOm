@@ -646,26 +646,61 @@ export default function LandingPage({ onGetStarted }) {
                   <div className="w-full h-full bg-cream rounded-[2.5rem] overflow-hidden">
                     <div className="p-4">
                       <p className="text-gray-500 text-xs">Namaste,</p>
-                      <p className="font-cinzel text-lg font-bold text-maroon">Devotee</p>
-                      <div className="grid grid-cols-4 gap-2 mt-4">
-                        <div className="bg-white rounded-xl p-3 text-center shadow-sm">
-                          <BellIcon className="w-6 h-6 mx-auto" animate={false} />
+                      <p className="font-cinzel text-lg font-bold text-maroon">Welcome to Divine</p>
+                      
+                      {/* User Types - Horizontal Row */}
+                      <div className="flex items-center justify-between mt-4 bg-white rounded-xl p-2 shadow-sm">
+                        <div className="flex flex-col items-center px-2">
+                          <div className="w-8 h-8 bg-saffron/20 rounded-full flex items-center justify-center">
+                            <Users className="w-4 h-4 text-saffron" />
+                          </div>
+                          <span className="text-[10px] text-gray-600 mt-1">Devotee</span>
                         </div>
-                        <div className="bg-white rounded-xl p-3 text-center shadow-sm">
-                          <ZodiacIcon className="w-6 h-6 mx-auto" animate={false} />
+                        <div className="flex flex-col items-center px-2">
+                          <div className="w-8 h-8 bg-maroon/20 rounded-full flex items-center justify-center">
+                            <Star className="w-4 h-4 text-maroon" />
+                          </div>
+                          <span className="text-[10px] text-gray-600 mt-1">Priest</span>
                         </div>
-                        <div className="bg-white rounded-xl p-3 text-center shadow-sm">
-                          <CartIcon className="w-6 h-6 mx-auto" animate={false} />
+                        <div className="flex flex-col items-center px-2">
+                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <Sun className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <span className="text-[10px] text-gray-600 mt-1">Astrologer</span>
                         </div>
-                        <div className="bg-white rounded-xl p-3 text-center shadow-sm">
-                          <TempleIcon className="w-6 h-6 mx-auto" animate={false} />
+                        <div className="flex flex-col items-center px-2">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <ShoppingBag className="w-4 h-4 text-green-600" />
+                          </div>
+                          <span className="text-[10px] text-gray-600 mt-1">Shop</span>
                         </div>
                       </div>
-                      <div className="mt-4 bg-gradient-to-r from-saffron to-gold rounded-xl p-3 text-white">
+                      
+                      {/* Service Icons */}
+                      <div className="grid grid-cols-4 gap-2 mt-3">
+                        <div className="bg-white rounded-xl p-2.5 text-center shadow-sm">
+                          <BellIcon className="w-5 h-5 mx-auto" animate={false} />
+                          <span className="text-[9px] text-gray-500">Pooja</span>
+                        </div>
+                        <div className="bg-white rounded-xl p-2.5 text-center shadow-sm">
+                          <ZodiacIcon className="w-5 h-5 mx-auto" animate={false} />
+                          <span className="text-[9px] text-gray-500">Astro</span>
+                        </div>
+                        <div className="bg-white rounded-xl p-2.5 text-center shadow-sm">
+                          <CartIcon className="w-5 h-5 mx-auto" animate={false} />
+                          <span className="text-[9px] text-gray-500">Shop</span>
+                        </div>
+                        <div className="bg-white rounded-xl p-2.5 text-center shadow-sm">
+                          <TempleIcon className="w-5 h-5 mx-auto" animate={false} />
+                          <span className="text-[9px] text-gray-500">Temple</span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 bg-gradient-to-r from-saffron to-gold rounded-xl p-3 text-white">
                         <p className="text-xs opacity-80">Next Festival</p>
                         <p className="font-semibold text-sm">Maha Shivaratri</p>
                       </div>
-                      <div className="mt-3 bg-white rounded-xl p-3 shadow-sm">
+                      <div className="mt-2 bg-white rounded-xl p-3 shadow-sm">
                         <div className="flex items-center gap-2">
                           <div className="w-10 h-10 bg-saffron rounded-full flex items-center justify-center text-white font-bold">P</div>
                           <div>
@@ -677,19 +712,51 @@ export default function LandingPage({ onGetStarted }) {
                     </div>
                   </div>
                 </div>
-                {/* Floating elements */}
-                <div className="absolute -left-8 top-20 bg-white rounded-2xl p-4 shadow-xl animate-float">
+                
+                {/* Floating elements - positioned on sides */}
+                <motion.div 
+                  className="absolute -left-16 top-24 bg-white rounded-2xl p-3 shadow-xl"
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                >
                   <div className="flex items-center gap-2">
                     <Star className="w-5 h-5 text-gold fill-gold" />
-                    <span className="font-semibold text-gray-800">4.9 Rating</span>
+                    <span className="font-semibold text-gray-800 text-sm">4.9 Rating</span>
                   </div>
-                </div>
-                <div className="absolute -right-4 bottom-48 bg-white rounded-2xl p-4 shadow-xl animate-float" style={{animationDelay: '1s'}}>
+                </motion.div>
+                
+                <motion.div 
+                  className="absolute -right-16 top-40 bg-white rounded-2xl p-3 shadow-xl"
+                  animate={{ y: [0, 8, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                >
                   <div className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-green-500" />
-                    <span className="font-semibold text-gray-800">Verified Priests</span>
+                    <span className="font-semibold text-gray-800 text-sm">Verified</span>
                   </div>
-                </div>
+                </motion.div>
+                
+                <motion.div 
+                  className="absolute -left-12 bottom-32 bg-white rounded-2xl p-3 shadow-xl"
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-saffron" />
+                    <span className="font-semibold text-gray-800 text-sm">50K+ Users</span>
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  className="absolute -right-12 bottom-52 bg-white rounded-2xl p-3 shadow-xl"
+                  animate={{ y: [0, 6, 0] }}
+                  transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-purple-500" />
+                    <span className="font-semibold text-gray-800 text-sm">500+ Priests</span>
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
             </div>

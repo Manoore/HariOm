@@ -414,7 +414,7 @@ export default function MobileApp() {
 
   const initialState = getInitialPaymentState();
   
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false); // Disabled splash screen
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   const [showDashboard, setShowDashboard] = useState(initialState.showDashboard);
