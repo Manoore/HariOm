@@ -392,11 +392,33 @@ function SplashScreen({ onComplete }) {
 
 // Main App Entry Point
 export default function MobileApp() {
+  // Check URL params on initial load to set initial state
+  const getInitialPaymentState = () => {
+    if (typeof window === 'undefined') return { showDashboard: false, paymentRedirect: false };
+    const path = window.location.pathname;
+    const searchParams = new URLSearchParams(window.location.search);
+    const paymentParam = searchParams.get('payment');
+    const sessionId = searchParams.get('session_id');
+    
+    const isPaymentRedirect = path === '/payment/success' || 
+                              path === '/payment/cancel' || 
+                              sessionId || 
+                              paymentParam === 'success' || 
+                              paymentParam === 'cancelled';
+    
+    return {
+      showDashboard: isPaymentRedirect,
+      paymentRedirect: isPaymentRedirect
+    };
+  };
+
+  const initialState = getInitialPaymentState();
+  
   const [showSplash, setShowSplash] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
-  const [showDashboard, setShowDashboard] = useState(false); // Track if user wants to see dashboard
-  const [paymentRedirect, setPaymentRedirect] = useState(false); // Track if returning from payment
+  const [showDashboard, setShowDashboard] = useState(initialState.showDashboard);
+  const [paymentRedirect, setPaymentRedirect] = useState(initialState.paymentRedirect);
   const { user, loading, updateUser } = useAuth();
   const isMobile = useIsMobile();
 
@@ -414,13 +436,25 @@ export default function MobileApp() {
     const sessionId = searchParams.get('session_id');
     const orderId = searchParams.get('order_id');
     
+    // Check if user has a token (even if auth context hasn't loaded yet)
+    const hasToken = localStorage.getItem('divine_token');
+    
     if (path === '/payment/success' || sessionId || paymentParam === 'success') {
       // User is returning from Stripe payment - mark for redirect
       setPaymentRedirect(true);
       setShowDashboard(true);
-      toast.success('Payment successful! Your order has been confirmed.', {
-        duration: 5000,
-      });
+      
+      // If user has a token, they should see dashboard
+      // If not, they'll need to log in first
+      if (hasToken) {
+        toast.success('Payment successful! Your order has been confirmed.', {
+          duration: 5000,
+        });
+      } else {
+        toast.info('Payment successful! Please log in to view your order.', {
+          duration: 5000,
+        });
+      }
       // Clear the URL parameters but keep on main page
       window.history.replaceState({}, document.title, '/');
     } else if (path === '/payment/cancel' || paymentParam === 'cancelled') {
@@ -508,6 +542,18 @@ export default function MobileApp() {
     // This ensures navigation to dashboard after successful login
     if (isLoggedIn && showDashboard && DashboardComponent) {
       return <DashboardComponent key={`dashboard-${userRole}`} />;
+    }
+
+    // If returning from payment but not logged in, show auth screen
+    if (paymentRedirect && !isLoggedIn) {
+      return (
+        <AuthScreen 
+          key="auth"
+          initialMode="login" 
+          onBack={handleBackToLanding} 
+          showBackButton={true}
+        />
+      );
     }
 
     // Show auth screen if user clicked login/register (and not yet logged in)
