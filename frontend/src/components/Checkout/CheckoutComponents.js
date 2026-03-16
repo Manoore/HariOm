@@ -337,19 +337,35 @@ export function CheckoutPage({ onBack, onComplete }) {
 
     setSubmitting(true);
     try {
-      // Try new checkout endpoint first, fall back to payments endpoint
+      // Try new checkout endpoint first
       let res;
       try {
         res = await api.post('/api/checkout', formData);
       } catch (checkoutError) {
         if (checkoutError.response?.status === 404) {
-          // Fall back to older payments endpoint
-          res = await api.post('/api/payments/create-checkout', {
-            amount: totals.total,
-            currency: 'inr',
-            description: 'Divine App Order',
-            metadata: formData
+          // Fall back to older two-step flow:
+          // Step 1: Create order
+          const shippingAddress = `${formData.shipping_name}, ${formData.shipping_address}, ${formData.shipping_city}, ${formData.shipping_state} - ${formData.shipping_pincode}. Phone: ${formData.shipping_phone}`;
+          
+          const orderRes = await api.post('/api/orders', {
+            items: cartData.items.map(item => ({
+              product_id: item.product_id,
+              quantity: item.quantity
+            })),
+            shipping_address: shippingAddress,
+            payment_method: 'stripe'
           });
+          
+          // Step 2: Create payment checkout session
+          const paymentRes = await api.post('/api/payments/create-checkout', {
+            amount: totals.total * 100, // Convert to paise
+            currency: 'inr',
+            payment_type: 'order',
+            reference_id: orderRes.data.order_id || orderRes.data.id,
+            payment_method: 'stripe'
+          });
+          
+          res = { data: { ...orderRes.data, ...paymentRes.data } };
         } else {
           throw checkoutError;
         }
@@ -360,9 +376,9 @@ export function CheckoutPage({ onBack, onComplete }) {
         toast.success('Redirecting to payment...');
         // Store order info before redirect
         localStorage.setItem('pending_order', JSON.stringify({
-          order_id: res.data.order_id,
+          order_id: res.data.order_id || res.data.id,
           order_number: res.data.order_number,
-          total: res.data.total
+          total: res.data.total || totals.total
         }));
         // Clear cart count in context (backend already cleared the cart)
         if (refreshCart) {
@@ -379,6 +395,7 @@ export function CheckoutPage({ onBack, onComplete }) {
         onComplete(res.data);
       }
     } catch (error) {
+      console.error('Checkout error:', error);
       toast.error(error.response?.data?.detail || 'Failed to place order');
       setSubmitting(false);
     }

@@ -157,6 +157,13 @@ function ProfileCompletionScreen({ user, onComplete, onSkip }) {
             >
               Next <ChevronRight className="w-5 h-5" />
             </button>
+            
+            <button
+              onClick={onSkip}
+              className="w-full mt-3 py-2 text-gray-500 text-sm hover:text-gray-700"
+            >
+              Skip for now
+            </button>
           </motion.div>
         )}
 
