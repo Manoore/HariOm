@@ -396,6 +396,7 @@ export default function MobileApp() {
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   const [showDashboard, setShowDashboard] = useState(false); // Track if user wants to see dashboard
+  const [paymentRedirect, setPaymentRedirect] = useState(false); // Track if returning from payment
   const { user, loading, updateUser } = useAuth();
   const isMobile = useIsMobile();
 
@@ -408,17 +409,23 @@ export default function MobileApp() {
     const path = window.location.pathname;
     const searchParams = new URLSearchParams(window.location.search);
     
-    // Check for payment success redirect
-    if (path === '/payment/success' || searchParams.get('session_id')) {
-      // User is returning from Stripe payment - show dashboard
+    // Check for payment success redirect (multiple formats)
+    const paymentParam = searchParams.get('payment');
+    const sessionId = searchParams.get('session_id');
+    const orderId = searchParams.get('order_id');
+    
+    if (path === '/payment/success' || sessionId || paymentParam === 'success') {
+      // User is returning from Stripe payment - mark for redirect
+      setPaymentRedirect(true);
       setShowDashboard(true);
       toast.success('Payment successful! Your order has been confirmed.', {
         duration: 5000,
       });
-      // Clear the URL
+      // Clear the URL parameters but keep on main page
       window.history.replaceState({}, document.title, '/');
-    } else if (path === '/payment/cancel') {
-      // User cancelled payment - show dashboard
+    } else if (path === '/payment/cancel' || paymentParam === 'cancelled') {
+      // User cancelled payment - mark for redirect
+      setPaymentRedirect(true);
       setShowDashboard(true);
       toast.error('Payment was cancelled. Your cart items are still saved.', {
         duration: 5000,
@@ -427,6 +434,13 @@ export default function MobileApp() {
       window.history.replaceState({}, document.title, '/');
     }
   }, []);
+
+  // Auto-show dashboard when user is logged in and returning from payment
+  useEffect(() => {
+    if (!loading && isLoggedIn && paymentRedirect) {
+      setShowDashboard(true);
+    }
+  }, [loading, isLoggedIn, paymentRedirect]);
 
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
