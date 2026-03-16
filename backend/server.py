@@ -111,7 +111,7 @@ async def upload_image(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://aarti-platform.preview.emergentagent.com"
+        backend_url = "https://pooja-store-test.preview.emergentagent.com"
     
     # Return the URL
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -155,7 +155,7 @@ async def upload_video(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://aarti-platform.preview.emergentagent.com"
+        backend_url = "https://pooja-store-test.preview.emergentagent.com"
     
     # Return the URL
     video_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -4052,7 +4052,42 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
             "quantity": 1,
         })
     
-    total_amount = subtotal + total_shipping
+    # Get fees and taxes configuration
+    fees_config = await get_fees_and_taxes()
+    fees_calc = calculate_fees_and_taxes(subtotal, fees_config)
+    
+    platform_fee = fees_calc["platform_fee"]
+    tax_amount = fees_calc["tax_amount"]
+    tax_label = fees_calc["tax_label"]
+    tax_percentage = fees_calc["tax_percentage"]
+    
+    # Add platform fee as line item
+    if platform_fee > 0:
+        stripe_line_items.append({
+            "price_data": {
+                "currency": "inr",
+                "product_data": {
+                    "name": "Platform Fee",
+                },
+                "unit_amount": int(platform_fee * 100),
+            },
+            "quantity": 1,
+        })
+    
+    # Add tax as line item
+    if tax_amount > 0:
+        stripe_line_items.append({
+            "price_data": {
+                "currency": "inr",
+                "product_data": {
+                    "name": f"{tax_label} ({tax_percentage}%)",
+                },
+                "unit_amount": int(tax_amount * 100),
+            },
+            "quantity": 1,
+        })
+    
+    total_amount = subtotal + total_shipping + platform_fee + tax_amount
     
     # Create order in pending state
     order_dict = {
@@ -4062,6 +4097,10 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
         "items": items,
         "subtotal": subtotal,
         "shipping_cost": total_shipping,
+        "platform_fee": platform_fee,
+        "tax_amount": tax_amount,
+        "tax_percentage": tax_percentage,
+        "tax_label": tax_label,
         "total_amount": total_amount,
         "shipping_address": data.shipping_address,
         "shipping_city": data.shipping_city,
@@ -4079,7 +4118,7 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     order_id = str(result.inserted_id)
     
     # Get frontend URL for redirect
-    frontend_url = os.environ.get("FRONTEND_URL", "https://aarti-platform.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://pooja-store-test.preview.emergentagent.com")
     
     # Create Stripe checkout session
     try:
@@ -4113,6 +4152,10 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
             "order_number": order_id[-8:].upper(),
             "subtotal": subtotal,
             "shipping": total_shipping,
+            "platform_fee": platform_fee,
+            "tax_amount": tax_amount,
+            "tax_label": tax_label,
+            "tax_percentage": tax_percentage,
             "total": total_amount,
             "payment_method": data.payment_method,
             "checkout_url": checkout_session.url,
@@ -4678,6 +4721,61 @@ async def get_total_unread_count(user: dict = Depends(get_current_user)):
         total += room.get("unread_count", {}).get(str(user["_id"]), 0)
     return {"unread_count": total}
 
+# ===================== ADDRESS / PINCODE API =====================
+@app.get("/api/pincode/{pincode}")
+async def get_pincode_details(pincode: str):
+    """Get location details from Indian pincode using postal API"""
+    try:
+        if len(pincode) != 6 or not pincode.isdigit():
+            raise HTTPException(status_code=400, detail="Invalid pincode format")
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"https://api.postalpincode.in/pincode/{pincode}",
+                timeout=10.0
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data and data[0].get("Status") == "Success":
+                    post_offices = data[0].get("PostOffice", [])
+                    if post_offices:
+                        # Get unique districts and states
+                        first_po = post_offices[0]
+                        return {
+                            "success": True,
+                            "pincode": pincode,
+                            "city": first_po.get("District", ""),
+                            "state": first_po.get("State", ""),
+                            "country": first_po.get("Country", "India"),
+                            "areas": [po.get("Name") for po in post_offices],
+                            "post_offices": [
+                                {
+                                    "name": po.get("Name"),
+                                    "branch_type": po.get("BranchType"),
+                                    "delivery_status": po.get("DeliveryStatus"),
+                                    "division": po.get("Division"),
+                                    "region": po.get("Region"),
+                                    "block": po.get("Block"),
+                                }
+                                for po in post_offices
+                            ]
+                        }
+                
+                return {
+                    "success": False,
+                    "message": "No data found for this pincode"
+                }
+            else:
+                raise HTTPException(status_code=503, detail="Pincode service unavailable")
+                
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Pincode service timeout")
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ===================== VIDEO CONSULTATION APIs =====================
 from video_consultation import (
     get_system_settings, update_system_settings,
@@ -4710,8 +4808,15 @@ from system_config import (
     get_all_config, get_config_value, update_config, update_multiple_configs,
     get_config_by_category, CONFIG_CATEGORIES, init_system_config,
     is_maintenance_mode, get_app_branding,
-    get_stripe_credentials, get_razorpay_credentials
+    get_stripe_credentials, get_razorpay_credentials,
+    get_fees_and_taxes, calculate_fees_and_taxes
 )
+
+@app.get("/api/checkout/fees-taxes")
+async def get_checkout_fees_taxes():
+    """Get fees and taxes configuration for checkout (public endpoint)"""
+    fees_config = await get_fees_and_taxes()
+    return fees_config
 
 @app.get("/api/admin/system-config")
 async def get_system_config(user: dict = Depends(get_current_user)):

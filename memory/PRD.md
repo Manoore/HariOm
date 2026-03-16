@@ -501,4 +501,4 @@ Icons: Custom 3D animated SVGs
 - `backend/routes/reviews.py` - Product reviews API (NEW)
 
 ## Preview URLs
-- **Web App**: https://aarti-platform.preview.emergentagent.com
+- **Web App**: https://pooja-store-test.preview.emergentagent.com

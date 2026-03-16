@@ -211,17 +211,22 @@ export function CheckoutPage({ onBack, onComplete }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1); // 1: Address, 2: Payment, 3: Confirmation
+  const [feesConfig, setFeesConfig] = useState(null);
+  const [pincodeLoading, setPincodeLoading] = useState(false);
   const [formData, setFormData] = useState({
     shipping_name: user?.name || '',
     shipping_phone: user?.phone || '',
     shipping_address: user?.address || '',
     shipping_city: user?.city || '',
+    shipping_state: '',
+    shipping_pincode: '',
     notes: '',
     payment_method: paymentGateway || 'stripe'
   });
 
   useEffect(() => {
     fetchCartSummary();
+    fetchFeesConfig();
   }, []);
 
   const fetchCartSummary = async () => {
@@ -234,6 +239,88 @@ export function CheckoutPage({ onBack, onComplete }) {
       setLoading(false);
     }
   };
+
+  const fetchFeesConfig = async () => {
+    try {
+      const res = await api.get('/api/checkout/fees-taxes');
+      setFeesConfig(res.data);
+    } catch (error) {
+      console.log('Could not fetch fees config:', error);
+    }
+  };
+
+  const handlePincodeChange = async (pincode) => {
+    setFormData({ ...formData, shipping_pincode: pincode });
+    
+    if (pincode.length === 6) {
+      setPincodeLoading(true);
+      try {
+        const res = await api.get(`/api/pincode/${pincode}`);
+        if (res.data.success) {
+          setFormData(prev => ({
+            ...prev,
+            shipping_city: res.data.city,
+            shipping_state: res.data.state,
+            shipping_pincode: pincode
+          }));
+          toast.success(`Location: ${res.data.city}, ${res.data.state}`);
+        }
+      } catch (error) {
+        console.log('Pincode lookup failed:', error);
+      } finally {
+        setPincodeLoading(false);
+      }
+    }
+  };
+
+  // Calculate fees and taxes
+  const calculateTotals = () => {
+    if (!cartData || !feesConfig) {
+      return {
+        subtotal: cartData?.subtotal || 0,
+        shipping: cartData?.shipping || 0,
+        platformFee: 0,
+        taxAmount: 0,
+        taxLabel: 'GST',
+        taxPercentage: 0,
+        total: cartData?.total || 0
+      };
+    }
+
+    const subtotal = cartData.subtotal || 0;
+    const shipping = cartData.shipping || 0;
+
+    let platformFee = 0;
+    if (feesConfig.platform_fee?.enabled) {
+      if (feesConfig.platform_fee.type === 'percentage') {
+        platformFee = Math.round(subtotal * feesConfig.platform_fee.value / 100 * 100) / 100;
+      } else {
+        platformFee = feesConfig.platform_fee.value;
+      }
+    }
+
+    let taxableAmount = subtotal;
+    if (feesConfig.tax?.on_platform_fee) {
+      taxableAmount += platformFee;
+    }
+
+    let taxAmount = 0;
+    if (feesConfig.tax?.enabled) {
+      taxAmount = Math.round(taxableAmount * feesConfig.tax.percentage / 100 * 100) / 100;
+    }
+
+    return {
+      subtotal,
+      shipping,
+      platformFee,
+      taxAmount,
+      taxLabel: feesConfig.tax?.label || 'GST',
+      taxPercentage: feesConfig.tax?.percentage || 0,
+      total: subtotal + shipping + platformFee + taxAmount
+    };
+  };
+
+  const totals = calculateTotals();
 
   const handlePlaceOrder = async () => {
     if (!formData.shipping_name || !formData.shipping_phone || !formData.shipping_address || !formData.shipping_city) {
@@ -366,16 +453,38 @@ export function CheckoutPage({ onBack, onComplete }) {
                   />
                 </div>
                 
-                <div>
-                  <label className="text-sm text-gray-600 mb-1 block">Address *</label>
-                  <textarea
-                    value={formData.shipping_address}
-                    onChange={(e) => setFormData({...formData, shipping_address: e.target.value})}
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-xl border border-orange-100 focus:ring-2 focus:ring-saffron/50 focus:border-saffron outline-none resize-none"
-                    placeholder="House/Flat No, Street, Landmark"
-                    required
-                  />
+                {/* Pincode with auto-fill */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-600 mb-1 block">PIN Code *</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={formData.shipping_pincode}
+                        onChange={(e) => handlePincodeChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className="w-full px-4 py-3 rounded-xl border border-orange-100 focus:ring-2 focus:ring-saffron/50 focus:border-saffron outline-none"
+                        placeholder="6-digit PIN"
+                        maxLength={6}
+                        required
+                      />
+                      {pincodeLoading && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader2 className="w-4 h-4 animate-spin text-saffron" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600 mb-1 block">State</label>
+                    <input
+                      type="text"
+                      value={formData.shipping_state}
+                      onChange={(e) => setFormData({...formData, shipping_state: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl border border-orange-100 focus:ring-2 focus:ring-saffron/50 focus:border-saffron outline-none bg-gray-50"
+                      placeholder="Auto-filled"
+                      readOnly={formData.shipping_state !== ''}
+                    />
+                  </div>
                 </div>
                 
                 <div>
@@ -384,8 +493,20 @@ export function CheckoutPage({ onBack, onComplete }) {
                     type="text"
                     value={formData.shipping_city}
                     onChange={(e) => setFormData({...formData, shipping_city: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-orange-100 focus:ring-2 focus:ring-saffron/50 focus:border-saffron outline-none"
+                    className={`w-full px-4 py-3 rounded-xl border border-orange-100 focus:ring-2 focus:ring-saffron/50 focus:border-saffron outline-none ${formData.shipping_city && formData.shipping_pincode.length === 6 ? 'bg-gray-50' : ''}`}
                     placeholder="Enter city"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm text-gray-600 mb-1 block">Address *</label>
+                  <textarea
+                    value={formData.shipping_address}
+                    onChange={(e) => setFormData({...formData, shipping_address: e.target.value})}
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl border border-orange-100 focus:ring-2 focus:ring-saffron/50 focus:border-saffron outline-none resize-none"
+                    placeholder="House/Flat No, Street, Landmark"
                     required
                   />
                 </div>
@@ -404,7 +525,7 @@ export function CheckoutPage({ onBack, onComplete }) {
               
               <button
                 onClick={() => setStep(2)}
-                disabled={!formData.shipping_name || !formData.shipping_phone || !formData.shipping_address || !formData.shipping_city}
+                disabled={!formData.shipping_name || !formData.shipping_phone || !formData.shipping_address || !formData.shipping_city || !formData.shipping_pincode}
                 className="w-full mt-6 py-4 bg-saffron text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue to Payment
@@ -586,19 +707,41 @@ export function CheckoutPage({ onBack, onComplete }) {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal ({cartData?.item_count} items)</span>
-                <span className="font-medium">₹{cartData?.subtotal}</span>
+                <span className="font-medium">₹{totals.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Shipping</span>
-                <span className={cartData?.shipping === 0 ? 'text-green-600 font-medium' : 'font-medium'}>
-                  {cartData?.shipping === 0 ? 'FREE' : `₹${cartData?.shipping}`}
+                <span className={totals.shipping === 0 ? 'text-green-600 font-medium' : 'font-medium'}>
+                  {totals.shipping === 0 ? 'FREE' : `₹${totals.shipping.toFixed(2)}`}
                 </span>
               </div>
+              
+              {/* Platform Fee */}
+              {totals.platformFee > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Platform Fee</span>
+                  <span className="font-medium">₹{totals.platformFee.toFixed(2)}</span>
+                </div>
+              )}
+              
+              {/* Tax */}
+              {totals.taxAmount > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{totals.taxLabel} ({totals.taxPercentage}%)</span>
+                  <span className="font-medium">₹{totals.taxAmount.toFixed(2)}</span>
+                </div>
+              )}
+              
               <div className="pt-3 border-t">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span className="text-saffron">₹{cartData?.total}</span>
+                  <span className="text-saffron">₹{totals.total.toFixed(2)}</span>
                 </div>
+                {(totals.platformFee > 0 || totals.taxAmount > 0) && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Inclusive of all taxes
+                  </p>
+                )}
               </div>
             </div>
 

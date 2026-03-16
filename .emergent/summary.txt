@@ -6,187 +6,183 @@ The user wants to build a Divine App, a digital platform connecting users with H
 -   **User Roles:** Devotees, Priests, Astrologers, Shop Owners, Admin.
 -   **Core Functions:** Priest booking, spiritual learning, and astrology services.
 -   **Marketplace:** A Pooja Store for spiritual items.
--   **Additional Features:** Spiritual content feed, festival reminders, temple info, animated Aarti, location-based services, multi-language support with text-to-speech, real-time chat, and per-minute video consultations.
+-   **Additional Features:** Spiritual content feed, festival reminders, temple info, animated Aarti, location-based services, multi-language support, real-time chat, and per-minute video consultations.
 -   **UI/UX:** Traditional/Warm theme, personalized devotee home screen, and role-specific dashboards.
--   **Admin Management:** All critical settings and API keys should be manageable from an Admin Dashboard without requiring code changes.
+-   **Admin Management:** All critical settings, including API keys, platform fees, and taxes should be manageable from an Admin Dashboard without requiring code changes.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The project is a live, full-stack application (React frontend, FastAPI backend) deployed on Firebase and Google Cloud Run. Key features are fully implemented and tested:
--   **Role-Based Dashboards:** Functional dashboards for Admin, Devotee, Priest, and Astrologer.
--   **Interactive Feed:** A Spiritual Updates feed where users can post, like, and comment with text and images.
--   **Real-time Chat:** A WebSocket-based chat system that automatically creates/deactivates chat rooms between devotees and providers (priests/shop owners) based on booking/order status.
--   **Video Consultation System:** A complete per-minute video calling feature for astrologers, built with 100ms. It includes a user wallet system, Stripe/Razorpay for recharges, free introductory minutes, low-balance warnings, and auto-disconnect logic.
--   **Admin Controls:** An admin dashboard to manage users and configure video consultation settings (e.g., min recharge, commission rates, free minutes).
+The application is a full-stack platform with a React frontend and a FastAPI backend. Key features include:
+-   **Authentication:** Multi-faceted login system supporting Email/Password, Google Sign-In, and international Phone Number with OTP verification.
+-   **Role-Based Dashboards:** Functional dashboards for Admin, Devotee, Priest, Astrologer, and Shop Owner.
+-   **E-commerce & Pooja Store:** A complete e-commerce flow with product browsing, a shopping cart, and a multi-step checkout process with Stripe integration.
+-   **Admin-Managed System:** A comprehensive admin UI for securely managing third-party API keys, and dynamically setting a platform fee and taxes, which are then reflected in the checkout total.
+-   **Product Management:** Shop owners can manage products (with image/video uploads), inventory, and orders. Customers can leave ratings and reviews on products they've purchased.
+-   **Address Autocomplete:** The checkout address form integrates with an Indian Pincode API to auto-populate the City and State fields.
+-   **Real-time Features:** An interactive Spiritual Updates feed and a WebSocket-based chat system.
+-   **Video Consultation:** A per-minute video calling system for astrologers.
+-   **Sarvam AI TTS feature has been completely removed** from the codebase as per the user's request.
 
 **Last working item**:
--   **Last item agent was working:** The user requested a secure way to manage all third-party API keys (like 100ms, Stripe, Razorpay) and other system configurations directly from the Admin Dashboard, instead of storing them in  files. The agent began building this feature.
--   **Status:** IN PROGRESS
--   **Agent Testing Done:** N
--   **Which testing method agent to use?** both. The backend APIs for saving/retrieving encrypted settings need to be tested. The new Admin UI for managing these settings also needs verification.
+-   **Last item agent was working:** Implementing a user request for dynamic, admin-configurable fees and taxes in the checkout process, along with an Indian Pincode API to auto-fill address details.
+    -   1. **Admin Controls:** Added UI in the Admin Dashboard to set a platform fee percentage and tax details (name and percentage).
+    -   2. **Dynamic Checkout:** Updated the checkout flow to fetch these settings and display a detailed breakdown of Subtotal, Platform Fee, and Taxes in the order summary.
+    -   3. **Address Autocomplete:** Created a backend endpoint to query an Indian Pincode API and integrated it into the checkout form to auto-populate City and State fields.
+-   **Status:** USER VERIFICATION PENDING
+-   **Agent Testing Done:** Y
+-   **Which testing method agent to use?** Frontend testing agent. The agent should test the full checkout flow to verify:
+    1.  The pincode auto-fill functionality in the address form.
+    2.  The correct calculation and display of platform fees and taxes in the order summary.
+    3.  The final amount passed to Stripe matches the total including fees and taxes.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Complete Admin-Editable System Configuration Feature (P0)
--   **Issue 2:** Google Sign-in on new preview domains (P1 - BLOCKED)
--   **Issue 3:** Expo Mobile App Preview (P2 - BLOCKED)
--   **Issue 4:** Sarvam AI TTS Synchronization (P3 - NOT STARTED)
+-   **Issue 1:** Google Sign-in on new preview domains (P1 - BLOCKED)
+-   **Issue 2:** Expo Mobile App Preview (P2 - BLOCKED)
 
 **Issues Detail:**
--   **Issue 1: Complete Admin-Editable System Configuration Feature**
-    -   **Attempted fixes:**
-        -   **Backend:** A new  module was created to handle encryption ( library) and storage of secrets in a new  MongoDB collection. API endpoints ( and ) were added to .
-        -   **Frontend:** A new  component was created to provide the UI for managing these settings.
-    -   **Next debug checklist:**
-        1.  Integrate the  component into the  file so it's accessible from the admin sidebar.
-        2.  Refactor the application's backend (, , etc.) to fetch API keys (100ms, Stripe, Razorpay) from the new database configuration system instead of environment variables ().
-        3.  Thoroughly test all features dependent on these keys (video calls, payments) to ensure they work with the new dynamic configuration system.
-    -   **Why fix this issue and what will be achieved with the fix?** This will allow the admin to update critical API keys and settings securely in a live environment without requiring developer intervention or new deployments, significantly improving security and maintainability.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on other issue:** None
-
--   **Issue 2: Google Sign-in on new preview domains**
-    -   **Description:** Google Sign-in will fail on new preview URLs unless the user manually authorizes the domain in their Firebase project. This is a recurring environmental constraint.
-    -   **Status:** BLOCKED (on user for any future preview domains)
-    -   **Is recurring issue?** Y
-
--   **Issue 3: Expo Mobile App Preview is Not Working**
-    -   **Description:** The React Native/Expo app preview is non-functional as it requires a user-provided . The user has agreed to postpone native app development.
+-   **Issue 1: Google Sign-in on new preview domains**
+    -   **Attempted fixes:** This is an environmental constraint. The fix requires the user to manually authorize the new preview domain in their Firebase/Google Cloud console.
+    -   **Next debug checklist:** Instruct the user to add the new preview domain to the authorized list in Firebase Authentication settings.
+    -   **Why fix this issue and what will be achieved with the fix?** Enables Google authentication for testing on new preview environments.
     -   **Status:** BLOCKED
     -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on other issue:** N/A
 
--   **Issue 4: Sarvam AI TTS Synchronization**
-    -   **Description:** User noted that the TTS audio doesnt sync properly" but deferred the fix to a later time.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
+-   **Issue 2: Expo Mobile App Preview is Not Working**
+    -   **Attempted fixes:** The user has agreed to postpone native app development, so no fix was attempted.
+    -   **Next debug checklist:** Blocked until the user provides an  and prioritizes mobile app development.
+    -   **Why fix this issue and what will be achieved with the fix?** Allows for previewing and developing the native mobile application.
+    -   **Status:** BLOCKED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on other issue:** N/A
 
 **In progress Task List**:
--   **Task 1: Implement Admin-Editable System Configuration (P0)**
-    -   **Where to resume:** The agent has created the necessary backend logic and the frontend UI component (`AdminSystemSettings.js`). The immediate next step is to add a link/tab in the `AdminDashboard.js` sidebar to render this new component and make it accessible to the admin.
-    -   **What will be achieved with this?** A centralized and secure settings management system controlled via the Admin UI.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** N/A
+-   There are no tasks currently in progress.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **(P1) Build Out `Shop Owner` Dashboard:** Create the dashboard for the `Shop Owner` role, including product management and order fulfillment features.
--   **(P2) Refactor Backend:** Decompose the monolithic `backend/server.py` into a structured `routes` directory (e.g., `auth.py`, `posts.py`, `chat.py`, `consultations.py`). This is critical for maintainability.
+-   **(P1) Spiritual Articles:** Build a blog/article section. Sourcing options (AI-generated vs. Priest-written) have been discussed with the user.
+-   **(P2) Temple Directory:** Create a searchable database of Hindu temples with details like location, timings, and photos.
+-   **(P2) Curated YouTube Video Player:** Replace the removed TTS feature with an embedded YouTube player for mantra recitations.
 
 **Future Tasks:**
--   **(P2) Build Native Mobile App:** Convert/rebuild the application using React Native + Expo for the iOS and Android app stores.
--   **(P2) Implement Core E-commerce Features:** Build the shopping cart and full e-commerce flow for the "Pooja Store."
--   **(P3) Add Content Features:** Build out the UI and backend for spiritual articles and a temple directory.
+-   **(P2) Build Native Mobile App:** Convert/rebuild the application using React Native + Expo.
+-   **(P3) Refactor Checkout Logic:** Move checkout, payment confirmation, and webhook endpoints from  to  to align with the modular architecture.
 
 **Completed work in this session**
--   **Comments & Likes Feature:** Implemented and tested a fully interactive social feed.
--   **Dedicated "Spiritual Feed" Tab:** Added a dedicated tab in the navigation for easy access to posts.
--   **Real-Time Chat System:** Implemented a WebSocket-based chat for devotees to communicate with priests and shop owners.
--   **Video Consultation & Wallet System:** Built a complete, per-minute billing system for astrologer video consultations using 100ms, including a user wallet, recharge functionality (Stripe/Razorpay), free introductory minutes, low-balance warnings, and auto-disconnect logic.
--   **Astrologer Dashboard:** Created a comprehensive dashboard for astrologers to manage their profile, per-minute rate, availability, call history, and earnings.
--   **Admin-Editable Consultation Settings:** Created a UI in the Admin Dashboard for admins to configure video consultation parameters like commission rates and promotional minutes.
+-   **Phone Number Authentication (DONE):** Implemented Firebase Phone Auth for sign-in/up, complete with an international country code selector, and fixed multiple reCAPTCHA/domain authorization bugs.
+-   **Sarvam AI TTS Removal (DONE):** Successfully removed all backend endpoints, frontend UI elements, and dependencies related to the Sarvam AI text-to-speech feature.
+-   **Shopping Cart & Checkout Bug Fixes (DONE):**
+    -   Resolved a backend crash when calculating the cart summary for products with no images.
+    -   Fixed the Stripe integration to handle users who registered with a phone number instead of an email.
+    -   Ensured the shopping cart is cleared from both the database and the frontend UI after a successful checkout.
+    -   Corrected a payment confirmation failure caused by using an invalid order status ( instead of ).
+-   **Stripe Payment Integration (DONE):** Fully integrated Stripe into the checkout flow, replacing a non-functional Razorpay placeholder.
+-   **Dynamic Fees & Pincode Autocomplete (DONE):** Added admin controls for platform fees/taxes and integrated an Indian Pincode API for address auto-filling during checkout.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Sarvam AI TTS Synchronization**
-    -   **Description:** User noted that the TTS audio "doesnt sync properly but deferred the fix.
-    -   **Why to solve this issue and what will be achieved with this?** Fixing this will improve the user experience for the audio library feature.
-    -   **Should Test frontend/backend/both after fix:** Frontend
-    -   **Is recurring issue?** N
+-   None. All previously mentioned issues have been addressed or resolved.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** Google Sign-in on new preview domains, Expo Mobile App Preview.
--   **Recurrence count:** 2+
+-   **Recurrence count:** 4+
 -   **Status:** BLOCKED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Hosting:** Google Cloud Run, Firebase Hosting.
--   **Database:** MongoDB Atlas.
--   **Real-time Communication:** WebSockets (for chat), 100ms SDK (for video/audio).
--   **Payments:** Stripe and Razorpay (IP-based routing).
--   **Security:**  library for encrypting/decrypting API keys stored in the database.
+-   **Backend:** FastAPI
+-   **Frontend:** React
+-   **Database:** MongoDB Atlas
+-   **Authentication:** Firebase (Email/Password, Google, Phone Auth with reCAPTCHA)
+-   **Payments:** Stripe (Checkout Sessions, Webhooks)
+-   **Real-time:** WebSockets
+-   **External APIs:** Indian Pincode API for address lookup.
+-   **Security:**  library for encrypting secrets in DB.
 
 **key DB schema**
--   **users:** {email, role, wallet_balance, free_minutes, ...}
--   **priest_posts:** {content, image_url, likes, comments, ...}
--   **post_likes:** {post_id, user_id}
--   **post_comments:** {post_id, user_id, text, image_url}
--   **chat_rooms:** {participants, booking_id, is_active} 
--   **chat_messages:** {room_id, sender_id, text, image_url} 
--   **wallet_transactions:** {user_id, amount, type, status} 
--   **call_history:** {user_id, provider_id, duration, cost, status} 
--   **system_config:** {key, value (encrypted)} 
+-   **system_config:** Now includes keys for , , and .
+-   **users:** Can now have a  instead of an .
+
+**changes in tech stack**
+-   None.
 
 **All files of reference**
--   : Contains all API endpoints, needs refactoring.
--   : Contains the core logic for video calls and per-minute billing.
--   : Handles the encryption and database storage of admin-managed settings.
--   : Needs to be updated to include the new System Settings UI.
--   : The new UI for managing API keys.
--   : Main entry point for the devotee experience, now includes Chat, Feed, and Video Consultation tabs.
--   : The complete dashboard for astrologers.
+-   : Contains critical checkout, payment confirmation, and fee/tax calculation logic.
+-   : Main UI for the new phone authentication flow.
+-   : Contains the UI for the address form (with pincode logic) and the order summary (with fee/tax breakdown).
+-   : UI for managing the new platform fee and tax settings.
+-   : Manages state and logic for all authentication methods.
+-   : Handles the redirect from Stripe after payment success or cancellation.
 
 **Areas that need refactoring**:
--   **:** This file is now critically oversized and handles auth, posts, comments, chat, bookings, and admin functions. It must be broken down into a  directory with separate files for each domain to ensure the project remains maintainable. This is the highest priority refactoring task.
+-   **Checkout Logic Consolidation:** The primary checkout logic (), payment confirmation (), and Stripe webhook () were implemented directly in . To improve modularity and adhere to the established architecture, this logic should be moved into the  file.
 
 **key api endpoints**
--   : Toggle a like for a post.
--   : Add a new comment to a post.
--   : WebSocket endpoint for real-time chat.
--   : Initiate a payment to add funds to the user's wallet.
--   : Start a video consultation call.
--   : Get statistics for the astrologer dashboard.
--   : Retrieve all system configurations. 
--   : Update system configurations. 
+-   : (POST) Creates an order and a Stripe checkout session. Includes fee/tax calculation.
+-   : (POST) Confirms an order's payment status after successful Stripe redirect.
+-   : (POST) Listens for events from Stripe (e.g., ).
+-   : (GET) Fetches city and state for a given Indian pincode.
+-   : (GET) Provides the current platform fee and tax settings to the frontend.
+-   : (POST) Updated to handle user creation/login via phone number.
 
 **Critical Info for New Agent**
--   **The application is LIVE and feature-rich.** Be cautious when making changes.
--   **Configuration Management has Changed:** The immediate task is to finalize the transition from  files to a database-driven, admin-editable configuration system for all third-party API keys. The backend logic must be refactored to query the database for these keys instead of reading from the environment.
--   **Backend Refactoring is Urgent:** The  file has become a major bottleneck. After completing the current task, prioritize breaking it into smaller, feature-specific route files.
--   **Testing is Crucial:** Use the testing agent after completing the settings migration to ensure video calls and payments are still functional.
+-   **Phone Auth is the New Default:** Phone number authentication is now a primary login method. Be mindful that user documents in the database may have a  field instead of an . The Stripe checkout flow was specifically patched to handle this scenario.
+-   **Checkout Logic is in :** Due to routing conflicts during development, most of the new Stripe checkout, fee calculation, and payment confirmation logic resides in the main  file, NOT in . Look here first when debugging the checkout flow.
+-   **Dynamic Fees & Taxes:** The final price at checkout is calculated by adding a platform fee and taxes. These values are not hardcoded; they are fetched from the  collection in the database and can be changed by the admin at any time.
+-   **Firebase Domain Authorization is Manual:** For phone authentication's reCAPTCHA to work on a new preview environment, you MUST instruct the user to add the preview domain (e.g., ) to the list of Authorized domains in their Firebase project settings. This is a recurring manual step for every new preview URL.
 
 **documents and test reports created in this job**
--   Multiple test reports in  created after implementing comments/likes, chat, and the astrologer dashboard.
+-    (updated with removal of Sarvam AI and addition of Phone Auth)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Asks about the best way to do video consultations. (Answered)
-2.  **User:** Confirms they want 1:1, group classes, recording, and per-minute billing for astrologers with a wallet system and auto-disconnect. (Requirement gathered)
-3.  **User:** Asks for a technical explanation of how per-minute billing works with 100ms. (Answered with architecture)
-4.  **User:** Provides business logic: ₹100 min recharge, 30s grace period, ₹20 low balance warning, 5 free mins for new users, and astrologer-specific pricing, all editable in admin. (Requirement gathered)
-5.  **User:** Provides 100ms API keys and confirms IP-based payment gateway logic. (Credentials received)
-6.  **Agent:** Implements the complete video consultation system. (COMPLETED)
-7.  **User:** Requests an Astrologer Dashboard. (Requirement gathered)
-8.  **Agent:** Implements the Astrologer Dashboard with earnings, call history, and profile management. (COMPLETED)
-9.  **User:** Asks if all secrets and keys were added to the admin panel to be edited in the future. (Requirement gathered)
-10. **Agent:** Acknowledges the need and starts implementing a comprehensive, encrypted admin settings system. (IN PROGRESS)
+1.  **Request:** Add admin-managed platform fees/taxes and a pincode API for address autocomplete. (COMPLETED)
+2.  **Error:** Payment confirmation fails with a 500 error after checkout. (RESOLVED)
+3.  **Error:** React warning Cannot update a component while rendering... after checkout redirect. (RESOLVED)
+4.  **Bug Report:** Cart is not being cleared after a successful checkout. (RESOLVED)
+5.  **Confirmation:** User agreed to the implemented solution for phone-only users at Stripe checkout. (COMPLETE)
+6.  **Error Report:** Firebase phone auth fails due to . (RESOLVED by instructing user to authorize domain).
+7.  **Error Report:** Firebase phone auth fails due to . (RESOLVED)
+8.  **Request:** Add international country code support to phone authentication. (COMPLETED)
+9.  **Bug Report:** Cart is not showing items and checkout is broken. (RESOLVED)
+10. **Request:** Implement Stripe as the primary payment provider. (COMPLETED)
 
 **Project Health Check:**
 -   **Broken:**
-    -   Native mobile app build/preview (intentionally postponed by the user).
+    -   Native mobile app preview (intentionally postponed by the user).
 -   **Mocked:**
     -   None.
 
 **3rd Party Integrations**
 -   **Google Cloud Run:** Backend hosting.
 -   **Firebase Hosting:** Frontend hosting.
--   **Firebase Authentication:** User login (Email/Google).
+-   **Firebase Authentication:** User login (Email/Password, Google, Phone).
 -   **MongoDB Atlas:** Database.
--   **Stripe:** International payments.
--   **Razorpay:** Indian payments.
--   **100ms:** Video/audio calls for consultations and classes.
+-   **Stripe:** Primary payment gateway (Checkout Sessions).
+-   **Razorpay:** Secondary payment option (UI present, but flow defaults to Stripe).
+-   **100ms:** Video/audio calls for consultations.
 -   **Prokerala Astrology API:** Astrology data.
--   **Sarvam AI:** Text-to-Speech (integration deferred).
+-   **pincode-api.com:** Used for Indian address autocomplete.
 -   : Python library for encrypting secrets.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES. Used extensively after implementing the feed, chat, video consultation, and astrologer dashboard features. All major features are covered by tests.
--   **Test files created:** Yes, comprehensive tests exist in .
+-   **Testing agent used after significant changes:** NO
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** NO
 -   **Known regressions:** None.
 
+**Credentials to test flow:**
+-   **User:**  / 
+-   **Admin:**  / 
+-   **Stripe Test Card:**
+    -   Card Number: 
+    -   Expiry: Any future date (e.g., )
+    -   CVC: Any 3 digits (e.g., )
+
 **What agent forgot to execute**
-The agent started the implementation for admin-editable system configurations but has not completed it. The final steps of integrating the UI into the admin dashboard and refactoring the backend to use these new dynamic settings are still pending.</analysis>
+-   The agent implemented significant checkout and payment logic directly in  to resolve an immediate routing issue, but this contradicts the established modular architecture where such logic should be in . The agent did not schedule a follow-up refactoring task to move this code and align it with the project's structure.</analysis>

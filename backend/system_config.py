@@ -152,6 +152,78 @@ DEFAULT_CONFIG = {
         "required": False
     },
     
+    # Platform Fees & Taxes
+    "platform_fee_type": {
+        "value": "percentage",
+        "category": "fees_taxes",
+        "label": "Platform Fee Type",
+        "description": "How to calculate platform fee - fixed amount or percentage",
+        "sensitive": False,
+        "options": ["percentage", "fixed"],
+        "required": False
+    },
+    "platform_fee_value": {
+        "value": "2.5",
+        "category": "fees_taxes",
+        "label": "Platform Fee Value",
+        "description": "Platform fee amount (in % or ₹ based on type)",
+        "sensitive": False,
+        "required": False,
+        "type": "number"
+    },
+    "platform_fee_enabled": {
+        "value": True,
+        "category": "fees_taxes",
+        "label": "Enable Platform Fee",
+        "description": "Enable/disable platform fee on orders",
+        "sensitive": False,
+        "type": "boolean",
+        "required": False
+    },
+    "gst_enabled": {
+        "value": True,
+        "category": "fees_taxes",
+        "label": "Enable GST",
+        "description": "Enable/disable GST on orders",
+        "sensitive": False,
+        "type": "boolean",
+        "required": False
+    },
+    "gst_percentage": {
+        "value": "18",
+        "category": "fees_taxes",
+        "label": "GST Percentage",
+        "description": "GST rate applied to orders (%)",
+        "sensitive": False,
+        "required": False,
+        "type": "number"
+    },
+    "gst_on_platform_fee": {
+        "value": True,
+        "category": "fees_taxes",
+        "label": "GST on Platform Fee",
+        "description": "Include platform fee in GST calculation",
+        "sensitive": False,
+        "type": "boolean",
+        "required": False
+    },
+    "gst_registration_number": {
+        "value": "",
+        "category": "fees_taxes",
+        "label": "GST Registration Number",
+        "description": "Your GST registration number (shown on invoices)",
+        "sensitive": False,
+        "required": False
+    },
+    "tax_label": {
+        "value": "GST",
+        "category": "fees_taxes",
+        "label": "Tax Label",
+        "description": "Label shown for tax (e.g., GST, VAT, Tax)",
+        "sensitive": False,
+        "required": False
+    },
+    
     # App Branding
     "app_name": {
         "value": "Divine App",
@@ -511,6 +583,7 @@ CONFIG_CATEGORIES = {
     "video": {"label": "Video (100ms)", "icon": "video", "description": "100ms video call integration settings"},
     "payment": {"label": "Payment Gateway Keys", "icon": "credit-card", "description": "Stripe and Razorpay API keys"},
     "payment_settings": {"label": "Payment Settings", "icon": "settings", "description": "Payment gateway configuration"},
+    "fees_taxes": {"label": "Fees & Taxes", "icon": "receipt", "description": "Platform fees, GST, and tax settings"},
     "firebase": {"label": "Firebase", "icon": "flame", "description": "Firebase authentication settings"},
     "branding": {"label": "App Branding", "icon": "palette", "description": "App name, tagline, and contact info"},
     "maintenance": {"label": "Maintenance", "icon": "tool", "description": "Maintenance mode settings"},
@@ -586,3 +659,58 @@ async def get_firebase_credentials() -> Dict[str, str]:
         "auth_domain": auth_domain or f"{project_id}.firebaseapp.com",
         "project_id": project_id
     }
+
+
+async def get_fees_and_taxes() -> Dict[str, Any]:
+    """Get platform fees and tax configuration for checkout"""
+    platform_fee_enabled = await get_config_value("platform_fee_enabled")
+    platform_fee_type = await get_config_value("platform_fee_type")
+    platform_fee_value = await get_config_value("platform_fee_value")
+    gst_enabled = await get_config_value("gst_enabled")
+    gst_percentage = await get_config_value("gst_percentage")
+    gst_on_platform_fee = await get_config_value("gst_on_platform_fee")
+    tax_label = await get_config_value("tax_label")
+    gst_registration_number = await get_config_value("gst_registration_number")
+    
+    return {
+        "platform_fee": {
+            "enabled": platform_fee_enabled if platform_fee_enabled is not None else True,
+            "type": platform_fee_type or "percentage",
+            "value": float(platform_fee_value or 2.5)
+        },
+        "tax": {
+            "enabled": gst_enabled if gst_enabled is not None else True,
+            "percentage": float(gst_percentage or 18),
+            "on_platform_fee": gst_on_platform_fee if gst_on_platform_fee is not None else True,
+            "label": tax_label or "GST",
+            "registration_number": gst_registration_number or ""
+        }
+    }
+
+
+def calculate_fees_and_taxes(subtotal: float, fees_config: Dict) -> Dict[str, float]:
+    """Calculate platform fee and tax amounts based on configuration"""
+    platform_fee = 0
+    tax_amount = 0
+    
+    # Calculate platform fee
+    if fees_config["platform_fee"]["enabled"]:
+        if fees_config["platform_fee"]["type"] == "percentage":
+            platform_fee = round(subtotal * fees_config["platform_fee"]["value"] / 100, 2)
+        else:
+            platform_fee = fees_config["platform_fee"]["value"]
+    
+    # Calculate tax
+    if fees_config["tax"]["enabled"]:
+        taxable_amount = subtotal
+        if fees_config["tax"]["on_platform_fee"]:
+            taxable_amount += platform_fee
+        tax_amount = round(taxable_amount * fees_config["tax"]["percentage"] / 100, 2)
+    
+    return {
+        "platform_fee": platform_fee,
+        "tax_amount": tax_amount,
+        "tax_percentage": fees_config["tax"]["percentage"] if fees_config["tax"]["enabled"] else 0,
+        "tax_label": fees_config["tax"]["label"]
+    }
+
