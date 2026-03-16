@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,13 +20,11 @@ import { productAPI } from '../services/api';
 const StoreScreen = ({ navigation }) => {
   const { addToCart, cartItemCount } = useCart();
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(['all']);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     fetchCategories();
@@ -33,7 +32,6 @@ const StoreScreen = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    setPage(1);
     fetchProducts(true);
   }, [selectedCategory, searchQuery]);
 
@@ -42,7 +40,7 @@ const StoreScreen = ({ navigation }) => {
       const response = await productAPI.getCategories();
       setCategories(['all', ...(response.data.categories || [])]);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.log('Error fetching categories:', error);
     }
   };
 
@@ -52,10 +50,7 @@ const StoreScreen = ({ navigation }) => {
         setLoading(true);
       }
 
-      const params = {
-        page: reset ? 1 : page,
-        limit: 10,
-      };
+      const params = { limit: 20 };
 
       if (selectedCategory !== 'all') {
         params.category = selectedCategory;
@@ -66,17 +61,10 @@ const StoreScreen = ({ navigation }) => {
       }
 
       const response = await productAPI.getAll(params);
-      const newProducts = response.data.products || [];
-
-      if (reset) {
-        setProducts(newProducts);
-      } else {
-        setProducts(prev => [...prev, ...newProducts]);
-      }
-
-      setHasMore(newProducts.length === 10);
+      setProducts(response.data.products || []);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.log('Error fetching products:', error);
+      setProducts([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -85,26 +73,25 @@ const StoreScreen = ({ navigation }) => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    setPage(1);
     fetchProducts(true);
-  };
-
-  const loadMore = () => {
-    if (!loading && hasMore) {
-      setPage(prev => prev + 1);
-      fetchProducts();
-    }
   };
 
   const handleAddToCart = async (product) => {
     const result = await addToCart(product.id);
-    // Show feedback to user
+    if (result.success) {
+      Alert.alert('Added!', `${product.name} added to cart`);
+    }
+  };
+
+  const handleProductPress = (product) => {
+    navigation.navigate('ProductDetail', { product });
   };
 
   const CategoryPill = ({ category, isSelected, onPress }) => (
     <TouchableOpacity
       style={[styles.categoryPill, isSelected && styles.categoryPillSelected]}
       onPress={onPress}
+      activeOpacity={0.7}
     >
       <Text style={[styles.categoryText, isSelected && styles.categoryTextSelected]}>
         {category === 'all' ? 'All' : category}
@@ -144,7 +131,10 @@ const StoreScreen = ({ navigation }) => {
         <Text style={styles.resultsCount}>
           {products.length} Products Found
         </Text>
-        <TouchableOpacity style={styles.filterButton}>
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => Alert.alert('Filter', 'Filter functionality coming soon!')}
+        >
           <Ionicons name="filter-outline" size={18} color={COLORS.gray[600]} />
           <Text style={styles.filterText}>Filter</Text>
         </TouchableOpacity>
@@ -156,19 +146,21 @@ const StoreScreen = ({ navigation }) => {
     <View style={[styles.productWrapper, index % 2 === 0 ? styles.productLeft : styles.productRight]}>
       <ProductCard
         product={item}
-        onPress={() => navigation.navigate('ProductDetail', { product: item })}
+        onPress={() => handleProductPress(item)}
         onAddToCart={() => handleAddToCart(item)}
       />
     </View>
   );
 
   const renderFooter = () => {
-    if (!hasMore) return null;
-    return (
-      <View style={styles.loadingFooter}>
-        <ActivityIndicator size="small" color={COLORS.saffron} />
-      </View>
-    );
+    if (loading && products.length > 0) {
+      return (
+        <View style={styles.loadingFooter}>
+          <ActivityIndicator size="small" color={COLORS.saffron} />
+        </View>
+      );
+    }
+    return null;
   };
 
   return (
@@ -179,6 +171,7 @@ const StoreScreen = ({ navigation }) => {
         <TouchableOpacity 
           style={styles.cartButton}
           onPress={() => navigation.navigate('Cart')}
+          activeOpacity={0.7}
         >
           <Ionicons name="cart-outline" size={24} color={COLORS.gray[700]} />
           {cartItemCount > 0 && (
@@ -189,7 +182,7 @@ const StoreScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {loading && !refreshing ? (
+      {loading && !refreshing && products.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.saffron} />
           <Text style={styles.loadingText}>Loading products...</Text>
@@ -202,8 +195,6 @@ const StoreScreen = ({ navigation }) => {
           ListHeaderComponent={renderHeader}
           renderItem={renderProduct}
           ListFooterComponent={renderFooter}
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.5}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

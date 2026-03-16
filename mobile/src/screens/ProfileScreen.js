@@ -31,43 +31,47 @@ const ProfileScreen = ({ navigation }) => {
     );
   };
 
+  const handleMenuPress = (screen, title) => {
+    Alert.alert(title, `${title} feature coming soon!`);
+  };
+
   const menuSections = [
     {
       title: 'Account',
       items: [
-        { icon: 'person-outline', label: 'Edit Profile', screen: 'EditProfile' },
-        { icon: 'location-outline', label: 'Saved Addresses', screen: 'Addresses' },
-        { icon: 'card-outline', label: 'Payment Methods', screen: 'PaymentMethods' },
+        { icon: 'person-outline', label: 'Edit Profile', action: () => handleMenuPress('EditProfile', 'Edit Profile') },
+        { icon: 'location-outline', label: 'Saved Addresses', action: () => handleMenuPress('Addresses', 'Saved Addresses') },
+        { icon: 'card-outline', label: 'Payment Methods', action: () => handleMenuPress('PaymentMethods', 'Payment Methods') },
       ],
     },
     {
       title: 'Orders & Bookings',
       items: [
-        { icon: 'receipt-outline', label: 'My Orders', screen: 'Orders' },
-        { icon: 'calendar-outline', label: 'Puja Bookings', screen: 'Bookings' },
-        { icon: 'videocam-outline', label: 'Consultations', screen: 'Consultations' },
+        { icon: 'receipt-outline', label: 'My Orders', action: () => handleMenuPress('Orders', 'My Orders') },
+        { icon: 'calendar-outline', label: 'Puja Bookings', action: () => handleMenuPress('Bookings', 'Puja Bookings') },
+        { icon: 'videocam-outline', label: 'Consultations', action: () => handleMenuPress('Consultations', 'Consultations') },
       ],
     },
     {
       title: 'Spiritual',
       items: [
-        { icon: 'heart-outline', label: 'Favorites', screen: 'Favorites' },
-        { icon: 'notifications-outline', label: 'Festival Reminders', screen: 'Reminders' },
-        { icon: 'book-outline', label: 'Saved Mantras', screen: 'Mantras' },
+        { icon: 'heart-outline', label: 'Favorites', action: () => handleMenuPress('Favorites', 'Favorites') },
+        { icon: 'notifications-outline', label: 'Festival Reminders', action: () => navigation.navigate('Festivals') },
+        { icon: 'book-outline', label: 'Saved Mantras', action: () => handleMenuPress('Mantras', 'Saved Mantras') },
       ],
     },
     {
       title: 'Support',
       items: [
-        { icon: 'help-circle-outline', label: 'Help & Support', screen: 'Help' },
-        { icon: 'document-text-outline', label: 'Terms & Conditions', screen: 'Terms' },
-        { icon: 'shield-outline', label: 'Privacy Policy', screen: 'Privacy' },
+        { icon: 'help-circle-outline', label: 'Help & Support', action: () => handleMenuPress('Help', 'Help & Support') },
+        { icon: 'document-text-outline', label: 'Terms & Conditions', action: () => handleMenuPress('Terms', 'Terms & Conditions') },
+        { icon: 'shield-outline', label: 'Privacy Policy', action: () => handleMenuPress('Privacy', 'Privacy Policy') },
       ],
     },
   ];
 
   const MenuItem = ({ icon, label, onPress }) => (
-    <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.menuItemLeft}>
         <View style={styles.menuIconContainer}>
           <Ionicons name={icon} size={20} color={COLORS.saffron} />
@@ -84,7 +88,10 @@ const ProfileScreen = ({ navigation }) => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Profile</Text>
-          <TouchableOpacity style={styles.settingsButton}>
+          <TouchableOpacity 
+            style={styles.settingsButton}
+            onPress={() => handleMenuPress('Settings', 'Settings')}
+          >
             <Ionicons name="settings-outline" size={24} color={COLORS.gray[700]} />
           </TouchableOpacity>
         </View>
@@ -103,14 +110,17 @@ const ProfileScreen = ({ navigation }) => {
                   {user?.name?.charAt(0)?.toUpperCase() || 'D'}
                 </Text>
               </View>
-              <TouchableOpacity style={styles.editAvatarButton}>
+              <TouchableOpacity 
+                style={styles.editAvatarButton}
+                onPress={() => handleMenuPress('EditProfile', 'Change Photo')}
+              >
                 <Ionicons name="camera-outline" size={16} color={COLORS.white} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{user?.name || 'Devotee'}</Text>
-              <Text style={styles.profileEmail}>{user?.email || 'devotee@divine.com'}</Text>
+              <Text style={styles.profileEmail}>{user?.email || user?.phoneNumber || 'devotee@divine.com'}</Text>
               <View style={styles.roleBadge}>
                 <Ionicons name="person-outline" size={12} color={COLORS.white} />
                 <Text style={styles.roleText}>
@@ -122,20 +132,29 @@ const ProfileScreen = ({ navigation }) => {
 
           {/* Stats */}
           <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
+            <TouchableOpacity 
+              style={styles.statItem}
+              onPress={() => handleMenuPress('Orders', 'My Orders')}
+            >
               <Text style={styles.statValue}>12</Text>
               <Text style={styles.statLabel}>Orders</Text>
-            </View>
+            </TouchableOpacity>
             <View style={styles.statDivider} />
-            <View style={styles.statItem}>
+            <TouchableOpacity 
+              style={styles.statItem}
+              onPress={() => handleMenuPress('Bookings', 'Puja Bookings')}
+            >
               <Text style={styles.statValue}>5</Text>
               <Text style={styles.statLabel}>Pujas</Text>
-            </View>
+            </TouchableOpacity>
             <View style={styles.statDivider} />
-            <View style={styles.statItem}>
+            <TouchableOpacity 
+              style={styles.statItem}
+              onPress={() => handleMenuPress('Consultations', 'Consultations')}
+            >
               <Text style={styles.statValue}>3</Text>
               <Text style={styles.statLabel}>Sessions</Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -149,7 +168,7 @@ const ProfileScreen = ({ navigation }) => {
                   <MenuItem
                     icon={item.icon}
                     label={item.label}
-                    onPress={() => navigation.navigate(item.screen)}
+                    onPress={item.action}
                   />
                   {itemIndex < section.items.length - 1 && <View style={styles.menuDivider} />}
                 </React.Fragment>
@@ -159,7 +178,7 @@ const ProfileScreen = ({ navigation }) => {
         ))}
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
           <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>

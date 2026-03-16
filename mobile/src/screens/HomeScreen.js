@@ -6,9 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  FlatList,
   RefreshControl,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,7 +24,7 @@ const { width } = Dimensions.get('window');
 
 // Quick Action Item
 const QuickAction = ({ icon, label, onPress, color = COLORS.saffron }) => (
-  <TouchableOpacity style={styles.quickAction} onPress={onPress}>
+  <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.7}>
     <View style={[styles.quickActionIcon, { backgroundColor: `${color}15` }]}>
       <Ionicons name={icon} size={24} color={color} />
     </View>
@@ -37,7 +37,7 @@ const SectionHeader = ({ title, onSeeAll }) => (
   <View style={styles.sectionHeader}>
     <Text style={styles.sectionTitle}>{title}</Text>
     {onSeeAll && (
-      <TouchableOpacity onPress={onSeeAll} style={styles.seeAllButton}>
+      <TouchableOpacity onPress={onSeeAll} style={styles.seeAllButton} activeOpacity={0.7}>
         <Text style={styles.seeAllText}>See All</Text>
         <Ionicons name="chevron-forward" size={16} color={COLORS.saffron} />
       </TouchableOpacity>
@@ -64,9 +64,9 @@ const HomeScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const [priestsRes, productsRes, festivalsRes] = await Promise.all([
-        priestAPI.getAll({ limit: 3 }),
-        productAPI.getAll({ limit: 6 }),
-        festivalAPI.getAll(),
+        priestAPI.getAll({ limit: 3 }).catch(() => ({ data: { priests: [] } })),
+        productAPI.getAll({ limit: 6 }).catch(() => ({ data: { products: [] } })),
+        festivalAPI.getAll().catch(() => ({ data: { festivals: [] } })),
       ]);
       
       setPriests(priestsRes.data.priests || []);
@@ -88,7 +88,13 @@ const HomeScreen = ({ navigation }) => {
   const handleAddToCart = async (product) => {
     const result = await addToCart(product.id);
     if (result.success) {
-      // Show success feedback
+      Alert.alert('Added!', `${product.name} added to cart`);
+    }
+  };
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigation.navigate('Search', { query: searchQuery });
     }
   };
 
@@ -123,14 +129,19 @@ const HomeScreen = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
+          <TouchableOpacity 
+            style={styles.headerLeft}
+            onPress={() => navigation.navigate('Profile')}
+            activeOpacity={0.7}
+          >
             <Text style={styles.greeting}>{greeting()},</Text>
             <Text style={styles.userName}>{user?.name || 'Devotee'}</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.headerRight}>
             <TouchableOpacity 
               style={styles.headerIcon}
               onPress={() => navigation.navigate('Notifications')}
+              activeOpacity={0.7}
             >
               <Ionicons name="notifications-outline" size={24} color={COLORS.gray[700]} />
               <View style={styles.notificationBadge} />
@@ -138,6 +149,7 @@ const HomeScreen = ({ navigation }) => {
             <TouchableOpacity 
               style={styles.headerIcon}
               onPress={() => navigation.navigate('Cart')}
+              activeOpacity={0.7}
             >
               <Ionicons name="cart-outline" size={24} color={COLORS.gray[700]} />
               {cartItemCount > 0 && (
@@ -155,7 +167,7 @@ const HomeScreen = ({ navigation }) => {
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search priests, products, services..."
-            onSubmit={() => navigation.navigate('Search', { query: searchQuery })}
+            onSubmit={handleSearch}
           />
         </View>
 
@@ -174,7 +186,11 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Upcoming Festival Banner */}
         {festivals.length > 0 && (
-          <TouchableOpacity style={styles.festivalBanner}>
+          <TouchableOpacity 
+            style={styles.festivalBanner}
+            onPress={() => navigation.navigate('FestivalDetail', { festival: festivals[0] })}
+            activeOpacity={0.8}
+          >
             <LinearGradient
               colors={GRADIENTS.sunrise}
               start={{ x: 0, y: 0 }}
@@ -188,7 +204,7 @@ const HomeScreen = ({ navigation }) => {
                   <Text style={styles.festivalBannerDate}>{festivals[0].date}</Text>
                 </View>
                 <View style={styles.festivalBannerIcon}>
-                  <Text style={styles.festivalEmoji}>🪔</Text>
+                  <Ionicons name="flame" size={40} color="rgba(255,255,255,0.8)" />
                 </View>
               </View>
             </LinearGradient>
@@ -207,69 +223,85 @@ const HomeScreen = ({ navigation }) => {
             contentContainerStyle={styles.horizontalScroll}
           >
             {services.map((service, index) => (
-              <ServiceCard 
-                key={index} 
-                service={service} 
+              <TouchableOpacity 
+                key={index}
+                style={styles.serviceCard}
                 onPress={() => navigation.navigate('ServiceDetail', { service })}
-              />
+                activeOpacity={0.8}
+              >
+                <View style={styles.serviceIconContainer}>
+                  <Ionicons name={service.icon} size={28} color={COLORS.saffron} />
+                </View>
+                <Text style={styles.serviceName}>{service.name}</Text>
+                <Text style={styles.servicePrice}>₹{service.price}</Text>
+                <Text style={styles.serviceDuration}>
+                  <Ionicons name="time-outline" size={12} color={COLORS.gray[500]} /> {service.duration}
+                </Text>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
 
         {/* Featured Priests */}
-        <View style={styles.section}>
-          <SectionHeader 
-            title="Top Priests" 
-            onSeeAll={() => navigation.navigate('Priests')} 
-          />
-          {priests.map((priest, index) => (
-            <PriestCard
-              key={priest.id || index}
-              priest={priest}
-              onPress={() => navigation.navigate('PriestDetail', { priest })}
-              onBook={() => navigation.navigate('BookPriest', { priest })}
+        {priests.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader 
+              title="Top Priests" 
+              onSeeAll={() => navigation.navigate('Priests')} 
             />
-          ))}
-        </View>
-
-        {/* Upcoming Festivals */}
-        <View style={styles.section}>
-          <SectionHeader 
-            title="Upcoming Festivals" 
-            onSeeAll={() => navigation.navigate('Festivals')} 
-          />
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScroll}
-          >
-            {festivals.map((festival, index) => (
-              <FestivalCard 
-                key={festival.id || index} 
-                festival={festival} 
-                onPress={() => navigation.navigate('FestivalDetail', { festival })}
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Featured Products */}
-        <View style={styles.section}>
-          <SectionHeader 
-            title="Pooja Essentials" 
-            onSeeAll={() => navigation.navigate('Store')} 
-          />
-          <View style={styles.productsGrid}>
-            {products.slice(0, 4).map((product, index) => (
-              <ProductCard
-                key={product.id || index}
-                product={product}
-                onPress={() => navigation.navigate('ProductDetail', { product })}
-                onAddToCart={() => handleAddToCart(product)}
+            {priests.map((priest, index) => (
+              <PriestCard
+                key={priest.id || index}
+                priest={priest}
+                onPress={() => navigation.navigate('PriestDetail', { priest })}
+                onBook={() => navigation.navigate('BookPriest', { priest })}
               />
             ))}
           </View>
-        </View>
+        )}
+
+        {/* Upcoming Festivals */}
+        {festivals.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader 
+              title="Upcoming Festivals" 
+              onSeeAll={() => navigation.navigate('Festivals')} 
+            />
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScroll}
+            >
+              {festivals.map((festival, index) => (
+                <FestivalCard 
+                  key={festival.id || index} 
+                  festival={festival} 
+                  onPress={() => navigation.navigate('FestivalDetail', { festival })}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Featured Products */}
+        {products.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader 
+              title="Pooja Essentials" 
+              onSeeAll={() => navigation.navigate('Store')} 
+            />
+            <View style={styles.productsGrid}>
+              {products.slice(0, 4).map((product, index) => (
+                <ProductCard
+                  key={product.id || index}
+                  product={product}
+                  onPress={() => navigation.navigate('ProductDetail', { product })}
+                  onAddToCart={() => handleAddToCart(product)}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Bottom Spacing */}
         <View style={{ height: 100 }} />
@@ -402,9 +434,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  festivalEmoji: {
-    fontSize: 40,
-  },
   section: {
     marginBottom: 24,
   },
@@ -438,6 +467,41 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
+  },
+  serviceCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    width: 140,
+    marginRight: 12,
+    alignItems: 'center',
+    ...SHADOWS.small,
+  },
+  serviceIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 153, 51, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  serviceName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.gray[800],
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  servicePrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.saffron,
+    marginBottom: 4,
+  },
+  serviceDuration: {
+    fontSize: 11,
+    color: COLORS.gray[500],
   },
 });
 

@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,7 +51,7 @@ const ZodiacCard = ({ sign, isSelected, onPress }) => (
 );
 
 const ServiceCard = ({ icon, title, description, onPress }) => (
-  <TouchableOpacity style={styles.serviceCard} onPress={onPress}>
+  <TouchableOpacity style={styles.serviceCard} onPress={onPress} activeOpacity={0.8}>
     <LinearGradient
       colors={['#1E293B', '#0F172A']}
       style={styles.serviceGradient}
@@ -70,6 +71,30 @@ const ServiceCard = ({ icon, title, description, onPress }) => (
 const AstrologyScreen = ({ navigation }) => {
   const { user } = useAuth();
   const [selectedSign, setSelectedSign] = useState(null);
+
+  const handleSignSelect = (sign) => {
+    setSelectedSign(sign.name);
+    Alert.alert(
+      sign.name,
+      `Your daily horoscope for ${sign.name}:\n\nToday is a great day for spiritual growth. Focus on your inner peace and meditation. Lucky color: Orange. Lucky number: 7.`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleServicePress = (service) => {
+    Alert.alert(service, `${service} feature coming soon!`);
+  };
+
+  const handleAstrologerPress = (name) => {
+    Alert.alert(
+      'Book Consultation',
+      `Would you like to book a consultation with ${name}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Book Now', onPress: () => Alert.alert('Coming Soon', 'Video consultation feature coming soon!') }
+      ]
+    );
+  };
 
   const services = [
     {
@@ -92,6 +117,12 @@ const AstrologyScreen = ({ navigation }) => {
       title: 'Compatibility',
       description: 'Check Kundli matching for marriage',
     },
+  ];
+
+  const astrologers = [
+    { name: 'Pandit Sharma', rating: '4.9', spec: 'Vedic Astrology', price: '15' },
+    { name: 'Jyotishi Devi', rating: '4.8', spec: 'Numerology', price: '12' },
+    { name: 'Acharya Verma', rating: '4.7', spec: 'Palmistry', price: '10' },
   ];
 
   return (
@@ -144,7 +175,7 @@ const AstrologyScreen = ({ navigation }) => {
                 key={sign.name}
                 sign={sign}
                 isSelected={selectedSign === sign.name}
-                onPress={() => setSelectedSign(sign.name)}
+                onPress={() => handleSignSelect(sign)}
               />
             ))}
           </ScrollView>
@@ -160,7 +191,7 @@ const AstrologyScreen = ({ navigation }) => {
                 icon={service.icon}
                 title={service.title}
                 description={service.description}
-                onPress={() => {}}
+                onPress={() => handleServicePress(service.title)}
               />
             ))}
           </View>
@@ -170,7 +201,7 @@ const AstrologyScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Top Astrologers</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => Alert.alert('All Astrologers', 'View all astrologers feature coming soon!')}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -180,22 +211,27 @@ const AstrologyScreen = ({ navigation }) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.astrologersScroll}
           >
-            {[1, 2, 3].map((_, index) => (
-              <TouchableOpacity key={index} style={styles.astrologerCard}>
+            {astrologers.map((astrologer, index) => (
+              <TouchableOpacity 
+                key={index} 
+                style={styles.astrologerCard}
+                onPress={() => handleAstrologerPress(astrologer.name)}
+                activeOpacity={0.8}
+              >
                 <LinearGradient
-                  colors={COLORS.cosmicAccent ? ['#4F46E5', '#7C3AED'] : ['#1E293B', '#0F172A']}
+                  colors={['#4F46E5', '#7C3AED']}
                   style={styles.astrologerGradient}
                 >
                   <View style={styles.astrologerAvatar}>
-                    <Text style={styles.avatarText}>A</Text>
+                    <Text style={styles.avatarText}>{astrologer.name.charAt(0)}</Text>
                   </View>
-                  <Text style={styles.astrologerName}>Pandit Sharma</Text>
+                  <Text style={styles.astrologerName}>{astrologer.name}</Text>
                   <View style={styles.ratingContainer}>
                     <Ionicons name="star" size={12} color={COLORS.gold} />
-                    <Text style={styles.ratingText}>4.9</Text>
+                    <Text style={styles.ratingText}>{astrologer.rating}</Text>
                   </View>
-                  <Text style={styles.astrologerSpec}>Vedic Astrology</Text>
-                  <Text style={styles.astrologerPrice}>₹15/min</Text>
+                  <Text style={styles.astrologerSpec}>{astrologer.spec}</Text>
+                  <Text style={styles.astrologerPrice}>₹{astrologer.price}/min</Text>
                 </LinearGradient>
               </TouchableOpacity>
             ))}
@@ -418,7 +454,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: COLORS.cosmicAccent,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -447,7 +483,7 @@ const styles = StyleSheet.create({
   },
   astrologerSpec: {
     fontSize: 11,
-    color: COLORS.gray[400],
+    color: 'rgba(255,255,255,0.7)',
     marginBottom: 8,
   },
   astrologerPrice: {
