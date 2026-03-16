@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,19 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
+import { astrologyAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
 
-// Zodiac Signs Data
-const ZODIAC_SIGNS = [
+// Fallback Zodiac Signs Data
+const FALLBACK_ZODIAC_SIGNS = [
   { name: 'Aries', symbol: '♈', dates: 'Mar 21 - Apr 19', element: 'Fire' },
   { name: 'Taurus', symbol: '♉', dates: 'Apr 20 - May 20', element: 'Earth' },
   { name: 'Gemini', symbol: '♊', dates: 'May 21 - Jun 20', element: 'Air' },
@@ -31,6 +33,13 @@ const ZODIAC_SIGNS = [
   { name: 'Aquarius', symbol: '♒', dates: 'Jan 20 - Feb 18', element: 'Air' },
   { name: 'Pisces', symbol: '♓', dates: 'Feb 19 - Mar 20', element: 'Water' },
 ];
+
+// Symbol mapping for API response
+const ZODIAC_SYMBOLS = {
+  'aries': '♈', 'taurus': '♉', 'gemini': '♊', 'cancer': '♋',
+  'leo': '♌', 'virgo': '♍', 'libra': '♎', 'scorpio': '♏',
+  'sagittarius': '♐', 'capricorn': '♑', 'aquarius': '♒', 'pisces': '♓'
+};
 
 const ZodiacCard = ({ sign, isSelected, onPress }) => (
   <TouchableOpacity 
@@ -71,14 +80,56 @@ const ServiceCard = ({ icon, title, description, onPress }) => (
 const AstrologyScreen = ({ navigation }) => {
   const { user } = useAuth();
   const [selectedSign, setSelectedSign] = useState(null);
+  const [zodiacSigns, setZodiacSigns] = useState(FALLBACK_ZODIAC_SIGNS);
+  const [loading, setLoading] = useState(false);
+  const [horoscopeLoading, setHoroscopeLoading] = useState(false);
 
-  const handleSignSelect = (sign) => {
+  // Fetch zodiac signs on mount
+  useEffect(() => {
+    fetchZodiacSigns();
+  }, []);
+
+  const fetchZodiacSigns = async () => {
+    try {
+      const response = await astrologyAPI.getZodiacSigns();
+      if (response.data?.signs) {
+        const signs = response.data.signs.map(sign => ({
+          name: sign.name,
+          symbol: ZODIAC_SYMBOLS[sign.name.toLowerCase()] || '⭐',
+          dates: sign.dates,
+          element: sign.element,
+        }));
+        setZodiacSigns(signs);
+      }
+    } catch (error) {
+      console.log('Using fallback zodiac signs');
+    }
+  };
+
+  const handleSignSelect = async (sign) => {
     setSelectedSign(sign.name);
-    Alert.alert(
-      sign.name,
-      `Your daily horoscope for ${sign.name}:\n\nToday is a great day for spiritual growth. Focus on your inner peace and meditation. Lucky color: Orange. Lucky number: 7.`,
-      [{ text: 'OK' }]
-    );
+    setHoroscopeLoading(true);
+    
+    try {
+      const response = await astrologyAPI.getDailyHoroscope(sign.name.toLowerCase());
+      const horoscope = response.data?.data?.daily_prediction?.prediction || 
+                       response.data?.horoscope || 
+                       'Today is a great day for spiritual growth.';
+      
+      Alert.alert(
+        `${sign.name} - Daily Horoscope`,
+        horoscope,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      Alert.alert(
+        sign.name,
+        `Your daily horoscope for ${sign.name}:\n\nToday is a great day for spiritual growth. Focus on your inner peace and meditation. Lucky color: Orange. Lucky number: 7.`,
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setHoroscopeLoading(false);
+    }
   };
 
   const handleServicePress = (service) => {
@@ -170,7 +221,7 @@ const AstrologyScreen = ({ navigation }) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.zodiacScroll}
           >
-            {ZODIAC_SIGNS.map((sign) => (
+            {zodiacSigns.map((sign) => (
               <ZodiacCard
                 key={sign.name}
                 sign={sign}

@@ -43,9 +43,10 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       
       const response = await authAPI.login(email, password);
-      const { access_token, user: userData } = response.data;
+      // Backend returns { token, user } not { access_token, user }
+      const { token, user: userData } = response.data;
       
-      await setAuthToken(access_token);
+      await setAuthToken(token);
       setUser(userData);
       
       return { success: true };
@@ -64,9 +65,10 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       
       const response = await authAPI.register(userData);
-      const { access_token, user: newUser } = response.data;
+      // Backend returns { token, user } not { access_token, user }
+      const { token, user: newUser } = response.data;
       
-      await setAuthToken(access_token);
+      await setAuthToken(token);
       setUser(newUser);
       
       return { success: true };
@@ -117,9 +119,10 @@ export const AuthProvider = ({ children }) => {
       };
       
       const response = await authAPI.firebaseSync(userData);
-      const { access_token, user: syncedUser } = response.data;
+      // Backend returns { token, user } not { access_token, user }
+      const { token, user: syncedUser } = response.data;
       
-      await setAuthToken(access_token);
+      await setAuthToken(token);
       setUser(syncedUser);
       
       return { success: true };

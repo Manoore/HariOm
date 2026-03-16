@@ -47,7 +47,7 @@ const ProfileScreen = ({ navigation }) => {
     {
       title: 'Orders & Bookings',
       items: [
-        { icon: 'receipt-outline', label: 'My Orders', action: () => handleMenuPress('Orders', 'My Orders') },
+        { icon: 'receipt-outline', label: 'My Orders', action: () => navigation.navigate('Orders') },
         { icon: 'calendar-outline', label: 'Puja Bookings', action: () => handleMenuPress('Bookings', 'Puja Bookings') },
         { icon: 'videocam-outline', label: 'Consultations', action: () => handleMenuPress('Consultations', 'Consultations') },
       ],

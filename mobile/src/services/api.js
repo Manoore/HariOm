@@ -1,8 +1,8 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-// API Base URL - same as web app
-const API_BASE_URL = 'https://priest-booking-4.preview.emergentagent.com';
+// API Base URL - Production Cloud Run backend
+const API_BASE_URL = 'https://divine-backend-149993395431.asia-south1.run.app';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -62,8 +62,8 @@ export const authAPI = {
   login: (email, password) => api.post('/api/auth/login', { email, password }),
   register: (userData) => api.post('/api/auth/register', userData),
   firebaseSync: (userData) => api.post('/api/auth/firebase-sync', userData),
-  getProfile: () => api.get('/api/auth/profile'),
-  updateProfile: (data) => api.put('/api/auth/profile', data),
+  getProfile: () => api.get('/api/users/profile'),
+  updateProfile: (data) => api.put('/api/users/profile', data),
 };
 
 // Priest APIs
@@ -89,21 +89,23 @@ export const cartAPI = {
   update: (productId, quantity) => api.put('/api/cart/update', { product_id: productId, quantity }),
   remove: (productId) => api.delete(`/api/cart/remove/${productId}`),
   clear: () => api.delete('/api/cart/clear'),
-  getSummary: () => api.get('/api/cart/summary'),
 };
 
 // Order APIs
 export const orderAPI = {
-  create: (data) => api.post('/api/checkout', data),
+  create: (data) => api.post('/api/orders', data),
   getAll: () => api.get('/api/orders'),
   getById: (id) => api.get(`/api/orders/${id}`),
-  confirmPayment: (orderId) => api.post(`/api/payment/confirm/${orderId}`),
+  createPayment: (data) => api.post('/api/payments/create-checkout', data),
 };
 
 // Astrology APIs
 export const astrologyAPI = {
-  getDailyHoroscope: (sign) => api.get(`/api/astrology/horoscope/${sign}`),
-  getBirthChart: (data) => api.post('/api/astrology/birth-chart', data),
+  getDailyHoroscope: (sign) => api.get(`/api/horoscope/daily/${sign}`),
+  getZodiacSigns: () => api.get('/api/horoscope/zodiac-signs'),
+  getBirthKundali: (data) => api.post('/api/astrology/birth-kundali', data),
+  getKundaliMatching: (data) => api.post('/api/astrology/kundali-matching', data),
+  getPanchang: (data) => api.get('/api/panchang/today', { params: data }),
   getAstrologers: () => api.get('/api/astrologers'),
 };
 

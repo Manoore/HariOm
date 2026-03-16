@@ -16,6 +16,8 @@ import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import StoreScreen from '../screens/StoreScreen';
 import CartScreen from '../screens/CartScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
+import OrdersScreen from '../screens/OrdersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AstrologyScreen from '../screens/AstrologyScreen';
 
@@ -103,80 +105,6 @@ const ProductDetailScreen = ({ route, navigation }) => {
       
       <View style={styles.bottomBar}>
         <Button title="Add to Cart" onPress={handleAddToCart} style={{ flex: 1 }} />
-      </View>
-    </SafeAreaView>
-  );
-};
-
-// Checkout Screen
-const CheckoutScreen = ({ navigation }) => {
-  const { cart, cartTotal, clearCart } = useCart();
-  
-  const handlePlaceOrder = () => {
-    Alert.alert(
-      'Order Placed!', 
-      'Your order has been placed successfully. You will receive a confirmation shortly.',
-      [{ text: 'OK', onPress: () => {
-        clearCart();
-        navigation.navigate('MainTabs');
-      }}]
-    );
-  };
-
-  return (
-    <SafeAreaView style={styles.screenContainer}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Checkout</Text>
-        <View style={{ width: 24 }} />
-      </View>
-      
-      <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Delivery Address</Text>
-          <TouchableOpacity style={styles.addressCard}>
-            <Ionicons name="location-outline" size={24} color={COLORS.saffron} />
-            <View style={styles.addressInfo}>
-              <Text style={styles.addressName}>Add Delivery Address</Text>
-              <Text style={styles.addressText}>Tap to add your address</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.gray[400]} />
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>₹{cartTotal}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Delivery</Text>
-              <Text style={[styles.summaryValue, { color: COLORS.success }]}>FREE</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.summaryRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>₹{cartTotal}</Text>
-            </View>
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Method</Text>
-          <TouchableOpacity style={styles.paymentOption}>
-            <Ionicons name="card-outline" size={24} color={COLORS.saffron} />
-            <Text style={styles.paymentText}>Pay with Card (Stripe)</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.gray[400]} />
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-      
-      <View style={styles.bottomBar}>
-        <Button title={`Place Order • ₹${cartTotal}`} onPress={handlePlaceOrder} style={{ flex: 1 }} />
       </View>
     </SafeAreaView>
   );
@@ -469,6 +397,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Cart" component={CartScreen} />
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
             <Stack.Screen name="Checkout" component={CheckoutScreen} />
+            <Stack.Screen name="Orders" component={OrdersScreen} />
             <Stack.Screen name="PriestDetail" component={PriestDetailScreen} />
             <Stack.Screen name="Notifications" component={NotificationsScreen} />
             <Stack.Screen name="Search" component={SearchScreen} />
