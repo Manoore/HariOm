@@ -4093,7 +4093,8 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
                 "order_id": order_id,
                 "user_id": str(user["_id"])
             },
-            customer_email=user.get("email"),
+            # Only include customer_email if it's a valid email (not a phone number)
+            **({'customer_email': user.get("email")} if user.get("email") and '@' in str(user.get("email", "")) else {}),
         )
         
         # Store stripe session id
