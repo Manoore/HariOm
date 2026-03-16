@@ -14,20 +14,24 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, GRADIENTS } from '../constants/theme';
-import { Button, GoldButton } from '../components/Button';
+import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
-// Temple Logo Component
+// Temple Logo Component with Image
 const TempleLogo = () => (
   <View style={styles.logoContainer}>
-    <View style={styles.templeIcon}>
-      <Text style={styles.omSymbol}>ॐ</Text>
+    <View style={styles.imageWrapper}>
+      <Image
+        source={require('../../assets/temple-logo.jpg')}
+        style={styles.templeImage}
+        resizeMode="contain"
+      />
     </View>
     <Text style={styles.logoText}>DIVINE</Text>
-    <Text style={styles.logoSubtext}>Your Spiritual Journey</Text>
+    <Text style={styles.logoSubtext}>Sri Anantha Padmanabha Swamy</Text>
   </View>
 );
 
@@ -130,6 +134,7 @@ const LoginScreen = ({ navigation }) => {
                 <TouchableOpacity
                   style={[styles.tab, isLogin && styles.tabActive]}
                   onPress={() => setIsLogin(true)}
+                  activeOpacity={0.7}
                 >
                   <Text style={[styles.tabText, isLogin && styles.tabTextActive]}>
                     Login
@@ -138,6 +143,7 @@ const LoginScreen = ({ navigation }) => {
                 <TouchableOpacity
                   style={[styles.tab, !isLogin && styles.tabActive]}
                   onPress={() => setIsLogin(false)}
+                  activeOpacity={0.7}
                 >
                   <Text style={[styles.tabText, !isLogin && styles.tabTextActive]}>
                     Register
@@ -177,6 +183,7 @@ const LoginScreen = ({ navigation }) => {
                           formData.role === role.value && styles.roleOptionActive,
                         ]}
                         onPress={() => updateFormData('role', role.value)}
+                        activeOpacity={0.7}
                       >
                         <Ionicons
                           name={role.icon}
@@ -255,10 +262,10 @@ const LoginScreen = ({ navigation }) => {
 
               {/* Social Login Buttons */}
               <View style={styles.socialButtons}>
-                <TouchableOpacity style={styles.socialButton}>
+                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
                   <Ionicons name="logo-google" size={24} color="#DB4437" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
+                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
                   <Ionicons name="call-outline" size={24} color={COLORS.saffron} />
                 </TouchableOpacity>
               </View>
@@ -290,39 +297,40 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 10,
     paddingBottom: 40,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
   },
-  templeIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.maroon,
-    justifyContent: 'center',
-    alignItems: 'center',
+  imageWrapper: {
+    width: 120,
+    height: 120,
+    borderRadius: 16,
+    overflow: 'hidden',
     marginBottom: 12,
+    borderWidth: 3,
+    borderColor: COLORS.maroon,
+    backgroundColor: COLORS.white,
     ...SHADOWS.large,
   },
-  omSymbol: {
-    fontSize: 40,
-    color: COLORS.gold,
-    fontWeight: 'bold',
+  templeImage: {
+    width: '100%',
+    height: '100%',
   },
   logoText: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.maroon,
     letterSpacing: 6,
   },
   logoSubtext: {
-    fontSize: 14,
+    fontSize: 11,
     color: COLORS.gray[500],
     marginTop: 4,
     letterSpacing: 1,
+    fontStyle: 'italic',
   },
   formCard: {
     backgroundColor: COLORS.white,

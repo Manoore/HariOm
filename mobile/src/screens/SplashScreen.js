@@ -1,110 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, GRADIENTS } from '../constants/theme';
-import Svg, { 
-  Path, Circle, Ellipse, Defs, LinearGradient as SvgLinearGradient, 
-  Stop, G, Text as SvgText, Rect, Polygon 
-} from 'react-native-svg';
+import { COLORS } from '../constants/theme';
 
 const { width, height } = Dimensions.get('window');
-
-// Animated Diya Component
-const AnimatedDiya = ({ style }) => {
-  const flameAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(flameAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(flameAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
-
-  const flameScale = flameAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.2],
-  });
-
-  return (
-    <Animated.View style={[style, { transform: [{ scale: flameScale }] }]}>
-      <Svg width={60} height={80} viewBox="0 0 60 80">
-        <Defs>
-          <SvgLinearGradient id="diyaGold" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#FFD700" />
-            <Stop offset="100%" stopColor="#B8860B" />
-          </SvgLinearGradient>
-          <SvgLinearGradient id="flame" x1="0%" y1="100%" x2="0%" y2="0%">
-            <Stop offset="0%" stopColor="#FF6B00" />
-            <Stop offset="50%" stopColor="#FFD700" />
-            <Stop offset="100%" stopColor="#FFF5CC" />
-          </SvgLinearGradient>
-        </Defs>
-        {/* Diya base */}
-        <Ellipse cx="30" cy="70" rx="20" ry="5" fill="#8B4513" />
-        <Path d="M15 70 Q15 55 22 48 L38 48 Q45 55 45 70" fill="url(#diyaGold)" />
-        <Ellipse cx="30" cy="48" rx="12" ry="4" fill="#FFD700" />
-        {/* Flame */}
-        <Path d="M30 45 Q24 32 30 15 Q36 32 30 45" fill="url(#flame)" />
-        <Ellipse cx="30" cy="20" rx="4" ry="6" fill="#FFF5CC" opacity="0.8" />
-      </Svg>
-    </Animated.View>
-  );
-};
-
-// Temple Icon Component
-const TempleIcon = () => (
-  <Svg width={120} height={140} viewBox="0 0 120 140">
-    <Defs>
-      <SvgLinearGradient id="templeGold" x1="0%" y1="0%" x2="0%" y2="100%">
-        <Stop offset="0%" stopColor="#FFD700" />
-        <Stop offset="50%" stopColor="#FFA500" />
-        <Stop offset="100%" stopColor="#B8860B" />
-      </SvgLinearGradient>
-      <SvgLinearGradient id="templeStone" x1="0%" y1="0%" x2="100%" y2="100%">
-        <Stop offset="0%" stopColor="#DEB887" />
-        <Stop offset="100%" stopColor="#CD853F" />
-      </SvgLinearGradient>
-    </Defs>
-    {/* Temple base */}
-    <Rect x="15" y="110" width="90" height="20" rx="3" fill="url(#templeStone)" />
-    {/* Temple body */}
-    <Rect x="22" y="70" width="76" height="40" fill="url(#templeStone)" />
-    {/* Temple pillars */}
-    <Rect x="28" y="75" width="8" height="30" fill="#8B4513" />
-    <Rect x="84" y="75" width="8" height="30" fill="#8B4513" />
-    {/* Temple door */}
-    <Rect x="48" y="82" width="24" height="28" rx="12" fill="#4A3728" />
-    {/* Temple roof tier 1 */}
-    <Polygon points="60,50 100,70 20,70" fill="url(#templeGold)" />
-    {/* Temple roof tier 2 */}
-    <Polygon points="60,32 88,50 32,50" fill="url(#templeGold)" />
-    {/* Temple spire */}
-    <Polygon points="60,8 72,32 48,32" fill="url(#templeGold)" />
-    {/* Kalash on top */}
-    <Circle cx="60" cy="12" r="6" fill="#FFD700" />
-    {/* Om symbol */}
-    <SvgText x="60" y="98" fontSize="14" fill="#FFD700" textAnchor="middle" fontWeight="bold">
-      ॐ
-    </SvgText>
-  </Svg>
-);
-
-// Om Symbol Component
-const OmSymbol = ({ size = 40, color = COLORS.gold }) => (
-  <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
-    <Text style={{ fontSize: size * 0.8, color: color, fontWeight: 'bold' }}>ॐ</Text>
-  </View>
-);
 
 // Floating Particle Component
 const FloatingParticle = ({ delay, startX, startY }) => {
@@ -175,42 +74,70 @@ const FloatingParticle = ({ delay, startX, startY }) => {
   );
 };
 
+// Animated Diya/Lamp Component
+const AnimatedDiya = ({ style }) => {
+  const flameAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(flameAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(flameAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const flameOpacity = flameAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.7, 1],
+  });
+
+  return (
+    <Animated.View style={[style, { opacity: flameOpacity }]}>
+      <View style={styles.diyaContainer}>
+        <View style={styles.flame} />
+        <View style={styles.diyaBase} />
+      </View>
+    </Animated.View>
+  );
+};
+
 const SplashScreen = ({ onFinish }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
   const titleAnim = useRef(new Animated.Value(0)).current;
   const subtitleAnim = useRef(new Animated.Value(0)).current;
-  const diyaLeftAnim = useRef(new Animated.Value(-100)).current;
-  const diyaRightAnim = useRef(new Animated.Value(100)).current;
+  const imageAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Main animation sequence
     Animated.sequence([
-      // Fade in temple with scale
+      // Fade in background
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      // Scale and show temple image
       Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
         Animated.spring(scaleAnim, {
           toValue: 1,
           friction: 8,
           tension: 40,
           useNativeDriver: true,
         }),
-      ]),
-      // Animate diyas sliding in
-      Animated.parallel([
-        Animated.spring(diyaLeftAnim, {
-          toValue: 0,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-        Animated.spring(diyaRightAnim, {
-          toValue: 0,
-          friction: 8,
+        Animated.timing(imageAnim, {
+          toValue: 1,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ]),
@@ -236,7 +163,7 @@ const SplashScreen = ({ onFinish }) => {
     Animated.loop(
       Animated.timing(rotateAnim, {
         toValue: 1,
-        duration: 20000,
+        duration: 30000,
         useNativeDriver: true,
       })
     ).start();
@@ -249,95 +176,98 @@ const SplashScreen = ({ onFinish }) => {
 
   // Generate particles
   const particles = [];
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 20; i++) {
     particles.push(
       <FloatingParticle
         key={i}
-        delay={i * 400}
+        delay={i * 300}
         startX={Math.random() * width}
-        startY={height * 0.5 + Math.random() * 100}
+        startY={height * 0.6 + Math.random() * 100}
       />
     );
   }
 
   return (
     <LinearGradient
-      colors={[COLORS.maroon, COLORS.maroonDark, '#2D0000']}
+      colors={['#1a0a0a', COLORS.maroon, '#2D0000']}
       style={styles.container}
     >
-      {/* Decorative rotating mandala */}
-      <Animated.View style={[styles.mandalaContainer, { transform: [{ rotate }] }]}>
-        <View style={styles.mandala}>
-          {[...Array(12)].map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.mandalaLine,
-                { transform: [{ rotate: `${i * 30}deg` }] },
-              ]}
+      <Animated.View style={{ opacity: fadeAnim, flex: 1 }}>
+        {/* Decorative rotating mandala */}
+        <Animated.View style={[styles.mandalaContainer, { transform: [{ rotate }] }]}>
+          <View style={styles.mandala}>
+            {[...Array(16)].map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.mandalaLine,
+                  { transform: [{ rotate: `${i * 22.5}deg` }] },
+                ]}
+              />
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* Floating particles */}
+        {particles}
+
+        {/* Main content */}
+        <View style={styles.content}>
+          {/* Left Diya */}
+          <AnimatedDiya style={styles.diyaLeft} />
+
+          {/* Temple Image */}
+          <Animated.View
+            style={[
+              styles.templeContainer,
+              {
+                opacity: imageAnim,
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
+          >
+            <View style={styles.imageGlow} />
+            <Image
+              source={require('../../assets/temple-logo.jpg')}
+              style={styles.templeImage}
+              resizeMode="contain"
             />
-          ))}
+          </Animated.View>
+
+          {/* Right Diya */}
+          <AnimatedDiya style={styles.diyaRight} />
+
+          {/* Title */}
+          <Animated.View style={[styles.titleContainer, { opacity: titleAnim }]}>
+            <Text style={styles.title}>DIVINE</Text>
+            <View style={styles.titleUnderline} />
+          </Animated.View>
+
+          {/* Subtitle */}
+          <Animated.View style={[styles.subtitleContainer, { opacity: subtitleAnim }]}>
+            <Text style={styles.omSymbol}>ॐ</Text>
+            <Text style={styles.subtitle}>Your Spiritual Journey Begins</Text>
+            <Text style={styles.omSymbol}>ॐ</Text>
+          </Animated.View>
+
+          {/* Temple Name */}
+          <Animated.View style={[styles.templeNameContainer, { opacity: subtitleAnim }]}>
+            <Text style={styles.templeName}>
+              Sri Anantha Padmanabha Swamy
+            </Text>
+          </Animated.View>
+        </View>
+
+        {/* Bottom decorative line */}
+        <View style={styles.bottomDecoration}>
+          <LinearGradient
+            colors={['transparent', COLORS.gold, 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.bottomLine}
+          />
         </View>
       </Animated.View>
-
-      {/* Floating particles */}
-      {particles}
-
-      {/* Main content */}
-      <View style={styles.content}>
-        {/* Left Diya */}
-        <Animated.View style={[styles.diyaLeft, { transform: [{ translateX: diyaLeftAnim }] }]}>
-          <AnimatedDiya />
-        </Animated.View>
-
-        {/* Temple Icon */}
-        <Animated.View
-          style={[
-            styles.templeContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
-            },
-          ]}
-        >
-          <TempleIcon />
-        </Animated.View>
-
-        {/* Right Diya */}
-        <Animated.View style={[styles.diyaRight, { transform: [{ translateX: diyaRightAnim }] }]}>
-          <AnimatedDiya />
-        </Animated.View>
-
-        {/* Title */}
-        <Animated.View style={[styles.titleContainer, { opacity: titleAnim }]}>
-          <Text style={styles.title}>DIVINE</Text>
-          <View style={styles.titleUnderline} />
-        </Animated.View>
-
-        {/* Subtitle */}
-        <Animated.View style={[styles.subtitleContainer, { opacity: subtitleAnim }]}>
-          <OmSymbol size={24} color={COLORS.gold} />
-          <Text style={styles.subtitle}>Your Spiritual Journey Begins</Text>
-          <OmSymbol size={24} color={COLORS.gold} />
-        </Animated.View>
-
-        {/* Tagline */}
-        <Animated.View style={[styles.taglineContainer, { opacity: subtitleAnim }]}>
-          <Text style={styles.tagline}>
-            Connect with the Divine from Anywhere
-          </Text>
-        </Animated.View>
-      </View>
-
-      {/* Bottom decorative line */}
-      <View style={styles.bottomDecoration}>
-        <LinearGradient
-          colors={['transparent', COLORS.gold, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.bottomLine}
-        />
-      </View>
     </LinearGradient>
   );
 };
@@ -354,7 +284,9 @@ const styles = StyleSheet.create({
     height: width * 1.5,
     justifyContent: 'center',
     alignItems: 'center',
-    opacity: 0.1,
+    opacity: 0.08,
+    top: -width * 0.25,
+    left: -width * 0.25,
   },
   mandala: {
     width: width,
@@ -368,7 +300,7 @@ const styles = StyleSheet.create({
   mandalaLine: {
     position: 'absolute',
     width: 1,
-    height: width * 0.8,
+    height: width * 0.9,
     backgroundColor: COLORS.gold,
   },
   particle: {
@@ -385,21 +317,61 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gold,
   },
   content: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 10,
+    paddingTop: 40,
   },
   templeContainer: {
+    alignItems: 'center',
     marginBottom: 20,
+  },
+  imageGlow: {
+    position: 'absolute',
+    width: width * 0.75,
+    height: width * 0.75,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    top: -10,
+  },
+  templeImage: {
+    width: width * 0.7,
+    height: width * 0.7,
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: COLORS.gold,
+  },
+  diyaContainer: {
+    alignItems: 'center',
+  },
+  flame: {
+    width: 12,
+    height: 20,
+    backgroundColor: COLORS.gold,
+    borderRadius: 10,
+    marginBottom: -5,
+    shadowColor: COLORS.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+  },
+  diyaBase: {
+    width: 24,
+    height: 12,
+    backgroundColor: '#B8860B',
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
   },
   diyaLeft: {
     position: 'absolute',
-    left: -80,
-    top: 40,
+    left: 40,
+    top: height * 0.35,
   },
   diyaRight: {
     position: 'absolute',
-    right: -80,
-    top: 40,
+    right: 40,
+    top: height * 0.35,
   },
   titleContainer: {
     alignItems: 'center',
@@ -424,24 +396,30 @@ const styles = StyleSheet.create({
   subtitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 16,
     gap: 10,
   },
+  omSymbol: {
+    fontSize: 20,
+    color: COLORS.gold,
+    fontWeight: 'bold',
+  },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: COLORS.cream,
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
-  taglineContainer: {
-    marginTop: 30,
+  templeNameContainer: {
+    marginTop: 20,
     paddingHorizontal: 40,
   },
-  tagline: {
-    fontSize: 14,
-    color: 'rgba(255, 253, 208, 0.7)',
+  templeName: {
+    fontSize: 12,
+    color: 'rgba(255, 253, 208, 0.6)',
     textAlign: 'center',
     fontStyle: 'italic',
+    letterSpacing: 1,
   },
   bottomDecoration: {
     position: 'absolute',
