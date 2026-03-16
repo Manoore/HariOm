@@ -496,9 +496,11 @@ export function AstrologerList({ onSelectAstrologer }) {
 
   const loadAstrologers = async () => {
     try {
-      const res = await api.get('/api/astrologers/available');
-      setAstrologers(res.data.astrologers || []);
+      // Use the correct endpoint
+      const res = await api.get('/api/astrologers');
+      setAstrologers(res.data.astrologers || res.data || []);
     } catch (error) {
+      console.error('Error loading astrologers:', error);
       toast.error('Failed to load astrologers');
     } finally {
       setLoading(false);
