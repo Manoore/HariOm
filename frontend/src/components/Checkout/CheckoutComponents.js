@@ -26,7 +26,7 @@ export function CartSidebar({ isOpen, onClose, onCheckout }) {
   const fetchCartSummary = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/api/cart/summary');
+      const res = await api.get('/api/cart');
       setCartData(res.data);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -231,7 +231,7 @@ export function CheckoutPage({ onBack, onComplete }) {
 
   const fetchCartSummary = async () => {
     try {
-      const res = await api.get('/api/cart/summary');
+      const res = await api.get('/api/cart');
       setCartData(res.data);
     } catch (error) {
       toast.error('Failed to load cart');
@@ -242,10 +242,16 @@ export function CheckoutPage({ onBack, onComplete }) {
 
   const fetchFeesConfig = async () => {
     try {
+      // Try new endpoint first, fall back to defaults
       const res = await api.get('/api/checkout/fees-taxes');
       setFeesConfig(res.data);
     } catch (error) {
-      console.log('Could not fetch fees config:', error);
+      // Use default config if endpoint doesn't exist
+      console.log('Using default fees config');
+      setFeesConfig({
+        platform_fee: { enabled: true, type: 'percentage', value: 2.5 },
+        tax: { enabled: true, label: 'GST', percentage: 18, on_platform_fee: false }
+      });
     }
   };
 
@@ -287,7 +293,7 @@ export function CheckoutPage({ onBack, onComplete }) {
       };
     }
 
-    const subtotal = cartData.subtotal || 0;
+    const subtotal = cartData.subtotal || cartData.total || 0;
     const shipping = cartData.shipping || 0;
 
     let platformFee = 0;
@@ -331,7 +337,23 @@ export function CheckoutPage({ onBack, onComplete }) {
 
     setSubmitting(true);
     try {
-      const res = await api.post('/api/checkout', formData);
+      // Try new checkout endpoint first, fall back to payments endpoint
+      let res;
+      try {
+        res = await api.post('/api/checkout', formData);
+      } catch (checkoutError) {
+        if (checkoutError.response?.status === 404) {
+          // Fall back to older payments endpoint
+          res = await api.post('/api/payments/create-checkout', {
+            amount: totals.total,
+            currency: 'inr',
+            description: 'Divine App Order',
+            metadata: formData
+          });
+        } else {
+          throw checkoutError;
+        }
+      }
       
       // If checkout_url is returned (Stripe), redirect to Stripe checkout
       if (res.data.checkout_url) {
