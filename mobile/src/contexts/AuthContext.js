@@ -42,16 +42,23 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       setLoading(true);
       
+      console.log('Attempting login with:', email);
       const response = await authAPI.login(email, password);
+      console.log('Login response:', response.data);
+      
       // Backend returns { token, user } not { access_token, user }
       const { token, user: userData } = response.data;
       
+      console.log('Setting token and user...');
       await setAuthToken(token);
       setUser(userData);
       
+      console.log('Login successful!');
       return { success: true };
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Login failed';
+      console.error('Login error:', err);
+      console.error('Error response:', err.response?.data);
+      const errorMessage = err.response?.data?.detail || err.message || 'Login failed';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
