@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Settings, Save, Loader2, Key, CreditCard, Video, Bell, 
-  Palette, Tool, Shield, Eye, EyeOff, CheckCircle, AlertCircle,
+  Palette, Wrench, Shield, Eye, EyeOff, CheckCircle, AlertCircle,
   RefreshCw, ChevronDown, ChevronRight, Flame, Phone, Mail
 } from 'lucide-react';
 import api from '../../lib/api';
@@ -15,7 +15,7 @@ const CategoryIcons = {
   payment_settings: Settings,
   firebase: Flame,
   branding: Palette,
-  maintenance: Tool,
+  maintenance: Wrench,
   notifications: Bell,
 };
 
