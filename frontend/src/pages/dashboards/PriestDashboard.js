@@ -14,6 +14,7 @@ import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 import ChatTab from '../../components/Chat/ChatTab';
+import AddressAutocomplete from '../../components/AddressAutocomplete';
 
 // Role display configuration
 const ROLE_CONFIG = {
@@ -165,6 +166,51 @@ export default function PriestDashboard() {
     }
   };
 
+  // Silent refresh - doesn't show loading spinner (prevents blank screen flash)
+  const silentRefresh = async () => {
+    try {
+      const [analyticsRes, bookingsRes, classesRes, streamsRes, postsRes] = await Promise.all([
+        api.get('/api/priest/analytics').catch(() => ({ data: null })),
+        api.get('/api/priest/bookings').catch(() => ({ data: { bookings: [] } })),
+        api.get('/api/priest/classes').catch(() => ({ data: { classes: [] } })),
+        api.get('/api/priest/streams').catch(() => ({ data: { streams: [] } })),
+        api.get('/api/priest/posts').catch(() => ({ data: { posts: [] } })),
+      ]);
+
+      setAnalytics(analyticsRes.data);
+      setBookings(bookingsRes.data?.bookings || []);
+      setClasses(classesRes.data?.classes || []);
+      setStreams(streamsRes.data?.streams || []);
+      setPosts(postsRes.data?.posts || []);
+      
+      // Fetch priest profile
+      try {
+        const profileRes = await api.get('/api/priest/profile');
+        setPriestProfile(profileRes.data);
+      } catch {
+        // Keep existing profile if fetch fails
+      }
+
+      // Fetch reviews, portfolio, services, earnings
+      try {
+        const [reviewsRes, portfolioRes, servicesRes, earningsRes] = await Promise.all([
+          api.get('/api/priest/reviews').catch(() => ({ data: { reviews: [] } })),
+          api.get('/api/priest/portfolio').catch(() => ({ data: { items: [] } })),
+          api.get('/api/priest/services').catch(() => ({ data: { services: [] } })),
+          api.get('/api/priest/earnings').catch(() => ({ data: null })),
+        ]);
+        setReviews(reviewsRes.data?.reviews || []);
+        setPortfolio(portfolioRes.data?.items || []);
+        setServices(servicesRes.data?.services || []);
+        setEarnings(earningsRes.data || { total_earnings: 0, monthly_earnings: 0 });
+      } catch (e) {
+        console.error('Error fetching additional data:', e);
+      }
+    } catch (error) {
+      console.error('Silent refresh error:', error);
+    }
+  };
+
   const updateBookingStatus = async (bookingId, status) => {
     try {
       await api.put(`/api/bookings/${bookingId}/status?status=${status}`);
@@ -182,25 +228,25 @@ export default function PriestDashboard() {
       case 'messages':
         return <ChatTab isDesktop={true} />;
       case 'posts':
-        return <PostsTab posts={posts} onRefresh={fetchDashboardData} />;
+        return <PostsTab posts={posts} onRefresh={silentRefresh} />;
       case 'profile':
-        return <ProfileTab profile={priestProfile} user={user} onRefresh={fetchDashboardData} />;
+        return <ProfileTab profile={priestProfile} user={user} onRefresh={silentRefresh} />;
       case 'bookings':
         return <BookingsTab bookings={bookings} updateStatus={updateBookingStatus} />;
       case 'services':
-        return <ServicesTab services={services} onRefresh={fetchDashboardData} />;
+        return <ServicesTab services={services} onRefresh={silentRefresh} />;
       case 'reviews':
         return <ReviewsTab reviews={reviews} />;
       case 'portfolio':
-        return <PortfolioTab portfolio={portfolio} onRefresh={fetchDashboardData} />;
+        return <PortfolioTab portfolio={portfolio} onRefresh={silentRefresh} />;
       case 'panchang':
         return <PanchangTab panchang={panchang} festivals={festivals} />;
       case 'earnings':
         return <EarningsTab earnings={earnings} analytics={analytics} />;
       case 'classes':
-        return <ClassesTab classes={classes} onRefresh={fetchDashboardData} />;
+        return <ClassesTab classes={classes} onRefresh={silentRefresh} />;
       case 'streams':
-        return <StreamsTab streams={streams} onRefresh={fetchDashboardData} />;
+        return <StreamsTab streams={streams} onRefresh={silentRefresh} />;
       default:
         return null;
     }
@@ -1296,15 +1342,23 @@ function ProfileTab({ profile, user, onRefresh }) {
         
         {editing && (
           <div className="flex gap-2 mb-3">
-            <input
-              type="text"
-              value={newLocation}
-              onChange={(e) => setNewLocation(e.target.value)}
-              placeholder="Add city or area"
-              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
-              onKeyPress={(e) => e.key === 'Enter' && addWorkLocation()}
-            />
-            <button onClick={addWorkLocation} className="px-3 py-2 bg-saffron text-white rounded-lg">
+            <div className="flex-1">
+              <AddressAutocomplete
+                value={newLocation}
+                onChange={(value) => setNewLocation(value)}
+                onSelect={(placeDetails) => {
+                  const locationName = placeDetails.main_text || placeDetails.city || placeDetails.address;
+                  if (locationName && !formData.work_locations.includes(locationName)) {
+                    setFormData({ ...formData, work_locations: [...formData.work_locations, locationName] });
+                    setNewLocation('');
+                  }
+                }}
+                placeholder="Search for city or area..."
+                inputClassName="!py-2 text-sm"
+                testId="priest-work-location"
+              />
+            </div>
+            <button onClick={addWorkLocation} className="px-3 py-2 bg-saffron text-white rounded-lg h-fit mt-auto">
               <Plus className="w-4 h-4" />
             </button>
           </div>
