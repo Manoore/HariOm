@@ -1205,54 +1205,6 @@ export default function LandingPage({ onGetStarted }) {
         </div>
       </section>
 
-      {/* Testimonials - Full Width */}
-      <section className="py-24 bg-cream w-full">
-        <div className="w-full px-4 sm:px-8 lg:px-16">
-          <div className="max-w-[1920px] mx-auto">
-            <motion.div 
-              className="text-center mb-16"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="text-saffron font-medium">TESTIMONIALS</span>
-              <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-4">
-                What Our Devotees Say
-              </h2>
-            </motion.div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                { name: 'Priya Sharma', location: 'Mumbai', text: 'Divine App made it so easy to book a pandit for my house warming ceremony. The priest was knowledgeable and the entire process was seamless.' },
-                { name: 'Rajesh Kumar', location: 'Delhi', text: 'I\'ve been using Divine for daily horoscopes and pooja bookings. The astrology section is incredibly accurate and the priests are all verified.' },
-                { name: 'Anita Patel', location: 'USA', text: 'Living abroad, I thought I\'d miss out on proper poojas. Divine connected me with priests who conducted online ceremonies beautifully.' },
-              ].map((testimonial, i) => (
-                <motion.div 
-                  key={i}
-                  className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <Quote className="w-10 h-10 text-saffron/20 mb-4" />
-                  <p className="text-gray-600 mb-6">{testimonial.text}</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white font-semibold">
-                      {testimonial.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-800">{testimonial.name}</p>
-                      <p className="text-sm text-gray-500">{testimonial.location}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section - Full Width */}
       <section className="py-24 bg-maroon relative overflow-hidden w-full">
         <div className="absolute inset-0 opacity-10">

@@ -545,7 +545,7 @@ Icons: Custom 3D animated SVGs
   - Marigold flowers (orange/yellow) with detailed petal layers
   - Jasmine flowers (white) with 5-petal design
   - Hibiscus petals (red) with vein details
-  - Natural floating motion with rotation and horizontal sway
+  - **Flowers only fall on LEFT and RIGHT sides** - not over the center form
 - [x] **Authentic Trishul Icons** - Redesigned with:
   - Three-pronged design with proper proportions
   - Gold gradient fill with shine effects
@@ -560,6 +560,9 @@ Icons: Custom 3D animated SVGs
   - Lotus flowers
   - Swastika symbols
   - Kalash with decorative leaves
+
+### Landing Page Fixes (COMPLETED)
+- [x] **Removed duplicate testimonials section** - Only one testimonials section now (dynamic from DB)
 
 ## Preview URLs
 - **Web App**: https://temple-hub-7.preview.emergentagent.com
