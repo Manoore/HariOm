@@ -539,6 +539,17 @@ Icons: Custom 3D animated SVGs
 
 ## Latest Updates (March 17, 2026)
 
+### Priest Services Fix (BUG FIX)
+- [x] **Fixed services not showing when booking** - Services from `priest_services_collection` are now fetched correctly
+- [x] Added public endpoint `GET /api/priests/{priest_id}/services` for booking page
+- [x] Priest list and detail APIs now include services from the separate collection
+
+### Nearby/Location-Based Search (NEW)
+- [x] **"Near Me" Button for Priests** - Uses browser geolocation to find priests in your city
+- [x] **"Near Me" Button for Store** - Find stores/products near your location
+- [x] Google Geocoding integration to convert coordinates to city name
+- [x] Products API now supports `location` query parameter to filter by shop location
+
 ### Priest Filters Feature (NEW)
 - [x] **Location/Zip Code Filter** - Search priests by city, state, or zip code
 - [x] **Language Filter** - Filter priests by language (Hindi, Sanskrit, Tamil, Telugu, etc.)

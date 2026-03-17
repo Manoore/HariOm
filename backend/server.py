@@ -1726,15 +1726,33 @@ async def get_priests(
     priests = []
     async for priest in cursor:
         user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
+        
+        # Fetch services from the separate services collection
+        services_cursor = priest_services_collection.find({"priest_id": str(priest["_id"])})
+        services = []
+        async for svc in services_cursor:
+            services.append({
+                "id": str(svc["_id"]),
+                "name": svc.get("name", ""),
+                "description": svc.get("description", ""),
+                "price": svc.get("price", 0),
+                "duration": svc.get("duration", ""),
+                "category": svc.get("category", "general")
+            })
+        
+        # Fallback to embedded services if separate collection is empty
+        if not services and priest.get("services"):
+            services = priest["services"]
+        
         priests.append({
             "id": str(priest["_id"]),
             "user_id": priest["user_id"],
             "user_name": user["name"] if user else "Unknown",
-            "specializations": priest["specializations"],
-            "experience_years": priest["experience_years"],
-            "languages": priest["languages"],
-            "services": priest["services"],
-            "bio": priest["bio"],
+            "specializations": priest.get("specializations", []),
+            "experience_years": priest.get("experience_years", 0),
+            "languages": priest.get("languages", []),
+            "services": services,
+            "bio": priest.get("bio", ""),
             "rating": priest.get("rating", 0),
             "total_reviews": priest.get("total_reviews", 0),
             "is_verified": priest.get("is_verified", False),
@@ -1752,19 +1770,41 @@ async def get_priest(priest_id: str):
         raise HTTPException(status_code=404, detail="Priest not found")
     
     user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
+    
+    # Fetch services from the separate services collection
+    services_cursor = priest_services_collection.find({"priest_id": str(priest["_id"])})
+    services = []
+    async for svc in services_cursor:
+        services.append({
+            "id": str(svc["_id"]),
+            "name": svc.get("name", ""),
+            "description": svc.get("description", ""),
+            "price": svc.get("price", 0),
+            "duration": svc.get("duration", ""),
+            "category": svc.get("category", "general")
+        })
+    
+    # Fallback to embedded services if separate collection is empty
+    if not services and priest.get("services"):
+        services = priest["services"]
+    
     return {
         "id": str(priest["_id"]),
         "user_id": priest["user_id"],
         "user_name": user["name"] if user else "Unknown",
-        "specializations": priest["specializations"],
-        "experience_years": priest["experience_years"],
-        "languages": priest["languages"],
-        "services": priest["services"],
-        "bio": priest["bio"],
+        "specializations": priest.get("specializations", []),
+        "experience_years": priest.get("experience_years", 0),
+        "languages": priest.get("languages", []),
+        "services": services,
+        "bio": priest.get("bio", ""),
         "rating": priest.get("rating", 0),
         "total_reviews": priest.get("total_reviews", 0),
         "is_verified": priest.get("is_verified", False),
-        "available_online": priest.get("available_online", True)
+        "available_online": priest.get("available_online", True),
+        "city": priest.get("city") or priest.get("location", {}).get("city", ""),
+        "state": priest.get("state") or priest.get("location", {}).get("state", ""),
+        "base_price": priest.get("base_price", 1100),
+        "profile_photo": priest.get("profile_photo")
     }
 
 @app.post("/api/priests/register")
@@ -1791,6 +1831,32 @@ async def register_as_priest(data: PriestCreate, user: dict = Depends(get_curren
     await users_collection.update_one({"_id": user["_id"]}, {"$set": {"role": UserRole.PRIEST}})
     
     return {"message": "Registered as priest", "priest_id": str(result.inserted_id)}
+
+@app.get("/api/priests/{priest_id}/services")
+async def get_priest_services_public(priest_id: str):
+    """Get services for a specific priest (public endpoint for booking)"""
+    priest = await priests_collection.find_one({"_id": ObjectId(priest_id)})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest not found")
+    
+    # Fetch services from the separate services collection
+    services_cursor = priest_services_collection.find({"priest_id": priest_id})
+    services = []
+    async for svc in services_cursor:
+        services.append({
+            "id": str(svc["_id"]),
+            "name": svc.get("name", ""),
+            "description": svc.get("description", ""),
+            "price": svc.get("price", 0),
+            "duration": svc.get("duration", ""),
+            "category": svc.get("category", "general")
+        })
+    
+    # Fallback to embedded services if separate collection is empty
+    if not services and priest.get("services"):
+        services = priest["services"]
+    
+    return {"services": services, "priest_id": priest_id}
 
 # ===================== BOOKING ROUTES =====================
 @app.post("/api/bookings")
@@ -3034,6 +3100,7 @@ async def get_live_streams():
 async def get_products(
     category: Optional[str] = None,
     search: Optional[str] = None,
+    location: Optional[str] = None,
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     skip: int = 0,
@@ -3052,13 +3119,40 @@ async def get_products(
     if max_price is not None:
         query.setdefault("price", {})["$lte"] = max_price
     
+    # If location filter is provided, first get shops in that location
+    shop_ids_in_location = None
+    if location:
+        shops_cursor = shops_collection.find({
+            "$or": [
+                {"city": {"$regex": location, "$options": "i"}},
+                {"state": {"$regex": location, "$options": "i"}},
+                {"address": {"$regex": location, "$options": "i"}},
+                {"pincode": location},
+                {"location.city": {"$regex": location, "$options": "i"}},
+                {"location.state": {"$regex": location, "$options": "i"}}
+            ]
+        })
+        shop_ids_in_location = []
+        async for shop in shops_cursor:
+            shop_ids_in_location.append(str(shop["_id"]))
+        
+        if shop_ids_in_location:
+            query["shop_id"] = {"$in": shop_ids_in_location}
+        else:
+            # No shops found in location, return empty
+            return {"products": [], "total": 0}
+    
     cursor = products_collection.find(query).skip(skip).limit(limit)
     products = []
     async for product in cursor:
+        # Get shop location info
+        shop = await shops_collection.find_one({"_id": ObjectId(product["shop_id"])}) if product.get("shop_id") else None
         products.append({
             "id": str(product["_id"]),
             "shop_id": product["shop_id"],
             "shop_name": product.get("shop_name", "Unknown"),
+            "shop_city": shop.get("city", "") if shop else "",
+            "shop_state": shop.get("state", "") if shop else "",
             "name": product["name"],
             "description": product["description"],
             "price": product["price"],

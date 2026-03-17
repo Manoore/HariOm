@@ -2147,6 +2147,9 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const [locationFilter, setLocationFilter] = useState('');
   const [languageFilter, setLanguageFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [nearbyMode, setNearbyMode] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   useEffect(() => {
     fetchPriests();
@@ -2169,10 +2172,70 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
     }
   };
 
+  const getNearbyPriests = async () => {
+    setGettingLocation(true);
+    try {
+      // Get user's current location
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      });
+      
+      const { latitude, longitude } = position.coords;
+      setUserLocation({ lat: latitude, lng: longitude });
+      setNearbyMode(true);
+      
+      // Use Google's Geocoding API to get city name from coordinates
+      try {
+        const geocodeRes = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.REACT_APP_GOOGLE_PLACES_API_KEY || 'AIzaSyBr3qP19Vxsv5jeLxccsM0OfK3DWssPTVQ'}`
+        );
+        const geocodeData = await geocodeRes.json();
+        
+        if (geocodeData.results && geocodeData.results[0]) {
+          const addressComponents = geocodeData.results[0].address_components;
+          const city = addressComponents.find(c => c.types.includes('locality'))?.long_name;
+          const state = addressComponents.find(c => c.types.includes('administrative_area_level_1'))?.long_name;
+          const postalCode = addressComponents.find(c => c.types.includes('postal_code'))?.long_name;
+          
+          // Set location filter to city or postal code
+          if (city) {
+            setLocationFilter(city);
+            toast.success(`Showing priests near ${city}`);
+          } else if (postalCode) {
+            setLocationFilter(postalCode);
+            toast.success(`Showing priests near ${postalCode}`);
+          } else if (state) {
+            setLocationFilter(state);
+            toast.success(`Showing priests in ${state}`);
+          }
+        }
+      } catch (geocodeError) {
+        console.error('Geocoding error:', geocodeError);
+        toast.error('Could not determine your city');
+      }
+    } catch (error) {
+      console.error('Location error:', error);
+      if (error.code === 1) {
+        toast.error('Location access denied. Please enable location in your browser settings.');
+      } else {
+        toast.error('Could not get your location');
+      }
+      setNearbyMode(false);
+    } finally {
+      setGettingLocation(false);
+    }
+  };
+
   const clearFilters = () => {
     setFilter('');
     setLocationFilter('');
     setLanguageFilter('');
+    setNearbyMode(false);
+    setUserLocation(null);
   };
 
   const hasActiveFilters = filter || locationFilter || languageFilter;
@@ -2184,22 +2247,41 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       <div className="pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Book a Priest</h1>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
-              showFilters || hasActiveFilters
-                ? 'bg-saffron text-white border-saffron'
-                : 'bg-white text-gray-600 border-orange-200 hover:border-saffron'
-            }`}
-          >
-            <Filter className="w-4 h-4" />
-            <span className="text-sm font-medium">Filters</span>
-            {hasActiveFilters && (
-              <span className="w-5 h-5 bg-white text-saffron text-xs rounded-full flex items-center justify-center font-bold">
-                {[filter, locationFilter, languageFilter].filter(Boolean).length}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Near Me Button */}
+            <button
+              onClick={getNearbyPriests}
+              disabled={gettingLocation}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+                nearbyMode
+                  ? 'bg-green-500 text-white border-green-500'
+                  : 'bg-white text-gray-600 border-orange-200 hover:border-green-500 hover:text-green-600'
+              }`}
+            >
+              {gettingLocation ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <MapPin className="w-4 h-4" />
+              )}
+              <span className="text-sm font-medium">Near Me</span>
+            </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+                showFilters || hasActiveFilters
+                  ? 'bg-saffron text-white border-saffron'
+                  : 'bg-white text-gray-600 border-orange-200 hover:border-saffron'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span className="text-sm font-medium">Filters</span>
+              {hasActiveFilters && (
+                <span className="w-5 h-5 bg-white text-saffron text-xs rounded-full flex items-center justify-center font-bold">
+                  {[filter, locationFilter, languageFilter].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Expanded Filters */}
@@ -3574,6 +3656,9 @@ function ShopTab({ isDesktop }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [nearbyMode, setNearbyMode] = useState(false);
+  const [gettingLocation, setGettingLocation] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [view, setView] = useState('shop'); // shop, product-detail, checkout, success, orders, order-detail
   const [orderData, setOrderData] = useState(null);
@@ -3597,17 +3682,76 @@ function ShopTab({ isDesktop }) {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [locationFilter]);
 
   const fetchProducts = async () => {
     try {
-      const res = await api.get('/api/products');
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (locationFilter) params.append('location', locationFilter);
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      const res = await api.get(`/api/products${queryString}`);
       setProducts(res.data.products || []);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getNearbyProducts = async () => {
+    setGettingLocation(true);
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      });
+      
+      const { latitude, longitude } = position.coords;
+      setNearbyMode(true);
+      
+      try {
+        const geocodeRes = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.REACT_APP_GOOGLE_PLACES_API_KEY || 'AIzaSyBr3qP19Vxsv5jeLxccsM0OfK3DWssPTVQ'}`
+        );
+        const geocodeData = await geocodeRes.json();
+        
+        if (geocodeData.results && geocodeData.results[0]) {
+          const addressComponents = geocodeData.results[0].address_components;
+          const city = addressComponents.find(c => c.types.includes('locality'))?.long_name;
+          const state = addressComponents.find(c => c.types.includes('administrative_area_level_1'))?.long_name;
+          
+          if (city) {
+            setLocationFilter(city);
+            toast.success(`Showing stores near ${city}`);
+          } else if (state) {
+            setLocationFilter(state);
+            toast.success(`Showing stores in ${state}`);
+          }
+        }
+      } catch (geocodeError) {
+        console.error('Geocoding error:', geocodeError);
+        toast.error('Could not determine your city');
+      }
+    } catch (error) {
+      console.error('Location error:', error);
+      if (error.code === 1) {
+        toast.error('Location access denied. Please enable location in your browser settings.');
+      } else {
+        toast.error('Could not get your location');
+      }
+      setNearbyMode(false);
+    } finally {
+      setGettingLocation(false);
+    }
+  };
+
+  const clearLocationFilter = () => {
+    setLocationFilter('');
+    setNearbyMode(false);
   };
 
   const handleAddToCart = async (productId) => {
@@ -3717,6 +3861,23 @@ function ShopTab({ isDesktop }) {
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Pooja Store</h1>
           <div className="flex items-center gap-3">
+            {/* Near Me Button */}
+            <button
+              onClick={getNearbyProducts}
+              disabled={gettingLocation}
+              className={`flex items-center gap-1 px-3 py-2 rounded-xl border text-sm transition-all ${
+                nearbyMode
+                  ? 'bg-green-500 text-white border-green-500'
+                  : 'bg-white text-gray-600 border-orange-200 hover:border-green-500 hover:text-green-600'
+              }`}
+            >
+              {gettingLocation ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <MapPin className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">Near Me</span>
+            </button>
             <button
               onClick={() => setView('orders')}
               className="text-sm text-saffron hover:underline"
@@ -3738,6 +3899,19 @@ function ShopTab({ isDesktop }) {
             </button>
           </div>
         </div>
+
+        {/* Location Filter Display */}
+        {locationFilter && (
+          <div className="flex items-center gap-2 mb-3">
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+              <MapPin className="w-3 h-3" />
+              Stores near {locationFilter}
+              <button onClick={clearLocationFilter} className="ml-1 hover:text-red-500">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          </div>
+        )}
         
         {/* Search */}
         <div className={`relative ${isDesktop ? 'max-w-md' : ''}`}>
