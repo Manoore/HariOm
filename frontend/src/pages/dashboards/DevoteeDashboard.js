@@ -1074,6 +1074,23 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
           )}
         </div>
       </div>
+
+      {/* Review Modal */}
+      {showReviewModal && reviewBooking && (
+        <ReviewModal
+          booking={reviewBooking}
+          onClose={() => {
+            setShowReviewModal(false);
+            setReviewBooking(null);
+          }}
+          onSuccess={() => {
+            setShowReviewModal(false);
+            setReviewBooking(null);
+            fetchData();
+            toast.success('Review submitted successfully!');
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -2157,23 +2174,6 @@ function CalendarTab({ isDesktop }) {
             </div>
           )}
         </motion.div>
-      )}
-
-      {/* Review Modal */}
-      {showReviewModal && reviewBooking && (
-        <ReviewModal
-          booking={reviewBooking}
-          onClose={() => {
-            setShowReviewModal(false);
-            setReviewBooking(null);
-          }}
-          onSuccess={() => {
-            setShowReviewModal(false);
-            setReviewBooking(null);
-            fetchData(); // Refresh bookings
-            toast.success('Review submitted successfully!');
-          }}
-        />
       )}
     </div>
   );
