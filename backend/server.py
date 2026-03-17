@@ -4016,6 +4016,7 @@ async def get_all_users(user: dict = Depends(require_role([UserRole.ADMIN])), sk
             "name": u["name"],
             "role": u["role"],
             "is_verified": u.get("is_verified", False),
+            "is_active": u.get("is_active", True),
             "created_at": u["created_at"].isoformat() if isinstance(u.get("created_at"), datetime) else None
         })
     return {"users": users, "total": await users_collection.count_documents({})}
@@ -4091,6 +4092,73 @@ async def update_user_role(user_id: str, role: UserRole, admin: dict = Depends(r
             await priests_collection.insert_one(priest_profile)
     
     return {"message": f"User role updated to {role}"}
+
+
+@app.put("/api/admin/users/{user_id}/status")
+async def update_user_status(user_id: str, request: Request, admin: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Admin endpoint to activate/deactivate a user"""
+    data = await request.json()
+    is_active = data.get("is_active", True)
+    
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Don't allow deactivating yourself
+    if str(admin["_id"]) == user_id:
+        raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
+    
+    await users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"is_active": is_active, "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    status_text = "activated" if is_active else "deactivated"
+    return {"message": f"User {status_text} successfully"}
+
+
+@app.post("/api/admin/users/{user_id}/reset-password")
+async def admin_reset_password(user_id: str, request: Request, admin: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Admin endpoint to reset a user's password"""
+    data = await request.json()
+    new_password = data.get("new_password")
+    
+    if not new_password or len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Hash the new password
+    hashed_password = pwd_context.hash(new_password)
+    
+    await users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"password": hashed_password, "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "Password reset successfully"}
+
+
+@app.get("/api/admin/users/{user_id}")
+async def get_user_details(user_id: str, admin: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Get detailed user information for admin"""
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "id": str(user["_id"]),
+        "name": user.get("name"),
+        "email": user.get("email"),
+        "phone": user.get("phone"),
+        "role": user.get("role"),
+        "is_active": user.get("is_active", True),
+        "is_verified": user.get("is_verified", False),
+        "created_at": user.get("created_at").isoformat() if user.get("created_at") else None,
+        "last_login": user.get("last_login").isoformat() if user.get("last_login") else None
+    }
 
 
 # ===================== PUJA TYPES (Admin-managed) =====================
