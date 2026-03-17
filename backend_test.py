@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class DivineAppAPITester:
-    def __init__(self, base_url="https://mantra-hub-5.preview.emergentagent.com"):
+    def __init__(self, base_url="https://puja-connect-12.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0

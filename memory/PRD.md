@@ -48,12 +48,13 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - **IP-based Selection**: Stripe for international users, Razorpay for India
 
 ## Backlog / Future Tasks 📋
-1. **Music Library Admin Management**
-   - Move `VEDIC_AUDIO_LIBRARY` from hardcoded to MongoDB
-   - Admin panel to add/edit/delete mantras
-   - Admin can edit Internet Archive search queries
-   - Test button to verify correct audio is returned
-   - Categories management
+1. ~~**Music Library Admin Management**~~  ✅ COMPLETED (March 17, 2026)
+   - ~~Move `VEDIC_AUDIO_LIBRARY` from hardcoded to MongoDB~~
+   - ~~Admin panel to add/edit/delete mantras~~
+   - ~~Admin can edit Internet Archive search queries~~
+   - ~~Play/Preview button to test audio before editing~~ 
+   - ~~Categories management~~
+   - **Now Playing bar with playback controls**
 
 2. **YouTube Embedded Player**
    - Embed YouTube videos for mantras
@@ -63,6 +64,18 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 3. **Mobile App (Expo)**
    - Fix Expo loading issue
    - Complete native app for App Store/Play Store
+
+4. **Class Enrollment Payments (P0)**
+   - Implement Stripe payment flow for paid Vedic classes
+
+5. **Edit/Delete Functionality (P1)**
+   - Allow priests to edit/delete their services, classes, and live streams
+
+6. **Booking Cancellation & Refunds (P1)**
+   - Implement cancellation with 24-hour notice policy and refund process
+
+7. **Stripe Connect Integration (P2)**
+   - Split payments between platform and service providers
 
 ## What's Been Implemented
 
@@ -676,7 +689,7 @@ Icons: Custom 3D animated SVGs
 - [x] **Backend fix in**: `/app/backend/server.py` - get_chat_rooms endpoint
 
 ## Preview URLs
-- **Web App**: https://mantra-hub-5.preview.emergentagent.com
+- **Web App**: https://puja-connect-12.preview.emergentagent.com
 - **Mobile App**: Run `npx expo start` from `/app/mobile/` and scan QR with Expo Go app
 
 ## Mobile App Structure (`/app/mobile/`)

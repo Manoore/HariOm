@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Users, Star, ShoppingBag, Calendar, Settings, LogOut,
   ChevronRight, CheckCircle, AlertCircle, Loader2, TrendingUp,
-  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2, Search, User, Shield, Music
+  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2, Search, User, Shield, Music, Play, Pause, Volume2
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -833,6 +833,13 @@ function AudioLibraryTab({ isDesktop }) {
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  
+  // Audio player state
+  const [playingItem, setPlayingItem] = useState(null);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = React.useRef(null);
 
   useEffect(() => {
     fetchItems();
@@ -848,6 +855,68 @@ function AudioLibraryTab({ isDesktop }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Effect to auto-play when audioUrl is set
+  React.useEffect(() => {
+    if (audioUrl && audioRef.current) {
+      audioRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch((e) => {
+          console.error('Auto-play failed:', e);
+          // Don't show error toast for auto-play policy blocks
+        });
+    }
+  }, [audioUrl]);
+
+  const handlePlayAudio = async (item) => {
+    // If same item, toggle play/pause
+    if (playingItem?.id === item.id && audioUrl) {
+      if (isPlaying) {
+        audioRef.current?.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current?.play();
+        setIsPlaying(true);
+      }
+      return;
+    }
+
+    // Stop current audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
+    setPlayingItem(item);
+    setAudioLoading(true);
+    setAudioUrl(null);
+    setIsPlaying(false);
+
+    try {
+      const res = await api.get(`/api/archive/play/${item.item_id}`);
+      if (res.data.audio_url) {
+        setAudioUrl(res.data.audio_url);
+        // Auto-play will be handled by useEffect
+      } else {
+        toast.error('No audio found for this item');
+        setPlayingItem(null);
+      }
+    } catch (error) {
+      toast.error('Failed to load audio');
+      setPlayingItem(null);
+    } finally {
+      setAudioLoading(false);
+    }
+  };
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
+    setPlayingItem(null);
+    setAudioUrl(null);
+    setIsPlaying(false);
   };
 
   const handleSubmit = async () => {
@@ -984,25 +1053,48 @@ function AudioLibraryTab({ isDesktop }) {
                     key={item.id}
                     className={`flex items-center justify-between p-3 rounded-xl ${
                       item.is_active ? 'bg-orange-50' : 'bg-red-50'
-                    }`}
+                    } ${playingItem?.id === item.id ? 'ring-2 ring-saffron' : ''}`}
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-medium truncate ${item.is_active ? 'text-gray-800' : 'text-red-400'}`}>
-                        {item.title}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">{item.search_query}</p>
-                      {!item.is_active && <span className="text-xs text-red-500">Inactive</span>}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {/* Play Button */}
+                      <button
+                        onClick={() => handlePlayAudio(item)}
+                        disabled={audioLoading && playingItem?.id === item.id}
+                        className={`p-2 rounded-full transition-all ${
+                          playingItem?.id === item.id && isPlaying
+                            ? 'bg-saffron text-white'
+                            : 'bg-white text-saffron hover:bg-saffron hover:text-white'
+                        } shadow-sm`}
+                      >
+                        {audioLoading && playingItem?.id === item.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : playingItem?.id === item.id && isPlaying ? (
+                          <Pause className="w-4 h-4" />
+                        ) : (
+                          <Play className="w-4 h-4" />
+                        )}
+                      </button>
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium truncate ${item.is_active ? 'text-gray-800' : 'text-red-400'}`}>
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">{item.search_query}</p>
+                        {!item.is_active && <span className="text-xs text-red-500">Inactive</span>}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-2">
+                    <div className="flex items-center gap-1 ml-2">
                       <button
                         onClick={() => handleEdit(item)}
                         className="p-1.5 hover:bg-orange-100 rounded-lg text-gray-500 hover:text-saffron-dark transition-colors"
+                        title="Edit"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(item.id)}
                         className="p-1.5 hover:bg-red-100 rounded-lg text-gray-500 hover:text-red-500 transition-colors"
+                        title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -1012,6 +1104,59 @@ function AudioLibraryTab({ isDesktop }) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Hidden Audio Element for Playback */}
+      {audioUrl && (
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          onEnded={() => setIsPlaying(false)}
+          onError={(e) => {
+            console.error('Audio error:', e);
+            toast.error('Failed to play audio');
+            setIsPlaying(false);
+          }}
+          data-testid="audio-player"
+        />
+      )}
+
+      {/* Now Playing Bar */}
+      {playingItem && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-xl border border-orange-200 p-3 flex items-center gap-4 z-40 max-w-md w-[90%]">
+          <button
+            onClick={() => {
+              if (isPlaying) {
+                audioRef.current?.pause();
+                setIsPlaying(false);
+              } else {
+                audioRef.current?.play();
+                setIsPlaying(true);
+              }
+            }}
+            className="p-3 bg-saffron text-white rounded-full"
+            data-testid="audio-player-toggle"
+          >
+            {audioLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : isPlaying ? (
+              <Pause className="w-5 h-5" />
+            ) : (
+              <Play className="w-5 h-5" />
+            )}
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-gray-800 truncate">{playingItem.title}</p>
+            <p className="text-xs text-gray-500 truncate">{playingItem.category}</p>
+          </div>
+          <button
+            onClick={stopAudio}
+            className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-colors"
+            data-testid="audio-player-stop"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
       )}
 
