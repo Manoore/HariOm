@@ -2146,14 +2146,31 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const [filter, setFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [languageFilter, setLanguageFilter] = useState('');
+  const [pujaTypeFilter, setPujaTypeFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [nearbyMode, setNearbyMode] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [pujaTypes, setPujaTypes] = useState([]);
+  const [pujaCategories, setPujaCategories] = useState({});
+
+  // Load puja types for dropdown
+  useEffect(() => {
+    const loadPujaTypes = async () => {
+      try {
+        const res = await api.get('/api/puja-types');
+        setPujaTypes(res.data.puja_types || []);
+        setPujaCategories(res.data.categories || {});
+      } catch (error) {
+        console.error('Failed to load puja types:', error);
+      }
+    };
+    loadPujaTypes();
+  }, []);
 
   useEffect(() => {
     fetchPriests();
-  }, [filter, locationFilter, languageFilter]);
+  }, [filter, locationFilter, languageFilter, pujaTypeFilter]);
 
   const fetchPriests = async () => {
     try {
@@ -2162,6 +2179,7 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       if (filter) params.append('specialization', filter);
       if (locationFilter) params.append('location', locationFilter);
       if (languageFilter) params.append('language', languageFilter);
+      if (pujaTypeFilter) params.append('puja_type', pujaTypeFilter);
       const queryString = params.toString() ? `?${params.toString()}` : '';
       const res = await api.get(`/api/priests${queryString}`);
       setPriests(res.data.priests || []);
@@ -2234,11 +2252,12 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
     setFilter('');
     setLocationFilter('');
     setLanguageFilter('');
+    setPujaTypeFilter('');
     setNearbyMode(false);
     setUserLocation(null);
   };
 
-  const hasActiveFilters = filter || locationFilter || languageFilter;
+  const hasActiveFilters = filter || locationFilter || languageFilter || pujaTypeFilter;
 
   const languages = ['Hindi', 'Sanskrit', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Marathi', 'Bengali', 'Gujarati', 'English'];
 
@@ -2293,7 +2312,30 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
               exit={{ opacity: 0, height: 0 }}
               className="bg-white rounded-2xl border border-orange-100 p-4 mb-4 overflow-hidden"
             >
-              <div className="grid md:grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Puja Type Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <BookOpen className="w-4 h-4 inline mr-1" />
+                    Puja / Service Type
+                  </label>
+                  <select
+                    value={pujaTypeFilter}
+                    onChange={(e) => setPujaTypeFilter(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent text-sm bg-white"
+                    data-testid="puja-type-filter"
+                  >
+                    <option value="">All Puja Types</option>
+                    {Object.entries(pujaCategories).map(([category, pujas]) => (
+                      <optgroup key={category} label={category}>
+                        {pujas.map(puja => (
+                          <option key={puja.id} value={puja.name}>{puja.name}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Location Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2364,6 +2406,15 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
         {/* Active Filters Display */}
         {hasActiveFilters && (
           <div className="flex flex-wrap gap-2 mt-3">
+            {pujaTypeFilter && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-saffron-dark rounded-full text-sm">
+                <BookOpen className="w-3 h-3" />
+                {pujaTypeFilter}
+                <button onClick={() => setPujaTypeFilter('')} className="ml-1 hover:text-red-500">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
             {locationFilter && (
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-saffron-dark rounded-full text-sm">
                 <MapPin className="w-3 h-3" />

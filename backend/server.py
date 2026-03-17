@@ -1696,6 +1696,7 @@ async def get_priests(
     location: Optional[str] = None,
     zipcode: Optional[str] = None,
     min_rating: Optional[float] = None,
+    puja_type: Optional[str] = None,
     skip: int = 0,
     limit: int = 20
 ):
@@ -1722,6 +1723,24 @@ async def get_priests(
         ]
     if min_rating:
         query["rating"] = {"$gte": min_rating}
+    
+    # If filtering by puja_type, we need to find priests who offer that service
+    priest_ids_with_puja = None
+    if puja_type:
+        # Find services matching the puja type
+        services_cursor = priest_services_collection.find({
+            "name": {"$regex": puja_type, "$options": "i"}
+        })
+        matching_priest_ids = set()
+        async for svc in services_cursor:
+            matching_priest_ids.add(svc.get("priest_id"))
+        priest_ids_with_puja = list(matching_priest_ids)
+        
+        if priest_ids_with_puja:
+            query["_id"] = {"$in": [ObjectId(pid) for pid in priest_ids_with_puja]}
+        else:
+            # No priests offer this service
+            return {"priests": [], "total": 0}
     
     cursor = priests_collection.find(query).skip(skip).limit(limit)
     priests = []
