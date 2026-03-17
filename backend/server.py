@@ -1986,7 +1986,9 @@ async def update_booking_status(booking_id: str, status: BookingStatus, user: di
             )
     
     # Auto-deactivate chat room when booking is completed or cancelled
-    if status in [BookingStatus.COMPLETED, BookingStatus.CANCELLED]:
+    # Note: We keep the room active even after completion so users can still communicate
+    # Only deactivate on cancellation
+    if status == BookingStatus.CANCELLED:
         await deactivate_chat_room("booking", booking_id)
     
     return {"message": "Booking status updated"}
@@ -4757,6 +4759,40 @@ async def deactivate_chat_room(room_type: str, reference_id: str):
         query,
         {"$set": {"is_active": False, "deactivated_at": datetime.now(timezone.utc)}}
     )
+
+async def reactivate_chat_room(room_type: str, reference_id: str):
+    """Reactivate a chat room"""
+    query = {"booking_id": reference_id} if room_type == "booking" else {"order_id": reference_id}
+    await chat_rooms_collection.update_one(
+        query,
+        {"$set": {"is_active": True}, "$unset": {"deactivated_at": ""}}
+    )
+
+@app.put("/api/admin/chat/reactivate/{room_id}")
+async def admin_reactivate_chat(room_id: str, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Reactivate a chat room (admin only)"""
+    result = await chat_rooms_collection.update_one(
+        {"_id": ObjectId(room_id)},
+        {"$set": {"is_active": True}, "$unset": {"deactivated_at": ""}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Chat room not found")
+    return {"message": "Chat room reactivated"}
+
+@app.put("/api/chat/reactivate/{booking_id}")
+async def reactivate_booking_chat(booking_id: str, user: dict = Depends(get_current_user)):
+    """Reactivate chat for a booking (priest or devotee who is part of the booking)"""
+    booking = await bookings_collection.find_one({"_id": ObjectId(booking_id)})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Check if user is part of this booking
+    priest = await priests_collection.find_one({"_id": ObjectId(booking["priest_id"])})
+    if str(user["_id"]) != booking["user_id"] and (not priest or str(user["_id"]) != priest["user_id"]):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    await reactivate_chat_room("booking", booking_id)
+    return {"message": "Chat reactivated"}
 
 @app.websocket("/ws/chat/{room_id}")
 async def websocket_chat(websocket: WebSocket, room_id: str):
