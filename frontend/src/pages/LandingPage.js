@@ -645,6 +645,233 @@ export default function LandingPage({ onGetStarted }) {
         )}
       </nav>
 
+      {/* Falling Flowers Animation - Sides Only */}
+      {/* Rose Petals - Left Side */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={`rose-left-${i}`}
+          className="fixed pointer-events-none z-20"
+          initial={{ 
+            top: -30, 
+            left: `${2 + Math.random() * 15}%`,
+            rotate: Math.random() * 360,
+          }}
+          animate={{ 
+            top: '110%',
+            rotate: [0, 180, 360, 540],
+            x: [0, Math.sin(i) * 40, Math.cos(i) * -30, 0],
+          }}
+          transition={{ 
+            duration: 12 + Math.random() * 6,
+            repeat: Infinity,
+            delay: i * 1.5,
+            ease: "linear"
+          }}
+        >
+          <svg viewBox="0 0 30 35" className="w-6 h-7" style={{ filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.15))' }}>
+            <defs>
+              <linearGradient id={`lpRoseL${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFB6C1" />
+                <stop offset="50%" stopColor="#FF69B4" />
+                <stop offset="100%" stopColor="#DB7093" />
+              </linearGradient>
+            </defs>
+            <path d="M15 2 Q22 8 20 18 Q18 28 15 32 Q12 28 10 18 Q8 8 15 2" fill={`url(#lpRoseL${i})`} opacity="0.65" />
+          </svg>
+        </motion.div>
+      ))}
+      
+      {/* Rose Petals - Right Side */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={`rose-right-${i}`}
+          className="fixed pointer-events-none z-20"
+          initial={{ 
+            top: -30, 
+            left: `${83 + Math.random() * 15}%`,
+            rotate: Math.random() * 360,
+          }}
+          animate={{ 
+            top: '110%',
+            rotate: [0, 180, 360, 540],
+            x: [0, Math.sin(i) * -40, Math.cos(i) * 30, 0],
+          }}
+          transition={{ 
+            duration: 12 + Math.random() * 6,
+            repeat: Infinity,
+            delay: i * 1.5 + 0.5,
+            ease: "linear"
+          }}
+        >
+          <svg viewBox="0 0 30 35" className="w-6 h-7" style={{ filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.15))' }}>
+            <defs>
+              <linearGradient id={`lpRoseR${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFB6C1" />
+                <stop offset="50%" stopColor="#FF69B4" />
+                <stop offset="100%" stopColor="#DB7093" />
+              </linearGradient>
+            </defs>
+            <path d="M15 2 Q22 8 20 18 Q18 28 15 32 Q12 28 10 18 Q8 8 15 2" fill={`url(#lpRoseR${i})`} opacity="0.65" />
+          </svg>
+        </motion.div>
+      ))}
+      
+      {/* Marigold Flowers - Left Side */}
+      {[...Array(4)].map((_, i) => (
+        <motion.div
+          key={`marigold-left-${i}`}
+          className="fixed pointer-events-none z-20"
+          initial={{ 
+            top: -40, 
+            left: `${3 + Math.random() * 14}%`,
+            rotate: 0,
+            scale: 0.7 + Math.random() * 0.3,
+          }}
+          animate={{ 
+            top: '115%',
+            rotate: [0, 120, 240, 360],
+            x: [0, 30, -15, 0],
+          }}
+          transition={{ 
+            duration: 16 + Math.random() * 6,
+            repeat: Infinity,
+            delay: i * 2.5 + 2,
+            ease: "linear"
+          }}
+        >
+          <svg viewBox="0 0 50 50" className="w-9 h-9" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>
+            {[...Array(12)].map((_, j) => (
+              <ellipse 
+                key={j}
+                cx="25" cy="8" rx="5" ry="9" 
+                fill={j % 2 === 0 ? '#FFD700' : '#FFA500'}
+                transform={`rotate(${j * 30} 25 25)`}
+                opacity="0.8"
+              />
+            ))}
+            <circle cx="25" cy="25" r="6" fill="#FF8C00" />
+          </svg>
+        </motion.div>
+      ))}
+      
+      {/* Marigold Flowers - Right Side */}
+      {[...Array(4)].map((_, i) => (
+        <motion.div
+          key={`marigold-right-${i}`}
+          className="fixed pointer-events-none z-20"
+          initial={{ 
+            top: -40, 
+            left: `${83 + Math.random() * 14}%`,
+            rotate: 0,
+            scale: 0.7 + Math.random() * 0.3,
+          }}
+          animate={{ 
+            top: '115%',
+            rotate: [0, 120, 240, 360],
+            x: [0, -30, 15, 0],
+          }}
+          transition={{ 
+            duration: 16 + Math.random() * 6,
+            repeat: Infinity,
+            delay: i * 2.5 + 3,
+            ease: "linear"
+          }}
+        >
+          <svg viewBox="0 0 50 50" className="w-9 h-9" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>
+            {[...Array(12)].map((_, j) => (
+              <ellipse 
+                key={j}
+                cx="25" cy="8" rx="5" ry="9" 
+                fill={j % 2 === 0 ? '#FFD700' : '#FFA500'}
+                transform={`rotate(${j * 30} 25 25)`}
+                opacity="0.8"
+              />
+            ))}
+            <circle cx="25" cy="25" r="6" fill="#FF8C00" />
+          </svg>
+        </motion.div>
+      ))}
+      
+      {/* Jasmine Flowers - Left Side */}
+      {[...Array(5)].map((_, i) => (
+        <motion.div
+          key={`jasmine-left-${i}`}
+          className="fixed pointer-events-none z-20"
+          initial={{ 
+            top: -25, 
+            left: `${4 + Math.random() * 13}%`,
+            rotate: Math.random() * 180,
+          }}
+          animate={{ 
+            top: '112%',
+            rotate: [0, 90, 180, 270, 360],
+            x: [0, 25, -15, 0],
+          }}
+          transition={{ 
+            duration: 14 + Math.random() * 5,
+            repeat: Infinity,
+            delay: i * 2 + 1,
+            ease: "linear"
+          }}
+        >
+          <svg viewBox="0 0 30 30" className="w-5 h-5" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}>
+            {[...Array(5)].map((_, j) => (
+              <ellipse 
+                key={j}
+                cx="15" cy="7" rx="4" ry="6" 
+                fill="white"
+                stroke="#F5F5DC"
+                strokeWidth="0.5"
+                transform={`rotate(${j * 72} 15 15)`}
+                opacity="0.85"
+              />
+            ))}
+            <circle cx="15" cy="15" r="3" fill="#FFFACD" />
+            <circle cx="15" cy="15" r="1.5" fill="#FFD700" />
+          </svg>
+        </motion.div>
+      ))}
+      
+      {/* Jasmine Flowers - Right Side */}
+      {[...Array(5)].map((_, i) => (
+        <motion.div
+          key={`jasmine-right-${i}`}
+          className="fixed pointer-events-none z-20"
+          initial={{ 
+            top: -25, 
+            left: `${83 + Math.random() * 13}%`,
+            rotate: Math.random() * 180,
+          }}
+          animate={{ 
+            top: '112%',
+            rotate: [0, 90, 180, 270, 360],
+            x: [0, -25, 15, 0],
+          }}
+          transition={{ 
+            duration: 14 + Math.random() * 5,
+            repeat: Infinity,
+            delay: i * 2 + 1.5,
+            ease: "linear"
+          }}
+        >
+          <svg viewBox="0 0 30 30" className="w-5 h-5" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}>
+            {[...Array(5)].map((_, j) => (
+              <ellipse 
+                key={j}
+                cx="15" cy="7" rx="4" ry="6" 
+                fill="white"
+                stroke="#F5F5DC"
+                strokeWidth="0.5"
+                transform={`rotate(${j * 72} 15 15)`}
+                opacity="0.85"
+              />
+            ))}
+            <circle cx="15" cy="15" r="3" fill="#FFFACD" />
+            <circle cx="15" cy="15" r="1.5" fill="#FFD700" />
+          </svg>
+        </motion.div>
+      ))}
+
       {/* Hero Section - Full Width with Image Carousel */}
       <section className="relative min-h-screen flex items-center pt-20 w-full">
         {/* Image Carousel Background */}

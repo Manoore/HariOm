@@ -563,6 +563,7 @@ Icons: Custom 3D animated SVGs
 
 ### Landing Page Fixes (COMPLETED)
 - [x] **Removed duplicate testimonials section** - Only one testimonials section now (dynamic from DB)
+- [x] **Added falling flowers animation** - Rose petals, marigolds, and jasmine flowers falling on left and right sides
 
 ## Preview URLs
 - **Web App**: https://temple-hub-7.preview.emergentagent.com
