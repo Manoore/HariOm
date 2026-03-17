@@ -64,6 +64,9 @@ puja_types_collection = db["puja_types"]
 # Audio Library Collection (Admin-managed mantras and shlokas)
 audio_library_collection = db["audio_library"]
 
+# Notification Logs Collection
+notification_logs_collection = db["notification_logs"]
+
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]
 mantras_collection = devotional_db["mantras"]
@@ -108,3 +111,6 @@ async def init_db():
     # Audio library index
     await audio_library_collection.create_index([("category", 1), ("title", 1)])
     await audio_library_collection.create_index("item_id", unique=True)
+    # Notification logs index
+    await notification_logs_collection.create_index([("user_id", 1), ("created_at", -1)])
+    await notification_logs_collection.create_index([("notification_type", 1), ("created_at", -1)])

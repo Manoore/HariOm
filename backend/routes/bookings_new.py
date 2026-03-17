@@ -15,6 +15,17 @@ from database import (
 from models import BookingCreate, BookingStatus, UserRole
 from auth import get_current_user, require_role
 
+# Import notification service
+try:
+    from services.notification_service import (
+        notify_booking_created, notify_booking_confirmed,
+        notify_booking_cancelled, notify_booking_completed,
+        notify_refund_initiated
+    )
+    NOTIFICATIONS_ENABLED = True
+except ImportError:
+    NOTIFICATIONS_ENABLED = False
+
 router = APIRouter(prefix="/api", tags=["Bookings"])
 
 # Helper function to create chat room (imported from main module)
@@ -95,6 +106,22 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
     }
     
     result = await bookings_collection.insert_one(booking_dict)
+    
+    # Send notification
+    if NOTIFICATIONS_ENABLED:
+        try:
+            booking_date_str = data.booking_date.strftime("%B %d, %Y at %I:%M %p") if hasattr(data.booking_date, 'strftime') else str(data.booking_date)
+            await notify_booking_created(str(user["_id"]), {
+                "service_name": data.service_name,
+                "priest_name": priest_user["name"] if priest_user else "Unknown",
+                "booking_date": booking_date_str,
+                "amount": service["price"],
+                "booking_id": str(result.inserted_id)[:8].upper()
+            })
+        except Exception:
+            # Don't fail booking if notification fails
+            pass
+    
     return {
         "message": "Booking created",
         "booking_id": str(result.inserted_id),
@@ -200,6 +227,30 @@ async def update_booking_status(booking_id: str, status: BookingStatus, user: di
                 participant2_name=priest_user.get("name", "Priest"),
                 context=context
             )
+        
+        # Send notification for booking confirmed
+        if NOTIFICATIONS_ENABLED:
+            try:
+                await notify_booking_confirmed(booking["user_id"], {
+                    "service_name": booking.get("service_name", "Puja"),
+                    "priest_name": priest_user.get("name", "Priest") if priest_user else "Priest",
+                    "booking_date": date_str
+                })
+            except Exception:
+                pass
+    
+    # Send notification for booking completed
+    if status == BookingStatus.COMPLETED and old_status != "completed":
+        if NOTIFICATIONS_ENABLED:
+            try:
+                priest_doc = await priests_collection.find_one({"_id": ObjectId(booking["priest_id"])})
+                priest_user = await users_collection.find_one({"_id": ObjectId(priest_doc["user_id"])}) if priest_doc else None
+                await notify_booking_completed(booking["user_id"], {
+                    "service_name": booking.get("service_name", "Puja"),
+                    "priest_name": priest_user.get("name", "Priest") if priest_user else "Priest"
+                })
+            except Exception:
+                pass
     
     # Deactivate chat room on cancellation
     if status == BookingStatus.CANCELLED:
@@ -288,6 +339,30 @@ async def cancel_booking(booking_id: str, request: Request, user: dict = Depends
     
     # Deactivate chat room
     await deactivate_chat_room("booking", booking_id)
+    
+    # Send cancellation notification
+    if NOTIFICATIONS_ENABLED:
+        try:
+            priest_doc = await priests_collection.find_one({"_id": ObjectId(booking["priest_id"])})
+            priest_user = await users_collection.find_one({"_id": ObjectId(priest_doc["user_id"])}) if priest_doc else None
+            
+            await notify_booking_cancelled(booking["user_id"], {
+                "service_name": booking.get("service_name", "Puja"),
+                "priest_name": priest_user.get("name", "Priest") if priest_user else "Priest",
+                "amount": price,
+                "refund_amount": refund_amount,
+                "refund_status": update_data["refund_status"]
+            })
+            
+            # If there's a refund, also send refund notification
+            if refund_amount > 0:
+                await notify_refund_initiated(booking["user_id"], {
+                    "refund_amount": refund_amount,
+                    "original_amount": price,
+                    "reason": "Booking cancellation"
+                })
+        except Exception:
+            pass
     
     return {
         "message": "Booking cancelled successfully",

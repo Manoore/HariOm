@@ -87,6 +87,15 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
    - Cancellation preview modal showing refund amount
    - Backend endpoints for cancellation and preview
 
+8. ~~**Notification System**~~ ✅ COMPLETED (March 17, 2026)
+   - Email notifications via Resend
+   - SMS notifications via Twilio
+   - Auto-detect user preference (phone login → SMS, email login → Email)
+   - Notifications for: booking created, confirmed, cancelled, completed
+   - Notifications for: class enrollment, payment success, refund initiated
+   - Beautiful HTML email templates with Divine App branding
+   - Notification logging to database
+
 ### Upcoming Tasks (P2+)
 1. **Stripe Connect Integration (P2)**
    - Split payments between platform and service providers

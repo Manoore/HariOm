@@ -54,6 +54,15 @@ from routes.auth_new import router as auth_router
 from routes.priests_new import router as priests_router
 from routes.bookings_new import router as bookings_router
 
+# Import notification service
+try:
+    from services.notification_service import (
+        notify_class_enrolled, notify_payment_success
+    )
+    NOTIFICATIONS_ENABLED = True
+except ImportError:
+    NOTIFICATIONS_ENABLED = False
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
@@ -1958,6 +1967,23 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
                 "status": "completed",
                 "enrolled_at": datetime.now(timezone.utc)
             })
+            
+            # Send notification
+            if NOTIFICATIONS_ENABLED:
+                try:
+                    priest = await priests_collection.find_one({"_id": ObjectId(cls["priest_id"])})
+                    priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])}) if priest else None
+                    schedule_time = cls.get("schedule_time")
+                    schedule_str = schedule_time.strftime("%B %d, %Y at %I:%M %p") if hasattr(schedule_time, 'strftime') else str(schedule_time)
+                    
+                    await notify_class_enrolled(str(user["_id"]), {
+                        "class_name": cls.get("title", "Vedic Class"),
+                        "teacher_name": priest_user.get("name", "Teacher") if priest_user else "Teacher",
+                        "schedule": schedule_str,
+                        "amount": cls.get("price", 0)
+                    })
+                except Exception:
+                    pass
             
             return {"message": "Successfully enrolled in class", "class_id": class_id, "is_free": False, "paid": True}
         else:
