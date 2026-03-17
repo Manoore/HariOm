@@ -17,6 +17,7 @@ import { AstrologerList, PreCallCheck, VideoCallScreen } from '../../components/
 import AddressAutocomplete from '../../components/AddressAutocomplete';
 import { PriestDetailView, AstrologyTab } from '../../components/DevoteeDashboard';
 import SmartPayment from '../../components/PaymentComponents';
+import NotificationBell from '../../components/NotificationBell';
 
 // 3D Animated Devotional SVG Icons
 const BellIcon3D = ({ size = "w-8 h-8" }) => (
@@ -804,17 +805,20 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       {/* Header - Name is clickable */}
-      <div className="pt-4 pb-6">
-        <p className="text-gray-500 text-sm">Namaste,</p>
-        <button 
-          onClick={() => setActiveTab('profile')}
-          className="text-left hover:opacity-80 transition-opacity"
-          data-testid="home-user-name"
-        >
-          <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon hover:text-saffron transition-colors">
-            {user?.name || 'Devotee'}
-          </h1>
-        </button>
+      <div className="pt-4 pb-6 flex items-start justify-between">
+        <div>
+          <p className="text-gray-500 text-sm">Namaste,</p>
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className="text-left hover:opacity-80 transition-opacity"
+            data-testid="home-user-name"
+          >
+            <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon hover:text-saffron transition-colors">
+              {user?.name || 'Devotee'}
+            </h1>
+          </button>
+        </div>
+        <NotificationBell />
       </div>
 
       {/* Personalized Daily Horoscope */}

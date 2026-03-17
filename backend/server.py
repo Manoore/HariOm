@@ -53,6 +53,7 @@ from routes.admin_new import router as admin_router
 from routes.auth_new import router as auth_router
 from routes.priests_new import router as priests_router
 from routes.bookings_new import router as bookings_router
+from routes.notifications import router as notifications_router
 
 # Import notification service
 try:
@@ -100,6 +101,7 @@ app.include_router(admin_router)
 app.include_router(auth_router)
 app.include_router(priests_router)
 app.include_router(bookings_router)
+app.include_router(notifications_router)
 
 @app.post("/api/upload/image")
 async def upload_image(

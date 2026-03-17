@@ -88,13 +88,15 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
    - Backend endpoints for cancellation and preview
 
 8. ~~**Notification System**~~ ✅ COMPLETED (March 17, 2026)
-   - Email notifications via Resend
-   - SMS notifications via Twilio
-   - Auto-detect user preference (phone login → SMS, email login → Email)
+   - Email notifications via Resend API
+   - In-app notifications for phone users (notification center)
+   - Auto-detect: email users get emails, phone users get in-app notifications
    - Notifications for: booking created, confirmed, cancelled, completed
    - Notifications for: class enrollment, payment success, refund initiated
    - Beautiful HTML email templates with Divine App branding
-   - Notification logging to database
+   - Notification bell with dropdown in dashboard header
+   - Mark as read / Mark all read / Delete functionality
+   - Unread badge counter on bell icon
 
 ### Upcoming Tasks (P2+)
 1. **Stripe Connect Integration (P2)**

@@ -1,34 +1,26 @@
 """
 Notification Service Module
-Handles all notifications (Email & SMS) for the Divine App.
-Automatically chooses SMS for phone-login users and Email for email-login users.
+Handles all notifications (Email & In-App) for the Divine App.
+- Email users: Send email via Resend
+- Phone users: Store as in-app notification
 """
 
 import os
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from enum import Enum
 
 import resend
-from twilio.rest import Client as TwilioClient
 
 from database import users_collection, notification_logs_collection
 
 logger = logging.getLogger(__name__)
 
-# Initialize services
+# Initialize Resend
 resend.api_key = os.environ.get("RESEND_API_KEY")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
-
-TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
-TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER")
-
-twilio_client = None
-if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
-    twilio_client = TwilioClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 
 class NotificationType(str, Enum):
@@ -41,6 +33,31 @@ class NotificationType(str, Enum):
     PAYMENT_FAILED = "payment_failed"
     REFUND_INITIATED = "refund_initiated"
     REFUND_COMPLETED = "refund_completed"
+
+
+# Notification titles and icons for in-app display
+NOTIFICATION_CONFIG = {
+    NotificationType.BOOKING_CREATED: {"title": "Booking Created", "icon": "calendar-plus"},
+    NotificationType.BOOKING_CONFIRMED: {"title": "Booking Confirmed", "icon": "check-circle"},
+    NotificationType.BOOKING_CANCELLED: {"title": "Booking Cancelled", "icon": "x-circle"},
+    NotificationType.BOOKING_COMPLETED: {"title": "Puja Completed", "icon": "star"},
+    NotificationType.CLASS_ENROLLED: {"title": "Class Enrollment", "icon": "book-open"},
+    NotificationType.PAYMENT_SUCCESS: {"title": "Payment Successful", "icon": "credit-card"},
+    NotificationType.PAYMENT_FAILED: {"title": "Payment Failed", "icon": "alert-circle"},
+    NotificationType.REFUND_INITIATED: {"title": "Refund Initiated", "icon": "refresh-cw"},
+    NotificationType.REFUND_COMPLETED: {"title": "Refund Completed", "icon": "check"},
+}
+
+# In-app notification messages (short versions)
+INAPP_MESSAGES = {
+    NotificationType.BOOKING_CREATED: "Your booking for {service_name} with {priest_name} on {booking_date} has been created. Amount: ₹{amount}",
+    NotificationType.BOOKING_CONFIRMED: "Great news! Your booking for {service_name} has been confirmed by {priest_name}.",
+    NotificationType.BOOKING_CANCELLED: "Your booking for {service_name} has been cancelled. Refund: ₹{refund_amount}",
+    NotificationType.BOOKING_COMPLETED: "Your puja {service_name} is complete! Please rate your experience with {priest_name}.",
+    NotificationType.CLASS_ENROLLED: "You're enrolled in {class_name} by {teacher_name}. Schedule: {schedule}",
+    NotificationType.PAYMENT_SUCCESS: "Payment of ₹{amount} successful for {description}.",
+    NotificationType.REFUND_INITIATED: "Refund of ₹{refund_amount} has been initiated. Will be credited in 5-7 days.",
+}
 
 
 # Email Templates
@@ -215,22 +232,11 @@ EMAIL_TEMPLATES = {
     }
 }
 
-# SMS Templates (shorter versions)
-SMS_TEMPLATES = {
-    NotificationType.BOOKING_CREATED: "🙏 Divine App: Your booking for {service_name} with {priest_name} on {booking_date} is created. Amount: ₹{amount}. Booking ID: {booking_id}",
-    NotificationType.BOOKING_CONFIRMED: "✅ Divine App: Your booking for {service_name} is confirmed! Priest {priest_name} will see you on {booking_date}.",
-    NotificationType.BOOKING_CANCELLED: "❌ Divine App: Your booking for {service_name} has been cancelled. Refund: ₹{refund_amount}. Status: {refund_status}",
-    NotificationType.BOOKING_COMPLETED: "🎉 Divine App: Your puja {service_name} is complete! Please rate your experience with {priest_name} in the app.",
-    NotificationType.CLASS_ENROLLED: "📚 Divine App: You're enrolled in {class_name} by {teacher_name}. Schedule: {schedule}. Amount: ₹{amount}",
-    NotificationType.PAYMENT_SUCCESS: "✅ Divine App: Payment of ₹{amount} successful. Transaction: {transaction_id}. For: {description}",
-    NotificationType.REFUND_INITIATED: "💰 Divine App: Refund of ₹{refund_amount} initiated. Will be credited in 5-7 days."
-}
-
 
 async def get_user_notification_preference(user_id: str) -> dict:
     """
     Get user's notification preference based on how they logged in.
-    Returns: {"channel": "email" or "sms", "contact": email or phone}
+    Returns: {"channel": "email" or "inapp", "contact": email or user_id, "name": user_name}
     """
     from bson import ObjectId
     user = await users_collection.find_one({"_id": ObjectId(user_id)})
@@ -238,21 +244,14 @@ async def get_user_notification_preference(user_id: str) -> dict:
     if not user:
         return None
     
-    auth_type = user.get("auth_type", "email")
+    user_name = user.get("name", "Devotee")
     
-    # If user logged in with phone, prefer SMS
-    if auth_type == "phone" and user.get("phone"):
-        return {"channel": "sms", "contact": user.get("phone"), "name": user.get("name", "Devotee")}
-    
-    # Otherwise use email
+    # If user has email, send email notification
     if user.get("email"):
-        return {"channel": "email", "contact": user.get("email"), "name": user.get("name", "Devotee")}
+        return {"channel": "email", "contact": user.get("email"), "name": user_name, "user_id": user_id}
     
-    # Fallback to phone if email not available
-    if user.get("phone"):
-        return {"channel": "sms", "contact": user.get("phone"), "name": user.get("name", "Devotee")}
-    
-    return None
+    # Otherwise store as in-app notification
+    return {"channel": "inapp", "contact": user_id, "name": user_name, "user_id": user_id}
 
 
 async def send_email_notification(to_email: str, subject: str, html_content: str) -> dict:
@@ -277,33 +276,40 @@ async def send_email_notification(to_email: str, subject: str, html_content: str
         return {"status": "failed", "error": str(e)}
 
 
-async def send_sms_notification(to_phone: str, message: str) -> dict:
-    """Send SMS using Twilio"""
-    if not twilio_client or not TWILIO_PHONE_NUMBER:
-        logger.warning("Twilio not configured, skipping SMS")
-        return {"status": "skipped", "reason": "Twilio not configured"}
-    
+async def store_inapp_notification(user_id: str, notification_type: NotificationType, 
+                                   title: str, message: str, data: dict = None) -> dict:
+    """Store notification in database for in-app display"""
     try:
-        # Ensure phone number is in E.164 format
-        if not to_phone.startswith("+"):
-            to_phone = "+91" + to_phone  # Default to India
+        from bson import ObjectId
         
-        sms = await asyncio.to_thread(
-            twilio_client.messages.create,
-            body=message,
-            from_=TWILIO_PHONE_NUMBER,
-            to=to_phone
-        )
-        logger.info(f"SMS sent to {to_phone}: {sms.sid}")
-        return {"status": "success", "sms_sid": sms.sid}
+        config = NOTIFICATION_CONFIG.get(notification_type, {"title": "Notification", "icon": "bell"})
+        
+        notification = {
+            "user_id": user_id,
+            "type": notification_type.value,
+            "title": title or config["title"],
+            "message": message,
+            "icon": config["icon"],
+            "data": data or {},
+            "is_read": False,
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        result = await notification_logs_collection.insert_one(notification)
+        logger.info(f"In-app notification stored for user {user_id}: {result.inserted_id}")
+        return {"status": "success", "notification_id": str(result.inserted_id)}
     except Exception as e:
-        logger.error(f"Failed to send SMS to {to_phone}: {str(e)}")
+        logger.error(f"Failed to store in-app notification: {str(e)}")
         return {"status": "failed", "error": str(e)}
 
 
 async def log_notification(user_id: str, notification_type: str, channel: str, 
                           contact: str, status: str, details: dict = None):
-    """Log notification to database for tracking"""
+    """Log notification to database for tracking (only for email channel)"""
+    if channel == "inapp":
+        # In-app notifications are already stored, no need to log separately
+        return
+    
     try:
         log_entry = {
             "user_id": user_id,
@@ -312,7 +318,8 @@ async def log_notification(user_id: str, notification_type: str, channel: str,
             "contact": contact,
             "status": status,
             "details": details or {},
-            "created_at": datetime.utcnow()
+            "is_log": True,  # Mark as log entry, not actual notification
+            "created_at": datetime.now(timezone.utc)
         }
         await notification_logs_collection.insert_one(log_entry)
     except Exception as e:
@@ -322,7 +329,8 @@ async def log_notification(user_id: str, notification_type: str, channel: str,
 async def send_notification(user_id: str, notification_type: NotificationType, data: dict) -> dict:
     """
     Main function to send notification to a user.
-    Automatically chooses SMS or Email based on user's login method.
+    - Email users: Send email via Resend
+    - Phone users: Store as in-app notification
     
     Args:
         user_id: The user's ID
@@ -355,34 +363,47 @@ async def send_notification(user_id: str, notification_type: NotificationType, d
             return {"status": "failed", "reason": "Email template not found"}
         
         subject = template_config["subject"]
-        html_content = template_config["template"].format(**data)
+        try:
+            html_content = template_config["template"].format(**data)
+        except KeyError as e:
+            logger.error(f"Missing template variable: {e}")
+            html_content = template_config["template"]
         
         result = await send_email_notification(contact, subject, html_content)
         
-    elif channel == "sms":
-        # Get SMS template
-        sms_template = SMS_TEMPLATES.get(notification_type)
-        if not sms_template:
-            return {"status": "failed", "reason": "SMS template not found"}
+        # Log email notification
+        await log_notification(
+            user_id=user_id,
+            notification_type=notification_type.value,
+            channel=channel,
+            contact=contact,
+            status=result.get("status", "unknown"),
+            details=result
+        )
         
-        message = sms_template.format(**data)
-        result = await send_sms_notification(contact, message)
-    
-    # Log the notification
-    await log_notification(
-        user_id=user_id,
-        notification_type=notification_type.value,
-        channel=channel,
-        contact=contact,
-        status=result.get("status", "unknown"),
-        details=result
-    )
+    elif channel == "inapp":
+        # Store as in-app notification
+        inapp_template = INAPP_MESSAGES.get(notification_type, "You have a new notification.")
+        try:
+            message = inapp_template.format(**data)
+        except KeyError:
+            message = inapp_template
+        
+        config = NOTIFICATION_CONFIG.get(notification_type, {"title": "Notification"})
+        
+        result = await store_inapp_notification(
+            user_id=user_id,
+            notification_type=notification_type,
+            title=config["title"],
+            message=message,
+            data=data
+        )
     
     return {
-        "status": result.get("status"),
+        "status": result.get("status") if result else "failed",
         "channel": channel,
         "contact": contact,
-        **result
+        **(result or {})
     }
 
 
