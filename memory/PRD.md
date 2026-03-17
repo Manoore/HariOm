@@ -563,6 +563,18 @@ Icons: Custom 3D animated SVGs
    - Priest can mark class as FREE or PAID
    - FREE: Direct enrollment
    - PAID: Requires payment before enrollment
+6. **Edit Functionality**:
+   - Edit classes (title, description, schedule, price)
+   - Edit live streams (title, description, schedule)
+   - Edit services (name, price, duration)
+7. **Booking Cancellation**:
+   - Devotee can cancel booking (at least 24 hours before)
+   - Priest can cancel booking (at least 24 hours before)
+   - Cancellation policy enforcement
+8. **Refund Process**:
+   - Automatic refund for cancellations within policy
+   - Partial refund options
+   - Refund to wallet or original payment method
 
 ### Deployment Status
 - **Backend (Cloud Run):** ✅ Deployed - https://divine-backend-149993395431.us-central1.run.app
