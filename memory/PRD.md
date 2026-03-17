@@ -575,6 +575,12 @@ Icons: Custom 3D animated SVGs
    - Automatic refund for cancellations within policy
    - Partial refund options
    - Refund to wallet or original payment method
+9. **Stripe Connect - Payment Splitting** (Priority):
+   - **Phase 1**: Priest/Vendor Stripe onboarding (connect bank account)
+   - **Phase 2**: Auto-split payments (Platform fee % + Priest/Vendor share)
+   - **Phase 3**: Payout dashboard for priests/vendors to see earnings
+   - Admin can set platform fee percentage
+   - Refunds deducted from priest/vendor share
 
 ### Deployment Status
 - **Backend (Cloud Run):** ✅ Deployed - https://divine-backend-149993395431.us-central1.run.app
