@@ -39,9 +39,9 @@ function AdminSidebar({ activeTab, setActiveTab, user }) {
   ];
 
   return (
-    <div className="fixed left-0 top-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-40">
+    <div className="fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-orange-50 to-amber-100 border-r border-orange-200 flex flex-col z-40">
       {/* Logo */}
-      <div className="p-6 border-b border-slate-800">
+      <div className="p-6 border-b border-orange-200">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10">
             <svg viewBox="0 0 100 100" className="w-full h-full">
@@ -51,19 +51,19 @@ function AdminSidebar({ activeTab, setActiveTab, user }) {
               <path d="M50 55 Q45 40 50 25 Q55 40 50 55" fill="#FF9933" />
             </svg>
           </div>
-          <span className="font-cinzel text-xl font-bold text-white">DIVINE</span>
+          <span className="font-cinzel text-xl font-bold text-gray-800">DIVINE</span>
         </div>
       </div>
 
       {/* User Info */}
-      <div className="p-4 border-b border-slate-800">
+      <div className="p-4 border-b border-orange-200">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-500/30 rounded-full flex items-center justify-center text-indigo-300 font-cinzel">
+          <div className="w-10 h-10 bg-saffron/20 rounded-full flex items-center justify-center text-saffron-dark font-cinzel">
             {user?.name?.charAt(0)}
           </div>
           <div>
-            <p className="font-medium text-white">{user?.name}</p>
-            <p className="text-xs text-slate-400">Administrator</p>
+            <p className="font-medium text-gray-800">{user?.name}</p>
+            <p className="text-xs text-gray-500">Administrator</p>
           </div>
         </div>
       </div>
@@ -76,8 +76,8 @@ function AdminSidebar({ activeTab, setActiveTab, user }) {
             onClick={() => setActiveTab(tab.id)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
               activeTab === tab.id 
-                ? 'bg-indigo-500 text-white' 
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                ? 'bg-saffron text-gray-800 shadow-md' 
+                : 'text-gray-600 hover:bg-orange-100 hover:text-saffron-dark'
             }`}
             data-testid={`admin-sidebar-${tab.id}`}
           >
@@ -88,10 +88,10 @@ function AdminSidebar({ activeTab, setActiveTab, user }) {
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-slate-800">
+      <div className="p-4 border-t border-orange-200">
         <button 
           onClick={logout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors"
           data-testid="admin-sidebar-logout"
         >
           <LogOut className="w-5 h-5" />
@@ -112,14 +112,14 @@ function AdminBottomNav({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 px-2 py-2 z-50 lg:hidden">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-orange-200 px-2 py-2 z-50 lg:hidden shadow-lg">
       <div className="flex justify-around items-center">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all ${
-              activeTab === tab.id ? 'text-indigo-400' : 'text-slate-500'
+              activeTab === tab.id ? 'text-saffron' : 'text-gray-500'
             }`}
             data-testid={`admin-nav-${tab.id}`}
           >
@@ -140,35 +140,35 @@ function OverviewTab({ stats, users, isDesktop, loading }) {
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       {/* Stats Grid */}
       <div className="pt-4 mb-6">
-        <h2 className="font-cinzel text-lg font-semibold text-white mb-4">Dashboard Overview</h2>
+        <h2 className="font-cinzel text-lg font-semibold text-gray-800 mb-4">Dashboard Overview</h2>
         <div className={`grid ${isDesktop ? 'grid-cols-4' : 'grid-cols-2'} gap-4`}>
-          <div className="bg-slate-800/50 rounded-2xl p-4 lg:p-6">
-            <Users className="w-8 h-8 text-indigo-400 mb-2" />
-            <p className="text-2xl lg:text-3xl font-bold text-white">
+          <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-orange-100">
+            <Users className="w-8 h-8 text-saffron mb-2" />
+            <p className="text-2xl lg:text-3xl font-bold text-gray-800">
               {loading ? <span className="animate-pulse">...</span> : (stats?.total_users || 0)}
             </p>
-            <p className="text-slate-400 text-sm">Total Users</p>
+            <p className="text-gray-500 text-sm">Total Users</p>
           </div>
-          <div className="bg-slate-800/50 rounded-2xl p-4 lg:p-6">
+          <div className="bg-white shadow-sm border border-orange-100 rounded-2xl p-4 lg:p-6">
             <Star className="w-8 h-8 text-yellow-400 mb-2" />
-            <p className="text-2xl lg:text-3xl font-bold text-white">
+            <p className="text-2xl lg:text-3xl font-bold text-gray-800">
               {loading ? <span className="animate-pulse">...</span> : (stats?.total_priests || 0)}
             </p>
-            <p className="text-slate-400 text-sm">Priests</p>
+            <p className="text-gray-500 text-sm">Priests</p>
           </div>
-          <div className="bg-slate-800/50 rounded-2xl p-4 lg:p-6">
+          <div className="bg-white shadow-sm border border-orange-100 rounded-2xl p-4 lg:p-6">
             <ShoppingBag className="w-8 h-8 text-green-400 mb-2" />
-            <p className="text-2xl lg:text-3xl font-bold text-white">
+            <p className="text-2xl lg:text-3xl font-bold text-gray-800">
               {loading ? <span className="animate-pulse">...</span> : (stats?.total_products || 0)}
             </p>
-            <p className="text-slate-400 text-sm">Products</p>
+            <p className="text-gray-500 text-sm">Products</p>
           </div>
-          <div className="bg-slate-800/50 rounded-2xl p-4 lg:p-6">
+          <div className="bg-white shadow-sm border border-orange-100 rounded-2xl p-4 lg:p-6">
             <Calendar className="w-8 h-8 text-orange-400 mb-2" />
-            <p className="text-2xl lg:text-3xl font-bold text-white">
+            <p className="text-2xl lg:text-3xl font-bold text-gray-800">
               {loading ? <span className="animate-pulse">...</span> : (stats?.total_bookings || 0)}
             </p>
-            <p className="text-slate-400 text-sm">Bookings</p>
+            <p className="text-gray-500 text-sm">Bookings</p>
           </div>
         </div>
       </div>
@@ -188,21 +188,21 @@ function OverviewTab({ stats, users, isDesktop, loading }) {
 
       {/* Recent Users */}
       <div>
-        <h2 className="font-cinzel text-lg font-semibold text-white mb-4">Recent Users</h2>
+        <h2 className="font-cinzel text-lg font-semibold text-gray-800 mb-4">Recent Users</h2>
         <div className={`${isDesktop ? 'grid grid-cols-2 gap-4' : 'space-y-3'}`}>
           {users.slice(0, isDesktop ? 8 : 5).map((u) => (
-            <div key={u.id} className="bg-slate-800/50 rounded-xl p-4 flex items-center justify-between">
+            <div key={u.id} className="bg-white shadow-sm border border-orange-100 rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-500/30 rounded-full flex items-center justify-center text-indigo-300 font-semibold">
+                <div className="w-10 h-10 bg-saffron/30 rounded-full flex items-center justify-center text-indigo-300 font-semibold">
                   {u.name?.charAt(0)}
                 </div>
                 <div>
-                  <p className="text-white font-medium">{u.name}</p>
-                  <p className="text-slate-400 text-xs">{u.email}</p>
+                  <p className="text-gray-800 font-medium">{u.name}</p>
+                  <p className="text-gray-500 text-xs">{u.email}</p>
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-xs bg-indigo-500/30 text-indigo-300 px-2 py-1 rounded-full">
+                <span className="text-xs bg-saffron/30 text-indigo-300 px-2 py-1 rounded-full">
                   {u.role}
                 </span>
               </div>
@@ -219,22 +219,22 @@ function UsersTab({ users, isDesktop, loading }) {
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       <div className="pt-4">
-        <h2 className="font-cinzel text-xl font-semibold text-white mb-4">All Users</h2>
+        <h2 className="font-cinzel text-xl font-semibold text-gray-800 mb-4">All Users</h2>
         {loading ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+            <Loader2 className="w-6 h-6 text-saffron animate-spin" />
           </div>
         ) : (
         <div className={`${isDesktop ? 'grid grid-cols-2 xl:grid-cols-3 gap-4' : 'space-y-3'}`}>
           {users.map((u) => (
-            <div key={u.id} className="bg-slate-800/50 rounded-xl p-4">
+            <div key={u.id} className="bg-white shadow-sm border border-orange-100 rounded-xl p-4">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 bg-indigo-500/30 rounded-full flex items-center justify-center text-indigo-300 font-semibold text-lg">
+                <div className="w-12 h-12 bg-saffron/30 rounded-full flex items-center justify-center text-indigo-300 font-semibold text-lg">
                   {u.name?.charAt(0)}
                 </div>
                 <div className="flex-1">
-                  <p className="text-white font-medium">{u.name}</p>
-                  <p className="text-slate-400 text-sm">{u.email}</p>
+                  <p className="text-gray-800 font-medium">{u.name}</p>
+                  <p className="text-gray-500 text-sm">{u.email}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -242,11 +242,11 @@ function UsersTab({ users, isDesktop, loading }) {
                   u.role === 'admin' ? 'bg-purple-500/30 text-purple-300' :
                   u.role === 'priest' ? 'bg-yellow-500/30 text-yellow-300' :
                   u.role === 'shop_owner' ? 'bg-green-500/30 text-green-300' :
-                  'bg-indigo-500/30 text-indigo-300'
+                  'bg-saffron/30 text-indigo-300'
                 }`}>
                   {u.role}
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-gray-500">
                   {u.is_verified ? '✓ Verified' : 'Unverified'}
                 </span>
               </div>
@@ -264,26 +264,26 @@ function PriestsTab({ priests, isDesktop, loading }) {
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       <div className="pt-4">
-        <h2 className="font-cinzel text-xl font-semibold text-white mb-4">Manage Priests</h2>
+        <h2 className="font-cinzel text-xl font-semibold text-gray-800 mb-4">Manage Priests</h2>
         {priests.length === 0 ? (
-          <div className="bg-slate-800/50 rounded-xl p-8 text-center">
-            <UserCheck className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400">No priests registered yet</p>
+          <div className="bg-white shadow-sm border border-orange-100 rounded-xl p-8 text-center">
+            <UserCheck className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-500">No priests registered yet</p>
           </div>
         ) : (
           <div className={`${isDesktop ? 'grid grid-cols-2 xl:grid-cols-3 gap-4' : 'space-y-3'}`}>
             {priests.map((priest) => (
-              <div key={priest.id} className="bg-slate-800/50 rounded-xl p-4">
+              <div key={priest.id} className="bg-white shadow-sm border border-orange-100 rounded-xl p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-14 h-14 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-xl">
+                  <div className="w-14 h-14 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-gray-800 font-semibold text-xl">
                     {priest.user_name?.charAt(0)}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-white font-medium">{priest.user_name}</p>
+                      <p className="text-gray-800 font-medium">{priest.user_name}</p>
                       {priest.is_verified && <CheckCircle className="w-4 h-4 text-green-400" />}
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-slate-400">
+                    <div className="flex items-center gap-1 text-sm text-gray-500">
                       <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                       {priest.rating} ({priest.total_reviews} reviews)
                     </div>
@@ -302,7 +302,7 @@ function PriestsTab({ priests, isDesktop, loading }) {
                       Verify
                     </button>
                   )}
-                  <button className="flex-1 bg-slate-700 text-slate-300 rounded-lg py-2 text-sm hover:bg-slate-600 transition-colors">
+                  <button className="flex-1 bg-gray-100 text-gray-600 rounded-lg py-2 text-sm hover:bg-orange-100 transition-colors">
                     View
                   </button>
                 </div>
@@ -320,27 +320,27 @@ function ProductsTab({ products, isDesktop, loading }) {
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       <div className="pt-4">
-        <h2 className="font-cinzel text-xl font-semibold text-white mb-4">All Products</h2>
+        <h2 className="font-cinzel text-xl font-semibold text-gray-800 mb-4">All Products</h2>
         {products.length === 0 ? (
-          <div className="bg-slate-800/50 rounded-xl p-8 text-center">
-            <Package className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400">No products available</p>
+          <div className="bg-white shadow-sm border border-orange-100 rounded-xl p-8 text-center">
+            <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-500">No products available</p>
           </div>
         ) : (
           <div className={`grid ${isDesktop ? 'grid-cols-3 xl:grid-cols-4' : 'grid-cols-2'} gap-4`}>
             {products.map((product) => (
-              <div key={product.id} className="bg-slate-800/50 rounded-xl p-3 lg:p-4">
-                <div className="aspect-square bg-slate-700/50 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
+              <div key={product.id} className="bg-white shadow-sm border border-orange-100 rounded-xl p-3 lg:p-4">
+                <div className="aspect-square bg-gray-100 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
                   {product.images?.[0] ? (
                     <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <Package className="w-10 h-10 text-slate-600" />
+                    <Package className="w-10 h-10 text-gray-400" />
                   )}
                 </div>
-                <p className="text-white font-medium text-sm line-clamp-2 mb-1">{product.name}</p>
+                <p className="text-gray-800 font-medium text-sm line-clamp-2 mb-1">{product.name}</p>
                 <div className="flex items-center justify-between">
                   <p className="text-green-400 font-bold">₹{product.price}</p>
-                  <span className="text-xs text-slate-400">Stock: {product.stock}</span>
+                  <span className="text-xs text-gray-500">Stock: {product.stock}</span>
                 </div>
               </div>
             ))}
@@ -356,20 +356,20 @@ function BookingsTab({ bookings, isDesktop, loading }) {
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       <div className="pt-4">
-        <h2 className="font-cinzel text-xl font-semibold text-white mb-4">All Bookings</h2>
+        <h2 className="font-cinzel text-xl font-semibold text-gray-800 mb-4">All Bookings</h2>
         {bookings.length === 0 ? (
-          <div className="bg-slate-800/50 rounded-xl p-8 text-center">
-            <Calendar className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400">No bookings yet</p>
+          <div className="bg-white shadow-sm border border-orange-100 rounded-xl p-8 text-center">
+            <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-500">No bookings yet</p>
           </div>
         ) : (
           <div className={`${isDesktop ? 'grid grid-cols-2 gap-4' : 'space-y-3'}`}>
             {bookings.map((booking) => (
-              <div key={booking.id} className="bg-slate-800/50 rounded-xl p-4">
+              <div key={booking.id} className="bg-white shadow-sm border border-orange-100 rounded-xl p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <p className="text-white font-medium">{booking.service_name}</p>
-                    <p className="text-sm text-slate-400">{booking.priest_name}</p>
+                    <p className="text-gray-800 font-medium">{booking.service_name}</p>
+                    <p className="text-sm text-gray-500">{booking.priest_name}</p>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     booking.status === 'confirmed' ? 'bg-blue-500/30 text-blue-300' :
@@ -380,7 +380,7 @@ function BookingsTab({ bookings, isDesktop, loading }) {
                     {booking.status}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-gray-500">
                   {new Date(booking.booking_date).toLocaleDateString()}
                 </p>
               </div>
@@ -485,12 +485,12 @@ function PujaTypesTab({ isDesktop }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-white">Puja Types Management</h2>
-          <p className="text-slate-400 text-sm">Manage the dropdown options for puja services</p>
+          <h2 className="text-xl font-semibold text-gray-800">Puja Types Management</h2>
+          <p className="text-gray-500 text-sm">Manage the dropdown options for puja services</p>
         </div>
         <button
           onClick={() => { setShowModal(true); setEditingPuja(null); setForm({ name: '', category: 'Deity Puja' }); }}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-saffron text-gray-800 rounded-xl hover:bg-indigo-600 transition-colors"
           data-testid="add-puja-type-btn"
         >
           <Plus className="w-4 h-4" />
@@ -505,12 +505,12 @@ function PujaTypesTab({ isDesktop }) {
           placeholder="Search puja types..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="flex-1 px-4 py-2 bg-white shadow-sm border border-orange-200 rounded-xl text-gray-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-saffron"
         />
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="px-4 py-2 bg-white shadow-sm border border-orange-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-saffron"
         >
           <option value="">All Categories</option>
           {categories.map(cat => (
@@ -521,34 +521,34 @@ function PujaTypesTab({ isDesktop }) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-slate-800 rounded-xl p-4">
-          <p className="text-slate-400 text-sm">Total Pujas</p>
-          <p className="text-2xl font-bold text-white">{pujaTypes.length}</p>
+        <div className="bg-white shadow-sm rounded-xl p-4">
+          <p className="text-gray-500 text-sm">Total Pujas</p>
+          <p className="text-2xl font-bold text-gray-800">{pujaTypes.length}</p>
         </div>
-        <div className="bg-slate-800 rounded-xl p-4">
-          <p className="text-slate-400 text-sm">Categories</p>
-          <p className="text-2xl font-bold text-white">{Object.keys(groupedPujas).length}</p>
+        <div className="bg-white shadow-sm rounded-xl p-4">
+          <p className="text-gray-500 text-sm">Categories</p>
+          <p className="text-2xl font-bold text-gray-800">{Object.keys(groupedPujas).length}</p>
         </div>
-        <div className="bg-slate-800 rounded-xl p-4">
-          <p className="text-slate-400 text-sm">Active</p>
+        <div className="bg-white shadow-sm rounded-xl p-4">
+          <p className="text-gray-500 text-sm">Active</p>
           <p className="text-2xl font-bold text-green-400">{pujaTypes.filter(p => p.is_active).length}</p>
         </div>
-        <div className="bg-slate-800 rounded-xl p-4">
-          <p className="text-slate-400 text-sm">Inactive</p>
+        <div className="bg-white shadow-sm rounded-xl p-4">
+          <p className="text-gray-500 text-sm">Inactive</p>
           <p className="text-2xl font-bold text-red-400">{pujaTypes.filter(p => !p.is_active).length}</p>
         </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-saffron" />
         </div>
       ) : (
         <div className="space-y-6">
           {Object.entries(groupedPujas).sort().map(([category, pujas]) => (
-            <div key={category} className="bg-slate-800/50 rounded-xl p-4">
-              <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-indigo-400" />
+            <div key={category} className="bg-white shadow-sm border border-orange-100 rounded-xl p-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-saffron" />
                 {category} ({pujas.length})
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -556,11 +556,11 @@ function PujaTypesTab({ isDesktop }) {
                   <div
                     key={puja.id}
                     className={`flex items-center justify-between p-3 rounded-xl ${
-                      puja.is_active ? 'bg-slate-700/50' : 'bg-red-900/20'
+                      puja.is_active ? 'bg-gray-100' : 'bg-red-100'
                     }`}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className={`font-medium truncate ${puja.is_active ? 'text-white' : 'text-red-400'}`}>
+                      <p className={`font-medium truncate ${puja.is_active ? 'text-gray-800' : 'text-red-400'}`}>
                         {puja.name}
                       </p>
                       {!puja.is_active && <span className="text-xs text-red-400">Inactive</span>}
@@ -568,13 +568,13 @@ function PujaTypesTab({ isDesktop }) {
                     <div className="flex items-center gap-2 ml-2">
                       <button
                         onClick={() => handleEdit(puja)}
-                        className="p-1.5 hover:bg-slate-600 rounded-lg text-slate-400 hover:text-white transition-colors"
+                        className="p-1.5 hover:bg-orange-100 rounded-lg text-gray-500 hover:text-gray-800 transition-colors"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(puja.id)}
-                        className="p-1.5 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400 transition-colors"
+                        className="p-1.5 hover:bg-red-500/20 rounded-lg text-gray-500 hover:text-red-400 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -593,35 +593,35 @@ function PujaTypesTab({ isDesktop }) {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-slate-800 rounded-2xl max-w-md w-full"
+            className="bg-white shadow-sm rounded-2xl max-w-md w-full"
           >
-            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">
+            <div className="p-4 border-b border-orange-200 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-800">
                 {editingPuja ? 'Edit Puja Type' : 'Add Puja Type'}
               </h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400">
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-orange-50 rounded-lg text-gray-500">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Puja Name*</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Puja Name*</label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-saffron"
                   placeholder="e.g., Ganesh Puja"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Category</label>
                 <select
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-saffron"
                 >
                   {categories.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -638,19 +638,19 @@ function PujaTypesTab({ isDesktop }) {
                     onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
                     className="w-4 h-4"
                   />
-                  <label htmlFor="is_active" className="text-sm text-slate-300">Active (visible in dropdown)</label>
+                  <label htmlFor="is_active" className="text-sm text-gray-600">Active (visible in dropdown)</label>
                 </div>
               )}
             </div>
             
-            <div className="p-4 border-t border-slate-700 flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-400 hover:text-white">
+            <div className="p-4 border-t border-orange-200 flex justify-end gap-3">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-500 hover:text-gray-800">
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="px-6 py-2 bg-indigo-500 text-white rounded-xl disabled:opacity-50 flex items-center gap-2 hover:bg-indigo-600"
+                className="px-6 py-2 bg-saffron text-gray-800 rounded-xl disabled:opacity-50 flex items-center gap-2 hover:bg-indigo-600"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 {editingPuja ? 'Update' : 'Add'}
@@ -719,8 +719,8 @@ function FeedbackTab({ isDesktop }) {
           onClick={() => setActiveSubTab('feedback')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeSubTab === 'feedback' 
-              ? 'bg-indigo-500 text-white' 
-              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              ? 'bg-saffron text-gray-800' 
+              : 'bg-white shadow-sm text-gray-600 hover:bg-orange-50'
           }`}
         >
           <Mail className="w-4 h-4 inline mr-2" />
@@ -730,8 +730,8 @@ function FeedbackTab({ isDesktop }) {
           onClick={() => setActiveSubTab('testimonials')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeSubTab === 'testimonials' 
-              ? 'bg-indigo-500 text-white' 
-              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              ? 'bg-saffron text-gray-800' 
+              : 'bg-white shadow-sm text-gray-600 hover:bg-orange-50'
           }`}
         >
           <MessageSquare className="w-4 h-4 inline mr-2" />
@@ -741,15 +741,15 @@ function FeedbackTab({ isDesktop }) {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
+          <Loader2 className="w-8 h-8 animate-spin text-saffron" />
         </div>
       ) : activeSubTab === 'feedback' ? (
         /* Feedback List */
         <div className="space-y-4">
           {feedback.length === 0 ? (
-            <div className="bg-slate-800/50 rounded-xl p-8 text-center">
-              <Mail className="w-12 h-12 mx-auto text-slate-600 mb-3" />
-              <p className="text-slate-400">No feedback received yet</p>
+            <div className="bg-white shadow-sm border border-orange-100 rounded-xl p-8 text-center">
+              <Mail className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+              <p className="text-gray-500">No feedback received yet</p>
             </div>
           ) : (
             feedback.map((item) => (
@@ -757,25 +757,25 @@ function FeedbackTab({ isDesktop }) {
                 key={item.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-slate-800/50 rounded-xl p-4"
+                className="bg-white shadow-sm border border-orange-100 rounded-xl p-4"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h4 className="font-semibold text-white">{item.name}</h4>
-                    <p className="text-sm text-slate-400">{item.email}</p>
+                    <h4 className="font-semibold text-gray-800">{item.name}</h4>
+                    <p className="text-sm text-gray-500">{item.email}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star 
                         key={i} 
-                        className={`w-4 h-4 ${i < (item.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-600'}`} 
+                        className={`w-4 h-4 ${i < (item.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`} 
                       />
                     ))}
                   </div>
                 </div>
-                <p className="text-sm text-indigo-400 font-medium mb-2">{item.subject}</p>
-                <p className="text-slate-300">{item.message}</p>
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-sm text-saffron font-medium mb-2">{item.subject}</p>
+                <p className="text-gray-600">{item.message}</p>
+                <p className="text-xs text-gray-500 mt-2">
                   {new Date(item.created_at).toLocaleString()}
                 </p>
               </motion.div>
@@ -786,9 +786,9 @@ function FeedbackTab({ isDesktop }) {
         /* Testimonials List */
         <div className="space-y-4">
           {testimonials.length === 0 ? (
-            <div className="bg-slate-800/50 rounded-xl p-8 text-center">
-              <MessageSquare className="w-12 h-12 mx-auto text-slate-600 mb-3" />
-              <p className="text-slate-400">No testimonials yet</p>
+            <div className="bg-white shadow-sm border border-orange-100 rounded-xl p-8 text-center">
+              <MessageSquare className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+              <p className="text-gray-500">No testimonials yet</p>
             </div>
           ) : (
             testimonials.map((item) => (
@@ -796,14 +796,14 @@ function FeedbackTab({ isDesktop }) {
                 key={item.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`bg-slate-800/50 rounded-xl p-4 border-l-4 ${
+                className={`bg-white shadow-sm border border-orange-100 rounded-xl p-4 border-l-4 ${
                   item.is_approved ? 'border-green-500' : 'border-yellow-500'
                 }`}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h4 className="font-semibold text-white">{item.user_name}</h4>
-                    <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded capitalize">
+                    <h4 className="font-semibold text-gray-800">{item.user_name}</h4>
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded capitalize">
                       {item.user_role}
                     </span>
                   </div>
@@ -819,15 +819,15 @@ function FeedbackTab({ isDesktop }) {
                       {[...Array(5)].map((_, i) => (
                         <Star 
                           key={i} 
-                          className={`w-4 h-4 ${i < item.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-600'}`} 
+                          className={`w-4 h-4 ${i < item.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`} 
                         />
                       ))}
                     </div>
                   </div>
                 </div>
-                <p className="text-slate-300 mb-3">"{item.content}"</p>
+                <p className="text-gray-600 mb-3">"{item.content}"</p>
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-gray-500">
                     {new Date(item.created_at).toLocaleString()}
                   </p>
                   <div className="flex gap-2">
@@ -895,7 +895,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B] ${isDesktop ? 'lg:pl-64' : ''}`}>
+    <div className={`min-h-screen bg-gradient-to-b from-orange-50 to-amber-50 ${isDesktop ? 'lg:pl-64' : ''}`}>
       <Toaster position="top-center" richColors />
       
       {isDesktop && <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />}
@@ -903,8 +903,8 @@ export default function AdminDashboard() {
       {/* Header - Mobile Only */}
       {!isDesktop && (
         <div className="px-4 pt-8 pb-6">
-          <p className="text-slate-400 text-sm">Admin Dashboard</p>
-          <h1 className="font-cinzel text-2xl font-bold text-white">{user?.name || 'Admin'}</h1>
+          <p className="text-saffron-dark text-sm">Admin Dashboard</p>
+          <h1 className="font-cinzel text-2xl font-bold text-gray-800">{user?.name || 'Admin'}</h1>
         </div>
       )}
 
@@ -912,10 +912,10 @@ export default function AdminDashboard() {
       {isDesktop && (
         <div className="px-8 pt-8 pb-4 flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-sm">Admin Dashboard</p>
-            <h1 className="font-cinzel text-2xl font-bold text-white">{user?.name || 'Admin'}</h1>
+            <p className="text-saffron-dark text-sm">Admin Dashboard</p>
+            <h1 className="font-cinzel text-2xl font-bold text-gray-800">{user?.name || 'Admin'}</h1>
           </div>
-          <button className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+          <button className="w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center text-saffron hover:text-saffron-dark transition-colors">
             <Bell className="w-5 h-5" />
           </button>
         </div>

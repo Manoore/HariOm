@@ -51,6 +51,9 @@ system_config_collection = db["system_config"]
 # Product Reviews Collection
 product_reviews_collection = db["product_reviews"]
 
+# Service Reviews Collection (for Priests and Astrologers)
+service_reviews_collection = db["service_reviews"]
+
 # Feedback and Testimonials Collections
 feedback_collection = db["feedback"]
 testimonials_collection = db["testimonials"]
@@ -89,6 +92,10 @@ async def init_db():
     await product_reviews_collection.create_index([("product_id", 1), ("created_at", -1)])
     await product_reviews_collection.create_index([("user_id", 1)])
     await product_reviews_collection.create_index([("product_id", 1), ("user_id", 1)], unique=True)
+    # Service reviews indexes (for priests/astrologers)
+    await service_reviews_collection.create_index([("provider_id", 1), ("created_at", -1)])
+    await service_reviews_collection.create_index([("user_id", 1)])
+    await service_reviews_collection.create_index([("booking_id", 1)], unique=True, sparse=True)
     # Feedback and testimonials indexes
     await feedback_collection.create_index([("created_at", -1)])
     await testimonials_collection.create_index([("is_approved", 1), ("created_at", -1)])

@@ -23,7 +23,7 @@ from database import (
     festivals_collection, temples_collection,
     deities_collection, mantras_collection, stotras_collection, daily_schedule_collection,
     product_reviews_collection, feedback_collection, testimonials_collection,
-    puja_types_collection
+    puja_types_collection, service_reviews_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -4336,6 +4336,207 @@ async def get_all_puja_types_admin(user: dict = Depends(require_role([UserRole.A
             "created_at": puja["created_at"].isoformat() if puja.get("created_at") else None
         })
     return {"puja_types": puja_types}
+
+
+# ===================== SERVICE REVIEWS (Priests & Astrologers) =====================
+
+@app.post("/api/bookings/{booking_id}/review")
+async def create_service_review(booking_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Create a review for a completed booking (priest or astrologer service)"""
+    data = await request.json()
+    
+    # Get booking
+    booking = await bookings_collection.find_one({"_id": ObjectId(booking_id)})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Verify user owns this booking
+    if booking.get("user_id") != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="This is not your booking")
+    
+    # Verify booking is completed
+    if booking.get("status") != "completed":
+        raise HTTPException(status_code=400, detail="Can only review completed bookings")
+    
+    # Check if already reviewed
+    existing_review = await service_reviews_collection.find_one({"booking_id": booking_id})
+    if existing_review:
+        raise HTTPException(status_code=400, detail="You have already reviewed this booking")
+    
+    rating = data.get("rating")
+    if not rating or rating < 1 or rating > 5:
+        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+    
+    comment = data.get("comment", "").strip()
+    
+    # Determine provider type and ID
+    provider_type = booking.get("provider_type", "priest")
+    provider_id = booking.get("priest_id") or booking.get("astrologer_id")
+    
+    if not provider_id:
+        raise HTTPException(status_code=400, detail="Provider not found for this booking")
+    
+    review = {
+        "booking_id": booking_id,
+        "provider_id": provider_id,
+        "provider_type": provider_type,  # "priest" or "astrologer"
+        "user_id": str(user["_id"]),
+        "user_name": user.get("name", "Anonymous"),
+        "service_name": booking.get("service_name", ""),
+        "rating": rating,
+        "comment": comment,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await service_reviews_collection.insert_one(review)
+    
+    # Update booking with review flag
+    await bookings_collection.update_one(
+        {"_id": ObjectId(booking_id)},
+        {"$set": {"has_review": True, "review_id": str(result.inserted_id)}}
+    )
+    
+    # Update provider's average rating
+    await update_provider_rating(provider_id, provider_type)
+    
+    return {
+        "message": "Review submitted successfully",
+        "review_id": str(result.inserted_id)
+    }
+
+@app.get("/api/priests/{priest_id}/reviews")
+async def get_priest_reviews_public(priest_id: str, limit: int = 20, skip: int = 0):
+    """Get reviews for a priest (public)"""
+    cursor = service_reviews_collection.find({
+        "provider_id": priest_id,
+        "provider_type": "priest"
+    }).sort("created_at", -1).skip(skip).limit(limit)
+    
+    reviews = []
+    async for review in cursor:
+        reviews.append({
+            "id": str(review["_id"]),
+            "user_name": review.get("user_name", "Anonymous"),
+            "service_name": review.get("service_name", ""),
+            "rating": review.get("rating"),
+            "comment": review.get("comment"),
+            "created_at": review.get("created_at").isoformat() if review.get("created_at") else None
+        })
+    
+    total = await service_reviews_collection.count_documents({
+        "provider_id": priest_id,
+        "provider_type": "priest"
+    })
+    
+    # Get rating summary
+    rating_summary = await get_provider_rating_summary(priest_id, "priest")
+    
+    return {
+        "reviews": reviews,
+        "total": total,
+        "rating_summary": rating_summary
+    }
+
+@app.get("/api/astrologers/{astrologer_id}/reviews")
+async def get_astrologer_reviews(astrologer_id: str, limit: int = 20, skip: int = 0):
+    """Get reviews for an astrologer (public)"""
+    cursor = service_reviews_collection.find({
+        "provider_id": astrologer_id,
+        "provider_type": "astrologer"
+    }).sort("created_at", -1).skip(skip).limit(limit)
+    
+    reviews = []
+    async for review in cursor:
+        reviews.append({
+            "id": str(review["_id"]),
+            "user_name": review.get("user_name", "Anonymous"),
+            "service_name": review.get("service_name", ""),
+            "rating": review.get("rating"),
+            "comment": review.get("comment"),
+            "created_at": review.get("created_at").isoformat() if review.get("created_at") else None
+        })
+    
+    total = await service_reviews_collection.count_documents({
+        "provider_id": astrologer_id,
+        "provider_type": "astrologer"
+    })
+    
+    rating_summary = await get_provider_rating_summary(astrologer_id, "astrologer")
+    
+    return {
+        "reviews": reviews,
+        "total": total,
+        "rating_summary": rating_summary
+    }
+
+@app.get("/api/bookings/{booking_id}/can-review")
+async def can_review_booking(booking_id: str, user: dict = Depends(get_current_user)):
+    """Check if user can review a booking"""
+    booking = await bookings_collection.find_one({"_id": ObjectId(booking_id)})
+    if not booking:
+        return {"can_review": False, "reason": "Booking not found"}
+    
+    if booking.get("user_id") != str(user["_id"]):
+        return {"can_review": False, "reason": "Not your booking"}
+    
+    if booking.get("status") != "completed":
+        return {"can_review": False, "reason": "Booking not completed yet"}
+    
+    if booking.get("has_review"):
+        return {"can_review": False, "reason": "Already reviewed"}
+    
+    return {"can_review": True}
+
+async def update_provider_rating(provider_id: str, provider_type: str):
+    """Recalculate and update provider's average rating"""
+    pipeline = [
+        {"$match": {"provider_id": provider_id, "provider_type": provider_type}},
+        {"$group": {
+            "_id": None,
+            "avg_rating": {"$avg": "$rating"},
+            "total_reviews": {"$sum": 1}
+        }}
+    ]
+    
+    result = await service_reviews_collection.aggregate(pipeline).to_list(1)
+    
+    if result:
+        avg_rating = round(result[0]["avg_rating"], 1)
+        total_reviews = result[0]["total_reviews"]
+    else:
+        avg_rating = 0
+        total_reviews = 0
+    
+    # Update the appropriate collection
+    if provider_type == "priest":
+        await priests_collection.update_one(
+            {"_id": ObjectId(provider_id)},
+            {"$set": {"rating": avg_rating, "total_reviews": total_reviews}}
+        )
+    elif provider_type == "astrologer":
+        await astrologers_collection.update_one(
+            {"_id": ObjectId(provider_id)},
+            {"$set": {"rating": avg_rating, "total_reviews": total_reviews}}
+        )
+
+async def get_provider_rating_summary(provider_id: str, provider_type: str):
+    """Get rating distribution for a provider"""
+    pipeline = [
+        {"$match": {"provider_id": provider_id, "provider_type": provider_type}},
+        {"$group": {
+            "_id": "$rating",
+            "count": {"$sum": 1}
+        }}
+    ]
+    
+    result = await service_reviews_collection.aggregate(pipeline).to_list(5)
+    
+    summary = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    for item in result:
+        if item["_id"]:
+            summary[item["_id"]] = item["count"]
+    
+    return summary
 
 
 # ===================== SHOP OWNER ROUTES =====================
