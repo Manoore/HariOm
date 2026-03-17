@@ -2348,6 +2348,7 @@ function EarningsTab({ earnings, analytics }) {
 
 function StreamsTab({ streams, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
+  const [editingStream, setEditingStream] = useState(null);
   const scheduled = streams.filter(s => s.status === 'scheduled');
   const live = streams.filter(s => s.status === 'live');
   const past = streams.filter(s => s.status === 'ended');
@@ -2355,7 +2356,24 @@ function StreamsTab({ streams, onRefresh }) {
   const handleScheduleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    setEditingStream(null);
     setShowModal(true);
+  };
+
+  const handleEditStream = (stream) => {
+    setEditingStream(stream);
+    setShowModal(true);
+  };
+
+  const deleteStream = async (streamId) => {
+    if (!window.confirm('Delete this scheduled stream?')) return;
+    try {
+      await api.delete(`/api/priest/streams/${streamId}`);
+      toast.success('Stream deleted');
+      onRefresh();
+    } catch (error) {
+      toast.error('Failed to delete stream');
+    }
   };
 
   const startStream = async (streamId) => {
@@ -2427,9 +2445,17 @@ function StreamsTab({ streams, onRefresh }) {
                   <p className="text-xs text-gray-400">{new Date(s.scheduled_at).toLocaleString()}</p>
                   <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{s.stream_type}</span>
                 </div>
-                <button onClick={() => startStream(s.id)} className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm flex items-center gap-1">
-                  <Play className="w-4 h-4" /> Go Live
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => handleEditStream(s)} className="p-2 hover:bg-gray-100 rounded-lg">
+                    <Edit className="w-4 h-4 text-gray-500" />
+                  </button>
+                  <button onClick={() => deleteStream(s.id)} className="p-2 hover:bg-red-50 rounded-lg">
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </button>
+                  <button onClick={() => startStream(s.id)} className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm flex items-center gap-1">
+                    <Play className="w-4 h-4" /> Go Live
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -2455,7 +2481,8 @@ function StreamsTab({ streams, onRefresh }) {
 
       <StreamModal 
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => { setShowModal(false); setEditingStream(null); }}
+        editData={editingStream}
         onSuccess={onRefresh}
       />
     </div>
@@ -2463,7 +2490,7 @@ function StreamsTab({ streams, onRefresh }) {
 }
 
 // Stream Modal Component
-function StreamModal({ isOpen, onClose, onSuccess }) {
+function StreamModal({ isOpen, onClose, editData, onSuccess }) {
   const [form, setForm] = useState({
     title: '', description: '', stream_type: 'puja', scheduled_at: ''
   });
@@ -2471,17 +2498,28 @@ function StreamModal({ isOpen, onClose, onSuccess }) {
 
   useEffect(() => {
     if (isOpen) {
-      // Set default scheduled time to 1 hour from now
-      const defaultTime = new Date();
-      defaultTime.setHours(defaultTime.getHours() + 1);
-      setForm({
-        title: '',
-        description: '',
-        stream_type: 'puja',
-        scheduled_at: defaultTime.toISOString().slice(0, 16)
-      });
+      if (editData) {
+        // Editing existing stream
+        const scheduledTime = editData.scheduled_at ? new Date(editData.scheduled_at).toISOString().slice(0, 16) : '';
+        setForm({
+          title: editData.title || '',
+          description: editData.description || '',
+          stream_type: editData.stream_type || 'puja',
+          scheduled_at: scheduledTime
+        });
+      } else {
+        // Set default scheduled time to 1 hour from now
+        const defaultTime = new Date();
+        defaultTime.setHours(defaultTime.getHours() + 1);
+        setForm({
+          title: '',
+          description: '',
+          stream_type: 'puja',
+          scheduled_at: defaultTime.toISOString().slice(0, 16)
+        });
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, editData]);
 
   const handleSubmit = async () => {
     if (!form.title) { toast.error('Enter stream title'); return; }
@@ -2489,15 +2527,22 @@ function StreamModal({ isOpen, onClose, onSuccess }) {
     
     setSaving(true);
     try {
-      await api.post('/api/priest/streams', {
+      const payload = {
         ...form,
         scheduled_at: new Date(form.scheduled_at).toISOString()
-      });
-      toast.success('Stream scheduled!');
+      };
+      
+      if (editData) {
+        await api.put(`/api/priest/streams/${editData.id}`, payload);
+        toast.success('Stream updated!');
+      } else {
+        await api.post('/api/priest/streams', payload);
+        toast.success('Stream scheduled!');
+      }
       onSuccess();
       onClose();
     } catch (error) {
-      toast.error('Failed to schedule stream');
+      toast.error(editData ? 'Failed to update stream' : 'Failed to schedule stream');
     } finally {
       setSaving(false);
     }

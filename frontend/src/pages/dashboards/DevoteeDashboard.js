@@ -16,6 +16,7 @@ import { WalletCard, RechargeModal, TransactionHistory } from '../../components/
 import { AstrologerList, PreCallCheck, VideoCallScreen } from '../../components/VideoConsultation/VideoConsultation';
 import AddressAutocomplete from '../../components/AddressAutocomplete';
 import { PriestDetailView, AstrologyTab } from '../../components/DevoteeDashboard';
+import SmartPayment from '../../components/PaymentComponents';
 
 // 3D Animated Devotional SVG Icons
 const BellIcon3D = ({ size = "w-8 h-8" }) => (
@@ -722,6 +723,10 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewBooking, setReviewBooking] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelBooking, setCancelBooking] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancellationPreview, setCancellationPreview] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -757,6 +762,42 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch cancellation preview when opening cancel modal
+  const fetchCancellationPreview = async (bookingId) => {
+    try {
+      const res = await api.get(`/api/bookings/${bookingId}/cancellation-preview`);
+      setCancellationPreview(res.data);
+    } catch (error) {
+      console.error('Failed to get cancellation preview:', error);
+      setCancellationPreview(null);
+    }
+  };
+
+  // Handle opening cancel modal
+  const openCancelModal = async (booking) => {
+    setCancelBooking(booking);
+    setShowCancelModal(true);
+    await fetchCancellationPreview(booking.id);
+  };
+
+  // Handle booking cancellation
+  const handleCancelBooking = async (reason = '') => {
+    if (!cancelBooking) return;
+    setCancelLoading(true);
+    try {
+      const res = await api.post(`/api/bookings/${cancelBooking.id}/cancel`, { reason });
+      toast.success(`Booking cancelled. ${res.data.refund_amount > 0 ? `Refund of ₹${res.data.refund_amount} will be processed.` : ''}`);
+      setShowCancelModal(false);
+      setCancelBooking(null);
+      setCancellationPreview(null);
+      fetchData(); // Refresh bookings
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to cancel booking');
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -999,6 +1040,7 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
                         booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
                         booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
                         booking.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                        booking.status === 'cancelled' ? 'bg-red-100 text-red-700' :
                         'bg-gray-100 text-gray-600'
                       }`}>
                         {booking.status}
@@ -1021,6 +1063,16 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
                           <CheckCircle className="w-3 h-3" />
                           Reviewed
                         </span>
+                      )}
+                      {(booking.status === 'pending' || booking.status === 'confirmed') && (
+                        <button
+                          onClick={() => openCancelModal(booking)}
+                          className="text-xs text-red-500 hover:underline flex items-center gap-1"
+                          data-testid={`cancel-booking-${booking.id}`}
+                        >
+                          <X className="w-3 h-3" />
+                          Cancel
+                        </button>
                       )}
                     </div>
                   </div>
@@ -1091,6 +1143,80 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
             toast.success('Review submitted successfully!');
           }}
         />
+      )}
+
+      {/* Cancel Booking Modal */}
+      {showCancelModal && cancelBooking && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl max-w-md w-full p-6"
+          >
+            <h3 className="font-cinzel text-xl font-bold text-maroon mb-2">
+              Cancel Booking
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to cancel <strong>{cancelBooking.service_name}</strong> with {cancelBooking.priest_name}?
+            </p>
+
+            {/* Cancellation Policy Preview */}
+            {cancellationPreview ? (
+              <div className={`rounded-xl p-4 mb-4 ${
+                cancellationPreview.refund_percentage === 100 ? 'bg-green-50 border border-green-200' :
+                cancellationPreview.refund_percentage === 50 ? 'bg-yellow-50 border border-yellow-200' :
+                'bg-red-50 border border-red-200'
+              }`}>
+                <p className="font-semibold text-gray-800 mb-2">Refund Policy</p>
+                <p className={`text-sm ${
+                  cancellationPreview.refund_percentage === 100 ? 'text-green-700' :
+                  cancellationPreview.refund_percentage === 50 ? 'text-yellow-700' :
+                  'text-red-700'
+                }`}>
+                  {cancellationPreview.policy_message}
+                </p>
+                <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                  <span className="text-gray-600">Booking Amount</span>
+                  <span className="font-medium">₹{cancellationPreview.booking_price}</span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-gray-600">Refund Amount</span>
+                  <span className={`font-bold ${
+                    cancellationPreview.refund_amount > 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    ₹{cancellationPreview.refund_amount}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-center py-4">
+                <Loader2 className="w-6 h-6 animate-spin text-saffron" />
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setCancelBooking(null);
+                  setCancellationPreview(null);
+                }}
+                className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                disabled={cancelLoading}
+              >
+                Keep Booking
+              </button>
+              <button
+                onClick={() => handleCancelBooking()}
+                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                disabled={cancelLoading}
+              >
+                {cancelLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Confirm Cancel
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );
@@ -3732,6 +3858,7 @@ function TestimonialSection() {
 
 // Classes Tab - Browse and enroll in Vedic classes
 function ClassesTab({ isDesktop }) {
+  const { user } = useAuth();
   const [classes, setClasses] = useState([]);
   const [myEnrollments, setMyEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -3791,11 +3918,11 @@ function ClassesTab({ isDesktop }) {
     }
   };
 
-  const handlePaymentSuccess = async (paymentIntentId) => {
+  const handlePaymentSuccess = async (paymentData) => {
     try {
       // Complete enrollment after payment
       await api.post(`/api/classes/${paymentModal.classId}/enroll`, {
-        payment_intent_id: paymentIntentId
+        payment_intent_id: paymentData.payment_id || paymentModal.paymentIntentId
       });
       toast.success('Payment successful! You are now enrolled.');
       setPaymentModal(null);
@@ -3804,6 +3931,10 @@ function ClassesTab({ isDesktop }) {
     } catch (error) {
       toast.error('Enrollment failed after payment. Please contact support.');
     }
+  };
+
+  const handlePaymentError = (error) => {
+    toast.error(error || 'Payment failed. Please try again.');
   };
 
   const formatDate = (dateStr) => {
@@ -4002,7 +4133,7 @@ function ClassesTab({ isDesktop }) {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl max-w-md w-full p-6"
+            className="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
           >
             <h3 className="font-cinzel text-xl font-bold text-maroon mb-2">
               Complete Payment
@@ -4018,24 +4149,25 @@ function ClassesTab({ isDesktop }) {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <button
-                onClick={() => handlePaymentSuccess(paymentModal.paymentIntentId)}
-                className="w-full py-3 bg-saffron text-white rounded-xl font-medium hover:bg-saffron-dark transition-colors"
-              >
-                Pay ₹{paymentModal.price}
-              </button>
-              <button
-                onClick={() => setPaymentModal(null)}
-                className="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+            <SmartPayment
+              amount={paymentModal.price}
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+              description={`Enrollment: ${paymentModal.className}`}
+              metadata={{
+                type: 'class_enrollment',
+                class_id: paymentModal.classId
+              }}
+              userEmail={user?.email}
+              userName={user?.name}
+            />
 
-            <p className="text-xs text-gray-400 text-center mt-4">
-              Secure payment powered by Stripe
-            </p>
+            <button
+              onClick={() => setPaymentModal(null)}
+              className="w-full mt-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
           </motion.div>
         </div>
       )}

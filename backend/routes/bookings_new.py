@@ -4,7 +4,7 @@ Contains all booking-related endpoints for the Divine App.
 Includes: create booking, get bookings, update status
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from datetime import datetime, timezone
 from bson import ObjectId
 
@@ -206,3 +206,147 @@ async def update_booking_status(booking_id: str, status: BookingStatus, user: di
         await deactivate_chat_room("booking", booking_id)
     
     return {"message": "Booking status updated"}
+
+# ===================== BOOKING CANCELLATION =====================
+
+@router.post("/bookings/{booking_id}/cancel")
+async def cancel_booking(booking_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """
+    Cancel a booking with 24-hour policy.
+    - Cancellations more than 24 hours before: Full refund
+    - Cancellations within 24 hours: 50% refund (or as per policy)
+    - Cancellations after booking time: No refund
+    """
+    booking = await bookings_collection.find_one({"_id": ObjectId(booking_id)})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Verify user is the booking owner or the priest
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    is_priest = priest and str(priest["_id"]) == booking["priest_id"]
+    is_devotee = booking["user_id"] == str(user["_id"])
+    
+    if not is_priest and not is_devotee:
+        raise HTTPException(status_code=403, detail="Not authorized to cancel this booking")
+    
+    # Check if booking can be cancelled
+    current_status = booking.get("status", "pending")
+    if current_status in ["cancelled", "completed"]:
+        raise HTTPException(status_code=400, detail=f"Booking already {current_status}")
+    
+    # Get cancellation reason from request
+    try:
+        data = await request.json()
+        reason = data.get("reason", "")
+    except Exception:
+        reason = ""
+    
+    # Calculate refund based on 24-hour policy
+    booking_date = booking.get("booking_date")
+    now = datetime.now(timezone.utc)
+    
+    refund_percentage = 0
+    refund_amount = 0
+    price = booking.get("price", 0)
+    
+    if booking_date:
+        # Make booking_date timezone aware if it isn't
+        if isinstance(booking_date, datetime):
+            if booking_date.tzinfo is None:
+                booking_date = booking_date.replace(tzinfo=timezone.utc)
+            
+            hours_until_booking = (booking_date - now).total_seconds() / 3600
+            
+            if hours_until_booking > 24:
+                # More than 24 hours: Full refund
+                refund_percentage = 100
+                refund_amount = price
+            elif hours_until_booking > 0:
+                # Within 24 hours: 50% refund
+                refund_percentage = 50
+                refund_amount = price * 0.5
+            else:
+                # Booking time passed: No refund
+                refund_percentage = 0
+                refund_amount = 0
+    
+    # Update booking status
+    update_data = {
+        "status": "cancelled",
+        "cancelled_at": now,
+        "cancelled_by": "priest" if is_priest else "devotee",
+        "cancellation_reason": reason,
+        "refund_percentage": refund_percentage,
+        "refund_amount": refund_amount,
+        "refund_status": "pending" if refund_amount > 0 else "not_applicable"
+    }
+    
+    await bookings_collection.update_one(
+        {"_id": ObjectId(booking_id)},
+        {"$set": update_data}
+    )
+    
+    # Deactivate chat room
+    await deactivate_chat_room("booking", booking_id)
+    
+    return {
+        "message": "Booking cancelled successfully",
+        "refund_percentage": refund_percentage,
+        "refund_amount": refund_amount,
+        "refund_status": update_data["refund_status"]
+    }
+
+@router.get("/bookings/{booking_id}/cancellation-preview")
+async def get_cancellation_preview(booking_id: str, user: dict = Depends(get_current_user)):
+    """
+    Get a preview of what happens if user cancels this booking
+    """
+    booking = await bookings_collection.find_one({"_id": ObjectId(booking_id)})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Verify user is involved in this booking
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    is_priest = priest and str(priest["_id"]) == booking["priest_id"]
+    is_devotee = booking["user_id"] == str(user["_id"])
+    
+    if not is_priest and not is_devotee:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    booking_date = booking.get("booking_date")
+    now = datetime.now(timezone.utc)
+    price = booking.get("price", 0)
+    
+    refund_percentage = 0
+    refund_amount = 0
+    policy_message = ""
+    
+    if booking_date:
+        if isinstance(booking_date, datetime):
+            if booking_date.tzinfo is None:
+                booking_date = booking_date.replace(tzinfo=timezone.utc)
+            
+            hours_until_booking = (booking_date - now).total_seconds() / 3600
+            
+            if hours_until_booking > 24:
+                refund_percentage = 100
+                refund_amount = price
+                policy_message = "Full refund - cancellation more than 24 hours before booking"
+            elif hours_until_booking > 0:
+                refund_percentage = 50
+                refund_amount = price * 0.5
+                policy_message = "50% refund - cancellation within 24 hours of booking"
+            else:
+                refund_percentage = 0
+                refund_amount = 0
+                policy_message = "No refund - booking time has passed"
+    
+    return {
+        "booking_id": booking_id,
+        "current_status": booking.get("status", "pending"),
+        "booking_price": price,
+        "refund_percentage": refund_percentage,
+        "refund_amount": refund_amount,
+        "policy_message": policy_message,
+        "can_cancel": booking.get("status") not in ["cancelled", "completed"]
+    }
