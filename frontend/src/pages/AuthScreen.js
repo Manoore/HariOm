@@ -228,178 +228,251 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
       {/* Hidden reCAPTCHA container */}
       <div id="recaptcha-container"></div>
       
-      {/* Left Side Decorative Elements */}
-      <div className="hidden lg:flex flex-col items-center gap-8 absolute left-12 top-1/2 -translate-y-1/2 opacity-60">
-        {/* Om Symbol */}
-        <motion.div 
-          animate={{ scale: [1, 1.05, 1], opacity: [0.6, 0.8, 0.6] }}
-          transition={{ duration: 4, repeat: Infinity }}
-          className="text-saffron"
-        >
-          <svg viewBox="0 0 100 100" className="w-20 h-20">
-            <text x="50" y="70" textAnchor="middle" fontSize="60" fill="currentColor" fontFamily="serif">ॐ</text>
-          </svg>
-        </motion.div>
-        
-        {/* Decorative Diya */}
-        <motion.svg 
-          viewBox="0 0 100 120" 
-          className="w-16 h-20"
-          animate={{ scale: [1, 1.02, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
+      {/* Floating Devotional Icons - Scattered across screen */}
+      
+      {/* Om Symbol - Top Left */}
+      <motion.div 
+        className="absolute top-20 left-16 text-saffron/30"
+        animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <svg viewBox="0 0 100 100" className="w-32 h-32">
+          <text x="50" y="75" textAnchor="middle" fontSize="70" fill="currentColor" fontFamily="serif">ॐ</text>
+        </svg>
+      </motion.div>
+      
+      {/* Om Symbol - Bottom Right */}
+      <motion.div 
+        className="absolute bottom-24 right-20 text-maroon/20"
+        animate={{ y: [0, 12, 0], rotate: [0, -3, 0] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+      >
+        <svg viewBox="0 0 100 100" className="w-28 h-28">
+          <text x="50" y="75" textAnchor="middle" fontSize="70" fill="currentColor" fontFamily="serif">ॐ</text>
+        </svg>
+      </motion.div>
+      
+      {/* Diya - Top Right */}
+      <motion.div
+        className="absolute top-32 right-24"
+        animate={{ y: [0, -10, 0], x: [0, 5, 0] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <svg viewBox="0 0 100 120" className="w-24 h-28 opacity-40">
           <defs>
-            <linearGradient id="diyaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="diyaGradFloat" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#CD853F" />
               <stop offset="100%" stopColor="#8B4513" />
             </linearGradient>
-            <linearGradient id="flameGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+            <linearGradient id="flameGradFloat" x1="0%" y1="100%" x2="0%" y2="0%">
               <stop offset="0%" stopColor="#FF6600" />
               <stop offset="50%" stopColor="#FFD700" />
               <stop offset="100%" stopColor="#FFFF00" />
             </linearGradient>
           </defs>
-          {/* Flame */}
           <motion.ellipse 
-            cx="50" cy="35" rx="8" ry="20" 
-            fill="url(#flameGrad)"
-            animate={{ scaleY: [1, 1.1, 0.9, 1], scaleX: [1, 0.9, 1.1, 1] }}
-            transition={{ duration: 0.5, repeat: Infinity }}
+            cx="50" cy="30" rx="10" ry="25" 
+            fill="url(#flameGradFloat)"
+            animate={{ scaleY: [1, 1.15, 0.9, 1], scaleX: [1, 0.85, 1.1, 1] }}
+            transition={{ duration: 0.6, repeat: Infinity }}
           />
-          {/* Diya base */}
-          <ellipse cx="50" cy="70" rx="25" ry="8" fill="url(#diyaGrad)" />
-          <path d="M25 70 Q25 90 50 95 Q75 90 75 70" fill="url(#diyaGrad)" />
-        </motion.svg>
-        
-        {/* Lotus */}
-        <motion.svg 
-          viewBox="0 0 100 80" 
-          className="w-16 h-12"
-          animate={{ rotate: [0, 2, -2, 0] }}
-          transition={{ duration: 6, repeat: Infinity }}
-        >
+          <ellipse cx="50" cy="70" rx="30" ry="10" fill="url(#diyaGradFloat)" />
+          <path d="M20 70 Q20 95 50 100 Q80 95 80 70" fill="url(#diyaGradFloat)" />
+        </svg>
+      </motion.div>
+      
+      {/* Diya - Bottom Left */}
+      <motion.div
+        className="absolute bottom-32 left-20"
+        animate={{ y: [0, 8, 0], x: [0, -5, 0] }}
+        transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+      >
+        <svg viewBox="0 0 100 120" className="w-20 h-24 opacity-35">
           <defs>
-            <linearGradient id="lotusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFB6C1" />
-              <stop offset="100%" stopColor="#FF69B4" />
+            <linearGradient id="diyaGradFloat2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#CD853F" />
+              <stop offset="100%" stopColor="#8B4513" />
+            </linearGradient>
+            <linearGradient id="flameGradFloat2" x1="0%" y1="100%" x2="0%" y2="0%">
+              <stop offset="0%" stopColor="#FF6600" />
+              <stop offset="50%" stopColor="#FFD700" />
+              <stop offset="100%" stopColor="#FFFF00" />
             </linearGradient>
           </defs>
-          <ellipse cx="50" cy="60" rx="15" ry="5" fill="#228B22" />
-          {/* Petals */}
-          <ellipse cx="50" cy="40" rx="8" ry="20" fill="url(#lotusGrad)" />
-          <ellipse cx="35" cy="45" rx="8" ry="18" fill="url(#lotusGrad)" transform="rotate(-20 35 45)" />
-          <ellipse cx="65" cy="45" rx="8" ry="18" fill="url(#lotusGrad)" transform="rotate(20 65 45)" />
-          <ellipse cx="25" cy="50" rx="7" ry="15" fill="url(#lotusGrad)" transform="rotate(-40 25 50)" />
-          <ellipse cx="75" cy="50" rx="7" ry="15" fill="url(#lotusGrad)" transform="rotate(40 75 50)" />
-          <circle cx="50" cy="45" r="6" fill="#FFD700" />
-        </motion.svg>
-        
-        {/* Sanskrit Mantra */}
-        <div className="text-maroon/50 text-center font-serif">
-          <p className="text-lg">शुभ लाभ</p>
-          <p className="text-xs mt-1">Shubh Labh</p>
-        </div>
-      </div>
+          <motion.ellipse 
+            cx="50" cy="30" rx="10" ry="25" 
+            fill="url(#flameGradFloat2)"
+            animate={{ scaleY: [1, 1.1, 0.95, 1], scaleX: [1, 0.9, 1.05, 1] }}
+            transition={{ duration: 0.5, repeat: Infinity }}
+          />
+          <ellipse cx="50" cy="70" rx="30" ry="10" fill="url(#diyaGradFloat2)" />
+          <path d="M20 70 Q20 95 50 100 Q80 95 80 70" fill="url(#diyaGradFloat2)" />
+        </svg>
+      </motion.div>
       
-      {/* Right Side Decorative Elements */}
-      <div className="hidden lg:flex flex-col items-center gap-8 absolute right-12 top-1/2 -translate-y-1/2 opacity-60">
-        {/* Swastika */}
-        <motion.svg 
-          viewBox="0 0 100 100" 
-          className="w-16 h-16 text-saffron"
-          animate={{ rotate: [0, 5, -5, 0] }}
-          transition={{ duration: 8, repeat: Infinity }}
-        >
-          <g fill="currentColor">
-            <rect x="45" y="20" width="10" height="60" />
-            <rect x="20" y="45" width="60" height="10" />
-            <rect x="45" y="20" width="30" height="10" />
-            <rect x="65" y="20" width="10" height="25" />
-            <rect x="25" y="70" width="30" height="10" />
-            <rect x="25" y="55" width="10" height="25" />
-          </g>
-        </motion.svg>
-        
-        {/* Temple Bell */}
-        <motion.svg 
-          viewBox="0 0 80 100" 
-          className="w-14 h-18"
-          animate={{ rotate: [-5, 5, -5] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
+      {/* Temple Bell - Left Center */}
+      <motion.div
+        className="absolute left-12 top-1/2 -translate-y-1/2"
+        animate={{ rotate: [-8, 8, -8], y: [0, -5, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <svg viewBox="0 0 80 100" className="w-24 h-32 opacity-30">
           <defs>
-            <linearGradient id="bellGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="bellGradFloat" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FFD700" />
               <stop offset="100%" stopColor="#B8860B" />
             </linearGradient>
           </defs>
-          <circle cx="40" cy="12" r="6" fill="#B8860B" />
-          <rect x="37" y="12" width="6" height="15" fill="#B8860B" />
-          <path d="M20 27 Q20 60 15 75 L65 75 Q60 60 60 27 Q50 20 40 20 Q30 20 20 27" fill="url(#bellGrad2)" />
-          <ellipse cx="40" cy="75" rx="27" ry="8" fill="#CD853F" />
-          <circle cx="40" cy="85" r="7" fill="#8B4513" />
-        </motion.svg>
-        
-        {/* Kalash */}
-        <motion.svg 
-          viewBox="0 0 80 100" 
-          className="w-14 h-18"
-          animate={{ y: [0, -3, 0] }}
-          transition={{ duration: 3, repeat: Infinity }}
-        >
+          <circle cx="40" cy="10" r="7" fill="#B8860B" />
+          <rect x="36" y="10" width="8" height="18" fill="#B8860B" />
+          <path d="M15 28 Q15 65 10 82 L70 82 Q65 65 65 28 Q52 18 40 18 Q28 18 15 28" fill="url(#bellGradFloat)" />
+          <ellipse cx="40" cy="82" rx="32" ry="10" fill="#CD853F" />
+          <circle cx="40" cy="95" r="9" fill="#8B4513" />
+        </svg>
+      </motion.div>
+      
+      {/* Temple Bell - Right Center */}
+      <motion.div
+        className="absolute right-16 top-1/3"
+        animate={{ rotate: [6, -6, 6], y: [0, 8, 0] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+      >
+        <svg viewBox="0 0 80 100" className="w-20 h-28 opacity-25">
           <defs>
-            <linearGradient id="kalashGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="bellGradFloat2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFD700" />
+              <stop offset="100%" stopColor="#B8860B" />
+            </linearGradient>
+          </defs>
+          <circle cx="40" cy="10" r="7" fill="#B8860B" />
+          <rect x="36" y="10" width="8" height="18" fill="#B8860B" />
+          <path d="M15 28 Q15 65 10 82 L70 82 Q65 65 65 28 Q52 18 40 18 Q28 18 15 28" fill="url(#bellGradFloat2)" />
+          <ellipse cx="40" cy="82" rx="32" ry="10" fill="#CD853F" />
+          <circle cx="40" cy="95" r="9" fill="#8B4513" />
+        </svg>
+      </motion.div>
+      
+      {/* Lotus - Top Center */}
+      <motion.div
+        className="absolute top-16 left-1/3"
+        animate={{ y: [0, -12, 0], rotate: [0, 3, -3, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <svg viewBox="0 0 120 90" className="w-28 h-20 opacity-35">
+          <defs>
+            <linearGradient id="lotusGradFloat" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFB6C1" />
+              <stop offset="100%" stopColor="#FF69B4" />
+            </linearGradient>
+          </defs>
+          <ellipse cx="60" cy="70" rx="20" ry="6" fill="#228B22" opacity="0.6" />
+          <ellipse cx="60" cy="45" rx="10" ry="28" fill="url(#lotusGradFloat)" />
+          <ellipse cx="40" cy="52" rx="10" ry="24" fill="url(#lotusGradFloat)" transform="rotate(-25 40 52)" />
+          <ellipse cx="80" cy="52" rx="10" ry="24" fill="url(#lotusGradFloat)" transform="rotate(25 80 52)" />
+          <ellipse cx="25" cy="58" rx="9" ry="20" fill="url(#lotusGradFloat)" transform="rotate(-45 25 58)" />
+          <ellipse cx="95" cy="58" rx="9" ry="20" fill="url(#lotusGradFloat)" transform="rotate(45 95 58)" />
+          <circle cx="60" cy="50" r="8" fill="#FFD700" />
+        </svg>
+      </motion.div>
+      
+      {/* Lotus - Bottom Center */}
+      <motion.div
+        className="absolute bottom-20 right-1/3"
+        animate={{ y: [0, 10, 0], rotate: [0, -2, 2, 0] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+      >
+        <svg viewBox="0 0 120 90" className="w-24 h-16 opacity-30">
+          <defs>
+            <linearGradient id="lotusGradFloat2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFB6C1" />
+              <stop offset="100%" stopColor="#FF69B4" />
+            </linearGradient>
+          </defs>
+          <ellipse cx="60" cy="70" rx="20" ry="6" fill="#228B22" opacity="0.6" />
+          <ellipse cx="60" cy="45" rx="10" ry="28" fill="url(#lotusGradFloat2)" />
+          <ellipse cx="40" cy="52" rx="10" ry="24" fill="url(#lotusGradFloat2)" transform="rotate(-25 40 52)" />
+          <ellipse cx="80" cy="52" rx="10" ry="24" fill="url(#lotusGradFloat2)" transform="rotate(25 80 52)" />
+          <circle cx="60" cy="50" r="8" fill="#FFD700" />
+        </svg>
+      </motion.div>
+      
+      {/* Swastika - Various positions */}
+      <motion.div
+        className="absolute top-1/4 right-12"
+        animate={{ rotate: [0, 10, 0], scale: [1, 1.05, 1] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <svg viewBox="0 0 100 100" className="w-20 h-20 text-saffron/25">
+          <g fill="currentColor">
+            <rect x="42" y="15" width="16" height="70" />
+            <rect x="15" y="42" width="70" height="16" />
+            <rect x="42" y="15" width="35" height="16" />
+            <rect x="61" y="15" width="16" height="30" />
+            <rect x="23" y="69" width="35" height="16" />
+            <rect x="23" y="55" width="16" height="30" />
+          </g>
+        </svg>
+      </motion.div>
+      
+      <motion.div
+        className="absolute bottom-1/4 left-16"
+        animate={{ rotate: [0, -8, 0], scale: [1, 1.03, 1] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+      >
+        <svg viewBox="0 0 100 100" className="w-16 h-16 text-maroon/20">
+          <g fill="currentColor">
+            <rect x="42" y="15" width="16" height="70" />
+            <rect x="15" y="42" width="70" height="16" />
+            <rect x="42" y="15" width="35" height="16" />
+            <rect x="61" y="15" width="16" height="30" />
+            <rect x="23" y="69" width="35" height="16" />
+            <rect x="23" y="55" width="16" height="30" />
+          </g>
+        </svg>
+      </motion.div>
+      
+      {/* Trishul - Left */}
+      <motion.div
+        className="absolute left-24 top-1/4"
+        animate={{ y: [0, -8, 0], rotate: [0, 2, -2, 0] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <svg viewBox="0 0 60 100" className="w-16 h-24 opacity-25">
+          <defs>
+            <linearGradient id="trishulGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FFD700" />
               <stop offset="100%" stopColor="#CD853F" />
             </linearGradient>
           </defs>
-          {/* Coconut & Leaves */}
-          <ellipse cx="40" cy="22" rx="12" ry="10" fill="#8B4513" />
-          <path d="M30 15 Q25 5 35 8" stroke="#228B22" strokeWidth="3" fill="none" />
-          <path d="M40 12 Q40 0 45 5" stroke="#228B22" strokeWidth="3" fill="none" />
-          <path d="M50 15 Q55 5 45 8" stroke="#228B22" strokeWidth="3" fill="none" />
-          {/* Pot */}
-          <ellipse cx="40" cy="35" rx="18" ry="6" fill="url(#kalashGrad)" />
-          <path d="M22 35 Q18 55 22 75 Q30 85 40 85 Q50 85 58 75 Q62 55 58 35" fill="url(#kalashGrad)" />
-          <ellipse cx="40" cy="85" rx="18" ry="5" fill="#B8860B" />
-        </motion.svg>
-        
-        {/* Sanskrit Mantra */}
-        <div className="text-maroon/50 text-center font-serif">
-          <p className="text-lg">सत्यम् शिवम्</p>
-          <p className="text-xs mt-1">Satyam Shivam</p>
-        </div>
-      </div>
+          <rect x="27" y="25" width="6" height="75" fill="url(#trishulGrad)" />
+          <path d="M30 5 L25 25 L35 25 Z" fill="url(#trishulGrad)" />
+          <path d="M10 30 Q15 15 20 25 L20 35 Q15 30 10 30" fill="url(#trishulGrad)" />
+          <path d="M50 30 Q45 15 40 25 L40 35 Q45 30 50 30" fill="url(#trishulGrad)" />
+        </svg>
+      </motion.div>
       
-      {/* Corner Decorative Patterns */}
-      <div className="absolute top-0 left-0 w-32 h-32 opacity-20">
-        <svg viewBox="0 0 100 100" className="w-full h-full text-saffron">
-          <path d="M0 0 Q50 0 50 50 Q0 50 0 0" fill="currentColor" />
-          <circle cx="20" cy="20" r="8" fill="none" stroke="currentColor" strokeWidth="1" />
-          <circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" strokeWidth="0.5" />
+      {/* Kalash - Right Bottom */}
+      <motion.div
+        className="absolute right-28 bottom-1/4"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+      >
+        <svg viewBox="0 0 80 100" className="w-20 h-24 opacity-30">
+          <defs>
+            <linearGradient id="kalashGradFloat" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFD700" />
+              <stop offset="100%" stopColor="#CD853F" />
+            </linearGradient>
+          </defs>
+          <ellipse cx="40" cy="22" rx="14" ry="12" fill="#8B4513" />
+          <path d="M28 12 Q20 0 34 5" stroke="#228B22" strokeWidth="4" fill="none" />
+          <path d="M40 8 Q40 -5 48 2" stroke="#228B22" strokeWidth="4" fill="none" />
+          <path d="M52 12 Q60 0 46 5" stroke="#228B22" strokeWidth="4" fill="none" />
+          <ellipse cx="40" cy="38" rx="22" ry="8" fill="url(#kalashGradFloat)" />
+          <path d="M18 38 Q12 60 18 82 Q28 94 40 94 Q52 94 62 82 Q68 60 62 38" fill="url(#kalashGradFloat)" />
+          <ellipse cx="40" cy="94" rx="22" ry="6" fill="#B8860B" />
         </svg>
-      </div>
-      <div className="absolute top-0 right-0 w-32 h-32 opacity-20 transform scale-x-[-1]">
-        <svg viewBox="0 0 100 100" className="w-full h-full text-saffron">
-          <path d="M0 0 Q50 0 50 50 Q0 50 0 0" fill="currentColor" />
-          <circle cx="20" cy="20" r="8" fill="none" stroke="currentColor" strokeWidth="1" />
-          <circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" strokeWidth="0.5" />
-        </svg>
-      </div>
-      <div className="absolute bottom-0 left-0 w-32 h-32 opacity-20 transform scale-y-[-1]">
-        <svg viewBox="0 0 100 100" className="w-full h-full text-saffron">
-          <path d="M0 0 Q50 0 50 50 Q0 50 0 0" fill="currentColor" />
-          <circle cx="20" cy="20" r="8" fill="none" stroke="currentColor" strokeWidth="1" />
-          <circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" strokeWidth="0.5" />
-        </svg>
-      </div>
-      <div className="absolute bottom-0 right-0 w-32 h-32 opacity-20 transform scale-[-1]">
-        <svg viewBox="0 0 100 100" className="w-full h-full text-saffron">
-          <path d="M0 0 Q50 0 50 50 Q0 50 0 0" fill="currentColor" />
-          <circle cx="20" cy="20" r="8" fill="none" stroke="currentColor" strokeWidth="1" />
-          <circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" strokeWidth="0.5" />
-        </svg>
-      </div>
+      </motion.div>
       
       <AnimatePresence mode="wait">
         {mode === 'welcome' && (
