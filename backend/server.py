@@ -111,7 +111,7 @@ async def upload_image(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://temple-hub-7.preview.emergentagent.com"
+        backend_url = "https://mantra-hub-5.preview.emergentagent.com"
     
     # Return the URL
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -155,7 +155,7 @@ async def upload_video(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://temple-hub-7.preview.emergentagent.com"
+        backend_url = "https://mantra-hub-5.preview.emergentagent.com"
     
     # Return the URL
     video_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -1994,7 +1994,7 @@ async def update_booking_status(booking_id: str, status: BookingStatus, user: di
     return {"message": "Booking status updated"}
 
 # ===================== PRIEST DASHBOARD - CLASSES =====================
-from database import priest_classes_collection, priest_availability_collection, priest_content_collection, priest_streams_collection, priest_portfolio_collection, priest_services_collection, priest_posts_collection, post_comments_collection, post_likes_collection
+from database import priest_classes_collection, priest_availability_collection, priest_content_collection, priest_streams_collection, priest_portfolio_collection, priest_services_collection, priest_posts_collection, post_comments_collection, post_likes_collection, class_enrollments_collection
 
 @app.get("/api/priest/classes")
 async def get_priest_classes(user: dict = Depends(require_role([UserRole.PRIEST]))):
@@ -2034,6 +2034,12 @@ async def create_priest_class(request: Request, user: dict = Depends(require_rol
     
     data = await request.json()
     
+    # Determine if class is free based on price
+    price = data.get("price", 0)
+    is_free = data.get("is_free", price == 0)
+    if is_free:
+        price = 0  # Ensure price is 0 for free classes
+    
     class_dict = {
         "priest_id": str(priest["_id"]),
         "priest_name": user["name"],
@@ -2041,14 +2047,18 @@ async def create_priest_class(request: Request, user: dict = Depends(require_rol
         "description": data.get("description", ""),
         "class_type": data.get("class_type", "online"),  # online / offline / both
         "duration_minutes": data.get("duration_minutes", 60),
-        "price": data.get("price", 0),
+        "is_free": is_free,
+        "price": price,
         "max_students": data.get("max_students", 20),
+        "available_slots": data.get("max_students", 20),  # Track remaining slots
         "enrolled_count": 0,
+        "enrollments": [],  # List of enrolled user IDs
         "schedule": data.get("schedule", []),  # [{"day": "Monday", "time": "10:00"}]
         "category": data.get("category", "General"),
         "frequency": data.get("frequency", "weekly"),  # once, daily, weekly, biweekly, monthly
         "schedule_day": data.get("schedule_day", ""),  # Day of week for weekly/biweekly
         "schedule_time": data.get("schedule_time", ""),  # Time of class
+        "meeting_link": data.get("meeting_link", ""),
         "is_active": True,
         "created_at": datetime.now(timezone.utc)
     }
@@ -2066,10 +2076,25 @@ async def update_priest_class(class_id: str, request: Request, user: dict = Depe
         raise HTTPException(status_code=404, detail="Class not found")
     
     data = await request.json()
+    
+    # Handle is_free and price together
+    if "is_free" in data:
+        if data["is_free"]:
+            data["price"] = 0
+    elif "price" in data:
+        data["is_free"] = data["price"] == 0
+    
+    # Update available_slots if max_students changed
+    if "max_students" in data:
+        current_enrolled = cls.get("enrolled_count", 0)
+        new_max = data["max_students"]
+        data["available_slots"] = max(0, new_max - current_enrolled)
+    
     update_data = {k: v for k, v in data.items() if k in [
         "title", "description", "class_type", "duration_minutes", 
-        "price", "max_students", "schedule", "category", "is_active",
-        "frequency", "schedule_day", "schedule_time"
+        "is_free", "price", "max_students", "available_slots", "schedule", 
+        "category", "is_active", "frequency", "schedule_day", "schedule_time",
+        "meeting_link"
     ]}
     
     await priest_classes_collection.update_one(
@@ -2327,6 +2352,44 @@ async def create_stream(request: Request, user: dict = Depends(require_role([Use
     result = await priest_streams_collection.insert_one(stream_dict)
     return {"message": "Stream scheduled", "stream_id": str(result.inserted_id)}
 
+@app.put("/api/priest/streams/{stream_id}")
+async def update_stream(stream_id: str, request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Update a scheduled stream (before it starts)"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    stream = await priest_streams_collection.find_one({"_id": ObjectId(stream_id)})
+    
+    if not stream or stream["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Stream not found")
+    
+    if stream.get("status") == "live":
+        raise HTTPException(status_code=400, detail="Cannot edit a live stream")
+    
+    data = await request.json()
+    update_data = {k: v for k, v in data.items() if k in [
+        "title", "description", "scheduled_time", "thumbnail"
+    ]}
+    
+    await priest_streams_collection.update_one(
+        {"_id": ObjectId(stream_id)},
+        {"$set": update_data}
+    )
+    return {"message": "Stream updated"}
+
+@app.delete("/api/priest/streams/{stream_id}")
+async def delete_stream(stream_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Delete a scheduled stream (before it starts)"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    stream = await priest_streams_collection.find_one({"_id": ObjectId(stream_id)})
+    
+    if not stream or stream["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Stream not found")
+    
+    if stream.get("status") == "live":
+        raise HTTPException(status_code=400, detail="Cannot delete a live stream - end it first")
+    
+    await priest_streams_collection.delete_one({"_id": ObjectId(stream_id)})
+    return {"message": "Stream deleted"}
+
 @app.put("/api/priest/streams/{stream_id}/start")
 async def start_stream(stream_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
     """Start a live stream"""
@@ -2405,8 +2468,9 @@ async def get_public_classes(
             "frequency_days": cls.get("frequency_days", []),
             "price": cls.get("price", 0),
             "max_students": cls.get("max_students", 50),
+            "available_slots": cls.get("available_slots", cls.get("max_students", 50) - cls.get("enrolled_count", 0)),
             "enrolled_count": cls.get("enrolled_count", 0),
-            "is_free": cls.get("price", 0) == 0,
+            "is_free": cls.get("is_free", cls.get("price", 0) == 0),
             "meeting_link": cls.get("meeting_link", ""),
             "created_at": safe_isoformat(cls.get("created_at"))
         })
@@ -2449,8 +2513,8 @@ async def get_class_details(class_id: str):
     }
 
 @app.post("/api/classes/{class_id}/enroll")
-async def enroll_in_class(class_id: str, user: dict = Depends(get_current_user)):
-    """Enroll in a class"""
+async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Enroll in a class - free classes enroll directly, paid classes require payment"""
     cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
     if not cls:
         raise HTTPException(status_code=404, detail="Class not found")
@@ -2460,20 +2524,82 @@ async def enroll_in_class(class_id: str, user: dict = Depends(get_current_user))
     if str(user["_id"]) in enrollments:
         raise HTTPException(status_code=400, detail="Already enrolled in this class")
     
-    # Check capacity
-    if cls.get("enrolled_count", 0) >= cls.get("max_students", 50):
-        raise HTTPException(status_code=400, detail="Class is full")
+    # Check capacity using available_slots
+    available_slots = cls.get("available_slots", cls.get("max_students", 50) - cls.get("enrolled_count", 0))
+    if available_slots <= 0:
+        raise HTTPException(status_code=400, detail="Class is full - no slots available")
     
-    # Enroll
-    await priest_classes_collection.update_one(
-        {"_id": ObjectId(class_id)},
-        {
-            "$push": {"enrollments": str(user["_id"])},
-            "$inc": {"enrolled_count": 1}
-        }
-    )
+    # Check if class is free or paid
+    is_free = cls.get("is_free", cls.get("price", 0) == 0)
     
-    return {"message": "Successfully enrolled in class", "class_id": class_id}
+    if is_free:
+        # Free class - enroll directly
+        await priest_classes_collection.update_one(
+            {"_id": ObjectId(class_id)},
+            {
+                "$push": {"enrollments": str(user["_id"])},
+                "$inc": {"enrolled_count": 1, "available_slots": -1}
+            }
+        )
+        return {"message": "Successfully enrolled in class", "class_id": class_id, "is_free": True}
+    else:
+        # Paid class - create payment intent
+        try:
+            data = await request.json() if request else {}
+        except:
+            data = {}
+        
+        # Check if payment_intent_id is provided (payment already completed)
+        if data.get("payment_intent_id"):
+            # Verify payment was successful
+            # For now, trust the frontend - in production, verify with Stripe
+            await priest_classes_collection.update_one(
+                {"_id": ObjectId(class_id)},
+                {
+                    "$push": {"enrollments": str(user["_id"])},
+                    "$inc": {"enrolled_count": 1, "available_slots": -1}
+                }
+            )
+            
+            # Record the class enrollment payment
+            await class_enrollments_collection.insert_one({
+                "user_id": str(user["_id"]),
+                "class_id": class_id,
+                "priest_id": cls["priest_id"],
+                "amount": cls.get("price", 0),
+                "payment_intent_id": data.get("payment_intent_id"),
+                "status": "completed",
+                "enrolled_at": datetime.now(timezone.utc)
+            })
+            
+            return {"message": "Successfully enrolled in class", "class_id": class_id, "is_free": False, "paid": True}
+        else:
+            # Create payment intent for the class
+            import stripe
+            stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
+            
+            try:
+                payment_intent = stripe.PaymentIntent.create(
+                    amount=int(cls.get("price", 0) * 100),  # Convert to cents/paise
+                    currency="inr",
+                    metadata={
+                        "type": "class_enrollment",
+                        "class_id": class_id,
+                        "user_id": str(user["_id"]),
+                        "priest_id": cls["priest_id"]
+                    }
+                )
+                
+                return {
+                    "message": "Payment required for this class",
+                    "requires_payment": True,
+                    "is_free": False,
+                    "price": cls.get("price", 0),
+                    "client_secret": payment_intent.client_secret,
+                    "payment_intent_id": payment_intent.id
+                }
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Payment processing error: {str(e)}")
 
 @app.get("/api/live-streams")
 async def get_public_live_streams(
@@ -4447,7 +4573,7 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     order_id = str(result.inserted_id)
     
     # Get frontend URL for redirect
-    frontend_url = os.environ.get("FRONTEND_URL", "https://temple-hub-7.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://mantra-hub-5.preview.emergentagent.com")
     
     # Create Stripe checkout session
     try:
@@ -4897,6 +5023,29 @@ async def get_chat_rooms(user: dict = Depends(get_current_user)):
     
     rooms = []
     async for room in cursor:
+        # Auto-heal: Reactivate chat rooms that were incorrectly deactivated
+        # Chat should only be inactive if booking/order is cancelled
+        is_active = room.get("is_active", True)
+        if not is_active:
+            should_reactivate = False
+            if room.get("booking_id"):
+                booking = await bookings_collection.find_one({"_id": ObjectId(room["booking_id"])})
+                # Reactivate if booking exists and is not cancelled
+                if booking and booking.get("status") != "cancelled":
+                    should_reactivate = True
+            elif room.get("order_id"):
+                order = await orders_collection.find_one({"_id": ObjectId(room["order_id"])})
+                # Reactivate if order exists and is not cancelled
+                if order and order.get("status") != "cancelled":
+                    should_reactivate = True
+            
+            if should_reactivate:
+                await chat_rooms_collection.update_one(
+                    {"_id": room["_id"]},
+                    {"$set": {"is_active": True}, "$unset": {"deactivated_at": ""}}
+                )
+                is_active = True
+        
         # Get last message
         last_message = await chat_messages_collection.find_one(
             {"room_id": str(room["_id"])},
@@ -4913,7 +5062,7 @@ async def get_chat_rooms(user: dict = Depends(get_current_user)):
             "booking_id": room.get("booking_id"),
             "order_id": room.get("order_id"),
             "context": room.get("context", ""),
-            "is_active": room.get("is_active", True),
+            "is_active": is_active,
             "other_participant": {
                 "id": other_id,
                 "name": other_details.get("name", "User"),

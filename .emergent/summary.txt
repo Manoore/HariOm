@@ -1,208 +1,216 @@
 <analysis>**original_problem_statement:**
-The user wants to build a Divine App, a digital platform connecting users with Hindu spiritual services. The goal is to have a comprehensive web application and eventually native mobile apps for the App Store and Play Store.
+The user wants to build a Divine App, a digital platform connecting users with Hindu spiritual services. The goal is to have a comprehensive web application and eventually native mobile apps.
 
 **PRODUCT REQUIREMENTS:**
 -   **Core Idea:** A digital platform for Hindu spiritual services.
 -   **User Roles:** Devotees, Priests, Astrologers, Shop Owners, Admin.
--   **Core Functions:** Priest booking, spiritual learning, and astrology services.
+-   **Core Functions:** Priest booking, spiritual learning (Vedic classes), and astrology services.
 -   **Marketplace:** A Pooja Store for spiritual items.
--   **Additional Features:** Spiritual content feed, festival reminders, temple info, animated Aarti, location-based services, multi-language support, real-time chat, and per-minute video consultations.
--   **UI/UX:** Traditional/Warm theme, personalized devotee home screen, and role-specific dashboards.
--   **Admin Management:** All critical settings, including API keys, platform fees, and taxes should be manageable from an Admin Dashboard without requiring code changes.
--   **Mobile App:** The user has requested a native mobile app to be built alongside the existing web application.
+-   **Additional Features:** Spiritual content feed (mantras), real-time chat between users and providers, payment splitting for vendors, booking cancellation, and refunds.
+-   **Admin Management:** All critical settings, including content (like the music library) and platform fees, should be manageable from an Admin Dashboard.
+-   **Mobile App:** A native mobile app is a long-term goal.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The project is a full-stack application consisting of a React web frontend, a FastAPI backend, and a React Native mobile app. The primary blocker from the previous session—a persistent backend deployment failure on Google Cloud Run—has been successfully resolved. The web frontend, deployed on Firebase Hosting, is now connected to the latest, fully functional backend. Numerous features and UI enhancements have been implemented in this session, including fixing broken app functionalities (Astrology, Wallet), adding address autocomplete, a feedback/testimonial system, and significant UI improvements to the landing and authentication pages. The mobile app in  remains non-functional.
+The project is a full-stack application with a React frontend, a FastAPI backend, and a MongoDB database. The user deploys the frontend to Firebase Hosting and the backend to Google Cloud Run. The application has a wide range of features, including user authentication, priest booking, a pooja store, and an admin dashboard. Recent work focused on implementing a comprehensive system for Vedic classes (including free/paid toggles, slot management, and payment flows), fixing numerous bugs related to data not appearing correctly, and enhancing search/filter capabilities. The mobile app in  remains non-functional.
 
 **Last working item**:
--   **Last item agent was working:** Enhancing the UI of the sign-in/signup screens. The user requested to make decorative icons bigger, float them across the screen, add falling flowers, and use a more authentic Trishul icon. The agent implemented the larger floating icons but did not add the falling flowers or update the Trishul icon.
--   **Status:** IN PROGRESS
--   **Agent Testing Done:** N
--   **Which testing method agent to use?** screenshot tool to verify the visual changes on the auth screen.
--   **User Testing Done:** N
+-   **Last item agent was working:** At the end of the last session, the user listed a large set of new requirements for the current session. The agent and user agreed on a prioritized list, with debugging the chat room feature being the first task.
+-   **Status:** NOT STARTED (This is the first task for the new session).
+-   **Agent Testing Done:** N/A
+-   **Which testing method agent to use?** To debug the chat, the agent should first try to reproduce the issue by logging in as a devotee and checking the Messages tab after confirming a booking with a priest.  commands can be used to inspect the  endpoint and check the  status of the relevant chat room.
+-   **User Testing Done:** N/A
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Incomplete Auth Screen UI Enhancements (P0)
+-   **Issue 1:** Chat rooms are not working on the user's live site (P0)
 -   **Issue 2:** Mobile App Fails to Load in Expo (P2)
 -   **Issue 3:** Google Sign-in Fails on New Preview Domains (P2)
+-   **Issue 4:** Unreliable Audio for Music Library (P3)
 
 **Issues Detail:**
--   **Issue 1: Incomplete Auth Screen UI Enhancements**
-    -   **Attempted fixes:** The agent successfully added larger, animated devotional icons that float across the screen.
+-   **Issue 1: Chat rooms are not working on the user's live site**
+    -   **Attempted fixes:** In the previous session, the agent found that chat rooms were being deactivated when a booking was completed. The agent changed the backend logic to keep the chat active and manually reactivated the user's existing chat room on the preview environment. The user then deployed the code. However, the user states the issue persists on their live site.
     -   **Next debug checklist:**
-        1.  Edit .
-        2.  Implement a falling flowers animation using CSS or a suitable library.
-        3.  Find a more authentic SVG/image for the Trishul icon and replace the current one.
-        4.  Take a screenshot to verify the final look and feel.
-    -   **Why fix this issue and what will be achieved with the fix?** To fully realize the user's aesthetic vision for a more immersive and spiritual authentication experience.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Frontend
+        1.  Verify the user has deployed the latest backend code to Google Cloud Run, not just the frontend.
+        2.  Log in as a devotee and priest to create and confirm a new booking on the live site.
+        3.  Check the Messages tab in both dashboards to see if the chat room appears and is active.
+        4.  Investigate the  collection in MongoDB to see the  status for the newly created chat room.
+    -   **Why fix this issue and what will be achieved with the fix?** Enables core communication between devotees and service providers after a booking is confirmed.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Both.
     -   **Blocked on other issue:** None
 
 -   **Issue 2: Mobile App Fails to Load in Expo**
-    -   **Attempted fixes:** In a previous session, asset sizes were reduced, and local images were replaced with remote URLs. No work was done on this in the current session.
+    -   **Attempted fixes:** None in the last session. The issue is unblocked but has not been prioritized.
     -   **Next debug checklist:**
-        1.  Now that the backend is stable, this issue is unblocked and can be prioritized.
-        2.  Instruct the user to run  and provide any terminal errors.
+        1.  Navigate to the  directory.
+        2.  Run  and analyze terminal errors.
         3.  Review  for outdated or conflicting dependencies.
-    -   **Why fix this issue and what will be achieved with the fix?** It will unblock all development and testing for the native mobile application.
+    -   **Why fix this issue and what will be achieved with the fix?** Unblocks all development and testing for the native mobile application.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Frontend (Mobile)
-    -   **Blocked on other issue:** None (was previously blocked by backend deployment).
+    -   **Blocked on other issue:** None
 
 -   **Issue 3: Google Sign-in Fails on New Preview Domains**
     -   **Attempted fixes:** None. This is an environmental constraint.
-    -   **Next debug checklist:** Instruct the user that for every new preview environment, they must manually add the new preview domain URL to the list of authorized domains in their Firebase Authentication settings.
-    -   **Why fix this issue and what will be achieved with the fix?** This will enable Google Sign-in for testing purposes on new preview builds.
-    -   **Status:** BLOCKED
+    -   **Next debug checklist:** This requires the user to manually add the new preview domain URL to the list of authorized domains in their Firebase Authentication settings for each new environment.
+    -   **Why fix this issue and what will be achieved with the fix?** Enables Google Sign-in for testing on new preview builds.
+    -   **Status:** BLOCKED (Requires user action per environment)
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Frontend
-    -   **Blocked on other issue:** N/A
+    -   **Blocked on other issue:** None
+
+-   **Issue 4: Unreliable Audio for Music Library**
+    -   **Attempted fixes:** None. The agent identified that the current implementation uses an unreliable Internet Archive API search, which returns incorrect audio (e.g., reggae music for a mantra search).
+    -   **Next debug checklist:** This has been moved to the backlog. The plan is to first move the search queries to the database so an Admin can manage them, and later replace the audio source with curated YouTube videos.
+    -   **Why fix this issue and what will be achieved with the fix?** Provides users with correct and relevant spiritual audio content.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Backend
+    -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1: Native Mobile App Development**
-    -   **Where to resume:** The app's development is blocked by the Expo loading issue. Once that is resolved, work can resume on connecting screens and implementing features.
-    -   **What will be achieved with this?** A functional native mobile app for iOS and Android.
-    -   **Status:** BLOCKED
-    -   **Should Test frontend/backend/both after fix?** Frontend (Mobile)
-    -   **Blocked on something:** Issue 2: Mobile App Fails to Load in Expo
+-   None.
 
 **Upcoming and Future Tasks**
-**Upcoming Tasks:**
--   **(P1) Spiritual Articles:** Build a blog/article section for the web and mobile apps.
--   **(P2) Temple Directory:** Create a searchable database of Hindu temples.
--   **(P2) Curated YouTube Video Player:** Implement an embedded YouTube player for mantras.
+**Upcoming Tasks (Prioritized for this session):**
+-   **(P0) Class Enrollment Payments:** Fully implement and test the payment flow for enrolling in paid Vedic classes.
+-   **(P0) Free/Paid Toggle for Classes:** Allow priests to mark classes as free or paid.
+-   **(P0) Class Slot Management:** Allow priests to set a maximum number of students for a class, and decrement the count upon successful enrollment.
+-   **(P1) Edit/Delete Functionality:** Provide priests with the ability to edit or delete their created services, classes, and live streams.
+-   **(P1) Booking Cancellation:** Implement a feature for both devotees and priests to cancel a booking, enforcing a 24-hour notice policy.
+-   **(P1) Refund Process:** Design and implement a refund process, likely tied to the cancellation policy.
+-   **(P2) Stripe Connect Integration:** Begin the phased implementation of Stripe Connect to automatically split payments between the platform and the service providers (priests/vendors).
+-   **(P2) Live Stream Notifications:** Enable notifications for devotees when a priest starts a live stream.
 
-**Future Tasks:**
--   **(P2) Complete Native Mobile App:** Finish all features for the mobile app and prepare for App Store/Play Store submission.
--   **(P3) Refactor Checkout Logic:** Move checkout, payment confirmation, and webhook endpoints from  to a dedicated  file.
+**Future Tasks (Backlog):**
+-   Admin Panel for Music Library: Move the mantra list from a hardcoded backend file to a MongoDB collection manageable via the Admin Dashboard.
+-   Curated YouTube Video Player: Replace the Internet Archive audio source with an embedded YouTube player.
+-   Complete Native Mobile App: Finish mobile app features after the Expo loading issue is resolved.
+-   Refactor : Break down the massive  file into multiple, smaller route files for better maintainability.
+-   Refactor : Decompose the large dashboard component into smaller, more manageable child components.
 
 **Completed work in this session**
--   **Backend Deployment (RESOLVED):** Fixed the critical Google Cloud Run deployment failure by resolving a hardcoded file path () and a  password hashing library issue within the Docker container. This unblocked the entire project.
--   **Authentication System (RESOLVED):** Fixed login and registration failures on the deployed backend. Created and verified a full set of test accounts for all user roles.
--   **Address Autocomplete (DONE):** Created a reusable React component for Google Places address autocomplete and integrated it into the Devotee Profile, Checkout Page, and Priest Dashboard.
--   **Post-Payment Redirect (RESOLVED):** Fixed a bug that redirected users to the landing page after payment by correcting frontend state management and setting the correct  environment variable in the backend deployment for Stripe redirects.
--   **Feedback & Testimonial System (DONE):**
-    -   Created backend APIs (, ) and database collections.
-    -   Added a Contact Us form and a dynamic Testimonials section to the landing page.
-    -   Added a feature for logged-in users to submit testimonials from their dashboard.
-    -   Added an Admin Dashboard section to view feedback and manage (approve/delete) testimonials.
--   **Dynamic Contact Info (DONE):** The website's contact information (email, phone, address) is now fetched from the backend and can be edited by an admin in the System Settings dashboard.
--   **UI/UX Enhancements:**
-    -   **Priest Dashboard:** Fixed a blank screen flash on save actions by implementing a silent data refresh.
-    -   **Landing Page:** Removed an irritating splash screen, redesigned the layout of floating elements to prevent overflow, and improved the background image transition to a smooth crossfade.
-    -   **Auth Screens:** Added large, animated, floating devotional icons (Om, Diyas, Bells, etc.) to the login/signup pages for a more immersive feel.
+-   **Vedic Classes Feature Suite (Backend & Frontend):**
+    -   Added backend endpoints and frontend UI for priests to mark classes as free or paid and set a maximum number of students ().
+    -   Implemented the class enrollment logic: free classes enroll instantly, while paid classes trigger a Stripe payment modal.
+    -   The backend now decrements available slots upon successful enrollment.
+-   **Services/Classes Not Appearing (BUG FIX):**
+    -   Resolved a critical bug where newly added priest services, classes, and live streams were not appearing for devotees. The root causes were identified and fixed (fetching from incorrect collections, API crashes due to string/datetime mismatches).
+-   **Priest/Store Search Filters:**
+    -   Implemented backend and frontend for filtering priests and products by location, language, and a Near Me geolocation feature.
+-   **UI Enhancements & Fixes:**
+    -   Completed UI enhancements on the Auth and Landing pages (authentic icons, contained falling flowers).
+    -   Removed a duplicate, hardcoded testimonials section from the landing page.
+-   **Deployment Support:**
+    -   Successfully guided the user through deploying the latest backend and frontend code to their production Google Cloud Run and Firebase environments, resolving several local CLI and configuration errors.
 
 **Earlier issues found/mentioned but not fixed**
--   None.
+-   None that are not already tracked in the pending or future task lists.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** Google Sign-in on new preview domains, Expo Mobile App Preview.
 -   **Recurrence count:** 5+
--   **Status:** The Google Sign-in issue remains  (requires user action). The Expo preview issue is  but is now unblocked. The primary recurring issue of backend deployment was .
+-   **Status:** The Google Sign-in issue is  (requires user action per-environment). The Expo preview issue is .
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Backend:** FastAPI, uvicorn,  with  for hashing.
--   **Frontend (Web):** React, Framer Motion for animations.
--   **Frontend (Mobile):** React Native, Expo.
--   **Database:** MongoDB Atlas.
--   **Authentication:** Firebase (Email/Password, Google, Phone Auth), Custom JWT for backend sessions.
--   **Payments:** Stripe.
--   **Deployment (Web):** Firebase Hosting (Frontend), Google Cloud Run (Backend).
+-   **Backend:** FastAPI
+-   **Frontend:** React
+-   **Database:** MongoDB (including geospatial queries for Near Me feature)
+-   **Authentication:** Firebase (Email/Password, Google), Custom JWT
+-   **Payments:** Stripe (currently single-receiver, Stripe Connect planned)
+-   **Deployment:** Firebase Hosting (Frontend), Google Cloud Run (Backend)
 
 **key DB schema**
--   **feedbacks:** 
--   **testimonials:** 
--   **system_configs:** Added  to the existing configuration document.
+-   ****: Fields added:  (Boolean),  (Number).
+-   ****: New collection to track .
+-   ****: Now uses  to filter which priests are publicly visible.
+-   Priest and Shop documents now support location data for geospatial queries.
 
 **changes in tech stack**
--   No changes in this session.
+-   No changes.
 
 **All files of reference**
--   : Modified to install  and correctly install  to resolve deployment and login issues.
--   : Major updates to add APIs for feedback, testimonials, and dynamic contact info. Pathing fixes for uploads.
--   : Heavily modified to add decorative, animated floating elements for a new UI.
--   : Updated to include a contact form, a dynamic testimonials section, and improved UI/UX for floating elements and background transitions.
--   : Reworked state and effect logic to correctly handle post-payment redirects from Stripe.
--   : Added new tabs and components for managing user feedback and testimonials.
--   : New reusable component for Google Places address search.
+-   **/app/backend/server.py**: Heavily modified to add all new backend logic for classes, payments, filters, and numerous bug fixes. **This file is over 5000 lines long and is a major technical debt risk.**
+-   **/app/frontend/src/pages/DevoteeDashboard.js**: Heavily modified to add UI for class enrollment, payment modals, and new filters. **This file is also very large.**
+-   **/app/frontend/src/pages/PriestDashboard.js**: Modified to add UI for creating/editing classes with the new free/paid and slot management fields.
+-   **/app/frontend/src/pages/AuthScreen.js**: UI styling changes for icons and animations.
+-   **/app/frontend/src/pages/LandingPage.js**: UI styling changes and removal of duplicate content.
 
 **Areas that need refactoring**:
--   The file  is acting as a monolithic router and state manager for the entire web app. It should be refactored to use  for clearer navigation logic.
--   The  command is very long and contains hardcoded secrets. This should be improved by using a build configuration file () and storing secrets in GCP Secret Manager.
+-   ** (CRITICAL):** The backend logic must be split from one massive file into a structured  directory (e.g., , , ). The current state is unmaintainable.
+-   ** (HIGH):** The component is a monolith handling multiple tabs and complex state. It should be broken down into smaller, self-contained components for each tab (, , , etc.).
 
 **key api endpoints**
--   **POST :** Submits user feedback from the landing page.
--   **GET :** Fetches approved testimonials for public display.
--   **POST :** Allows logged-in users to submit a testimonial.
--   **GET :** Fetches public contact information for the landing page.
--   **PUT/DELETE :** Admin endpoints to approve/delete testimonials.
+-   **POST **: Enrolls a user in a class. Handles both free and paid scenarios.
+-   **POST **: Creates a Stripe Payment Intent for paid enrollments.
+-   **PUT **: Edit a service.
+-   **PUT **: Edit a class.
+-   **PUT **: Edit a live stream.
+-   The  and  GET endpoints now accept , ,  for location-based filtering.
 
 **Critical Info for New Agent**
--   The primary blocker of the entire project—backend deployment failure—is now **resolved**. The application is stable and running on the latest code.
--   Your immediate priority (P0) is to complete the user's latest UI request for the authentication screen: adding **falling flowers** and a more **authentic Trishul icon**.
--   Once the auth screen UI is complete, the next major task should be to investigate and fix the **mobile app's Expo loading issue** (Issue #2), as it is the main blocker for mobile development.
--   Remember to instruct the user on how to resolve the recurring Google Sign-in issue by adding new preview domains to their Firebase settings.
+-   **Start with the User's Priorities:** The user wants to start by debugging the chat room functionality, followed by the list of new features (class payments, cancellation, Stripe Connect, etc.). Acknowledge this plan.
+-   **Production First Mentality:** The user tests exclusively on their live Firebase/Cloud Run site and is frustrated when fixes on the preview don't appear live. Always frame solutions in the context of their production deployment. Ensure they deploy both frontend AND backend code.
+-   **Address Technical Debt:** The  file is a critical risk to the project's stability and future development. You MUST propose and prioritize refactoring it into smaller, manageable route files as an urgent task. Frame this as a necessary step to build the user's complex new features (like Stripe Connect) reliably.
 
 **documents and test reports created in this job**
--   None.
+-    was updated to reflect new requirements and backlog items.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requests a contact option, a way for users to write testimonials for the landing page, and 3D scrolling devotional images.
-2.  **Agent:** Implements all three features.
-3.  **User:** Asks to remove the 3D scrolling image section as the images are not appropriate.
-4.  **Agent:** Removes the section.
-5.  **User:** Asks how they will receive feedback submissions and how to update the contact info.
-6.  **Agent:** Implements an admin dashboard to view feedback and makes contact info editable from the admin panel.
-7.  **User:** Asks if they need to pull code before deploying the backend.
-8.  **Agent:** Confirms yes and provides the full sequence of commands.
-9.  **User:** Reports that the floating icons on the landing page are getting cut off by the screen edges.
-10. **Agent:** Fixes the layout to use flexbox, preventing the overflow issue.
-11. **User:** Asks to add a sanathana devotional touch to the empty sides of the sign-in/signup screens.
-12. **Agent:** Adds decorative elements (Om, Diya, Lotus, etc.) with animations to the auth screens.
-13. **User:** Dislikes the new auth screen design, asking for bigger icons floated all over the screen.
-14. **Agent:** Redesigns the auth screen with larger, randomly-placed floating icons.
-15. **User:** Requests to add falling flowers and make the Trishul icon a little authentic on the auth screen. (This is the current pending task).
+1.  **User:** Asks to remember to add edit, cancellation, and refund features for services/classes.
+2.  **Agent:** Acknowledges and adds them to the task list.
+3.  **User:** Asks how payment splitting between the platform and priests/vendors would work.
+4.  **Agent:** Explains Stripe Connect as the recommended solution and proposes a phased implementation.
+5.  **User:** yes - Agrees to add Stripe Connect to the task list.
+6.  **Agent:** Summarizes the full task list for the next session.
+7.  **User:** bye
+8.  **Agent:** Bye! Good night! 🙏
+9.  **User:** Good Morning welcome back - **This is the pending message to respond to.**
+10. **Agent:** Responds with a greeting and outlines the agreed-upon tasks for the day, asking where to start.
+11. **User:** Asks how the music library data is managed before starting the tasks.
+12. **Agent:** Explains the current hardcoded implementation and suggests moving it to the database as a backlog item.
+13. **User:** Agrees to backlog the music library task and asks to start with the chat room issue, with Stripe Connect as the last task for the day.
 
 **Project Health Check:**
 -   **Broken:**
-    -   The mobile app preview in Expo is non-functional, blocking all mobile development.
-    -   The auth screen UI is incomplete based on the last user request.
--   **Mocked:**
-    -   None.
+    -   The mobile app () is completely non-functional.
+    -   The chat feature is reportedly not working on the user's live site.
+-   **Technical Debt:**
+    -    is critically large and requires immediate refactoring.
+    -    is overly complex and should be broken down.
 
 **3rd Party Integrations**
 -   **Google Cloud Run:** Backend hosting.
 -   **Firebase Hosting:** Frontend hosting.
--   **Firebase Authentication:** User login (Email/Password, Google, Phone).
+-   **Firebase Authentication:** User login (Email/Password, Google).
 -   **MongoDB Atlas:** Database.
--   **Stripe:** Payment gateway.
+-   **Stripe:** Payment gateway (Single-receiver model).
 -   **Prokerala Astrology API:** Astrology data.
--   **Expo:** Mobile app development and previewing.
+-   **Expo:** Mobile app development (currently broken).
+-   **Stripe Connect:** Planned for payment splitting.
 
 **Testing status**
 -   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None in this session.
--   **Known regressions:** None from this session.
+-   **Test files created:** None.
+-   **Known regressions:** The chat feature, which was working on preview, is reportedly broken on the user's live deployment.
 
 **Credentials to test flow:**
 | Role | Email | Password |
 |---|---|---|
 | **Admin** |  |  |
 | **Priest** |  |  |
-| **Shop Owner** |  |  |
-| **Astrologer** |  |  |
+| **User's Priest** |  | (password unknown, but is verified) |
 | **Devotee** |  |  |
+| **User's Devotee**|  | (password unknown) |
 
 **What agent forgot to execute**
--   The agent did not fully complete the last user request to add falling flowers and an authentic Trishul to the auth screen.
--   The agent did not revisit the mobile app's Expo loading issue after the main backend blocker was resolved.
--   The agent did not use the  at any point, despite numerous significant backend and frontend changes. All testing was manual or based on user feedback.</analysis>
+-   The agent did not perform end-to-end testing of the complex class enrollment and payment flow before the end of the previous session.
+-   The agent did not proactively push for the critical refactoring of , allowing it to grow to an unmanageable size. This should have been raised as a blocker for adding more features.</analysis>

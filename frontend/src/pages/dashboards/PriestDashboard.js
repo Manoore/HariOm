@@ -1506,7 +1506,14 @@ function ClassesTab({ classes, onRefresh }) {
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <h3 className="font-semibold text-gray-800">{cls.title}</h3>
-                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{cls.category}</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{cls.category}</span>
+                    {cls.is_free || cls.price === 0 ? (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">FREE</span>
+                    ) : (
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">₹{cls.price}</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => { setEditingClass(cls); setShowModal(true); }} className="p-1.5 hover:bg-gray-100 rounded">
@@ -1524,10 +1531,17 @@ function ClassesTab({ classes, onRefresh }) {
                 <span className="flex items-center gap-1 text-gray-600">
                   <Clock className="w-3 h-3" /> {cls.duration_minutes} min
                 </span>
-                <span className="flex items-center gap-1 text-gray-600">
-                  <Users className="w-3 h-3" /> {cls.enrolled_count || 0}/{cls.max_students}
+                <span className={`flex items-center gap-1 ${(cls.available_slots || (cls.max_students - (cls.enrolled_count || 0))) <= 3 ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
+                  <Users className="w-3 h-3" /> {cls.enrolled_count || 0}/{cls.max_students} enrolled
                 </span>
-                <span className="flex items-center gap-1 text-saffron font-medium">₹{cls.price}</span>
+              </div>
+              
+              {/* Show remaining slots */}
+              <div className="mt-2 text-xs text-gray-500">
+                {(cls.available_slots || (cls.max_students - (cls.enrolled_count || 0))) > 0 
+                  ? `${cls.available_slots || (cls.max_students - (cls.enrolled_count || 0))} slots available`
+                  : <span className="text-red-500 font-medium">Class Full</span>
+                }
               </div>
               
               {cls.frequency && cls.frequency !== 'once' && (
@@ -1558,8 +1572,9 @@ function ClassesTab({ classes, onRefresh }) {
 function ClassModal({ isOpen, onClose, editData, onSuccess }) {
   const [form, setForm] = useState({
     title: '', description: '', class_type: 'online', duration_minutes: 60,
-    price: 500, max_students: 20, category: 'General',
-    frequency: 'weekly', schedule_day: 'Monday', schedule_time: '10:00'
+    is_free: false, price: 500, max_students: 20, category: 'General',
+    frequency: 'weekly', schedule_day: 'Monday', schedule_time: '10:00',
+    meeting_link: ''
   });
   const [saving, setSaving] = useState(false);
 
@@ -1567,25 +1582,35 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
     if (editData) {
       setForm({
         ...editData,
+        is_free: editData.is_free || editData.price === 0,
         frequency: editData.frequency || 'weekly',
         schedule_day: editData.schedule_day || 'Monday',
-        schedule_time: editData.schedule_time || '10:00'
+        schedule_time: editData.schedule_time || '10:00',
+        meeting_link: editData.meeting_link || ''
       });
     } else {
       setForm({
         title: '', description: '', class_type: 'online', duration_minutes: 60,
-        price: 500, max_students: 20, category: 'General',
-        frequency: 'weekly', schedule_day: 'Monday', schedule_time: '10:00'
+        is_free: false, price: 500, max_students: 20, category: 'General',
+        frequency: 'weekly', schedule_day: 'Monday', schedule_time: '10:00',
+        meeting_link: ''
       });
     }
   }, [editData, isOpen]);
 
   const handleSubmit = async () => {
     if (!form.title) { toast.error('Enter class title'); return; }
+    
+    // If free, set price to 0
+    const submitData = { ...form };
+    if (submitData.is_free) {
+      submitData.price = 0;
+    }
+    
     setSaving(true);
     try {
-      if (editData) await api.put(`/api/priest/classes/${editData.id}`, form);
-      else await api.post('/api/priest/classes', form);
+      if (editData) await api.put(`/api/priest/classes/${editData.id}`, submitData);
+      else await api.post('/api/priest/classes', submitData);
       toast.success(editData ? 'Updated!' : 'Created!');
       onSuccess(); onClose();
     } catch { toast.error('Failed'); }
@@ -1639,19 +1664,52 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
             </div>
           </div>
           
-          <div className="grid grid-cols-3 gap-4">
+          {/* Free/Paid Toggle */}
+          <div className="bg-orange-50 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-medium text-gray-700">Class Pricing</span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.is_free}
+                  onChange={(e) => setForm({ ...form, is_free: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  {form.is_free ? 'FREE' : 'PAID'}
+                </span>
+              </label>
+            </div>
+            
+            {!form.is_free && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl"
+                  min="1"
+                />
+              </div>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
               <input type="number" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
-              <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Max Students (Slots)</label>
+              <input type="number" value={form.max_students} onChange={(e) => setForm({ ...form, max_students: parseInt(e.target.value) })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" min="1" />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Students</label>
-              <input type="number" value={form.max_students} onChange={(e) => setForm({ ...form, max_students: parseInt(e.target.value) })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" />
-            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Meeting Link (Zoom/Google Meet)</label>
+            <input type="url" value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" placeholder="https://zoom.us/j/..." />
           </div>
           
           {/* Schedule Section */}
@@ -1685,6 +1743,16 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
               <input type="time" value={form.schedule_time} onChange={(e) => setForm({ ...form, schedule_time: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" />
             </div>
           </div>
+          
+          {/* Show enrolled count if editing */}
+          {editData && editData.enrolled_count > 0 && (
+            <div className="bg-blue-50 rounded-xl p-3 flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-blue-700">
+                {editData.enrolled_count} student(s) enrolled • {(editData.max_students || 20) - (editData.enrolled_count || 0)} slots remaining
+              </span>
+            </div>
+          )}
         </div>
         
         <div className="p-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">

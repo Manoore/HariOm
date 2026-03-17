@@ -669,8 +669,14 @@ Icons: Custom 3D animated SVGs
 - [x] **Removed duplicate testimonials section** - Only one testimonials section now (dynamic from DB)
 - [x] **Added falling flowers animation** - Rose petals, marigolds, and jasmine flowers falling on left and right sides
 
+## Chat Room Fix (March 17, 2026)
+- [x] **Auto-heal inactive chat rooms** - Chat rooms that were incorrectly deactivated when bookings were completed are now automatically reactivated
+- [x] **Root cause**: Old code deactivated chats on booking completion; new code only deactivates on cancellation
+- [x] **Solution**: GET `/api/chat/rooms` now checks booking/order status and reactivates if not cancelled
+- [x] **Backend fix in**: `/app/backend/server.py` - get_chat_rooms endpoint
+
 ## Preview URLs
-- **Web App**: https://temple-hub-7.preview.emergentagent.com
+- **Web App**: https://mantra-hub-5.preview.emergentagent.com
 - **Mobile App**: Run `npx expo start` from `/app/mobile/` and scan QR with Expo Go app
 
 ## Mobile App Structure (`/app/mobile/`)

@@ -4480,6 +4480,7 @@ function ClassesTab({ isDesktop }) {
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState('browse'); // 'browse' or 'enrolled'
   const [enrolling, setEnrolling] = useState(null);
+  const [paymentModal, setPaymentModal] = useState(null); // {classId, className, price, clientSecret}
 
   useEffect(() => {
     fetchClasses();
@@ -4506,17 +4507,45 @@ function ClassesTab({ isDesktop }) {
     }
   };
 
-  const handleEnroll = async (classId) => {
-    setEnrolling(classId);
+  const handleEnroll = async (cls) => {
+    setEnrolling(cls.id);
     try {
-      await api.post(`/api/classes/${classId}/enroll`);
-      toast.success('Successfully enrolled in class!');
-      fetchClasses();
-      fetchMyEnrollments();
+      const res = await api.post(`/api/classes/${cls.id}/enroll`);
+      
+      if (res.data.requires_payment) {
+        // Show payment modal for paid classes
+        setPaymentModal({
+          classId: cls.id,
+          className: cls.title,
+          price: res.data.price,
+          clientSecret: res.data.client_secret,
+          paymentIntentId: res.data.payment_intent_id
+        });
+      } else {
+        // Free class - enrolled directly
+        toast.success('Successfully enrolled in class!');
+        fetchClasses();
+        fetchMyEnrollments();
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to enroll');
     } finally {
       setEnrolling(null);
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentIntentId) => {
+    try {
+      // Complete enrollment after payment
+      await api.post(`/api/classes/${paymentModal.classId}/enroll`, {
+        payment_intent_id: paymentIntentId
+      });
+      toast.success('Payment successful! You are now enrolled.');
+      setPaymentModal(null);
+      fetchClasses();
+      fetchMyEnrollments();
+    } catch (error) {
+      toast.error('Enrollment failed after payment. Please contact support.');
     }
   };
 
@@ -4622,23 +4651,33 @@ function ClassesTab({ isDesktop }) {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-400">
-                        {cls.enrolled_count}/{cls.max_students} enrolled
-                      </span>
+                      <div className="text-xs text-gray-400">
+                        <span className={cls.available_slots <= 3 ? 'text-red-500 font-medium' : ''}>
+                          {cls.available_slots > 0 ? `${cls.available_slots} slots left` : 'Full'}
+                        </span>
+                        <span className="mx-1">•</span>
+                        <span>{cls.enrolled_count} enrolled</span>
+                      </div>
                       {isEnrolled(cls.id) ? (
                         <span className="px-4 py-2 bg-green-100 text-green-700 rounded-xl text-sm font-medium flex items-center gap-1">
                           <CheckCircle className="w-4 h-4" /> Enrolled
                         </span>
+                      ) : cls.available_slots <= 0 ? (
+                        <span className="px-4 py-2 bg-gray-100 text-gray-500 rounded-xl text-sm font-medium">
+                          Class Full
+                        </span>
                       ) : (
                         <button
-                          onClick={() => handleEnroll(cls.id)}
+                          onClick={() => handleEnroll(cls)}
                           disabled={enrolling === cls.id}
-                          className="px-4 py-2 bg-saffron text-white rounded-xl text-sm font-medium hover:bg-saffron-dark transition-colors disabled:opacity-50"
+                          className="px-4 py-2 bg-saffron text-white rounded-xl text-sm font-medium hover:bg-saffron-dark transition-colors disabled:opacity-50 flex items-center gap-1"
                         >
                           {enrolling === cls.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : cls.is_free ? (
+                            'Enroll Free'
                           ) : (
-                            'Enroll Now'
+                            <>Pay ₹{cls.price}</>
                           )}
                         </button>
                       )}
@@ -4699,6 +4738,50 @@ function ClassesTab({ isDesktop }) {
           </div>
         )}
       </div>
+
+      {/* Payment Modal for Paid Classes */}
+      {paymentModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl max-w-md w-full p-6"
+          >
+            <h3 className="font-cinzel text-xl font-bold text-maroon mb-2">
+              Complete Payment
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Enroll in <strong>{paymentModal.className}</strong>
+            </p>
+            
+            <div className="bg-orange-50 rounded-xl p-4 mb-6">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Class Fee</span>
+                <span className="text-xl font-bold text-maroon">₹{paymentModal.price}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => handlePaymentSuccess(paymentModal.paymentIntentId)}
+                className="w-full py-3 bg-saffron text-white rounded-xl font-medium hover:bg-saffron-dark transition-colors"
+              >
+                Pay ₹{paymentModal.price}
+              </button>
+              <button
+                onClick={() => setPaymentModal(null)}
+                className="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-400 text-center mt-4">
+              Secure payment powered by Stripe
+            </p>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
