@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { 
   Star, Calendar, ShoppingBag, Sun, ChevronRight, Users, Award, Clock, 
   ArrowRight, Check, Play, Quote, MapPin, Phone, Mail, Send, MessageSquare,
@@ -12,16 +12,6 @@ import { toast } from 'sonner';
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
-
-// 3D Parallax Devotional Images
-const DEVOTIONAL_3D_IMAGES = [
-  { url: 'https://images.unsplash.com/photo-1609619385002-f40f1df9b7eb?w=600&q=80', title: 'Ganesh Ji' },
-  { url: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=600&q=80', title: 'Temple Bell' },
-  { url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80', title: 'Meditation' },
-  { url: 'https://images.unsplash.com/photo-1600618528240-fb9fc964b853?w=600&q=80', title: 'Diya Lamp' },
-  { url: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=600&q=80', title: 'Prayer' },
-  { url: 'https://images.unsplash.com/photo-1623656849840-340c16c5b37b?w=600&q=80', title: 'Temple' },
-];
 
 // Divine/Spiritual images for carousel
 const CAROUSEL_IMAGES = [
@@ -1274,53 +1264,6 @@ export default function LandingPage({ onGetStarted }) {
               Create Free Account <ArrowRight className="w-5 h-5" />
             </button>
           </motion.div>
-        </div>
-      </section>
-
-      {/* 3D Parallax Devotional Gallery Section */}
-      <section className="py-20 bg-gradient-to-b from-maroon to-maroon-dark w-full overflow-hidden">
-        <div className="w-full px-4 sm:px-8 lg:px-16">
-          <div className="max-w-[1920px] mx-auto">
-            <motion.div 
-              className="text-center mb-12"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="text-gold font-medium">DIVINE GALLERY</span>
-              <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-white mt-2">
-                Experience the Sacred
-              </h2>
-            </motion.div>
-
-            {/* 3D Scrolling Images */}
-            <div className="relative h-80 perspective-1000">
-              <motion.div 
-                className="flex gap-6 absolute"
-                animate={{ x: [0, -1200] }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              >
-                {[...DEVOTIONAL_3D_IMAGES, ...DEVOTIONAL_3D_IMAGES].map((img, index) => (
-                  <motion.div
-                    key={index}
-                    className="w-64 h-72 flex-shrink-0 rounded-2xl overflow-hidden shadow-2xl"
-                    whileHover={{ scale: 1.05, rotateY: 5, z: 50 }}
-                    style={{ transformStyle: 'preserve-3d' }}
-                  >
-                    <div className="relative w-full h-full">
-                      <img 
-                        src={img.url} 
-                        alt={img.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <p className="absolute bottom-4 left-4 text-white font-semibold">{img.title}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
-          </div>
         </div>
       </section>
 
