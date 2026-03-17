@@ -22,7 +22,8 @@ from database import (
     payment_transactions_collection, cart_collection, reviews_collection,
     festivals_collection, temples_collection,
     deities_collection, mantras_collection, stotras_collection, daily_schedule_collection,
-    product_reviews_collection, feedback_collection, testimonials_collection
+    product_reviews_collection, feedback_collection, testimonials_collection,
+    puja_types_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -4072,6 +4073,250 @@ async def update_user_role(user_id: str, role: UserRole, admin: dict = Depends(r
     
     return {"message": f"User role updated to {role}"}
 
+
+# ===================== PUJA TYPES (Admin-managed) =====================
+
+# Default puja types to seed
+DEFAULT_PUJA_TYPES = [
+    # Deity-Specific Pujas
+    {"name": "Ganesh Puja", "category": "Deity Puja"},
+    {"name": "Lakshmi Puja", "category": "Deity Puja"},
+    {"name": "Shiva Puja", "category": "Deity Puja"},
+    {"name": "Vishnu Puja", "category": "Deity Puja"},
+    {"name": "Durga Puja", "category": "Deity Puja"},
+    {"name": "Saraswati Puja", "category": "Deity Puja"},
+    {"name": "Hanuman Puja", "category": "Deity Puja"},
+    {"name": "Krishna Puja", "category": "Deity Puja"},
+    {"name": "Narasimha Puja", "category": "Deity Puja"},
+    {"name": "Radha Krishna Puja", "category": "Deity Puja"},
+    {"name": "Uma Maheshwara Puja", "category": "Deity Puja"},
+    {"name": "Gauri Puja", "category": "Deity Puja"},
+    {"name": "Katyayani Puja", "category": "Deity Puja"},
+    {"name": "Hayagriva Puja", "category": "Deity Puja"},
+    {"name": "Dakshina Murthy Puja", "category": "Deity Puja"},
+    # Festival Pujas
+    {"name": "Diwali Lakshmi Puja", "category": "Festival Puja"},
+    {"name": "Ganesh Chaturthi Puja", "category": "Festival Puja"},
+    {"name": "Navratri Durga Puja", "category": "Festival Puja"},
+    {"name": "Satyanarayan Puja", "category": "Festival Puja"},
+    {"name": "Krishna Janmashtami Puja", "category": "Festival Puja"},
+    {"name": "Vijaya Dashami Puja", "category": "Festival Puja"},
+    {"name": "Maha Shivratri Puja", "category": "Festival Puja"},
+    {"name": "Ram Navami Puja", "category": "Festival Puja"},
+    {"name": "Hanuman Jayanti Puja", "category": "Festival Puja"},
+    {"name": "Ugadi / Gudi Padwa Puja", "category": "Festival Puja"},
+    {"name": "Pongal Puja", "category": "Festival Puja"},
+    {"name": "Makar Sankranti Puja", "category": "Festival Puja"},
+    {"name": "Baisakhi Puja", "category": "Festival Puja"},
+    {"name": "Onam Puja", "category": "Festival Puja"},
+    {"name": "Chhath Puja", "category": "Festival Puja"},
+    {"name": "Holi Holika Dahan Puja", "category": "Festival Puja"},
+    {"name": "Raksha Bandhan Puja", "category": "Festival Puja"},
+    {"name": "Vasant Panchami Saraswati Puja", "category": "Festival Puja"},
+    {"name": "Dhanteras Puja", "category": "Festival Puja"},
+    # Samskaras (Life Rituals)
+    {"name": "Garbhadhana Puja", "category": "Samskara"},
+    {"name": "Pumsavana Puja", "category": "Samskara"},
+    {"name": "Seemantham / Valaikappu", "category": "Samskara"},
+    {"name": "Jatakarma Puja", "category": "Samskara"},
+    {"name": "Namkaran Puja", "category": "Samskara"},
+    {"name": "Nishkramana Puja", "category": "Samskara"},
+    {"name": "Annaprashan Puja", "category": "Samskara"},
+    {"name": "Mundan Puja", "category": "Samskara"},
+    {"name": "Karnavedha Puja", "category": "Samskara"},
+    {"name": "Vidyarambha / Aksharabhyasam", "category": "Samskara"},
+    {"name": "Upanayanam", "category": "Samskara"},
+    {"name": "Vedarambha Puja", "category": "Samskara"},
+    {"name": "Vivah Puja", "category": "Samskara"},
+    {"name": "Antyeshti (Funeral Rites)", "category": "Samskara"},
+    # Griha & Vastu Pujas
+    {"name": "Griha Pravesh Puja", "category": "Griha Puja"},
+    {"name": "Bhoomi Puja", "category": "Griha Puja"},
+    {"name": "Vastu Puja", "category": "Griha Puja"},
+    {"name": "Udyapana Puja (Business Launch)", "category": "Griha Puja"},
+    {"name": "Vahana Puja", "category": "Griha Puja"},
+    {"name": "Yatra Puja", "category": "Griha Puja"},
+    # Graha/Planetary Pujas
+    {"name": "Navagraha Puja", "category": "Graha Puja"},
+    {"name": "Kala Sarpa Dosha Puja", "category": "Graha Puja"},
+    {"name": "Maha Mrityunjaya Puja", "category": "Graha Puja"},
+    {"name": "Mangal Dosha Puja", "category": "Graha Puja"},
+    {"name": "Dhanvantari Puja", "category": "Graha Puja"},
+    {"name": "Rahu-Ketu Shanti Puja", "category": "Graha Puja"},
+    {"name": "Shani Puja", "category": "Graha Puja"},
+    {"name": "Surya Puja", "category": "Graha Puja"},
+    {"name": "Chandra Puja", "category": "Graha Puja"},
+    {"name": "Budha Puja (Mercury)", "category": "Graha Puja"},
+    {"name": "Guru / Brihaspati Puja (Jupiter)", "category": "Graha Puja"},
+    {"name": "Shukra Puja (Venus)", "category": "Graha Puja"},
+    {"name": "Mangal Puja (Mars)", "category": "Graha Puja"},
+    {"name": "Rahu Puja", "category": "Graha Puja"},
+    {"name": "Ketu Puja", "category": "Graha Puja"},
+    # Homas & Yajnas
+    {"name": "Rudrabhishekam", "category": "Homa & Yajna"},
+    {"name": "Abhishekam", "category": "Homa & Yajna"},
+    {"name": "Havan", "category": "Homa & Yajna"},
+    {"name": "Homam", "category": "Homa & Yajna"},
+    {"name": "Yajna", "category": "Homa & Yajna"},
+    {"name": "Chandi Homam", "category": "Homa & Yajna"},
+    {"name": "Ganapathi Homa", "category": "Homa & Yajna"},
+    {"name": "Rudra Homa", "category": "Homa & Yajna"},
+    {"name": "Sudarshana Homam", "category": "Homa & Yajna"},
+    {"name": "Ayushya Homa", "category": "Homa & Yajna"},
+    {"name": "Nakshatra Homa", "category": "Homa & Yajna"},
+    {"name": "Vastu Homa", "category": "Homa & Yajna"},
+    {"name": "Ati Rudra Maha Yajna", "category": "Homa & Yajna"},
+    {"name": "Laksha Deepam", "category": "Homa & Yajna"},
+    {"name": "Agnihotra", "category": "Homa & Yajna"},
+    # Vrat Pujas
+    {"name": "Mangala Gauri Vrat", "category": "Vrat Puja"},
+    {"name": "Varalakshmi Vrat", "category": "Vrat Puja"},
+    {"name": "Vaibhava Lakshmi Vrat", "category": "Vrat Puja"},
+    {"name": "Mahalakshmi Vrat", "category": "Vrat Puja"},
+    {"name": "Satyanarayan Vrat Puja", "category": "Vrat Puja"},
+    {"name": "Ekadashi Puja", "category": "Vrat Puja"},
+    {"name": "Pradosh Vrat Puja", "category": "Vrat Puja"},
+    {"name": "Karva Chauth Puja", "category": "Vrat Puja"},
+    # Wealth & Prosperity Pujas
+    {"name": "Lakshmi Kubera Puja", "category": "Prosperity Puja"},
+    {"name": "Kubera Puja", "category": "Prosperity Puja"},
+    {"name": "Kanakdhara Puja", "category": "Prosperity Puja"},
+    {"name": "Ayudha Puja", "category": "Prosperity Puja"},
+    # Marriage & Relationship Pujas
+    {"name": "Kalyanam Puja", "category": "Marriage Puja"},
+    {"name": "Swayamvara Parvati Puja", "category": "Marriage Puja"},
+    # Ancestor & Pitru Pujas
+    {"name": "Shraddha Puja", "category": "Pitru Puja"},
+    {"name": "Tarpanam", "category": "Pitru Puja"},
+    {"name": "Pind Daan", "category": "Pitru Puja"},
+    {"name": "Pitru Paksha Puja", "category": "Pitru Puja"},
+    {"name": "Narayana Bali", "category": "Pitru Puja"},
+    # Nature & Protection Pujas
+    {"name": "Varuna Puja", "category": "Nature Puja"},
+    {"name": "Naga Puja", "category": "Nature Puja"},
+    {"name": "Tulsi Puja", "category": "Nature Puja"},
+    {"name": "Prithvi Puja", "category": "Nature Puja"},
+    {"name": "Raksha Kavach Puja", "category": "Protection Puja"},
+    # Daily & Regular Pujas
+    {"name": "Sandhyavandana", "category": "Daily Puja"},
+    {"name": "Nitya Puja (Daily Home Worship)", "category": "Daily Puja"},
+    {"name": "Surya Namaskar Puja", "category": "Daily Puja"},
+    {"name": "Bhajan Kirtan", "category": "Daily Puja"},
+    # Education & Wisdom Pujas
+    {"name": "Medha Suktam Puja", "category": "Education Puja"},
+]
+
+@app.get("/api/puja-types")
+async def get_puja_types():
+    """Get all puja types (public endpoint)"""
+    # Check if collection is empty, seed if needed
+    count = await puja_types_collection.count_documents({})
+    if count == 0:
+        # Seed default puja types
+        for puja in DEFAULT_PUJA_TYPES:
+            puja["is_active"] = True
+            puja["created_at"] = datetime.now(timezone.utc)
+        await puja_types_collection.insert_many(DEFAULT_PUJA_TYPES)
+    
+    cursor = puja_types_collection.find({"is_active": True}).sort([("category", 1), ("name", 1)])
+    puja_types = []
+    async for puja in cursor:
+        puja_types.append({
+            "id": str(puja["_id"]),
+            "name": puja["name"],
+            "category": puja.get("category", "General")
+        })
+    
+    # Group by category for easier frontend display
+    categories = {}
+    for puja in puja_types:
+        cat = puja["category"]
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append({"id": puja["id"], "name": puja["name"]})
+    
+    return {"puja_types": puja_types, "categories": categories}
+
+@app.post("/api/admin/puja-types")
+async def add_puja_type(request: Request, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Add a new puja type (admin only)"""
+    data = await request.json()
+    name = data.get("name", "").strip()
+    category = data.get("category", "General").strip()
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="Puja name is required")
+    
+    # Check for duplicate
+    existing = await puja_types_collection.find_one({"name": {"$regex": f"^{name}$", "$options": "i"}})
+    if existing:
+        raise HTTPException(status_code=400, detail="Puja type already exists")
+    
+    puja_doc = {
+        "name": name,
+        "category": category,
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc)
+    }
+    result = await puja_types_collection.insert_one(puja_doc)
+    
+    return {"message": "Puja type added", "id": str(result.inserted_id)}
+
+@app.put("/api/admin/puja-types/{puja_id}")
+async def update_puja_type(puja_id: str, request: Request, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Update a puja type (admin only)"""
+    data = await request.json()
+    
+    update_data = {}
+    if "name" in data:
+        update_data["name"] = data["name"].strip()
+    if "category" in data:
+        update_data["category"] = data["category"].strip()
+    if "is_active" in data:
+        update_data["is_active"] = data["is_active"]
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    result = await puja_types_collection.update_one(
+        {"_id": ObjectId(puja_id)},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Puja type not found")
+    
+    return {"message": "Puja type updated"}
+
+@app.delete("/api/admin/puja-types/{puja_id}")
+async def delete_puja_type(puja_id: str, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Delete a puja type (admin only) - soft delete by setting is_active to False"""
+    result = await puja_types_collection.update_one(
+        {"_id": ObjectId(puja_id)},
+        {"$set": {"is_active": False, "deleted_at": datetime.now(timezone.utc)}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Puja type not found")
+    
+    return {"message": "Puja type deleted"}
+
+@app.get("/api/admin/puja-types")
+async def get_all_puja_types_admin(user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Get all puja types including inactive ones (admin only)"""
+    cursor = puja_types_collection.find({}).sort([("category", 1), ("name", 1)])
+    puja_types = []
+    async for puja in cursor:
+        puja_types.append({
+            "id": str(puja["_id"]),
+            "name": puja["name"],
+            "category": puja.get("category", "General"),
+            "is_active": puja.get("is_active", True),
+            "created_at": puja["created_at"].isoformat() if puja.get("created_at") else None
+        })
+    return {"puja_types": puja_types}
 
 
 # ===================== SHOP OWNER ROUTES =====================

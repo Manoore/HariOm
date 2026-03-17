@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Users, Star, ShoppingBag, Calendar, Settings, LogOut,
   ChevronRight, CheckCircle, AlertCircle, Loader2, TrendingUp,
-  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X
+  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -32,6 +32,7 @@ function AdminSidebar({ activeTab, setActiveTab, user }) {
     { id: 'priests', icon: UserCheck, label: 'Priests' },
     { id: 'products', icon: Package, label: 'Products' },
     { id: 'bookings', icon: Calendar, label: 'Bookings' },
+    { id: 'puja-types', icon: BookOpen, label: 'Puja Types' },
     { id: 'feedback', icon: MessageSquare, label: 'Feedback & Reviews' },
     { id: 'consultation', icon: Video, label: 'Consultation Settings' },
     { id: 'system', icon: Key, label: 'System Settings' },
@@ -391,6 +392,277 @@ function BookingsTab({ bookings, isDesktop, loading }) {
   );
 }
 
+// Puja Types Management Tab
+function PujaTypesTab({ isDesktop }) {
+  const [pujaTypes, setPujaTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingPuja, setEditingPuja] = useState(null);
+  const [form, setForm] = useState({ name: '', category: 'Deity Puja' });
+  const [saving, setSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+
+  const categories = [
+    'Deity Puja', 'Festival Puja', 'Samskara', 'Griha Puja', 'Graha Puja',
+    'Homa & Yajna', 'Vrat Puja', 'Prosperity Puja', 'Marriage Puja',
+    'Pitru Puja', 'Nature Puja', 'Protection Puja', 'Daily Puja', 'Education Puja', 'General'
+  ];
+
+  useEffect(() => {
+    fetchPujaTypes();
+  }, []);
+
+  const fetchPujaTypes = async () => {
+    try {
+      const res = await api.get('/api/admin/puja-types');
+      setPujaTypes(res.data.puja_types || []);
+    } catch (error) {
+      toast.error('Failed to load puja types');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!form.name.trim()) {
+      toast.error('Enter puja name');
+      return;
+    }
+    setSaving(true);
+    try {
+      if (editingPuja) {
+        await api.put(`/api/admin/puja-types/${editingPuja.id}`, form);
+        toast.success('Puja type updated!');
+      } else {
+        await api.post('/api/admin/puja-types', form);
+        toast.success('Puja type added!');
+      }
+      fetchPujaTypes();
+      setShowModal(false);
+      setEditingPuja(null);
+      setForm({ name: '', category: 'Deity Puja' });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this puja type?')) return;
+    try {
+      await api.delete(`/api/admin/puja-types/${id}`);
+      toast.success('Puja type deleted!');
+      fetchPujaTypes();
+    } catch (error) {
+      toast.error('Failed to delete');
+    }
+  };
+
+  const handleEdit = (puja) => {
+    setEditingPuja(puja);
+    setForm({ name: puja.name, category: puja.category });
+    setShowModal(true);
+  };
+
+  const filteredPujas = pujaTypes.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !filterCategory || p.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Group by category for display
+  const groupedPujas = filteredPujas.reduce((acc, puja) => {
+    const cat = puja.category || 'General';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(puja);
+    return acc;
+  }, {});
+
+  return (
+    <div className={`${isDesktop ? 'px-8 pb-8' : 'px-4 pb-24'}`}>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-xl font-semibold text-white">Puja Types Management</h2>
+          <p className="text-slate-400 text-sm">Manage the dropdown options for puja services</p>
+        </div>
+        <button
+          onClick={() => { setShowModal(true); setEditingPuja(null); setForm({ name: '', category: 'Deity Puja' }); }}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-colors"
+          data-testid="add-puja-type-btn"
+        >
+          <Plus className="w-4 h-4" />
+          Add Puja Type
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <input
+          type="text"
+          placeholder="Search puja types..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">All Categories</option>
+          {categories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div className="bg-slate-800 rounded-xl p-4">
+          <p className="text-slate-400 text-sm">Total Pujas</p>
+          <p className="text-2xl font-bold text-white">{pujaTypes.length}</p>
+        </div>
+        <div className="bg-slate-800 rounded-xl p-4">
+          <p className="text-slate-400 text-sm">Categories</p>
+          <p className="text-2xl font-bold text-white">{Object.keys(groupedPujas).length}</p>
+        </div>
+        <div className="bg-slate-800 rounded-xl p-4">
+          <p className="text-slate-400 text-sm">Active</p>
+          <p className="text-2xl font-bold text-green-400">{pujaTypes.filter(p => p.is_active).length}</p>
+        </div>
+        <div className="bg-slate-800 rounded-xl p-4">
+          <p className="text-slate-400 text-sm">Inactive</p>
+          <p className="text-2xl font-bold text-red-400">{pujaTypes.filter(p => !p.is_active).length}</p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {Object.entries(groupedPujas).sort().map(([category, pujas]) => (
+            <div key={category} className="bg-slate-800/50 rounded-xl p-4">
+              <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-indigo-400" />
+                {category} ({pujas.length})
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {pujas.map(puja => (
+                  <div
+                    key={puja.id}
+                    className={`flex items-center justify-between p-3 rounded-xl ${
+                      puja.is_active ? 'bg-slate-700/50' : 'bg-red-900/20'
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-medium truncate ${puja.is_active ? 'text-white' : 'text-red-400'}`}>
+                        {puja.name}
+                      </p>
+                      {!puja.is_active && <span className="text-xs text-red-400">Inactive</span>}
+                    </div>
+                    <div className="flex items-center gap-2 ml-2">
+                      <button
+                        onClick={() => handleEdit(puja)}
+                        className="p-1.5 hover:bg-slate-600 rounded-lg text-slate-400 hover:text-white transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(puja.id)}
+                        className="p-1.5 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-slate-800 rounded-2xl max-w-md w-full"
+          >
+            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">
+                {editingPuja ? 'Edit Puja Type' : 'Add Puja Type'}
+              </h2>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Puja Name*</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="e.g., Ganesh Puja"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
+                <select
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              {editingPuja && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    checked={form.is_active !== false}
+                    onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="is_active" className="text-sm text-slate-300">Active (visible in dropdown)</label>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 border-t border-slate-700 flex justify-end gap-3">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-400 hover:text-white">
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={saving}
+                className="px-6 py-2 bg-indigo-500 text-white rounded-xl disabled:opacity-50 flex items-center gap-2 hover:bg-indigo-600"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {editingPuja ? 'Update' : 'Add'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Feedback & Testimonials Tab
 function FeedbackTab({ isDesktop }) {
   const [feedback, setFeedback] = useState([]);
@@ -655,6 +927,7 @@ export default function AdminDashboard() {
       {activeTab === 'priests' && <PriestsTab priests={priests} isDesktop={isDesktop} loading={loading} />}
       {activeTab === 'products' && <ProductsTab products={products} isDesktop={isDesktop} loading={loading} />}
       {activeTab === 'bookings' && <BookingsTab bookings={bookings} isDesktop={isDesktop} loading={loading} />}
+      {activeTab === 'puja-types' && <PujaTypesTab isDesktop={isDesktop} />}
       {activeTab === 'feedback' && <FeedbackTab isDesktop={isDesktop} />}
       {activeTab === 'consultation' && <ConsultationSettingsAdmin />}
       {activeTab === 'system' && <SystemSettingsAdmin />}

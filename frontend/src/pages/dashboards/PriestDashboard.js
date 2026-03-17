@@ -1848,32 +1848,75 @@ function ServicesTab({ services, onRefresh }) {
 // Service Modal Component
 function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
   const [form, setForm] = useState({
-    name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100
+    name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100, puja_type_id: '', custom_puja_name: ''
   });
   const [saving, setSaving] = useState(false);
+  const [pujaTypes, setPujaTypes] = useState([]);
+  const [pujaCategories, setPujaCategories] = useState({});
+  const [showCustomInput, setShowCustomInput] = useState(false);
+
+  useEffect(() => {
+    // Load puja types
+    const loadPujaTypes = async () => {
+      try {
+        const res = await api.get('/api/puja-types');
+        setPujaTypes(res.data.puja_types || []);
+        setPujaCategories(res.data.categories || {});
+      } catch (error) {
+        console.error('Failed to load puja types:', error);
+      }
+    };
+    loadPujaTypes();
+  }, []);
 
   useEffect(() => {
     if (editData) {
+      const isCustom = editData.puja_type_id === 'other' || !editData.puja_type_id;
       setForm({
         name: editData.name || '',
         description: editData.description || '',
         category: editData.category || 'Pooja',
         duration_minutes: editData.duration_minutes || 60,
-        price: editData.price || 1100
+        price: editData.price || 1100,
+        puja_type_id: editData.puja_type_id || '',
+        custom_puja_name: isCustom ? editData.name : ''
       });
+      setShowCustomInput(isCustom && editData.name);
     } else {
-      setForm({ name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100 });
+      setForm({ name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100, puja_type_id: '', custom_puja_name: '' });
+      setShowCustomInput(false);
     }
   }, [editData, isOpen]);
 
+  const handlePujaSelect = (value) => {
+    if (value === 'other') {
+      setShowCustomInput(true);
+      setForm({ ...form, puja_type_id: 'other', name: form.custom_puja_name || '' });
+    } else {
+      const selectedPuja = pujaTypes.find(p => p.id === value);
+      setShowCustomInput(false);
+      setForm({ 
+        ...form, 
+        puja_type_id: value, 
+        name: selectedPuja ? selectedPuja.name : '',
+        custom_puja_name: ''
+      });
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!form.name) { toast.error('Enter service name'); return; }
+    const serviceName = showCustomInput ? form.custom_puja_name : form.name;
+    if (!serviceName) { toast.error('Select or enter a puja name'); return; }
     setSaving(true);
     try {
+      const submitData = {
+        ...form,
+        name: serviceName
+      };
       if (editData) {
-        await api.put(`/api/priest/services/${editData.id}`, form);
+        await api.put(`/api/priest/services/${editData.id}`, submitData);
       } else {
-        await api.post('/api/priest/services', form);
+        await api.post('/api/priest/services', submitData);
       }
       toast.success(editData ? 'Service updated!' : 'Service added!');
       onSuccess();
@@ -1901,15 +1944,38 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
         
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Service Name*</label>
-            <input 
-              type="text" 
-              value={form.name} 
-              onChange={(e) => setForm({ ...form, name: e.target.value })} 
-              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
-              placeholder="e.g., Satyanarayan Pooja" 
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Puja/Service Type*</label>
+            <select 
+              value={form.puja_type_id} 
+              onChange={(e) => handlePujaSelect(e.target.value)} 
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+              data-testid="puja-type-select"
+            >
+              <option value="">-- Select Puja Type --</option>
+              {Object.entries(pujaCategories).map(([category, pujas]) => (
+                <optgroup key={category} label={category}>
+                  {pujas.map(puja => (
+                    <option key={puja.id} value={puja.id}>{puja.name}</option>
+                  ))}
+                </optgroup>
+              ))}
+              <option value="other">Other (Custom)</option>
+            </select>
           </div>
+
+          {showCustomInput && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Custom Puja Name*</label>
+              <input 
+                type="text" 
+                value={form.custom_puja_name} 
+                onChange={(e) => setForm({ ...form, custom_puja_name: e.target.value })} 
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
+                placeholder="Enter custom puja name"
+                data-testid="custom-puja-input"
+              />
+            </div>
+          )}
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

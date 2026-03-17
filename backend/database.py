@@ -55,6 +55,9 @@ product_reviews_collection = db["product_reviews"]
 feedback_collection = db["feedback"]
 testimonials_collection = db["testimonials"]
 
+# Puja Types Collection (Admin-managed dropdown values)
+puja_types_collection = db["puja_types"]
+
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]
 mantras_collection = devotional_db["mantras"]
@@ -89,3 +92,6 @@ async def init_db():
     # Feedback and testimonials indexes
     await feedback_collection.create_index([("created_at", -1)])
     await testimonials_collection.create_index([("is_approved", 1), ("created_at", -1)])
+    # Puja types index
+    await puja_types_collection.create_index("name", unique=True)
+    await puja_types_collection.create_index([("category", 1), ("name", 1)])
