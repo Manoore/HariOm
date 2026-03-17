@@ -1865,8 +1865,18 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
     if not priest:
         raise HTTPException(status_code=404, detail="Priest not found")
     
-    # Find service price
-    service = next((s for s in priest["services"] if s["name"] == data.service_name), None)
+    # Find service price - check separate services collection first
+    service = None
+    services_cursor = priest_services_collection.find({"priest_id": data.priest_id})
+    async for svc in services_cursor:
+        if svc.get("name") == data.service_name:
+            service = {"name": svc["name"], "price": svc.get("price", 0)}
+            break
+    
+    # Fallback to embedded services
+    if not service and priest.get("services"):
+        service = next((s for s in priest["services"] if s["name"] == data.service_name), None)
+    
     if not service:
         raise HTTPException(status_code=400, detail="Service not found")
     

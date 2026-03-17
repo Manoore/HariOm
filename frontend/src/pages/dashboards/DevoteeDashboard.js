@@ -985,9 +985,9 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
                     <div>
                       <p className="font-semibold text-gray-800">{booking.service_name}</p>
                       <p className="text-sm text-gray-500">{booking.priest_name}</p>
-                      {booking.scheduled_date && (
+                      {(booking.booking_date || booking.scheduled_date) && (
                         <p className="text-xs text-gray-400 mt-1">
-                          {new Date(booking.scheduled_date).toLocaleDateString()}
+                          {new Date(booking.booking_date || booking.scheduled_date).toLocaleDateString()}
                         </p>
                       )}
                     </div>
