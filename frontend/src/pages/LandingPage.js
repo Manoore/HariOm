@@ -1,16 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { 
   Star, Calendar, ShoppingBag, Sun, ChevronRight, Users, Award, Clock, 
-  ArrowRight, Check, Play, Quote, MapPin, Phone, Mail,
+  ArrowRight, Check, Play, Quote, MapPin, Phone, Mail, Send, MessageSquare,
   Facebook, Twitter, Instagram, Youtube, ChevronDown, Menu, X, ChevronLeft
 } from 'lucide-react';
 import api from '../lib/api';
+import { toast } from 'sonner';
 
 // Scroll to top function
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
+
+// 3D Parallax Devotional Images
+const DEVOTIONAL_3D_IMAGES = [
+  { url: 'https://images.unsplash.com/photo-1609619385002-f40f1df9b7eb?w=600&q=80', title: 'Ganesh Ji' },
+  { url: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=600&q=80', title: 'Temple Bell' },
+  { url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80', title: 'Meditation' },
+  { url: 'https://images.unsplash.com/photo-1600618528240-fb9fc964b853?w=600&q=80', title: 'Diya Lamp' },
+  { url: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=600&q=80', title: 'Prayer' },
+  { url: 'https://images.unsplash.com/photo-1623656849840-340c16c5b37b?w=600&q=80', title: 'Temple' },
+];
 
 // Divine/Spiritual images for carousel
 const CAROUSEL_IMAGES = [
@@ -514,7 +525,18 @@ export default function LandingPage({ onGetStarted }) {
   const [priests, setPriests] = useState([]);
   const [products, setProducts] = useState([]);
   const [festivals, setFestivals] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Feedback form state
+  const [feedbackForm, setFeedbackForm] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+    rating: 0
+  });
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -522,16 +544,32 @@ export default function LandingPage({ onGetStarted }) {
 
   const fetchData = async () => {
     try {
-      const [priestsRes, productsRes, festivalsRes] = await Promise.all([
+      const [priestsRes, productsRes, festivalsRes, testimonialsRes] = await Promise.all([
         api.get('/api/priests?limit=3'),
         api.get('/api/products?limit=4'),
-        api.get('/api/festivals')
+        api.get('/api/festivals'),
+        api.get('/api/testimonials').catch(() => ({ data: { testimonials: [] } }))
       ]);
       setPriests(priestsRes.data.priests || []);
       setProducts(productsRes.data.products || []);
       setFestivals((festivalsRes.data.festivals || []).slice(0, 4));
+      setTestimonials(testimonialsRes.data.testimonials || []);
     } catch (error) {
       console.error('Error fetching data:', error);
+    }
+  };
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    setFeedbackSubmitting(true);
+    try {
+      await api.post('/api/feedback', feedbackForm);
+      toast.success('Thank you for your feedback! We will get back to you soon.');
+      setFeedbackForm({ name: '', email: '', subject: '', message: '', rating: 0 });
+    } catch (error) {
+      toast.error('Failed to send feedback. Please try again.');
+    } finally {
+      setFeedbackSubmitting(false);
     }
   };
 
@@ -1236,6 +1274,286 @@ export default function LandingPage({ onGetStarted }) {
               Create Free Account <ArrowRight className="w-5 h-5" />
             </button>
           </motion.div>
+        </div>
+      </section>
+
+      {/* 3D Parallax Devotional Gallery Section */}
+      <section className="py-20 bg-gradient-to-b from-maroon to-maroon-dark w-full overflow-hidden">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <motion.div 
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="text-gold font-medium">DIVINE GALLERY</span>
+              <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-white mt-2">
+                Experience the Sacred
+              </h2>
+            </motion.div>
+
+            {/* 3D Scrolling Images */}
+            <div className="relative h-80 perspective-1000">
+              <motion.div 
+                className="flex gap-6 absolute"
+                animate={{ x: [0, -1200] }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              >
+                {[...DEVOTIONAL_3D_IMAGES, ...DEVOTIONAL_3D_IMAGES].map((img, index) => (
+                  <motion.div
+                    key={index}
+                    className="w-64 h-72 flex-shrink-0 rounded-2xl overflow-hidden shadow-2xl"
+                    whileHover={{ scale: 1.05, rotateY: 5, z: 50 }}
+                    style={{ transformStyle: 'preserve-3d' }}
+                  >
+                    <div className="relative w-full h-full">
+                      <img 
+                        src={img.url} 
+                        alt={img.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <p className="absolute bottom-4 left-4 text-white font-semibold">{img.title}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-24 bg-cream w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <motion.div 
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="text-saffron font-medium">TESTIMONIALS</span>
+              <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-4">
+                What Our Devotees Say
+              </h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Hear from thousands of satisfied users who have transformed their spiritual journey with Divine App
+              </p>
+            </motion.div>
+
+            {/* Testimonials Grid */}
+            <div className="grid md:grid-cols-3 gap-8">
+              {testimonials.length > 0 ? testimonials.slice(0, 6).map((testimonial, index) => (
+                <motion.div
+                  key={testimonial.id}
+                  className="bg-white rounded-2xl p-6 shadow-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star 
+                        key={i} 
+                        className={`w-4 h-4 ${i < testimonial.rating ? 'text-gold fill-gold' : 'text-gray-300'}`} 
+                      />
+                    ))}
+                  </div>
+                  <p className="text-gray-600 mb-4 italic">"{testimonial.content}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-saffron rounded-full flex items-center justify-center text-white font-bold">
+                      {testimonial.user_name?.charAt(0) || 'D'}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">{testimonial.user_name || 'Devotee'}</p>
+                      <p className="text-xs text-gray-500 capitalize">{testimonial.user_role || 'User'}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )) : (
+                // Default testimonials when none from DB
+                [
+                  { name: 'Priya Sharma', role: 'Devotee', content: 'Divine App has transformed my daily spiritual practice. The priests are authentic and knowledgeable.', rating: 5 },
+                  { name: 'Rajesh Kumar', role: 'Business Owner', content: 'Booking priests for our office puja was so easy. Highly recommend!', rating: 5 },
+                  { name: 'Anita Patel', role: 'Homemaker', content: 'The astrology readings are incredibly accurate. I check my horoscope daily!', rating: 4 },
+                ].map((testimonial, index) => (
+                  <motion.div
+                    key={index}
+                    className="bg-white rounded-2xl p-6 shadow-lg"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <div className="flex items-center gap-1 mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`w-4 h-4 ${i < testimonial.rating ? 'text-gold fill-gold' : 'text-gray-300'}`} 
+                        />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 mb-4 italic">"{testimonial.content}"</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-saffron rounded-full flex items-center justify-center text-white font-bold">
+                        {testimonial.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">{testimonial.name}</p>
+                        <p className="text-xs text-gray-500">{testimonial.role}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact & Feedback Section */}
+      <section id="contact-form" className="py-24 bg-gradient-to-b from-parchment to-cream w-full">
+        <div className="w-full px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1920px] mx-auto">
+            <div className="grid lg:grid-cols-2 gap-16 items-start">
+              {/* Contact Info */}
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+              >
+                <span className="text-saffron font-medium">GET IN TOUCH</span>
+                <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mt-2 mb-6">
+                  We'd Love to Hear From You
+                </h2>
+                <p className="text-gray-600 mb-8">
+                  Have questions, feedback, or suggestions? We're here to help! Reach out to us and we'll get back to you as soon as possible.
+                </p>
+
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-saffron/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-6 h-6 text-saffron" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800">Email Us</h4>
+                      <p className="text-gray-600">support@divineapp.com</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-saffron/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-6 h-6 text-saffron" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800">Call Us</h4>
+                      <p className="text-gray-600">+91 98765 43210</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-saffron/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-6 h-6 text-saffron" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800">Visit Us</h4>
+                      <p className="text-gray-600">Hyderabad, Telangana, India</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Contact Form */}
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-2xl p-8 shadow-xl"
+              >
+                <h3 className="font-cinzel text-xl font-semibold text-maroon mb-6">Send us a Message</h3>
+                <form onSubmit={handleFeedbackSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Your Name</label>
+                      <input
+                        type="text"
+                        value={feedbackForm.name}
+                        onChange={(e) => setFeedbackForm({...feedbackForm, name: e.target.value})}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-saffron focus:border-transparent"
+                        placeholder="Enter your name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Email Address</label>
+                      <input
+                        type="email"
+                        value={feedbackForm.email}
+                        onChange={(e) => setFeedbackForm({...feedbackForm, email: e.target.value})}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-saffron focus:border-transparent"
+                        placeholder="Enter your email"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">Subject</label>
+                    <input
+                      type="text"
+                      value={feedbackForm.subject}
+                      onChange={(e) => setFeedbackForm({...feedbackForm, subject: e.target.value})}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-saffron focus:border-transparent"
+                      placeholder="What's this about?"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">Message</label>
+                    <textarea
+                      value={feedbackForm.message}
+                      onChange={(e) => setFeedbackForm({...feedbackForm, message: e.target.value})}
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-saffron focus:border-transparent resize-none"
+                      placeholder="Tell us what's on your mind..."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">How would you rate your experience?</label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <button
+                          key={rating}
+                          type="button"
+                          onClick={() => setFeedbackForm({...feedbackForm, rating})}
+                          className="p-2 transition-transform hover:scale-110"
+                        >
+                          <Star 
+                            className={`w-6 h-6 ${feedbackForm.rating >= rating ? 'text-gold fill-gold' : 'text-gray-300'}`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={feedbackSubmitting}
+                    className="w-full bg-saffron hover:bg-saffron-dark text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  >
+                    {feedbackSubmitting ? (
+                      <>Sending...</>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5" />
+                        Send Message
+                      </>
+                    )}
+                  </button>
+                </form>
+              </motion.div>
+            </div>
+          </div>
         </div>
       </section>
 

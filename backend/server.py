@@ -22,7 +22,7 @@ from database import (
     payment_transactions_collection, cart_collection, reviews_collection,
     festivals_collection, temples_collection,
     deities_collection, mantras_collection, stotras_collection, daily_schedule_collection,
-    product_reviews_collection
+    product_reviews_collection, feedback_collection, testimonials_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -5138,6 +5138,88 @@ async def websocket_consultation(websocket: WebSocket, call_id: str):
                 active_call_connections[call_id].remove(websocket)
             if not active_call_connections[call_id]:
                 del active_call_connections[call_id]
+
+
+# ==================== FEEDBACK & TESTIMONIALS ENDPOINTS ====================
+
+class FeedbackCreate(BaseModel):
+    name: str
+    email: str
+    subject: str
+    message: str
+    rating: Optional[int] = None
+
+class TestimonialCreate(BaseModel):
+    content: str
+    rating: int
+
+@app.post("/api/feedback")
+async def submit_feedback(feedback: FeedbackCreate):
+    """Submit feedback/contact form - no auth required"""
+    feedback_doc = {
+        "name": feedback.name,
+        "email": feedback.email,
+        "subject": feedback.subject,
+        "message": feedback.message,
+        "rating": feedback.rating,
+        "created_at": datetime.now(timezone.utc),
+        "status": "new"
+    }
+    result = await feedback_collection.insert_one(feedback_doc)
+    return {"success": True, "message": "Thank you for your feedback!", "id": str(result.inserted_id)}
+
+@app.get("/api/feedback")
+async def get_all_feedback(user: dict = Depends(require_role(["admin"]))):
+    """Get all feedback - admin only"""
+    feedback_list = await feedback_collection.find().sort("created_at", -1).to_list(100)
+    for f in feedback_list:
+        f["id"] = str(f.pop("_id"))
+    return {"feedback": feedback_list}
+
+@app.post("/api/testimonials")
+async def submit_testimonial(testimonial: TestimonialCreate, user: dict = Depends(get_current_user)):
+    """Submit a testimonial - requires login"""
+    testimonial_doc = {
+        "user_id": str(user["_id"]),
+        "user_name": user.get("name", "Anonymous"),
+        "user_role": user.get("role", "devotee"),
+        "content": testimonial.content,
+        "rating": testimonial.rating,
+        "created_at": datetime.now(timezone.utc),
+        "is_approved": False  # Admin needs to approve
+    }
+    result = await testimonials_collection.insert_one(testimonial_doc)
+    return {"success": True, "message": "Thank you! Your testimonial will be reviewed.", "id": str(result.inserted_id)}
+
+@app.get("/api/testimonials")
+async def get_testimonials(approved_only: bool = True):
+    """Get testimonials - public endpoint"""
+    query = {"is_approved": True} if approved_only else {}
+    testimonials = await testimonials_collection.find(query).sort("created_at", -1).to_list(50)
+    for t in testimonials:
+        t["id"] = str(t.pop("_id"))
+    return {"testimonials": testimonials}
+
+@app.put("/api/testimonials/{testimonial_id}/approve")
+async def approve_testimonial(testimonial_id: str, user: dict = Depends(require_role(["admin"]))):
+    """Approve a testimonial - admin only"""
+    result = await testimonials_collection.update_one(
+        {"_id": ObjectId(testimonial_id)},
+        {"$set": {"is_approved": True}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Testimonial not found")
+    return {"success": True, "message": "Testimonial approved"}
+
+@app.delete("/api/testimonials/{testimonial_id}")
+async def delete_testimonial(testimonial_id: str, user: dict = Depends(require_role(["admin"]))):
+    """Delete a testimonial - admin only"""
+    result = await testimonials_collection.delete_one({"_id": ObjectId(testimonial_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Testimonial not found")
+    return {"success": True, "message": "Testimonial deleted"}
+
+
 
 if __name__ == "__main__":
     import uvicorn

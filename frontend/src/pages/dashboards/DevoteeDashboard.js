@@ -5,7 +5,7 @@ import {
   Bell, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
   CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
-  Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet
+  Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet, Edit
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -4022,6 +4022,9 @@ function ProfileTab({ isDesktop }) {
           </div>
         )}
 
+        {/* Write a Testimonial Section */}
+        <TestimonialSection />
+
         {/* Actions - Only show on mobile */}
         {!isDesktop && (
           <div className="space-y-3">
@@ -4036,6 +4039,115 @@ function ProfileTab({ isDesktop }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Testimonial Section Component
+function TestimonialSection() {
+  const [showForm, setShowForm] = useState(false);
+  const [content, setContent] = useState('');
+  const [rating, setRating] = useState(5);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!content.trim()) {
+      toast.error('Please write your testimonial');
+      return;
+    }
+    
+    setSubmitting(true);
+    try {
+      await api.post('/api/testimonials', { content, rating });
+      toast.success('Thank you! Your testimonial will be reviewed and published soon.');
+      setContent('');
+      setRating(5);
+      setShowForm(false);
+    } catch (error) {
+      toast.error('Failed to submit testimonial. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-saffron/10 to-gold/10 rounded-2xl border border-orange-200 p-6 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="font-semibold text-maroon flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" />
+            Share Your Experience
+          </h3>
+          <p className="text-sm text-gray-600">Help others by sharing your experience with Divine App</p>
+        </div>
+        {!showForm && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-4 py-2 bg-saffron text-white rounded-xl hover:bg-saffron-dark transition-colors flex items-center gap-2"
+          >
+            <Edit className="w-4 h-4" />
+            Write Review
+          </button>
+        )}
+      </div>
+
+      {showForm && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="block text-sm text-gray-600 mb-2">Your Rating</label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className="p-1 transition-transform hover:scale-110"
+                >
+                  <Star className={`w-8 h-8 ${rating >= star ? 'text-gold fill-gold' : 'text-gray-300'}`} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-2">Your Testimonial</label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={4}
+              className="w-full px-4 py-3 rounded-xl border border-orange-200 focus:ring-2 focus:ring-saffron focus:border-transparent resize-none"
+              placeholder="Share how Divine App has helped you in your spiritual journey..."
+            />
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowForm(false)}
+              className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="flex-1 px-4 py-2 bg-saffron text-white rounded-xl hover:bg-saffron-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Submit Testimonial
+                </>
+              )}
+            </button>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
