@@ -9,6 +9,7 @@ class UserRole(str, Enum):
     ASTROLOGER = "astrologer"
     SHOP_OWNER = "shop_owner"
     ADMIN = "admin"
+    SUPER_ADMIN = "super_admin"
 
 class BookingStatus(str, Enum):
     PENDING = "pending"

@@ -10,11 +10,13 @@ import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 import AstrologerDashboard from './dashboards/AstrologerDashboard';
+import AdminDashboard from './dashboards/AdminDashboard';
 
 // Role display configuration
 const ROLE_CONFIG = {
   priest: { label: 'Priest', color: 'bg-maroon', icon: Star },
   admin: { label: 'Admin', color: 'bg-purple-600', icon: Shield },
+  super_admin: { label: 'Super Admin', color: 'bg-purple-800', icon: Shield },
   devotee: { label: 'Devotee', color: 'bg-saffron', icon: User },
   astrologer: { label: 'Astrologer', color: 'bg-indigo-600', icon: Star },
   shop_owner: { label: 'Shop Owner', color: 'bg-green-600', icon: ShoppingBag },
@@ -54,6 +56,7 @@ export default function DashboardPage() {
   // Route to appropriate dashboard based on role
   switch (user.role) {
     case 'admin':
+    case 'super_admin':
       return <AdminDashboard />;
     case 'priest':
       return <PriestDashboard />;
@@ -478,151 +481,6 @@ function ShopOwnerDashboard() {
               </div>
             )}
           </div>
-        </motion.div>
-      </div>
-    </div>
-  );
-}
-
-function AdminDashboard() {
-  const { user, logout } = useAuth();
-  const [stats, setStats] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [welcomeShown, setWelcomeShown] = useState(false);
-
-  // Show welcome toast on first load
-  useEffect(() => {
-    if (user && !welcomeShown) {
-      const roleConfig = ROLE_CONFIG[user.role] || ROLE_CONFIG.admin;
-      toast.success(`Welcome, ${user.name}!`, {
-        description: `You're logged in as ${roleConfig.label}`,
-        duration: 4000,
-      });
-      setWelcomeShown(true);
-    }
-  }, [user, welcomeShown]);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [statsRes, usersRes] = await Promise.all([
-        api.get('/api/admin/stats'),
-        api.get('/api/admin/users')
-      ]);
-      setStats(statsRes.data);
-      setUsers(usersRes.data.users || []);
-    } catch (error) {
-      console.error('Error fetching admin data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen pt-20 pb-24 md:pb-12 bg-gradient-to-b from-cream to-parchment">
-      <Toaster position="top-center" richColors />
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="card p-6 mb-8 bg-gradient-to-r from-cosmic-bg to-cosmic-surface text-white">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="font-cinzel text-2xl font-bold mb-2">Admin Dashboard</h1>
-                <p className="opacity-90 mb-3">Platform overview and management</p>
-                <RoleBadge role={user?.role} light />
-              </div>
-              <button 
-                onClick={logout}
-                className="p-2 bg-white/20 rounded-full hover:bg-red-500/50 transition-colors"
-                data-testid="logout-btn"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5 text-white" />
-              </button>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 text-saffron animate-spin" />
-            </div>
-          ) : (
-            <>
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="card p-4 text-center">
-                  <Users className="w-8 h-8 text-saffron mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-gray-800">{stats?.total_users || 0}</p>
-                  <p className="text-gray-600 text-sm">Total Users</p>
-                </div>
-                <div className="card p-4 text-center">
-                  <Star className="w-8 h-8 text-gold mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-gray-800">{stats?.total_priests || 0}</p>
-                  <p className="text-gray-600 text-sm">Priests</p>
-                </div>
-                <div className="card p-4 text-center">
-                  <ShoppingBag className="w-8 h-8 text-maroon mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-gray-800">{stats?.total_products || 0}</p>
-                  <p className="text-gray-600 text-sm">Products</p>
-                </div>
-                <div className="card p-4 text-center">
-                  <Calendar className="w-8 h-8 text-cosmic-accent mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-gray-800">{stats?.total_bookings || 0}</p>
-                  <p className="text-gray-600 text-sm">Bookings</p>
-                </div>
-              </div>
-
-              {/* Pending Verifications Alert */}
-              {stats?.pending_verifications > 0 && (
-                <div className="card p-4 mb-8 bg-yellow-50 border-yellow-200 flex items-center gap-3">
-                  <AlertCircle className="w-6 h-6 text-yellow-600" />
-                  <span className="text-yellow-800">
-                    {stats.pending_verifications} priests pending verification
-                  </span>
-                </div>
-              )}
-
-              {/* Recent Users */}
-              <div className="card p-6">
-                <h2 className="font-cinzel text-xl font-bold text-maroon mb-4">Recent Users</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="text-left text-sm text-gray-500 border-b">
-                        <th className="pb-3">Name</th>
-                        <th className="pb-3">Email</th>
-                        <th className="pb-3">Role</th>
-                        <th className="pb-3">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.slice(0, 10).map((u) => (
-                        <tr key={u.id} className="border-b border-gray-100">
-                          <td className="py-3 font-medium">{u.name}</td>
-                          <td className="py-3 text-gray-600">{u.email}</td>
-                          <td className="py-3">
-                            <span className="bg-orange-100 text-saffron-dark text-xs px-2 py-1 rounded-full">
-                              {u.role}
-                            </span>
-                          </td>
-                          <td className="py-3">
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              u.is_verified ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {u.is_verified ? 'Verified' : 'Pending'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
-          )}
         </motion.div>
       </div>
     </div>

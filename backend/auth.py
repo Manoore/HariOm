@@ -106,7 +106,11 @@ async def get_optional_user(credentials: Optional[HTTPAuthorizationCredentials] 
 
 def require_role(allowed_roles: list):
     async def role_checker(user: dict = Depends(get_current_user)):
-        if user.get("role") not in allowed_roles:
+        user_role = user.get("role")
+        # Super admin has access to all admin routes
+        if user_role == "super_admin":
+            return user
+        if user_role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You don't have permission to access this resource"

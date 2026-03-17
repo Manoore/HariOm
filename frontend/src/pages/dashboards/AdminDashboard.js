@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Users, Star, ShoppingBag, Calendar, Settings, LogOut,
   ChevronRight, CheckCircle, AlertCircle, Loader2, TrendingUp,
-  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2, Search
+  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2, Search, User, Shield
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,6 +25,7 @@ const useIsDesktop = () => {
 // Sidebar Navigation for Desktop
 function AdminSidebar({ activeTab, setActiveTab, user }) {
   const { logout } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
   
   const tabs = [
     { id: 'overview', icon: Home, label: 'Overview' },
@@ -34,8 +35,10 @@ function AdminSidebar({ activeTab, setActiveTab, user }) {
     { id: 'bookings', icon: Calendar, label: 'Bookings' },
     { id: 'puja-types', icon: BookOpen, label: 'Puja Types' },
     { id: 'feedback', icon: MessageSquare, label: 'Feedback & Reviews' },
+    ...(isSuperAdmin ? [{ id: 'admin-management', icon: Key, label: 'Admin Management' }] : []),
     { id: 'consultation', icon: Video, label: 'Consultation Settings' },
-    { id: 'system', icon: Key, label: 'System Settings' },
+    { id: 'system', icon: Settings, label: 'System Settings' },
+    { id: 'profile', icon: User, label: 'My Profile' },
   ];
 
   return (
@@ -818,6 +821,433 @@ function PujaTypesTab({ isDesktop }) {
   );
 }
 
+// Admin Profile Tab
+function ProfileTab({ isDesktop, user, onRefresh }) {
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || ''
+  });
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [saving, setSaving] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+
+  useEffect(() => {
+    setForm({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || ''
+    });
+  }, [user]);
+
+  const handleUpdateProfile = async () => {
+    if (!form.name || !form.email) {
+      toast.error('Name and email are required');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.put('/api/admin/profile', form);
+      toast.success('Profile updated successfully');
+      onRefresh?.();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordForm.current_password || !passwordForm.new_password) {
+      toast.error('Please fill all password fields');
+      return;
+    }
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (passwordForm.new_password.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+    
+    setChangingPassword(true);
+    try {
+      await api.post('/api/admin/change-password', {
+        current_password: passwordForm.current_password,
+        new_password: passwordForm.new_password
+      });
+      toast.success('Password changed successfully');
+      setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+      setShowPasswordSection(false);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to change password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  return (
+    <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+      <div className="pt-4 max-w-2xl">
+        <h2 className="font-cinzel text-xl font-semibold text-gray-800 mb-6">My Profile</h2>
+        
+        {/* Profile Info */}
+        <div className="bg-white rounded-2xl shadow-sm border border-orange-100 p-6 mb-6">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-20 h-20 bg-saffron/20 rounded-full flex items-center justify-center text-saffron-dark font-cinzel text-3xl">
+              {form.name?.charAt(0)}
+            </div>
+            <div>
+              <p className="text-xl font-semibold text-gray-800">{form.name}</p>
+              <span className={`text-xs px-3 py-1 rounded-full ${user?.role === 'super_admin' ? 'bg-purple-100 text-purple-700' : 'bg-saffron/20 text-saffron-dark'}`}>
+                {user?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+              </span>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="w-full px-4 py-2 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="w-full px-4 py-2 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className="w-full px-4 py-2 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                placeholder="Optional"
+              />
+            </div>
+            <button
+              onClick={handleUpdateProfile}
+              disabled={saving}
+              className="w-full py-2.5 bg-saffron text-white rounded-xl hover:bg-saffron-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              Save Changes
+            </button>
+          </div>
+        </div>
+
+        {/* Change Password */}
+        <div className="bg-white rounded-2xl shadow-sm border border-orange-100 p-6">
+          <button
+            onClick={() => setShowPasswordSection(!showPasswordSection)}
+            className="w-full flex items-center justify-between text-gray-800 font-medium"
+          >
+            <span className="flex items-center gap-2">
+              <Key className="w-5 h-5" />
+              Change Password
+            </span>
+            <ChevronRight className={`w-5 h-5 transition-transform ${showPasswordSection ? 'rotate-90' : ''}`} />
+          </button>
+          
+          {showPasswordSection && (
+            <div className="mt-4 space-y-4 pt-4 border-t border-orange-100">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.current_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+                  className="w-full px-4 py-2 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.new_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+                  className="w-full px-4 py-2 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.confirm_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+                  className="w-full px-4 py-2 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                />
+              </div>
+              <button
+                onClick={handleChangePassword}
+                disabled={changingPassword}
+                className="w-full py-2.5 bg-gray-800 text-white rounded-xl hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {changingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
+                Change Password
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Admin Management Tab (Super Admin Only)
+function AdminManagementTab({ isDesktop }) {
+  const [admins, setAdmins] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState(null);
+  const [form, setForm] = useState({ name: '', email: '', password: '', is_super_admin: false });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
+
+  const fetchAdmins = async () => {
+    try {
+      const res = await api.get('/api/admin/admins');
+      setAdmins(res.data.admins || []);
+    } catch (error) {
+      toast.error('Failed to load admins');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!form.name || !form.email) {
+      toast.error('Name and email are required');
+      return;
+    }
+    if (!editingAdmin && (!form.password || form.password.length < 6)) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      if (editingAdmin) {
+        await api.put(`/api/admin/admins/${editingAdmin.id}`, {
+          name: form.name,
+          is_super_admin: form.is_super_admin
+        });
+        toast.success('Admin updated');
+      } else {
+        await api.post('/api/admin/admins', form);
+        toast.success('Admin created');
+      }
+      fetchAdmins();
+      setShowAddModal(false);
+      setEditingAdmin(null);
+      setForm({ name: '', email: '', password: '', is_super_admin: false });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to save admin');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleStatus = async (adminId, isActive) => {
+    if (!window.confirm(`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this admin?`)) return;
+    try {
+      await api.put(`/api/admin/admins/${adminId}`, { is_active: !isActive });
+      toast.success(`Admin ${isActive ? 'deactivated' : 'activated'}`);
+      fetchAdmins();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to update status');
+    }
+  };
+
+  const handleDelete = async (adminId) => {
+    if (!window.confirm('Are you sure you want to delete this admin? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/api/admin/admins/${adminId}`);
+      toast.success('Admin deleted');
+      fetchAdmins();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to delete admin');
+    }
+  };
+
+  return (
+    <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+      <div className="pt-4">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-cinzel text-xl font-semibold text-gray-800">Admin Management</h2>
+            <p className="text-sm text-gray-500">Manage administrators and their permissions</p>
+          </div>
+          <button
+            onClick={() => { setShowAddModal(true); setEditingAdmin(null); setForm({ name: '', email: '', password: '', is_super_admin: false }); }}
+            className="flex items-center gap-2 px-4 py-2 bg-saffron text-white rounded-xl hover:bg-saffron-dark transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Admin
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="w-6 h-6 text-saffron animate-spin" />
+          </div>
+        ) : (
+          <div className={`${isDesktop ? 'grid grid-cols-2 xl:grid-cols-3 gap-4' : 'space-y-3'}`}>
+            {admins.map((admin) => (
+              <div key={admin.id} className={`bg-white shadow-sm border rounded-2xl p-4 ${!admin.is_active ? 'border-red-200 bg-red-50/30' : 'border-orange-100'}`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold text-lg ${
+                    admin.role === 'super_admin' ? 'bg-purple-100 text-purple-700' : 'bg-saffron/20 text-saffron-dark'
+                  }`}>
+                    {admin.role === 'super_admin' ? <Shield className="w-6 h-6" /> : admin.name?.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-medium truncate ${admin.is_active ? 'text-gray-800' : 'text-gray-400'}`}>{admin.name}</p>
+                    <p className="text-gray-500 text-sm truncate">{admin.email}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    admin.role === 'super_admin' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                  }`}>
+                    {admin.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                  </span>
+                  {!admin.is_active && <span className="text-xs text-red-500">Inactive</span>}
+                </div>
+                
+                <div className="flex gap-2 pt-2 border-t border-orange-100">
+                  <button
+                    onClick={() => { setEditingAdmin(admin); setForm({ name: admin.name, email: admin.email, password: '', is_super_admin: admin.role === 'super_admin' }); setShowAddModal(true); }}
+                    className="flex-1 text-xs px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleToggleStatus(admin.id, admin.is_active)}
+                    className={`flex-1 text-xs px-3 py-2 rounded-lg transition-colors flex items-center justify-center gap-1 ${
+                      admin.is_active ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' : 'bg-green-50 text-green-600 hover:bg-green-100'
+                    }`}
+                  >
+                    {admin.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(admin.id)}
+                    className="text-xs px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Add/Edit Admin Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl max-w-md w-full shadow-xl"
+          >
+            <div className="p-4 border-b border-orange-100 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-800">
+                {editingAdmin ? 'Edit Admin' : 'Add New Admin'}
+              </h2>
+              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-orange-50 rounded-lg text-gray-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name*</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full px-4 py-2 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email*</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full px-4 py-2 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                  disabled={!!editingAdmin}
+                />
+              </div>
+              {!editingAdmin && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password*</label>
+                  <input
+                    type="password"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    className="w-full px-4 py-2 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                    placeholder="Minimum 6 characters"
+                  />
+                </div>
+              )}
+              <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
+                <input
+                  type="checkbox"
+                  id="is_super_admin"
+                  checked={form.is_super_admin}
+                  onChange={(e) => setForm({ ...form, is_super_admin: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="is_super_admin" className="flex-1">
+                  <p className="text-sm font-medium text-gray-700">Super Admin</p>
+                  <p className="text-xs text-gray-500">Can manage other admins and all settings</p>
+                </label>
+                <Shield className="w-5 h-5 text-purple-500" />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-orange-100 flex justify-end gap-3">
+              <button onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-500 hover:text-gray-700">
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={saving}
+                className="px-6 py-2 bg-saffron text-white rounded-xl disabled:opacity-50 flex items-center gap-2 hover:bg-saffron-dark transition-colors"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {editingAdmin ? 'Update' : 'Create Admin'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Feedback & Testimonials Tab
 function FeedbackTab({ isDesktop }) {
   const [feedback, setFeedback] = useState([]);
@@ -1084,8 +1514,10 @@ export default function AdminDashboard() {
       {activeTab === 'bookings' && <BookingsTab bookings={bookings} isDesktop={isDesktop} loading={loading} />}
       {activeTab === 'puja-types' && <PujaTypesTab isDesktop={isDesktop} />}
       {activeTab === 'feedback' && <FeedbackTab isDesktop={isDesktop} />}
+      {activeTab === 'admin-management' && user?.role === 'super_admin' && <AdminManagementTab isDesktop={isDesktop} />}
       {activeTab === 'consultation' && <ConsultationSettingsAdmin />}
       {activeTab === 'system' && <SystemSettingsAdmin />}
+      {activeTab === 'profile' && <ProfileTab isDesktop={isDesktop} user={user} onRefresh={fetchData} />}
 
       {/* Mobile Logout - shown only on overview */}
       {!isDesktop && activeTab === 'overview' && (

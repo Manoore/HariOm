@@ -175,7 +175,7 @@ async def seed_initial_data():
         "email": "admin@divineapp.com",
         "password": get_password_hash("admin123"),
         "name": "Admin",
-        "role": UserRole.ADMIN,
+        "role": UserRole.SUPER_ADMIN,
         "is_verified": True,
         "created_at": datetime.now(timezone.utc)
     }
@@ -4159,6 +4159,187 @@ async def get_user_details(user_id: str, admin: dict = Depends(require_role([Use
         "created_at": user.get("created_at").isoformat() if user.get("created_at") else None,
         "last_login": user.get("last_login").isoformat() if user.get("last_login") else None
     }
+
+
+@app.put("/api/admin/profile")
+async def update_admin_profile(request: Request, admin: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Update admin's own profile"""
+    data = await request.json()
+    
+    update_fields = {}
+    if "name" in data and data["name"]:
+        update_fields["name"] = data["name"].strip()
+    if "phone" in data:
+        update_fields["phone"] = data["phone"].strip() if data["phone"] else None
+    if "email" in data and data["email"]:
+        # Check if email is already taken by another user
+        existing = await users_collection.find_one({
+            "email": data["email"],
+            "_id": {"$ne": admin["_id"]}
+        })
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already in use")
+        update_fields["email"] = data["email"].strip()
+    
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    update_fields["updated_at"] = datetime.now(timezone.utc)
+    
+    await users_collection.update_one(
+        {"_id": admin["_id"]},
+        {"$set": update_fields}
+    )
+    
+    return {"message": "Profile updated successfully"}
+
+
+@app.post("/api/admin/change-password")
+async def change_admin_password(request: Request, admin: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Admin changes their own password"""
+    data = await request.json()
+    
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+    
+    if not current_password or not new_password:
+        raise HTTPException(status_code=400, detail="Current and new passwords are required")
+    
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    
+    # Verify current password
+    if not pwd_context.verify(current_password, admin.get("password", "")):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    # Hash and update new password
+    hashed_password = pwd_context.hash(new_password)
+    await users_collection.update_one(
+        {"_id": admin["_id"]},
+        {"$set": {"password": hashed_password, "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "Password changed successfully"}
+
+
+@app.get("/api/admin/admins")
+async def get_all_admins(admin: dict = Depends(require_role([UserRole.SUPER_ADMIN]))):
+    """Get all admin users (Super Admin only)"""
+    cursor = users_collection.find({
+        "role": {"$in": ["admin", "super_admin"]}
+    }, {"password": 0})
+    
+    admins = []
+    async for a in cursor:
+        admins.append({
+            "id": str(a["_id"]),
+            "name": a.get("name"),
+            "email": a.get("email"),
+            "phone": a.get("phone"),
+            "role": a.get("role"),
+            "is_active": a.get("is_active", True),
+            "created_at": a.get("created_at").isoformat() if a.get("created_at") else None
+        })
+    
+    return {"admins": admins}
+
+
+@app.post("/api/admin/admins")
+async def create_admin(request: Request, admin: dict = Depends(require_role([UserRole.SUPER_ADMIN]))):
+    """Create a new admin user (Super Admin only)"""
+    data = await request.json()
+    
+    email = data.get("email", "").strip()
+    name = data.get("name", "").strip()
+    password = data.get("password", "")
+    is_super = data.get("is_super_admin", False)
+    
+    if not email or not name or not password:
+        raise HTTPException(status_code=400, detail="Email, name, and password are required")
+    
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Check if email already exists
+    existing = await users_collection.find_one({"email": email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already in use")
+    
+    new_admin = {
+        "email": email,
+        "name": name,
+        "password": pwd_context.hash(password),
+        "role": UserRole.SUPER_ADMIN if is_super else UserRole.ADMIN,
+        "is_verified": True,
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await users_collection.insert_one(new_admin)
+    
+    return {
+        "message": "Admin created successfully",
+        "id": str(result.inserted_id)
+    }
+
+
+@app.put("/api/admin/admins/{admin_id}")
+async def update_admin_user(admin_id: str, request: Request, admin: dict = Depends(require_role([UserRole.SUPER_ADMIN]))):
+    """Update an admin user (Super Admin only)"""
+    data = await request.json()
+    
+    target_admin = await users_collection.find_one({"_id": ObjectId(admin_id)})
+    if not target_admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    if target_admin.get("role") not in ["admin", "super_admin"]:
+        raise HTTPException(status_code=400, detail="User is not an admin")
+    
+    update_fields = {}
+    if "name" in data and data["name"]:
+        update_fields["name"] = data["name"].strip()
+    if "phone" in data:
+        update_fields["phone"] = data["phone"].strip() if data["phone"] else None
+    if "is_active" in data:
+        # Cannot deactivate yourself
+        if str(admin["_id"]) == admin_id and not data["is_active"]:
+            raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
+        update_fields["is_active"] = data["is_active"]
+    if "is_super_admin" in data:
+        # Cannot demote yourself
+        if str(admin["_id"]) == admin_id:
+            raise HTTPException(status_code=400, detail="Cannot change your own super admin status")
+        update_fields["role"] = UserRole.SUPER_ADMIN if data["is_super_admin"] else UserRole.ADMIN
+    
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    update_fields["updated_at"] = datetime.now(timezone.utc)
+    
+    await users_collection.update_one(
+        {"_id": ObjectId(admin_id)},
+        {"$set": update_fields}
+    )
+    
+    return {"message": "Admin updated successfully"}
+
+
+@app.delete("/api/admin/admins/{admin_id}")
+async def delete_admin_user(admin_id: str, admin: dict = Depends(require_role([UserRole.SUPER_ADMIN]))):
+    """Delete an admin user (Super Admin only)"""
+    if str(admin["_id"]) == admin_id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    target_admin = await users_collection.find_one({"_id": ObjectId(admin_id)})
+    if not target_admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    if target_admin.get("role") not in ["admin", "super_admin"]:
+        raise HTTPException(status_code=400, detail="User is not an admin")
+    
+    await users_collection.delete_one({"_id": ObjectId(admin_id)})
+    
+    return {"message": "Admin deleted successfully"}
 
 
 # ===================== PUJA TYPES (Admin-managed) =====================

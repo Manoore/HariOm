@@ -494,6 +494,7 @@ export default function MobileApp() {
     if (!userRole) return null;
     switch (userRole) {
       case 'admin':
+      case 'super_admin':
         return AdminDashboard;
       case 'priest':
         return PriestDashboard;
