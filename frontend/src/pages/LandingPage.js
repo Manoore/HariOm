@@ -711,8 +711,38 @@ export default function LandingPage({ onGetStarted }) {
               className="hidden lg:block"
             >
               {/* App Preview Mockup */}
-              <div className="relative">
-                <div className="w-72 h-[580px] bg-gray-900 rounded-[3rem] p-3 mx-auto shadow-2xl">
+              <div className="relative flex items-center justify-center">
+                {/* Left floating badges */}
+                <div className="flex flex-col gap-6 mr-6">
+                  <motion.div 
+                    className="bg-white rounded-2xl px-4 py-3 shadow-xl border border-saffron/20"
+                    animate={{ y: [0, -10, 0], x: [0, 3, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-saffron/20 rounded-full flex items-center justify-center">
+                        <Users className="w-5 h-5 text-saffron" />
+                      </div>
+                      <span className="font-semibold text-gray-800">Devotee</span>
+                    </div>
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="bg-white rounded-2xl px-4 py-3 shadow-xl border border-purple-200"
+                    animate={{ y: [0, -8, 0], x: [0, -2, 0] }}
+                    transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Sun className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <span className="font-semibold text-gray-800">Astrologer</span>
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Phone Mockup */}
+                <div className="w-72 h-[580px] bg-gray-900 rounded-[3rem] p-3 shadow-2xl flex-shrink-0">
                   <div className="w-full h-full bg-cream rounded-[2.5rem] overflow-hidden">
                     <div className="p-4">
                       <p className="text-gray-500 text-xs">Namaste,</p>
@@ -764,58 +794,34 @@ export default function LandingPage({ onGetStarted }) {
                   </div>
                 </div>
                 
-                {/* Floating User Type Badges - Outside the phone */}
-                <motion.div 
-                  className="absolute -left-24 top-16 bg-white rounded-2xl px-4 py-3 shadow-xl border border-saffron/20"
-                  animate={{ y: [0, -10, 0], x: [0, 3, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-saffron/20 rounded-full flex items-center justify-center">
-                      <Users className="w-5 h-5 text-saffron" />
+                {/* Right floating badges */}
+                <div className="flex flex-col gap-6 ml-6">
+                  <motion.div 
+                    className="bg-white rounded-2xl px-4 py-3 shadow-xl border border-maroon/20"
+                    animate={{ y: [0, 8, 0], x: [0, -3, 0] }}
+                    transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-maroon/20 rounded-full flex items-center justify-center">
+                        <Star className="w-5 h-5 text-maroon" />
+                      </div>
+                      <span className="font-semibold text-gray-800">Priest</span>
                     </div>
-                    <span className="font-semibold text-gray-800">Devotee</span>
-                  </div>
-                </motion.div>
-                
-                <motion.div 
-                  className="absolute -right-24 top-32 bg-white rounded-2xl px-4 py-3 shadow-xl border border-maroon/20"
-                  animate={{ y: [0, 8, 0], x: [0, -3, 0] }}
-                  transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-maroon/20 rounded-full flex items-center justify-center">
-                      <Star className="w-5 h-5 text-maroon" />
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="bg-white rounded-2xl px-4 py-3 shadow-xl border border-green-200"
+                    animate={{ y: [0, 10, 0], x: [0, 2, 0] }}
+                    transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <ShoppingBag className="w-5 h-5 text-green-600" />
+                      </div>
+                      <span className="font-semibold text-gray-800">Shop</span>
                     </div>
-                    <span className="font-semibold text-gray-800">Priest</span>
-                  </div>
-                </motion.div>
-                
-                <motion.div 
-                  className="absolute -left-20 bottom-48 bg-white rounded-2xl px-4 py-3 shadow-xl border border-purple-200"
-                  animate={{ y: [0, -8, 0], x: [0, -2, 0] }}
-                  transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Sun className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <span className="font-semibold text-gray-800">Astrologer</span>
-                  </div>
-                </motion.div>
-                
-                <motion.div 
-                  className="absolute -right-20 bottom-32 bg-white rounded-2xl px-4 py-3 shadow-xl border border-green-200"
-                  animate={{ y: [0, 10, 0], x: [0, 2, 0] }}
-                  transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <ShoppingBag className="w-5 h-5 text-green-600" />
-                    </div>
-                    <span className="font-semibold text-gray-800">Shop</span>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </div>
               </div>
             </motion.div>
             </div>
