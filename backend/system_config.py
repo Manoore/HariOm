@@ -257,6 +257,14 @@ DEFAULT_CONFIG = {
         "sensitive": False,
         "required": False
     },
+    "contact_address": {
+        "value": "Hyderabad, Telangana, India",
+        "category": "branding",
+        "label": "Contact Address",
+        "description": "Physical address shown on contact page",
+        "sensitive": False,
+        "required": False
+    },
     
     # Maintenance Mode
     "maintenance_mode": {

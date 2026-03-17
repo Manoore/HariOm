@@ -516,6 +516,11 @@ export default function LandingPage({ onGetStarted }) {
   const [products, setProducts] = useState([]);
   const [festivals, setFestivals] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
+  const [contactInfo, setContactInfo] = useState({
+    email: 'support@divineapp.com',
+    phone: '+91 98765 43210',
+    address: 'Hyderabad, Telangana, India'
+  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Feedback form state
@@ -534,16 +539,20 @@ export default function LandingPage({ onGetStarted }) {
 
   const fetchData = async () => {
     try {
-      const [priestsRes, productsRes, festivalsRes, testimonialsRes] = await Promise.all([
+      const [priestsRes, productsRes, festivalsRes, testimonialsRes, contactRes] = await Promise.all([
         api.get('/api/priests?limit=3'),
         api.get('/api/products?limit=4'),
         api.get('/api/festivals'),
-        api.get('/api/testimonials').catch(() => ({ data: { testimonials: [] } }))
+        api.get('/api/testimonials').catch(() => ({ data: { testimonials: [] } })),
+        api.get('/api/contact-info').catch(() => ({ data: contactInfo }))
       ]);
       setPriests(priestsRes.data.priests || []);
       setProducts(productsRes.data.products || []);
       setFestivals((festivalsRes.data.festivals || []).slice(0, 4));
       setTestimonials(testimonialsRes.data.testimonials || []);
+      if (contactRes.data) {
+        setContactInfo(contactRes.data);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -1383,7 +1392,7 @@ export default function LandingPage({ onGetStarted }) {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800">Email Us</h4>
-                      <p className="text-gray-600">support@divineapp.com</p>
+                      <p className="text-gray-600">{contactInfo.email}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -1392,7 +1401,7 @@ export default function LandingPage({ onGetStarted }) {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800">Call Us</h4>
-                      <p className="text-gray-600">+91 98765 43210</p>
+                      <p className="text-gray-600">{contactInfo.phone}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -1401,7 +1410,7 @@ export default function LandingPage({ onGetStarted }) {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800">Visit Us</h4>
-                      <p className="text-gray-600">Hyderabad, Telangana, India</p>
+                      <p className="text-gray-600">{contactInfo.address}</p>
                     </div>
                   </div>
                 </div>
@@ -1552,15 +1561,15 @@ export default function LandingPage({ onGetStarted }) {
                 <ul className="space-y-3 text-sm text-gray-400">
                   <li className="flex items-center gap-2">
                     <Mail className="w-4 h-4" />
-                    support@divineapp.com
+                    {contactInfo.email}
                   </li>
                   <li className="flex items-center gap-2">
                     <Phone className="w-4 h-4" />
-                    +91 98765 43210
+                    {contactInfo.phone}
                   </li>
                   <li className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 mt-0.5" />
-                    Mumbai, Maharashtra, India
+                    {contactInfo.address}
                   </li>
                 </ul>
               </div>

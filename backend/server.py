@@ -5219,6 +5219,16 @@ async def delete_testimonial(testimonial_id: str, user: dict = Depends(require_r
         raise HTTPException(status_code=404, detail="Testimonial not found")
     return {"success": True, "message": "Testimonial deleted"}
 
+@app.get("/api/contact-info")
+async def get_contact_info():
+    """Get public contact information - no auth required"""
+    from system_config import get_config_value
+    return {
+        "email": await get_config_value("support_email") or "support@divineapp.com",
+        "phone": await get_config_value("support_phone") or "+91 98765 43210",
+        "address": await get_config_value("contact_address") or "Hyderabad, Telangana, India",
+        "app_name": await get_config_value("app_name") or "Divine App"
+    }
 
 
 if __name__ == "__main__":
