@@ -1957,9 +1957,14 @@ async def update_booking_status(booking_id: str, status: BookingStatus, user: di
     
     old_status = booking.get("status", "pending")
     
+    update_data = {"status": status}
+    # Track when booking was completed for chat expiry
+    if status == BookingStatus.COMPLETED:
+        update_data["completed_at"] = datetime.now(timezone.utc)
+    
     await bookings_collection.update_one(
         {"_id": ObjectId(booking_id)},
-        {"$set": {"status": status}}
+        {"$set": update_data}
     )
     
     # Auto-create chat room when booking is confirmed
@@ -5021,30 +5026,65 @@ async def get_chat_rooms(user: dict = Depends(get_current_user)):
         "participants": str(user["_id"])
     }).sort("last_message_at", -1)
     
+    # Chat window: 5 days after booking/order completion
+    CHAT_WINDOW_DAYS = 5
+    
     rooms = []
     async for room in cursor:
-        # Auto-heal: Reactivate chat rooms that were incorrectly deactivated
-        # Chat should only be inactive if booking/order is cancelled
         is_active = room.get("is_active", True)
-        if not is_active:
-            should_reactivate = False
-            if room.get("booking_id"):
-                booking = await bookings_collection.find_one({"_id": ObjectId(room["booking_id"])})
-                # Reactivate if booking exists and is not cancelled
-                if booking and booking.get("status") != "cancelled":
-                    should_reactivate = True
-            elif room.get("order_id"):
-                order = await orders_collection.find_one({"_id": ObjectId(room["order_id"])})
-                # Reactivate if order exists and is not cancelled
-                if order and order.get("status") != "cancelled":
-                    should_reactivate = True
-            
-            if should_reactivate:
-                await chat_rooms_collection.update_one(
-                    {"_id": room["_id"]},
-                    {"$set": {"is_active": True}, "$unset": {"deactivated_at": ""}}
-                )
-                is_active = True
+        chat_expired = False
+        chat_expiry_reason = None
+        
+        # Check booking status and expiry
+        if room.get("booking_id"):
+            booking = await bookings_collection.find_one({"_id": ObjectId(room["booking_id"])})
+            if booking:
+                if booking.get("status") == "cancelled":
+                    # Cancelled - deactivate immediately
+                    is_active = False
+                    chat_expiry_reason = "cancelled"
+                elif booking.get("status") == "completed":
+                    # Completed - check 5-day window
+                    completed_at = booking.get("completed_at")
+                    if completed_at:
+                        days_since_completion = (datetime.now(timezone.utc) - completed_at).days
+                        if days_since_completion > CHAT_WINDOW_DAYS:
+                            is_active = False
+                            chat_expired = True
+                            chat_expiry_reason = "expired"
+                    else:
+                        # No completed_at timestamp, use legacy behavior (keep active)
+                        is_active = True
+                else:
+                    # Pending/confirmed - keep active
+                    is_active = True
+        
+        # Check order status and expiry
+        elif room.get("order_id"):
+            order = await orders_collection.find_one({"_id": ObjectId(room["order_id"])})
+            if order:
+                if order.get("status") == "cancelled":
+                    is_active = False
+                    chat_expiry_reason = "cancelled"
+                elif order.get("status") == "delivered":
+                    delivered_at = order.get("delivered_at")
+                    if delivered_at:
+                        days_since_delivery = (datetime.now(timezone.utc) - delivered_at).days
+                        if days_since_delivery > CHAT_WINDOW_DAYS:
+                            is_active = False
+                            chat_expired = True
+                            chat_expiry_reason = "expired"
+                    else:
+                        is_active = True
+                else:
+                    is_active = True
+        
+        # Update DB if status changed
+        if is_active != room.get("is_active", True):
+            await chat_rooms_collection.update_one(
+                {"_id": room["_id"]},
+                {"$set": {"is_active": is_active}}
+            )
         
         # Get last message
         last_message = await chat_messages_collection.find_one(
@@ -5063,6 +5103,8 @@ async def get_chat_rooms(user: dict = Depends(get_current_user)):
             "order_id": room.get("order_id"),
             "context": room.get("context", ""),
             "is_active": is_active,
+            "chat_expired": chat_expired,
+            "chat_expiry_reason": chat_expiry_reason,
             "other_participant": {
                 "id": other_id,
                 "name": other_details.get("name", "User"),

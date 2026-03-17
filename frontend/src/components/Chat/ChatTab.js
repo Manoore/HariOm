@@ -117,7 +117,9 @@ export function ChatRoomList({ onSelectRoom, selectedRoomId }) {
 
             {!room.is_active && (
               <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded mt-1 inline-block">
-                Chat ended
+                {room.chat_expiry_reason === 'expired' 
+                  ? 'Chat expired - Book again to chat' 
+                  : 'Chat ended'}
               </span>
             )}
           </div>
@@ -475,7 +477,10 @@ export function ChatRoom({ room, onBack, isDesktop }) {
       ) : (
         <div className="p-4 border-t border-gray-100 bg-gray-50 text-center">
           <p className="text-gray-400 text-sm">
-            This chat has ended. The {room.type === 'booking' ? 'booking' : 'order'} is complete.
+            {room.chat_expiry_reason === 'expired' 
+              ? 'This chat has expired. Book again through the app to continue chatting with this priest.'
+              : `This chat has ended. The ${room.type === 'booking' ? 'booking' : 'order'} was ${room.chat_expiry_reason === 'cancelled' ? 'cancelled' : 'completed'}.`
+            }
           </p>
         </div>
       )}
