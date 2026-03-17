@@ -61,6 +61,9 @@ testimonials_collection = db["testimonials"]
 # Puja Types Collection (Admin-managed dropdown values)
 puja_types_collection = db["puja_types"]
 
+# Audio Library Collection (Admin-managed mantras and shlokas)
+audio_library_collection = db["audio_library"]
+
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]
 mantras_collection = devotional_db["mantras"]
@@ -102,3 +105,6 @@ async def init_db():
     # Puja types index
     await puja_types_collection.create_index("name", unique=True)
     await puja_types_collection.create_index([("category", 1), ("name", 1)])
+    # Audio library index
+    await audio_library_collection.create_index([("category", 1), ("title", 1)])
+    await audio_library_collection.create_index("item_id", unique=True)

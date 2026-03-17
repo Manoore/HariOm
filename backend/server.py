@@ -23,7 +23,7 @@ from database import (
     festivals_collection, temples_collection,
     deities_collection, mantras_collection, stotras_collection, daily_schedule_collection,
     product_reviews_collection, feedback_collection, testimonials_collection,
-    puja_types_collection, service_reviews_collection
+    puja_types_collection, service_reviews_collection, audio_library_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -668,23 +668,63 @@ VEDIC_AUDIO_LIBRARY = {
 @app.get("/api/archive/library")
 async def get_vedic_library():
     """Get the complete Vedic audio library organized by category"""
-    return {"status": "ok", "data": VEDIC_AUDIO_LIBRARY}
+    # Check if we have items in the database
+    count = await audio_library_collection.count_documents({"is_active": True})
+    
+    if count == 0:
+        # Seed from hardcoded data
+        for category, items in VEDIC_AUDIO_LIBRARY.items():
+            for item in items:
+                doc = {
+                    "item_id": item["id"],
+                    "title": item["title"],
+                    "search_query": item["search_query"],
+                    "category": category,
+                    "is_active": True,
+                    "created_at": datetime.now(timezone.utc)
+                }
+                try:
+                    await audio_library_collection.insert_one(doc)
+                except:
+                    pass  # Skip duplicates
+    
+    # Fetch from database grouped by category
+    cursor = audio_library_collection.find({"is_active": True}).sort([("category", 1), ("title", 1)])
+    
+    library = {}
+    async for item in cursor:
+        cat = item.get("category", "UNCATEGORIZED")
+        if cat not in library:
+            library[cat] = []
+        library[cat].append({
+            "id": item.get("item_id"),
+            "title": item.get("title"),
+            "search_query": item.get("search_query")
+        })
+    
+    return {"status": "ok", "data": library}
 
 @app.get("/api/archive/play/{item_id}")
 async def get_audio_for_item(item_id: str):
     """Search Internet Archive for audio matching the item and return playable URL"""
-    # Find the item in our library
-    search_query = None
-    item_title = None
+    # Find the item in database first
+    item = await audio_library_collection.find_one({"item_id": item_id, "is_active": True})
     
-    for category, items in VEDIC_AUDIO_LIBRARY.items():
-        for item in items:
-            if item["id"] == item_id:
-                search_query = item["search_query"]
-                item_title = item["title"]
+    if item:
+        search_query = item.get("search_query")
+        item_title = item.get("title")
+    else:
+        # Fallback to hardcoded library
+        search_query = None
+        item_title = None
+        for category, items in VEDIC_AUDIO_LIBRARY.items():
+            for i in items:
+                if i["id"] == item_id:
+                    search_query = i["search_query"]
+                    item_title = i["title"]
+                    break
+            if search_query:
                 break
-        if search_query:
-            break
     
     if not search_query:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -4585,6 +4625,137 @@ async def get_all_puja_types_admin(user: dict = Depends(require_role([UserRole.A
             "created_at": puja["created_at"].isoformat() if puja.get("created_at") else None
         })
     return {"puja_types": puja_types}
+
+
+# ===================== AUDIO LIBRARY MANAGEMENT (Admin) =====================
+
+AUDIO_CATEGORIES = [
+    "MAHAVAKYAS",
+    "ESSENTIAL DAILY MANTRAS",
+    "GANESH MANTRAS",
+    "SHIVA MANTRAS",
+    "VISHNU MANTRAS",
+    "LAKSHMI MANTRAS",
+    "SARASWATI MANTRAS",
+    "HANUMAN MANTRAS",
+    "NAVAGRAHA MANTRAS",
+    "DAILY SHLOKAS",
+    "PHILOSOPHICAL SHLOKAS",
+    "POWERFUL STOTRAS",
+    "POOJA RITUAL MANTRAS",
+    "KEY SECTIONS FROM EPICS",
+]
+
+@app.get("/api/admin/audio-library")
+async def get_admin_audio_library(user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Get all audio library items for admin management"""
+    # Ensure data is seeded
+    count = await audio_library_collection.count_documents({})
+    if count == 0:
+        for category, items in VEDIC_AUDIO_LIBRARY.items():
+            for item in items:
+                doc = {
+                    "item_id": item["id"],
+                    "title": item["title"],
+                    "search_query": item["search_query"],
+                    "category": category,
+                    "is_active": True,
+                    "created_at": datetime.now(timezone.utc)
+                }
+                try:
+                    await audio_library_collection.insert_one(doc)
+                except:
+                    pass
+    
+    cursor = audio_library_collection.find({}).sort([("category", 1), ("title", 1)])
+    items = []
+    async for item in cursor:
+        items.append({
+            "id": str(item["_id"]),
+            "item_id": item.get("item_id"),
+            "title": item.get("title"),
+            "search_query": item.get("search_query"),
+            "category": item.get("category"),
+            "is_active": item.get("is_active", True),
+            "created_at": item.get("created_at").isoformat() if item.get("created_at") else None
+        })
+    
+    return {"items": items, "categories": AUDIO_CATEGORIES}
+
+@app.post("/api/admin/audio-library")
+async def add_audio_item(request: Request, user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Add a new audio item"""
+    data = await request.json()
+    
+    title = data.get("title", "").strip()
+    search_query = data.get("search_query", "").strip()
+    category = data.get("category", "ESSENTIAL DAILY MANTRAS")
+    
+    if not title or not search_query:
+        raise HTTPException(status_code=400, detail="Title and search query are required")
+    
+    # Generate item_id from title
+    item_id = title.lower().replace(" ", "-").replace("(", "").replace(")", "")[:50]
+    
+    # Check for duplicate
+    existing = await audio_library_collection.find_one({"item_id": item_id})
+    if existing:
+        raise HTTPException(status_code=400, detail="An item with similar title already exists")
+    
+    doc = {
+        "item_id": item_id,
+        "title": title,
+        "search_query": search_query,
+        "category": category,
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await audio_library_collection.insert_one(doc)
+    return {"message": "Audio item added", "id": str(result.inserted_id)}
+
+@app.put("/api/admin/audio-library/{item_id}")
+async def update_audio_item(item_id: str, request: Request, user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Update an audio item"""
+    data = await request.json()
+    
+    update_fields = {}
+    if "title" in data:
+        update_fields["title"] = data["title"].strip()
+    if "search_query" in data:
+        update_fields["search_query"] = data["search_query"].strip()
+    if "category" in data:
+        update_fields["category"] = data["category"]
+    if "is_active" in data:
+        update_fields["is_active"] = data["is_active"]
+    
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    update_fields["updated_at"] = datetime.now(timezone.utc)
+    
+    result = await audio_library_collection.update_one(
+        {"_id": ObjectId(item_id)},
+        {"$set": update_fields}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Audio item not found")
+    
+    return {"message": "Audio item updated"}
+
+@app.delete("/api/admin/audio-library/{item_id}")
+async def delete_audio_item(item_id: str, user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Delete an audio item (soft delete)"""
+    result = await audio_library_collection.update_one(
+        {"_id": ObjectId(item_id)},
+        {"$set": {"is_active": False, "deleted_at": datetime.now(timezone.utc)}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Audio item not found")
+    
+    return {"message": "Audio item deleted"}
 
 
 # ===================== SERVICE REVIEWS (Priests & Astrologers) =====================
