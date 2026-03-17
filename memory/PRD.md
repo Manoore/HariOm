@@ -47,6 +47,23 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - **Integration**: Payment Intent API ready
 - **IP-based Selection**: Stripe for international users, Razorpay for India
 
+## Backlog / Future Tasks 📋
+1. **Music Library Admin Management**
+   - Move `VEDIC_AUDIO_LIBRARY` from hardcoded to MongoDB
+   - Admin panel to add/edit/delete mantras
+   - Admin can edit Internet Archive search queries
+   - Test button to verify correct audio is returned
+   - Categories management
+
+2. **YouTube Embedded Player**
+   - Embed YouTube videos for mantras
+   - Curated playlists for each category
+   - More reliable than Internet Archive
+
+3. **Mobile App (Expo)**
+   - Fix Expo loading issue
+   - Complete native app for App Store/Play Store
+
 ## What's Been Implemented
 
 ### Authentication (COMPLETE)
