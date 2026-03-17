@@ -1692,6 +1692,8 @@ async def update_profile(update_data: UserUpdate, user: dict = Depends(get_curre
 async def get_priests(
     specialization: Optional[str] = None,
     language: Optional[str] = None,
+    location: Optional[str] = None,
+    zipcode: Optional[str] = None,
     min_rating: Optional[float] = None,
     skip: int = 0,
     limit: int = 20
@@ -1701,6 +1703,22 @@ async def get_priests(
         query["specializations"] = {"$regex": specialization, "$options": "i"}
     if language:
         query["languages"] = {"$regex": language, "$options": "i"}
+    if location:
+        # Search in city, state, or address fields
+        query["$or"] = [
+            {"location.city": {"$regex": location, "$options": "i"}},
+            {"location.state": {"$regex": location, "$options": "i"}},
+            {"location.address": {"$regex": location, "$options": "i"}},
+            {"city": {"$regex": location, "$options": "i"}},
+            {"state": {"$regex": location, "$options": "i"}}
+        ]
+    if zipcode:
+        query["$or"] = query.get("$or", []) + [
+            {"location.zipcode": zipcode},
+            {"location.postal_code": zipcode},
+            {"zipcode": zipcode},
+            {"postal_code": zipcode}
+        ]
     if min_rating:
         query["rating"] = {"$gte": min_rating}
     
@@ -1720,7 +1738,10 @@ async def get_priests(
             "rating": priest.get("rating", 0),
             "total_reviews": priest.get("total_reviews", 0),
             "is_verified": priest.get("is_verified", False),
-            "available_online": priest.get("available_online", True)
+            "available_online": priest.get("available_online", True),
+            "location": priest.get("location", {}),
+            "city": priest.get("city") or priest.get("location", {}).get("city", ""),
+            "state": priest.get("state") or priest.get("location", {}).get("state", "")
         })
     return {"priests": priests, "total": await priests_collection.count_documents(query)}
 

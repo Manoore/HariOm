@@ -5,7 +5,7 @@ import {
   Bell, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
   CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
-  Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet, Edit
+  Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet, Edit, Globe
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -2144,15 +2144,23 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const [priests, setPriests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [languageFilter, setLanguageFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     fetchPriests();
-  }, [filter]);
+  }, [filter, locationFilter, languageFilter]);
 
   const fetchPriests = async () => {
     try {
-      const params = filter ? `?specialization=${filter}` : '';
-      const res = await api.get(`/api/priests${params}`);
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filter) params.append('specialization', filter);
+      if (locationFilter) params.append('location', locationFilter);
+      if (languageFilter) params.append('language', languageFilter);
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      const res = await api.get(`/api/priests${queryString}`);
       setPriests(res.data.priests || []);
     } catch (error) {
       console.error('Error:', error);
@@ -2161,12 +2169,100 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
     }
   };
 
+  const clearFilters = () => {
+    setFilter('');
+    setLocationFilter('');
+    setLanguageFilter('');
+  };
+
+  const hasActiveFilters = filter || locationFilter || languageFilter;
+
+  const languages = ['Hindi', 'Sanskrit', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Marathi', 'Bengali', 'Gujarati', 'English'];
+
   return (
-    <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+    <div className={`pb-24 lg:pb-8 ${isDesktop ? 'ml-64 px-8' : 'px-4'}`}>
       <div className="pt-4 pb-4">
-        <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon mb-4">Book a Priest</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Book a Priest</h1>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+              showFilters || hasActiveFilters
+                ? 'bg-saffron text-white border-saffron'
+                : 'bg-white text-gray-600 border-orange-200 hover:border-saffron'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            <span className="text-sm font-medium">Filters</span>
+            {hasActiveFilters && (
+              <span className="w-5 h-5 bg-white text-saffron text-xs rounded-full flex items-center justify-center font-bold">
+                {[filter, locationFilter, languageFilter].filter(Boolean).length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Expanded Filters */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-white rounded-2xl border border-orange-100 p-4 mb-4 overflow-hidden"
+            >
+              <div className="grid md:grid-cols-3 gap-4">
+                {/* Location Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <MapPin className="w-4 h-4 inline mr-1" />
+                    Location / City / Zip Code
+                  </label>
+                  <input
+                    type="text"
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                    placeholder="Enter city, state, or zip code"
+                    className="w-full px-4 py-2.5 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent text-sm"
+                  />
+                </div>
+
+                {/* Language Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Globe className="w-4 h-4 inline mr-1" />
+                    Language
+                  </label>
+                  <select
+                    value={languageFilter}
+                    onChange={(e) => setLanguageFilter(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent text-sm bg-white"
+                  >
+                    <option value="">All Languages</option>
+                    {languages.map((lang) => (
+                      <option key={lang} value={lang}>{lang}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Clear Filters */}
+                <div className="flex items-end">
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearFilters}
+                      className="px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      Clear All Filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
-        {/* Filter */}
+        {/* Specialization Quick Filter */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {['All', 'Vedic Rituals', 'Homam', 'Pooja', 'Ceremony'].map((f) => (
             <button
@@ -2182,11 +2278,49 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
             </button>
           ))}
         </div>
+
+        {/* Active Filters Display */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {locationFilter && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-saffron-dark rounded-full text-sm">
+                <MapPin className="w-3 h-3" />
+                {locationFilter}
+                <button onClick={() => setLocationFilter('')} className="ml-1 hover:text-red-500">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {languageFilter && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-saffron-dark rounded-full text-sm">
+                <Globe className="w-3 h-3" />
+                {languageFilter}
+                <button onClick={() => setLanguageFilter('')} className="ml-1 hover:text-red-500">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="w-8 h-8 text-saffron animate-spin" />
+        </div>
+      ) : priests.length === 0 ? (
+        <div className="text-center py-12">
+          <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 mb-2">No priests found</p>
+          <p className="text-sm text-gray-400">Try adjusting your filters</p>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="mt-4 px-4 py-2 bg-saffron text-white rounded-xl text-sm font-medium hover:bg-saffron-dark transition-colors"
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
       ) : (
         <div className={`${isDesktop ? 'grid grid-cols-2 xl:grid-cols-3 gap-6' : 'space-y-3'}`}>
@@ -2209,7 +2343,13 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
                       <CheckCircle className="w-4 h-4 text-green-500" />
                     )}
                   </div>
-                  <p className="text-sm text-gray-500 mb-2">{priest.experience_years} years experience</p>
+                  <p className="text-sm text-gray-500 mb-1">{priest.experience_years} years experience</p>
+                  {(priest.city || priest.state) && (
+                    <p className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {[priest.city, priest.state].filter(Boolean).join(', ')}
+                    </p>
+                  )}
                   <div className="flex flex-wrap gap-1">
                     {priest.specializations?.slice(0, 2).map((s, i) => (
                       <span key={i} className="text-xs bg-orange-50 text-saffron-dark px-2 py-0.5 rounded-full">
@@ -2217,6 +2357,11 @@ function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
                       </span>
                     ))}
                   </div>
+                  {priest.languages?.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      {priest.languages.slice(0, 3).join(', ')}
+                    </p>
+                  )}
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-1 mb-1">

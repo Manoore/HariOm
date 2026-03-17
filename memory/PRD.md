@@ -539,6 +539,14 @@ Icons: Custom 3D animated SVGs
 
 ## Latest Updates (March 17, 2026)
 
+### Priest Filters Feature (NEW)
+- [x] **Location/Zip Code Filter** - Search priests by city, state, or zip code
+- [x] **Language Filter** - Filter priests by language (Hindi, Sanskrit, Tamil, Telugu, etc.)
+- [x] **Enhanced Priest Cards** - Now show location and languages
+- [x] **Collapsible Filter Panel** - Clean UI with filter badge showing active filters
+- [x] **Clear Filters** - One-click to reset all filters
+- [x] Backend API updated with `location` and `zipcode` query parameters
+
 ### Vedic Classes & Live Events Feature (NEW)
 - [x] **Vedic Classes Tab** - Devotees can now browse and enroll in spiritual classes
   - Browse available classes with priest info, schedule, and pricing
