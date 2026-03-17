@@ -48,34 +48,61 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - **IP-based Selection**: Stripe for international users, Razorpay for India
 
 ## Backlog / Future Tasks 📋
-1. ~~**Music Library Admin Management**~~  ✅ COMPLETED (March 17, 2026)
-   - ~~Move `VEDIC_AUDIO_LIBRARY` from hardcoded to MongoDB~~
-   - ~~Admin panel to add/edit/delete mantras~~
-   - ~~Admin can edit Internet Archive search queries~~
-   - ~~Play/Preview button to test audio before editing~~ 
-   - ~~Categories management~~
-   - **Now Playing bar with playback controls**
 
-2. **YouTube Embedded Player**
-   - Embed YouTube videos for mantras
-   - Curated playlists for each category
-   - More reliable than Internet Archive
+### Completed ✅
+1. ~~**Music Library Admin Management**~~ ✅ COMPLETED (March 17, 2026)
+   - Audio Library with Play/Preview functionality
+   - Now Playing bar with playback controls
+   - Admin CRUD for audio items
 
-3. **Mobile App (Expo)**
-   - Fix Expo loading issue
-   - Complete native app for App Store/Play Store
+2. ~~**Priest Reviews Display**~~ ✅ COMPLETED (March 17, 2026)
+   - Reviews section on priest profile
+   - Rating distribution chart
+   - Individual review cards with ratings
 
-4. **Class Enrollment Payments (P0)**
+3. ~~**Code Refactoring - Frontend**~~ ✅ COMPLETED (March 17, 2026)
+   - Extracted `PriestDetailView` component (279 lines)
+   - Extracted `AstrologyTab` component (510 lines)
+   - DevoteeDashboard.js reduced from 5,411 to 4,318 lines
+
+4. ~~**Code Refactoring - Backend**~~ ✅ COMPLETED (March 17, 2026)
+   - Created `routes/admin_new.py` (530 lines)
+   - Created `routes/auth_new.py` (316 lines)
+   - Created `routes/priests_new.py` (204 lines)
+   - Created `routes/bookings_new.py` (203 lines)
+   - server.py reduced from 6,676 to 5,271 lines (-21%)
+
+### Upcoming Tasks (P0-P1)
+1. **Class Enrollment Payments (P0)**
    - Implement Stripe payment flow for paid Vedic classes
 
-5. **Edit/Delete Functionality (P1)**
+2. **Edit/Delete Functionality (P1)**
    - Allow priests to edit/delete their services, classes, and live streams
 
-6. **Booking Cancellation & Refunds (P1)**
+3. **Booking Cancellation & Refunds (P1)**
    - Implement cancellation with 24-hour notice policy and refund process
 
-7. **Stripe Connect Integration (P2)**
+### Future Tasks (P2+)
+4. **Stripe Connect Integration (P2)**
    - Split payments between platform and service providers
+
+5. **Continue Backend Refactoring (P2)**
+   - Extract Shop/Marketplace routes
+   - Extract Payment (Stripe) routes
+   - Extract Astrology routes
+   - Extract Priest Dashboard routes
+
+6. **Continue Frontend Refactoring (P2)**
+   - Extract remaining tabs from DevoteeDashboard.js
+   - Refactor PriestDashboard.js
+
+7. **YouTube Embedded Player (P3)**
+   - Embed YouTube videos for mantras
+   - Curated playlists for each category
+
+8. **Mobile App (Expo) (P3)**
+   - Fix Expo loading issue
+   - Complete native app for App Store/Play Store
 
 ## What's Been Implemented
 
