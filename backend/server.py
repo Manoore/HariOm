@@ -4951,12 +4951,12 @@ async def get_provider_rating_summary(provider_id: str, provider_type: str):
     
     result = await service_reviews_collection.aggregate(pipeline).to_list(5)
     
-    summary = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
     for item in result:
         if item["_id"]:
-            summary[item["_id"]] = item["count"]
+            distribution[item["_id"]] = item["count"]
     
-    return summary
+    return {"distribution": distribution}
 
 
 # ===================== SHOP OWNER ROUTES =====================

@@ -2669,6 +2669,26 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
   const [selectedService, setSelectedService] = useState(null);
   const [bookingDate, setBookingDate] = useState('');
   const [loading, setLoading] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [ratingSummary, setRatingSummary] = useState(null);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
+  // Fetch reviews for this priest
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await api.get(`/api/priests/${priest.id}/reviews`);
+        setReviews(res.data.reviews || []);
+        setRatingSummary(res.data.rating_summary);
+      } catch (error) {
+        console.error('Failed to fetch reviews:', error);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, [priest.id]);
 
   const handleBook = async () => {
     if (!selectedService || !bookingDate) {
@@ -2756,6 +2776,132 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
                 </div>
               </button>
             ))}
+          </div>
+
+          {/* Reviews Section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-cinzel text-lg font-semibold text-maroon">
+                Reviews ({priest.total_reviews || 0})
+              </h2>
+              {reviews.length > 3 && (
+                <button
+                  onClick={() => setShowAllReviews(!showAllReviews)}
+                  className="text-sm text-saffron hover:text-saffron-dark font-medium"
+                >
+                  {showAllReviews ? 'Show Less' : 'View All'}
+                </button>
+              )}
+            </div>
+
+            {/* Rating Summary */}
+            {ratingSummary && (
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-maroon">{priest.rating || '0.0'}</p>
+                    <div className="flex items-center justify-center gap-0.5 mt-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-4 h-4 ${
+                            star <= Math.round(priest.rating || 0)
+                              ? 'text-gold fill-gold'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{priest.total_reviews || 0} reviews</p>
+                  </div>
+                  {ratingSummary.distribution && (
+                    <div className="flex-1 space-y-1">
+                      {[5, 4, 3, 2, 1].map((rating) => {
+                        const count = ratingSummary.distribution[rating] || 0;
+                        const percentage = priest.total_reviews > 0 
+                          ? (count / priest.total_reviews) * 100 
+                          : 0;
+                        return (
+                          <div key={rating} className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 w-3">{rating}</span>
+                            <Star className="w-3 h-3 text-gold fill-gold" />
+                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gold rounded-full"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-500 w-6">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Reviews List */}
+            {reviewsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-saffron" />
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-2xl">
+                <MessageSquare className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-500">No reviews yet</p>
+                <p className="text-xs text-gray-400">Be the first to review after your booking!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review) => (
+                  <motion.div
+                    key={review.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-xl p-4 border border-orange-100 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-saffron/20 rounded-full flex items-center justify-center text-saffron-dark font-semibold">
+                          {review.user_name?.charAt(0) || 'A'}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-800">{review.user_name || 'Anonymous'}</p>
+                          <p className="text-xs text-gray-500">{review.service_name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-3 h-3 ${
+                                star <= review.rating
+                                  ? 'text-gold fill-gold'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {review.created_at
+                            ? new Date(review.created_at).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })
+                            : ''}
+                        </p>
+                      </div>
+                    </div>
+                    {review.comment && (
+                      <p className="text-sm text-gray-600 mt-2 pl-13">{review.comment}</p>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
