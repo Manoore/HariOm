@@ -6057,7 +6057,7 @@ from video_consultation import (
 @app.get("/api/admin/consultation-settings")
 async def get_consultation_settings(user: dict = Depends(get_current_user)):
     """Get consultation system settings (admin only)"""
-    if user.get("role") != "admin":
+    if user.get("role") not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     settings = await get_system_settings()
     return {k: v for k, v in settings.items() if k != "_id"}
@@ -6065,7 +6065,7 @@ async def get_consultation_settings(user: dict = Depends(get_current_user)):
 @app.put("/api/admin/consultation-settings")
 async def update_consultation_settings(request: Request, user: dict = Depends(get_current_user)):
     """Update consultation system settings (admin only)"""
-    if user.get("role") != "admin":
+    if user.get("role") not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     data = await request.json()
     settings = await update_system_settings(data)
@@ -6089,7 +6089,7 @@ async def get_checkout_fees_taxes():
 @app.get("/api/admin/system-config")
 async def get_system_config(user: dict = Depends(get_current_user)):
     """Get all system configuration (admin only)"""
-    if user.get("role") != "admin":
+    if user.get("role") not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     config = await get_all_config(include_sensitive=False)
@@ -6101,7 +6101,7 @@ async def get_system_config(user: dict = Depends(get_current_user)):
 @app.get("/api/admin/system-config/{category}")
 async def get_system_config_by_category(category: str, user: dict = Depends(get_current_user)):
     """Get system config by category (admin only)"""
-    if user.get("role") != "admin":
+    if user.get("role") not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     if category not in CONFIG_CATEGORIES:
@@ -6117,7 +6117,7 @@ async def get_system_config_by_category(category: str, user: dict = Depends(get_
 @app.put("/api/admin/system-config")
 async def update_system_config(request: Request, user: dict = Depends(get_current_user)):
     """Update system configuration (admin only)"""
-    if user.get("role") != "admin":
+    if user.get("role") not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     data = await request.json()
@@ -6127,7 +6127,7 @@ async def update_system_config(request: Request, user: dict = Depends(get_curren
 @app.put("/api/admin/system-config/{key}")
 async def update_single_config(key: str, request: Request, user: dict = Depends(get_current_user)):
     """Update a single config value (admin only)"""
-    if user.get("role") != "admin":
+    if user.get("role") not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     data = await request.json()
@@ -6142,7 +6142,7 @@ async def update_single_config(key: str, request: Request, user: dict = Depends(
 @app.get("/api/admin/system-config/init")
 async def initialize_system_config(user: dict = Depends(get_current_user)):
     """Initialize system config from env variables (admin only)"""
-    if user.get("role") != "admin":
+    if user.get("role") not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     await init_system_config()
