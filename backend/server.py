@@ -2259,6 +2259,178 @@ async def end_stream(stream_id: str, user: dict = Depends(require_role([UserRole
     return {"message": "Stream ended", "status": "ended"}
 
 
+# ===================== PUBLIC CLASSES & LIVE STREAMS (FOR DEVOTEES) =====================
+@app.get("/api/classes")
+async def get_public_classes(
+    skip: int = 0,
+    limit: int = 20,
+    upcoming_only: bool = True
+):
+    """Get all public classes for devotees to browse and join"""
+    query = {}
+    if upcoming_only:
+        query["schedule_time"] = {"$gte": datetime.now(timezone.utc)}
+    
+    cursor = priest_classes_collection.find(query).sort("schedule_time", 1).skip(skip).limit(limit)
+    classes = []
+    
+    async for cls in cursor:
+        # Get priest info
+        priest = await priests_collection.find_one({"_id": ObjectId(cls["priest_id"])})
+        priest_user = None
+        if priest:
+            priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
+        
+        classes.append({
+            "id": str(cls["_id"]),
+            "priest_id": cls["priest_id"],
+            "priest_name": priest_user["name"] if priest_user else "Unknown Priest",
+            "priest_photo": priest.get("profile_photo") if priest else None,
+            "title": cls["title"],
+            "description": cls.get("description", ""),
+            "category": cls.get("category", "General"),
+            "schedule_time": cls["schedule_time"].isoformat() if cls.get("schedule_time") else None,
+            "duration_minutes": cls.get("duration_minutes", 60),
+            "frequency": cls.get("frequency", "one_time"),
+            "frequency_days": cls.get("frequency_days", []),
+            "price": cls.get("price", 0),
+            "max_students": cls.get("max_students", 50),
+            "enrolled_count": cls.get("enrolled_count", 0),
+            "is_free": cls.get("price", 0) == 0,
+            "meeting_link": cls.get("meeting_link", ""),
+            "created_at": cls["created_at"].isoformat() if cls.get("created_at") else None
+        })
+    
+    total = await priest_classes_collection.count_documents(query)
+    return {"classes": classes, "total": total}
+
+@app.get("/api/classes/{class_id}")
+async def get_class_details(class_id: str):
+    """Get details of a specific class"""
+    cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
+    if not cls:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    priest = await priests_collection.find_one({"_id": ObjectId(cls["priest_id"])})
+    priest_user = None
+    if priest:
+        priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
+    
+    return {
+        "id": str(cls["_id"]),
+        "priest_id": cls["priest_id"],
+        "priest_name": priest_user["name"] if priest_user else "Unknown Priest",
+        "priest_photo": priest.get("profile_photo") if priest else None,
+        "priest_bio": priest.get("bio", "") if priest else "",
+        "title": cls["title"],
+        "description": cls.get("description", ""),
+        "category": cls.get("category", "General"),
+        "schedule_time": cls["schedule_time"].isoformat() if cls.get("schedule_time") else None,
+        "duration_minutes": cls.get("duration_minutes", 60),
+        "frequency": cls.get("frequency", "one_time"),
+        "frequency_days": cls.get("frequency_days", []),
+        "price": cls.get("price", 0),
+        "max_students": cls.get("max_students", 50),
+        "enrolled_count": cls.get("enrolled_count", 0),
+        "is_free": cls.get("price", 0) == 0,
+        "meeting_link": cls.get("meeting_link", ""),
+        "syllabus": cls.get("syllabus", []),
+        "requirements": cls.get("requirements", [])
+    }
+
+@app.post("/api/classes/{class_id}/enroll")
+async def enroll_in_class(class_id: str, user: dict = Depends(get_current_user)):
+    """Enroll in a class"""
+    cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
+    if not cls:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    # Check if already enrolled
+    enrollments = cls.get("enrollments", [])
+    if str(user["_id"]) in enrollments:
+        raise HTTPException(status_code=400, detail="Already enrolled in this class")
+    
+    # Check capacity
+    if cls.get("enrolled_count", 0) >= cls.get("max_students", 50):
+        raise HTTPException(status_code=400, detail="Class is full")
+    
+    # Enroll
+    await priest_classes_collection.update_one(
+        {"_id": ObjectId(class_id)},
+        {
+            "$push": {"enrollments": str(user["_id"])},
+            "$inc": {"enrolled_count": 1}
+        }
+    )
+    
+    return {"message": "Successfully enrolled in class", "class_id": class_id}
+
+@app.get("/api/live-streams")
+async def get_public_live_streams(
+    skip: int = 0,
+    limit: int = 20,
+    status: Optional[str] = None  # "live", "scheduled", or None for all
+):
+    """Get all public live streams for devotees"""
+    query = {}
+    if status:
+        query["status"] = status
+    else:
+        # Show live and upcoming scheduled streams
+        query["status"] = {"$in": ["live", "scheduled"]}
+    
+    cursor = priest_streams_collection.find(query).sort("scheduled_time", 1).skip(skip).limit(limit)
+    streams = []
+    
+    async for stream in cursor:
+        # Get priest info
+        priest = await priests_collection.find_one({"_id": ObjectId(stream["priest_id"])})
+        priest_user = None
+        if priest:
+            priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
+        
+        streams.append({
+            "id": str(stream["_id"]),
+            "priest_id": stream["priest_id"],
+            "priest_name": priest_user["name"] if priest_user else "Unknown Priest",
+            "priest_photo": priest.get("profile_photo") if priest else None,
+            "title": stream["title"],
+            "description": stream.get("description", ""),
+            "scheduled_time": stream["scheduled_time"].isoformat() if stream.get("scheduled_time") else None,
+            "status": stream.get("status", "scheduled"),
+            "viewer_count": stream.get("viewer_count", 0),
+            "stream_url": stream.get("stream_url", "") if stream.get("status") == "live" else None,
+            "thumbnail": stream.get("thumbnail", ""),
+            "created_at": stream["created_at"].isoformat() if stream.get("created_at") else None
+        })
+    
+    total = await priest_streams_collection.count_documents(query)
+    return {"streams": streams, "total": total}
+
+@app.get("/api/my-enrollments")
+async def get_my_enrollments(user: dict = Depends(get_current_user)):
+    """Get classes the current user is enrolled in"""
+    cursor = priest_classes_collection.find({"enrollments": str(user["_id"])}).sort("schedule_time", 1)
+    classes = []
+    
+    async for cls in cursor:
+        priest = await priests_collection.find_one({"_id": ObjectId(cls["priest_id"])})
+        priest_user = None
+        if priest:
+            priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
+        
+        classes.append({
+            "id": str(cls["_id"]),
+            "priest_name": priest_user["name"] if priest_user else "Unknown Priest",
+            "title": cls["title"],
+            "schedule_time": cls["schedule_time"].isoformat() if cls.get("schedule_time") else None,
+            "duration_minutes": cls.get("duration_minutes", 60),
+            "meeting_link": cls.get("meeting_link", "")
+        })
+    
+    return {"enrollments": classes}
+
+
 # ===================== PRIEST PROFILE MANAGEMENT =====================
 @app.get("/api/priest/profile")
 async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]))):
@@ -3558,6 +3730,25 @@ async def get_all_users(user: dict = Depends(require_role([UserRole.ADMIN])), sk
             "created_at": u["created_at"].isoformat() if isinstance(u.get("created_at"), datetime) else None
         })
     return {"users": users, "total": await users_collection.count_documents({})}
+
+@app.get("/api/admin/priests")
+async def get_all_priests_admin(user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Get all priests including unverified ones (admin only)"""
+    cursor = priests_collection.find({})
+    priests = []
+    async for priest in cursor:
+        # Get user info
+        priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
+        priests.append({
+            "priest_id": str(priest["_id"]),
+            "user_id": str(priest["user_id"]),
+            "name": priest_user["name"] if priest_user else "Unknown",
+            "email": priest_user["email"] if priest_user else "Unknown",
+            "is_verified": priest.get("is_verified", False),
+            "specializations": priest.get("specializations", []),
+            "created_at": priest["created_at"].isoformat() if isinstance(priest.get("created_at"), datetime) else None
+        })
+    return {"priests": priests, "total": len(priests)}
 
 @app.put("/api/admin/verify-priest/{priest_id}")
 async def verify_priest(priest_id: str, user: dict = Depends(require_role([UserRole.ADMIN]))):

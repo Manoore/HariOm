@@ -539,6 +539,23 @@ Icons: Custom 3D animated SVGs
 
 ## Latest Updates (March 17, 2026)
 
+### Vedic Classes & Live Events Feature (NEW)
+- [x] **Vedic Classes Tab** - Devotees can now browse and enroll in spiritual classes
+  - Browse available classes with priest info, schedule, and pricing
+  - View enrolled classes with meeting links
+  - Filter between "Browse Classes" and "My Classes" views
+- [x] **Live Events Tab** - Devotees can watch live spiritual streams
+  - View currently live streams with "Watch Now" button
+  - See upcoming scheduled streams
+  - Live viewer count displayed
+- [x] **New API Endpoints:**
+  - `GET /api/classes` - List all public classes
+  - `GET /api/classes/{id}` - Get class details  
+  - `POST /api/classes/{id}/enroll` - Enroll in a class
+  - `GET /api/live-streams` - List live and scheduled streams
+  - `GET /api/my-enrollments` - Get user's enrolled classes
+  - `GET /api/admin/priests` - Admin endpoint to view all priests (including unverified)
+
 ### Auth Screen UI Enhancements (COMPLETED)
 - [x] **Falling Flowers Animation** - Beautiful multi-variety falling flowers:
   - Rose petals (soft pink) with gradient and shadow effects

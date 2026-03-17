@@ -106,8 +106,10 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages },
     { id: 'consultation', icon: Video, label: 'Call Astrologer' },
+    { id: 'classes', icon: BookOpen, label: 'Vedic Classes' },
+    { id: 'live', icon: Play, label: 'Live Events' },
     { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
-    { id: 'mantras', icon: BookOpen, label: 'Mantras & Shlokas' },
+    { id: 'mantras', icon: Music, label: 'Mantras & Shlokas' },
     { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
     { id: 'priests', icon: Star, label: 'Book Priests' },
     { id: 'astrology', icon: Sun, label: 'Astrology' },
@@ -4152,6 +4154,440 @@ function TestimonialSection() {
   );
 }
 
+// Classes Tab - Browse and enroll in Vedic classes
+function ClassesTab({ isDesktop }) {
+  const [classes, setClasses] = useState([]);
+  const [myEnrollments, setMyEnrollments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState('browse'); // 'browse' or 'enrolled'
+  const [enrolling, setEnrolling] = useState(null);
+
+  useEffect(() => {
+    fetchClasses();
+    fetchMyEnrollments();
+  }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const res = await api.get('/api/classes');
+      setClasses(res.data.classes || []);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMyEnrollments = async () => {
+    try {
+      const res = await api.get('/api/my-enrollments');
+      setMyEnrollments(res.data.enrollments || []);
+    } catch (error) {
+      console.error('Error fetching enrollments:', error);
+    }
+  };
+
+  const handleEnroll = async (classId) => {
+    setEnrolling(classId);
+    try {
+      await api.post(`/api/classes/${classId}/enroll`);
+      toast.success('Successfully enrolled in class!');
+      fetchClasses();
+      fetchMyEnrollments();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to enroll');
+    } finally {
+      setEnrolling(null);
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'TBD';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-IN', { 
+      weekday: 'short', 
+      day: 'numeric', 
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const isEnrolled = (classId) => {
+    return myEnrollments.some(e => e.id === classId);
+  };
+
+  return (
+    <div className={`min-h-screen bg-gradient-to-b from-cream to-parchment pb-20 lg:pb-0 ${isDesktop ? 'ml-64' : ''}`}>
+      <div className="p-4 lg:p-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Vedic Classes</h1>
+            <p className="text-gray-600 text-sm mt-1">Learn from experienced priests and scholars</p>
+          </div>
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex bg-white rounded-xl p-1 mb-6 max-w-md">
+          <button
+            onClick={() => setActiveView('browse')}
+            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+              activeView === 'browse' ? 'bg-saffron text-white' : 'text-gray-600'
+            }`}
+          >
+            Browse Classes
+          </button>
+          <button
+            onClick={() => setActiveView('enrolled')}
+            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+              activeView === 'enrolled' ? 'bg-saffron text-white' : 'text-gray-600'
+            }`}
+          >
+            My Classes ({myEnrollments.length})
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-saffron" />
+          </div>
+        ) : activeView === 'browse' ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {classes.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No classes available at the moment</p>
+                <p className="text-sm text-gray-400 mt-1">Check back soon for new classes!</p>
+              </div>
+            ) : (
+              classes.map((cls) => (
+                <motion.div
+                  key={cls.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl shadow-sm border border-orange-100 overflow-hidden"
+                >
+                  <div className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white font-semibold">
+                          {cls.priest_name?.charAt(0) || 'P'}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">{cls.priest_name}</p>
+                          <span className="text-xs px-2 py-0.5 bg-orange-100 text-saffron rounded-full">
+                            {cls.category || 'General'}
+                          </span>
+                        </div>
+                      </div>
+                      {cls.is_free ? (
+                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">FREE</span>
+                      ) : (
+                        <span className="text-sm font-semibold text-maroon">₹{cls.price}</span>
+                      )}
+                    </div>
+                    
+                    <h3 className="font-semibold text-gray-800 mb-2">{cls.title}</h3>
+                    <p className="text-sm text-gray-500 line-clamp-2 mb-3">{cls.description}</p>
+                    
+                    <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{formatDate(cls.schedule_time)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{cls.duration_minutes} min</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400">
+                        {cls.enrolled_count}/{cls.max_students} enrolled
+                      </span>
+                      {isEnrolled(cls.id) ? (
+                        <span className="px-4 py-2 bg-green-100 text-green-700 rounded-xl text-sm font-medium flex items-center gap-1">
+                          <CheckCircle className="w-4 h-4" /> Enrolled
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleEnroll(cls.id)}
+                          disabled={enrolling === cls.id}
+                          className="px-4 py-2 bg-saffron text-white rounded-xl text-sm font-medium hover:bg-saffron-dark transition-colors disabled:opacity-50"
+                        >
+                          {enrolling === cls.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            'Enroll Now'
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {myEnrollments.length === 0 ? (
+              <div className="text-center py-12">
+                <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">You haven't enrolled in any classes yet</p>
+                <button 
+                  onClick={() => setActiveView('browse')}
+                  className="mt-4 px-6 py-2 bg-saffron text-white rounded-xl font-medium hover:bg-saffron-dark transition-colors"
+                >
+                  Browse Classes
+                </button>
+              </div>
+            ) : (
+              myEnrollments.map((cls) => (
+                <motion.div
+                  key={cls.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white rounded-xl p-4 shadow-sm border border-orange-100 flex items-center justify-between"
+                >
+                  <div>
+                    <h3 className="font-semibold text-gray-800">{cls.title}</h3>
+                    <p className="text-sm text-gray-500">{cls.priest_name}</p>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {formatDate(cls.schedule_time)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        {cls.duration_minutes} min
+                      </span>
+                    </div>
+                  </div>
+                  {cls.meeting_link && (
+                    <a
+                      href={cls.meeting_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-medium hover:bg-green-600 transition-colors flex items-center gap-2"
+                    >
+                      <Play className="w-4 h-4" /> Join
+                    </a>
+                  )}
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Live Events Tab - Watch live streams from priests
+function LiveEventsTab({ isDesktop }) {
+  const [liveStreams, setLiveStreams] = useState([]);
+  const [upcomingStreams, setUpcomingStreams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState('live'); // 'live' or 'upcoming'
+
+  useEffect(() => {
+    fetchStreams();
+  }, []);
+
+  const fetchStreams = async () => {
+    try {
+      const [liveRes, upcomingRes] = await Promise.all([
+        api.get('/api/live-streams?status=live'),
+        api.get('/api/live-streams?status=scheduled')
+      ]);
+      setLiveStreams(liveRes.data.streams || []);
+      setUpcomingStreams(upcomingRes.data.streams || []);
+    } catch (error) {
+      console.error('Error fetching streams:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'TBD';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-IN', { 
+      weekday: 'short', 
+      day: 'numeric', 
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getTimeUntil = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = date - now;
+    
+    if (diff < 0) return 'Starting soon';
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (days > 0) return `In ${days}d ${hours}h`;
+    if (hours > 0) return `In ${hours}h ${minutes}m`;
+    return `In ${minutes}m`;
+  };
+
+  return (
+    <div className={`min-h-screen bg-gradient-to-b from-cream to-parchment pb-20 lg:pb-0 ${isDesktop ? 'ml-64' : ''}`}>
+      <div className="p-4 lg:p-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Live Events</h1>
+            <p className="text-gray-600 text-sm mt-1">Watch live spiritual streams and events</p>
+          </div>
+          {liveStreams.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-100 rounded-full">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+              <span className="text-sm text-red-600 font-medium">{liveStreams.length} Live Now</span>
+            </div>
+          )}
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex bg-white rounded-xl p-1 mb-6 max-w-md">
+          <button
+            onClick={() => setActiveView('live')}
+            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+              activeView === 'live' ? 'bg-red-500 text-white' : 'text-gray-600'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${activeView === 'live' ? 'bg-white animate-pulse' : 'bg-red-500'}`}></span>
+            Live Now ({liveStreams.length})
+          </button>
+          <button
+            onClick={() => setActiveView('upcoming')}
+            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+              activeView === 'upcoming' ? 'bg-saffron text-white' : 'text-gray-600'
+            }`}
+          >
+            Upcoming ({upcomingStreams.length})
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-saffron" />
+          </div>
+        ) : activeView === 'live' ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {liveStreams.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <Video className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No live streams at the moment</p>
+                <p className="text-sm text-gray-400 mt-1">Check the upcoming section for scheduled events</p>
+              </div>
+            ) : (
+              liveStreams.map((stream) => (
+                <motion.div
+                  key={stream.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white rounded-2xl shadow-sm border-2 border-red-200 overflow-hidden"
+                >
+                  <div className="relative">
+                    <div className="aspect-video bg-gradient-to-br from-maroon to-red-900 flex items-center justify-center">
+                      {stream.thumbnail ? (
+                        <img src={stream.thumbnail} alt={stream.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <Video className="w-16 h-16 text-white/50" />
+                      )}
+                    </div>
+                    <div className="absolute top-3 left-3 flex items-center gap-2 px-2 py-1 bg-red-500 rounded-full">
+                      <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                      <span className="text-xs text-white font-medium">LIVE</span>
+                    </div>
+                    <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/60 rounded-lg">
+                      <span className="text-xs text-white">{stream.viewer_count} watching</span>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                        {stream.priest_name?.charAt(0) || 'P'}
+                      </div>
+                      <span className="text-sm text-gray-600">{stream.priest_name}</span>
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-3">{stream.title}</h3>
+                    {stream.stream_url && (
+                      <a
+                        href={stream.stream_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Play className="w-4 h-4" /> Watch Now
+                      </a>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {upcomingStreams.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No upcoming streams scheduled</p>
+                <p className="text-sm text-gray-400 mt-1">Check back later for new events!</p>
+              </div>
+            ) : (
+              upcomingStreams.map((stream) => (
+                <motion.div
+                  key={stream.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl shadow-sm border border-orange-100 overflow-hidden"
+                >
+                  <div className="relative">
+                    <div className="aspect-video bg-gradient-to-br from-saffron/20 to-gold/20 flex items-center justify-center">
+                      {stream.thumbnail ? (
+                        <img src={stream.thumbnail} alt={stream.title} className="w-full h-full object-cover opacity-80" />
+                      ) : (
+                        <Video className="w-16 h-16 text-saffron/50" />
+                      )}
+                    </div>
+                    <div className="absolute top-3 left-3 px-2 py-1 bg-saffron rounded-full">
+                      <span className="text-xs text-white font-medium">{getTimeUntil(stream.scheduled_time)}</span>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                        {stream.priest_name?.charAt(0) || 'P'}
+                      </div>
+                      <span className="text-sm text-gray-600">{stream.priest_name}</span>
+                    </div>
+                    <h3 className="font-semibold text-gray-800 mb-2">{stream.title}</h3>
+                    <p className="text-sm text-gray-500 line-clamp-2 mb-3">{stream.description}</p>
+                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>{formatDate(stream.scheduled_time)}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Main Dashboard Component
 export default function DevoteeDashboard() {
   const [activeTab, setActiveTab] = useState('home');
@@ -4204,6 +4640,8 @@ export default function DevoteeDashboard() {
         )}
         {activeTab === 'messages' && <ChatTab isDesktop={isDesktop} />}
         {activeTab === 'consultation' && <ConsultationTab isDesktop={isDesktop} />}
+        {activeTab === 'classes' && <ClassesTab isDesktop={isDesktop} />}
+        {activeTab === 'live' && <LiveEventsTab isDesktop={isDesktop} />}
         {activeTab === 'feed' && <FeedTab isDesktop={isDesktop} />}
         {activeTab === 'mantras' && <MantrasTab isDesktop={isDesktop} />}
         {activeTab === 'calendar' && <CalendarTab isDesktop={isDesktop} />}
