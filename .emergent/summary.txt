@@ -9,48 +9,64 @@ The user wants to build a Divine App, a digital platform connecting users with H
 -   **Additional Features:** Spiritual content feed (mantras), real-time chat between users and providers, payment splitting for vendors, booking cancellation, and refunds.
 -   **Admin Management:** All critical settings, including content (like the music library, puja types), users (activation/deactivation, password reset), and other admins should be manageable from an Admin Dashboard. A Super Admin role has full control.
 -   **Mobile App:** A native mobile app is a long-term goal.
+-   **Notifications**: Users should receive notifications for key events (bookings, payments, cancellations). Delivery should be via email for users registered with email and as in-app notifications for users registered with a phone number.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The project is a full-stack application with a React frontend, a FastAPI backend, and a MongoDB database. A significant amount of work has been done on the Admin dashboard, which now includes management for users, puja types, the audio library, and other admins. It also features a new color scheme matching the main app. The chat functionality was fixed and enhanced with a time-limited active window after booking completion. A comprehensive puja type system was implemented, allowing priests to add services from a managed list and devotees to filter priests by those pujas. A review system for priests/astrologers has also been added.
+The application is a full-stack React/FastAPI/MongoDB platform. Significant work was completed this session, including:
+-   **Feature Completion**: Audio playback in the admin panel, a UI to view priest reviews, Stripe integration for class enrollment, booking cancellation with a refund policy, and edit/delete for priest's live streams.
+-   **Major Refactoring**: A large-scale refactoring was initiated. Key sections of the backend () and frontend () were broken down into smaller, modular files to reduce technical debt.
+-   **Notification System**: A new notification system was built. It uses Resend for email and stores notifications in the database for in-app display, triggered by events like bookings, payments, and cancellations. A notification bell UI was added to the frontend.
+-   **Bug Fixes**: A bug preventing the Daily Horoscope from loading was fixed.
 
 **Last working item**:
--   **Last item agent was working:** The user requested the ability to preview/play audio files directly from the new Audio Library management panel in the Admin Dashboard. The agent was in the process of adding a Play button and the associated playback logic to the  component.
--   **Status:** IN PROGRESS
--   **Agent Testing Done:** N
--   **Which testing method agent to use?** screenshot tool. The agent should verify that the new Play button is visible for each item in the Audio Library admin panel and appears functional.
+-   **Last item agent was working:** The user reported that the Daily Horoscope feature was not working. The agent investigated and found the frontend was using an incorrect API endpoint ( instead of ) and was not parsing the nested API response correctly. The agent implemented a fix in .
+-   **Status:** USER VERIFICATION PENDING
+-   **Agent Testing Done:** Y
+-   **Which testing method agent to use?** screenshot tool. The agent needs to log in as a devotee, navigate to the Astrology tab, click on a zodiac sign, and verify that the daily horoscope details (prediction, lucky number, color) are displayed correctly.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Mobile App Fails to Load in Expo (P2)
--   **Issue 2:** Google Sign-in Fails on New Preview Domains (P2)
--   **Issue 3:** Unreliable Audio for Music Library (P3)
+-   **Issue 1:** Daily Horoscope displays an error (P0)
+-   **Issue 2:** Mobile App Fails to Load in Expo (P2)
+-   **Issue 3:** Google Sign-in Fails on New Preview Domains (P2)
+-   **Issue 4:** Unreliable Audio for Music Library (P3)
 
 **Issues Detail:**
--   **Issue 1: Mobile App Fails to Load in Expo**
-    -   **Attempted fixes:** None in this session. The issue is unblocked but has not been prioritized.
+-   **Issue 1: Daily Horoscope displays an error**
+    -   **Attempted fixes:** The agent corrected the API endpoint in the frontend from  to  and updated the data handling logic in  to match the nested structure of the API response.
     -   **Next debug checklist:**
-        1.  Navigate to the  directory.
-        2.  Run  and analyze terminal errors.
-        3.  Review  for outdated or conflicting dependencies.
-    -   **Why fix this issue and what will be achieved with the fix?** Unblocks all development and testing for the native mobile application.
+        1.  Use the  tool to log in as a devotee ( / ).
+        2.  Navigate to the Astrology tab.
+        3.  Click on any of the zodiac signs (e.g., Aries).
+        4.  Verify that the horoscope details appear below the sign selection, replacing the error message.
+    -   **Why fix this issue and what will be achieved with the fix?** This will restore a key feature for users in the Astrology section of the dashboard.
+    -   **Status:** USER VERIFICATION PENDING
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on other issue:** None
+
+-   **Issue 2: Mobile App Fails to Load in Expo**
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:** Navigate to , run , and analyze terminal errors.
+    -   **Why fix this issue and what will be achieved with the fix?** Unblocks all development for the native mobile application.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Frontend (Mobile)
     -   **Blocked on other issue:** None
 
--   **Issue 2: Google Sign-in Fails on New Preview Domains**
+-   **Issue 3: Google Sign-in Fails on New Preview Domains**
     -   **Attempted fixes:** None. This is an environmental constraint.
-    -   **Next debug checklist:** This requires the user to manually add the new preview domain URL to the list of authorized domains in their Firebase Authentication settings for each new environment.
+    -   **Next debug checklist:** Requires the user to add the new preview domain URL to the list of authorized domains in their Firebase Authentication settings.
     -   **Why fix this issue and what will be achieved with the fix?** Enables Google Sign-in for testing on new preview builds.
-    -   **Status:** BLOCKED (Requires user action per environment)
+    -   **Status:** BLOCKED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Frontend
     -   **Blocked on other issue:** None
 
--   **Issue 3: Unreliable Audio for Music Library**
-    -   **Attempted fixes:** The agent moved the list of mantras from a hardcoded file to a database collection managed by the admin. However, the underlying audio source is still an unreliable Internet Archive API that returns incorrect audio.
+-   **Issue 4: Unreliable Audio for Music Library**
+    -   **Attempted fixes:** None in this session. Agent proposed a YouTube-based solution, which the user postponed.
     -   **Next debug checklist:** Plan and implement a switch from the Internet Archive API to a curated source like embedded YouTube videos.
     -   **Why fix this issue and what will be achieved with the fix?** Provides users with correct and relevant spiritual audio content.
     -   **Status:** NOT STARTED
@@ -59,60 +75,40 @@ The project is a full-stack application with a React frontend, a FastAPI backend
     -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1: Add Play/Preview to Audio Library Admin (P0)**
-    -   **Where to resume:** Continue editing , specifically the  component. The agent was adding a  function and a play button to each audio item card.
-    -   **What will be achieved with this?** Allows the admin to listen to an audio file before editing or deleting it, improving content management workflow.
+-   **Task 1: Complete Code Refactoring (P2)**
+    -   **Where to resume:**
+        -   **Backend**: Continue migrating endpoints from  to dedicated files in the  directory (e.g., Shop, Payments, Astrology).
+        -   **Frontend**: Continue extracting components from  (e.g., , , ).
+    -   **What will be achieved with this?** Dramatically improves code maintainability, reduces complexity, and makes future development faster and safer.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Should Test frontend/backend/both after fix?** Both
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **(P0) Class Enrollment Payments:** Implement the Stripe payment flow for enrolling in paid Vedic classes.
--   **(P1) Edit/Delete Functionality:** Provide priests with the ability to edit or delete their created services, classes, and live streams.
--   **(P1) Booking Cancellation & Refunds:** Implement a feature for both devotees and priests to cancel a booking, enforcing a 24-hour notice policy and a refund process.
 -   **(P2) Stripe Connect Integration:** Begin the phased implementation of Stripe Connect to automatically split payments between the platform and the service providers.
 
 **Future Tasks:**
--   **(CRITICAL) Refactor :** Break down the massive  file into multiple, smaller route files (, , etc.) for maintainability.
--   **(HIGH) Refactor :** Decompose the large dashboard component into smaller, more manageable child components.
--   **(HIGH) Refactor  and :** Consolidate the redundant routing logic into a single source of truth to prevent bugs.
--   **Curated YouTube Video Player:** Replace the unreliable Internet Archive audio source with an embedded YouTube player for the music library.
--   **Complete Native Mobile App:** Finish mobile app features after the Expo loading issue is resolved.
+-   **(P3) Curated YouTube Video Player:** Replace the unreliable Internet Archive audio source with an embedded YouTube player for the music library.
+-   **(P3) Complete Native Mobile App:** Finish mobile app features after the Expo loading issue is resolved.
 
 **Completed work in this session**
--   **Chat Functionality:**
-    -   Fixed the bug where chats were incorrectly deactivated when a booking was completed.
-    -   Implemented a hybrid chat lifecycle: chat remains active for 5 days post-completion for follow-ups, then auto-closes.
--   **Puja Management System:**
-    -   Created backend APIs and a  collection to manage a list of pujas.
-    -   Built an admin panel for full CRUD (Create, Read, Update, Delete) on puja types.
-    -   Integrated a puja dropdown into the priest's Add Service form.
-    -   Added a puja type filter to the devotee's priest search page.
--   **Admin Dashboard Overhaul:**
-    -   Reskinned the entire Admin Dashboard to match the app's saffron/orange theme.
-    -   Implemented admin functions to reset user passwords and activate/deactivate user accounts.
-    -   Created a Super Admin role with permissions to manage other admins.
-    -   Added a My Profile page for admins to edit their own details.
-    -   Fixed all role-based access control endpoints to correctly handle the new  role.
--   **Audio Library Management:**
-    -   Migrated the hardcoded list of mantras from  to a new  collection in the database.
-    -   Created a new Audio Library tab in the admin panel for full CRUD management of audio items.
--   **Review System:**
-    -   Implemented a backend and frontend system for devotees to write reviews for priests/astrologers on completed bookings.
--   **Bug Fixes:**
-    -   Resolved multiple frontend build failures caused by  variable errors in .
-    -   Fixed a critical routing issue where  users were being incorrectly redirected to the Devotee Dashboard.
+-   **Audio Library Play/Preview:** Added a working Play button and a Now Playing bar to the Audio Library admin panel.
+-   **View Priest Reviews:** Implemented a UI in the  to display a priest's reviews, including an overall rating summary, a rating distribution bar chart, and individual review comments.
+-   **Class Enrollment Payments (P0):** Integrated the  Stripe component into the Vedic classes enrollment modal.
+-   **Priest Edit/Delete Functionality (P1):** Added Edit/Delete functionality for Live Streams in the Priest Dashboard.
+-   **Booking Cancellation & Refunds (P1):** Implemented backend API and frontend UI for devotees to cancel bookings (with a 24-hour notice policy) and view refund information.
+-   **Notification System:** Built and integrated a notification service for key events. It sends emails via Resend and creates in-app notifications, which are displayed in a new notification bell UI in the user dashboard.
+-   **Code Refactoring (Started):**
+    -   **Backend:** Extracted ~1,400 lines from  into new route files for Admin, Auth, Priests, and Bookings.
+    -   **Frontend:** Extracted ~1,100 lines from  into new components (, ).
+-   **Bug Fix:** Fixed the Daily Horoscope feature by correcting the API endpoint and frontend data parsing.
 
 **Earlier issues found/mentioned but not fixed**
 -   User's local development environment issues (yarn install v1.22.22
-info No lockfile found.
 [1/4] Resolving packages...
-[2/4] Fetching packages...
-[3/4] Linking dependencies...
-[4/4] Building fresh packages...
-success Saved lockfile.
-Done in 0.03s., ,  commands not recognized) were guided around with npm <command>
+success Already up-to-date.
+Done in 0.06s., ,  commands not recognized) were guided around with npm <command>
 
 Usage:
 
@@ -149,8 +145,8 @@ npm@10.8.2 /usr/lib/node_modules/npm and  but are indicative of setup problems o
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** Google Sign-in on new preview domains, Expo Mobile App Preview.
--   **Recurrence count:** 5+
--   **Status:** Google Sign-in is  (user action needed). Expo preview issue is .
+-   **Recurrence count:** 6+
+-   **Status:** Google Sign-in is . Expo preview issue is .
 
 **Code Architecture**
 
@@ -159,70 +155,68 @@ npm@10.8.2 /usr/lib/node_modules/npm and  but are indicative of setup problems o
 -   **Backend:** FastAPI
 -   **Frontend:** React
 -   **Database:** MongoDB
--   **Authentication:** Firebase (Email/Password, Google), Custom JWT with  and  roles.
+-   **Authentication:** Firebase (Email/Password, Google), Custom JWT
 -   **Payments:** Stripe (Single-receiver)
--   **Deployment:** Firebase Hosting (Frontend), Google Cloud Run (Backend)
+-   **Notifications:** Resend (Email), In-App (DB-backed)
 
 **key DB schema**
--   ****: { , , , ,  }
--   ****: { , ,  }
--   ****: { , ,  }
--   ****: Added  enum now includes . Added  (Boolean).
--   ****: Added  (Datetime) to track when a booking is completed.
+-   ****: { ,  ('email'/'sms'), , ,  }
+-   ****: { , , , , ,  }
 
 **changes in tech stack**
--   No changes.
+-   **Added:**  for transactional emails.
+-   **Added:**  dependency was added but not used in the final implementation.
 
 **All files of reference**
--   : Heavily modified. Contains new logic for chat lifecycle, Puja Types API, Service Reviews API, comprehensive Admin/Super Admin management APIs, and the Audio Library API. The technical debt is severe.
--   : Heavily modified. Contains UI for all new admin features and the new color theme.
--   : Modified to add the Puja Type filter and the Write Review feature for completed bookings. Still a monolithic component.
--   : Modified routing logic to correctly render dashboards for  and  roles.
--   : Modified to fix a routing bug related to the  role.
--   : New collections (, , ) defined.
+-   : Majorly refactored, but still contains significant logic.
+-   , , , , : **New files** containing extracted backend logic.
+-   : **New file** containing notification logic.
+-   : Majorly refactored, but still a very large component.
+-   : Modified to add Edit/Delete for streams.
+-   , : **New files** containing extracted frontend components.
+-   : **New file** for the notification UI.
+-   : Updated with completed tasks.
 
 **Areas that need refactoring**:
--   ** (CRITICAL):** This file's size and complexity are a major risk to stability. It must be broken into a structured  directory.
--   ** (HIGH):** This component is a monolith and should be broken down into smaller components for each tab.
--   ** &  (MEDIUM):** These two files contain duplicate and conflicting routing logic. This should be consolidated into a single source of truth to prevent future routing bugs.
+-   ** (CRITICAL):** Refactoring is in progress. The file is down to ~5,200 lines from ~6,700, but still contains thousands of lines of code for Shop, Payments, Astrology, etc., that need to be moved to the  directory.
+-   ** (HIGH):** Refactoring is in progress. The file is down to ~4,300 lines from ~5,400, but still contains multiple tabs (, , , etc.) that should be extracted into separate components.
+-   ** (MEDIUM):** This large file (2,584 lines) should also be broken down into smaller components.
 
 **key api endpoints**
--   **PUT **: Allows admin to reset a user's password.
--   **PUT **: Allows admin to activate/deactivate a user.
--   **GET/POST/PUT/DELETE **: CRUD endpoints for Super Admins to manage other admins.
--   **GET/POST/PUT/DELETE **: CRUD endpoints for managing puja types.
--   **GET/POST/PUT/DELETE **: CRUD endpoints for managing the audio library.
--   **POST **: Endpoint for devotees to submit reviews.
--   **GET **: Updated to accept a  query parameter for filtering.
--   Multiple other  endpoints updated to grant access to  role.
+-   **POST **: Cancels a booking and processes a refund if applicable.
+-   **GET **: Gets refund details before confirming cancellation.
+-   **PUT **: Updates a scheduled live stream.
+-   **DELETE **: Deletes a scheduled live stream.
+-   **GET **: Fetches unread in-app notifications for the logged-in user.
+-   **POST **: Marks notifications as read.
 
 **Critical Info for New Agent**
--   The user frequently encounters issues with their local deployment being out of sync. Always remind them to **Save to GitHub** and  before building and deploying. Be prepared to guide them through build errors caused by stale code.
--   The  role () has been introduced and has higher privileges than the  role. All role-based access control must consider both roles. Many endpoints were fixed in this session, but others may have been missed.
--   The technical debt, especially in , is now critical. Adding more features without refactoring first will be slow and risky. Strongly recommend prioritizing the refactoring of  to the user.
+-   The user has decided on a notification strategy: emails for email-based users (using Resend), and in-app notifications for phone-based users. The key  is available for Resend.
+-   A major refactoring of the backend and frontend is in progress but was paused by the user. The goal is to break down monolithic files (, ). New backend logic should go into the  directory. New frontend components for the devotee dashboard should go in .
+-   The user has prioritized finishing P0 and P1 tasks, which are now complete. The next priority should be clarified with the user, but the remaining refactoring is a high-impact task.
 
 **documents and test reports created in this job**
--    was updated.
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Reports admin panel is showing the wrong dashboard (Devotee's). (RESOLVED)
-2.  **User:** States that changes like reviews and puja types are not visible on their live site. (RESOLVED - user needed to pull code)
-3.  **User:** Reports 403 Forbidden errors on admin setting pages. (RESOLVED - backend role checks fixed)
-4.  **User:** Asks for the audio library names to be managed in the admin panel. (IMPLEMENTED)
-5.  **User:** Asks if they can play/view audio before making changes. (IN PROGRESS)
-6.  **User:** Provides build error logs. (RESOLVED - was due to stale local code)
-7.  **User:** deployed what next - Confirms deployment and asks for next steps. (ADDRESSED)
-8.  **User:** Shows a screenshot of the wrong admin dashboard. (ADDRESSED - user needed to pull latest code)
-9.  **User:** finsih the changes and also I dont see any chnaged are pushed through like writing the reviews and all the puja types in the priest dashboard (ADDRESSED - user needed to pull latest code)
-10. **User:** Shares error logs from their local machine. (ADDRESSED - root cause was stale code)
+1.  **User:** Asks how to implement YouTube-based audio. (Agent explained the options).
+2.  **User:** Asks for the list of pending tasks. (Agent provided a prioritized list).
+3.  **User:** Asks to implement all P0 and P1 tasks. (Agent implemented them).
+4.  **User:** Shares feedback on notification preferences. (Agent implemented the requested logic).
+5.  **User:** Asks if Firebase can be used for email/SMS. (Agent clarified Firebase limitations and proposed alternatives).
+6.  **User:** Provides Resend API key and clarifies notification logic. (Agent implemented it).
+7.  **User:** Asks for deployment steps. (Agent provided them).
+8.  **User:** Asks for simpler deployment commands. (Agent provided a condensed version).
+9.  **User:** **Reports that the Daily Horoscope is not working and shows an error.** (This is the last bug report).
+10. **(Pending Human Message):** The user is waiting for confirmation that the Daily Horoscope bug is fixed and for next steps after deployment.
 
 **Project Health Check:**
 -   **Broken:**
-    -   The mobile app () is completely non-functional and fails to start in Expo.
+    -   The mobile app () is completely non-functional.
+-   **Mocked:** None.
 -   **Technical Debt:**
-    -    is critically large and must be refactored.
-    -    is overly complex.
-    -   Redundant routing logic exists between  and .
+    -   Refactoring is in progress but  and  are still critically large.
+    -    is also a large monolithic component that needs refactoring.
 
 **3rd Party Integrations**
 -   **Google Cloud Run:** Backend hosting.
@@ -232,13 +226,14 @@ npm@10.8.2 /usr/lib/node_modules/npm and  but are indicative of setup problems o
 -   **Stripe:** Payment gateway (Single-receiver model).
 -   **Prokerala Astrology API:** Astrology data.
 -   **Expo:** Mobile app development (currently broken).
--   **Stripe Connect:** Planned for payment splitting.
+-   **Resend:** Transactional emails.
+-   **Internet Archive:** Used for the audio library (known to be unreliable).
 
 **Testing status**
 -   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None.
--   **Known regressions:** None. A previous regression with the chat feature was resolved.
+-   **Test files created:** None
+-   **Known regressions:** None in this session.
 
 **Credentials to test flow:**
 | Role | Email | Password |
@@ -248,7 +243,7 @@ npm@10.8.2 /usr/lib/node_modules/npm and  but are indicative of setup problems o
 | **Devotee** |  |  |
 
 **What agent forgot to execute**
--   The agent did not create any automated tests (============================= test session starts ==============================
+-   The agent did not create any automated ============================= test session starts ==============================
 platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0
 rootdir: /app
 plugins: anyio-4.12.1
@@ -262,5 +257,5 @@ E   ValueError: REACT_APP_BACKEND_URL environment variable is required
 =========================== short test summary info ============================
 ERROR backend/tests/test_chat_feature.py - ValueError: REACT_APP_BACKEND_URL ...
 !!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
-=============================== 1 error in 0.53s ===============================) for the numerous new backend APIs, increasing the risk of future regressions.
--   The agent did not get the user's agreement to prioritize the critical refactoring of  and , allowing the technical debt to worsen significantly.</analysis>
+=============================== 1 error in 0.85s =============================== tests for the new backend APIs (cancellation, notifications), which increases the risk of future regressions.
+-   The  package was installed but never used, as the user opted for in-app notifications over SMS. This could be cleaned up.</analysis>

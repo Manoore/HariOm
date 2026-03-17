@@ -147,10 +147,20 @@ function AstrologyTab({ isDesktop }) {
   const fetchHoroscope = async (sign) => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/horoscope/${sign.name.toLowerCase()}`);
-      setHoroscope(res.data);
+      const res = await api.get(`/api/horoscope/daily/${sign.name.toLowerCase()}`);
+      // Handle nested data structure from API
+      const data = res.data;
+      const prediction = data?.data?.daily_prediction || data;
+      setHoroscope({
+        horoscope: prediction?.prediction || prediction?.horoscope || "Your cosmic energy is aligned today. Focus on your goals and embrace new opportunities.",
+        lucky_number: prediction?.lucky_number,
+        lucky_color: prediction?.lucky_color,
+        sign_name: data?.sign_name || sign.name,
+        sign_name_hindi: data?.sign_name_hindi
+      });
       setSelectedSign(sign);
     } catch (error) {
+      console.error('Horoscope error:', error);
       toast.error('Failed to fetch horoscope');
     } finally {
       setLoading(false);

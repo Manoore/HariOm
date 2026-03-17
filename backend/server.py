@@ -131,7 +131,7 @@ async def upload_image(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://puja-connect-12.preview.emergentagent.com"
+        backend_url = "https://divine-spiritual-1.preview.emergentagent.com"
     
     # Return the URL
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -175,7 +175,7 @@ async def upload_video(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://puja-connect-12.preview.emergentagent.com"
+        backend_url = "https://divine-spiritual-1.preview.emergentagent.com"
     
     # Return the URL
     video_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -4087,7 +4087,7 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     order_id = str(result.inserted_id)
     
     # Get frontend URL for redirect
-    frontend_url = os.environ.get("FRONTEND_URL", "https://puja-connect-12.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://divine-spiritual-1.preview.emergentagent.com")
     
     # Create Stripe checkout session
     try:

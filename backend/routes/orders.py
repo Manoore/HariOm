@@ -168,7 +168,7 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     order_id = str(result.inserted_id)
     
     # Get frontend URL for redirect
-    frontend_url = os.environ.get("FRONTEND_URL", "https://puja-connect-12.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://divine-spiritual-1.preview.emergentagent.com")
     
     # Create Stripe checkout session
     try:
