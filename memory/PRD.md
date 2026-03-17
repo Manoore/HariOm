@@ -537,8 +537,32 @@ Icons: Custom 3D animated SVGs
 - `frontend/src/components/Reviews/ProductReviews.js` - Product reviews UI components (NEW)
 - `backend/routes/reviews.py` - Product reviews API (NEW)
 
+## Latest Updates (March 17, 2026)
+
+### Auth Screen UI Enhancements (COMPLETED)
+- [x] **Falling Flowers Animation** - Beautiful multi-variety falling flowers:
+  - Rose petals (soft pink) with gradient and shadow effects
+  - Marigold flowers (orange/yellow) with detailed petal layers
+  - Jasmine flowers (white) with 5-petal design
+  - Hibiscus petals (red) with vein details
+  - Natural floating motion with rotation and horizontal sway
+- [x] **Authentic Trishul Icons** - Redesigned with:
+  - Three-pronged design with proper proportions
+  - Gold gradient fill with shine effects
+  - Decorative bands on the shaft
+  - Crescent moon decoration
+  - Center jewel ornament
+  - Multiple Trishuls at different positions (left and right)
+- [x] **Other Devotional Elements** retained:
+  - Om symbols (ॐ) with gentle floating animation
+  - Diyas with animated flames
+  - Temple bells with swinging motion
+  - Lotus flowers
+  - Swastika symbols
+  - Kalash with decorative leaves
+
 ## Preview URLs
-- **Web App**: https://divine-preview-2.preview.emergentagent.com
+- **Web App**: https://temple-hub-7.preview.emergentagent.com
 - **Mobile App**: Run `npx expo start` from `/app/mobile/` and scan QR with Expo Go app
 
 ## Mobile App Structure (`/app/mobile/`)

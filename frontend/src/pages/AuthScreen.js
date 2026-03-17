@@ -228,6 +228,184 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
       {/* Hidden reCAPTCHA container */}
       <div id="recaptcha-container"></div>
       
+      {/* Falling Rose Petals - Soft Pink */}
+      {[...Array(15)].map((_, i) => (
+        <motion.div
+          key={`rose-${i}`}
+          className="absolute pointer-events-none z-10"
+          initial={{ 
+            top: -30, 
+            left: `${5 + Math.random() * 90}%`,
+            rotate: Math.random() * 360,
+          }}
+          animate={{ 
+            top: '110%',
+            rotate: [0, 180, 360, 540],
+            x: [0, Math.sin(i) * 60, Math.cos(i) * -40, 0],
+          }}
+          transition={{ 
+            duration: 10 + Math.random() * 5,
+            repeat: Infinity,
+            delay: i * 0.8,
+            ease: "linear"
+          }}
+        >
+          <svg viewBox="0 0 30 35" className="w-7 h-8" style={{ filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.15))' }}>
+            <defs>
+              <linearGradient id={`roseGrad${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFB6C1" />
+                <stop offset="50%" stopColor="#FF69B4" />
+                <stop offset="100%" stopColor="#DB7093" />
+              </linearGradient>
+            </defs>
+            <path d="M15 2 Q22 8 20 18 Q18 28 15 32 Q12 28 10 18 Q8 8 15 2" fill={`url(#roseGrad${i})`} opacity="0.7" />
+            <path d="M15 5 Q18 10 17 18 Q16 25 15 28" stroke="#FF1493" strokeWidth="0.5" fill="none" opacity="0.4" />
+          </svg>
+        </motion.div>
+      ))}
+      
+      {/* Falling Marigold Flowers - Orange/Yellow */}
+      {[...Array(10)].map((_, i) => (
+        <motion.div
+          key={`marigold-${i}`}
+          className="absolute pointer-events-none z-10"
+          initial={{ 
+            top: -40, 
+            left: `${8 + Math.random() * 84}%`,
+            rotate: 0,
+            scale: 0.8 + Math.random() * 0.4,
+          }}
+          animate={{ 
+            top: '115%',
+            rotate: [0, 120, 240, 360],
+            x: [0, Math.random() > 0.5 ? 80 : -80, Math.random() > 0.5 ? 30 : -30, 0],
+          }}
+          transition={{ 
+            duration: 14 + Math.random() * 6,
+            repeat: Infinity,
+            delay: i * 1.2 + 2,
+            ease: "linear"
+          }}
+        >
+          <svg viewBox="0 0 50 50" className="w-10 h-10" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>
+            <defs>
+              <radialGradient id={`marigoldGrad${i}`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#FF8C00" />
+                <stop offset="100%" stopColor="#FF6600" />
+              </radialGradient>
+            </defs>
+            {/* Outer petals */}
+            {[...Array(12)].map((_, j) => (
+              <ellipse 
+                key={`outer-${j}`}
+                cx="25" 
+                cy="8" 
+                rx="5" 
+                ry="10" 
+                fill={j % 2 === 0 ? '#FFD700' : '#FFA500'}
+                transform={`rotate(${j * 30} 25 25)`}
+                opacity="0.85"
+              />
+            ))}
+            {/* Inner petals */}
+            {[...Array(8)].map((_, j) => (
+              <ellipse 
+                key={`inner-${j}`}
+                cx="25" 
+                cy="14" 
+                rx="3" 
+                ry="6" 
+                fill={j % 2 === 0 ? '#FF8C00' : '#FFD700'}
+                transform={`rotate(${j * 45 + 22.5} 25 25)`}
+                opacity="0.9"
+              />
+            ))}
+            {/* Center */}
+            <circle cx="25" cy="25" r="6" fill={`url(#marigoldGrad${i})`} />
+          </svg>
+        </motion.div>
+      ))}
+      
+      {/* Falling Jasmine Flowers - White */}
+      {[...Array(12)].map((_, i) => (
+        <motion.div
+          key={`jasmine-${i}`}
+          className="absolute pointer-events-none z-10"
+          initial={{ 
+            top: -25, 
+            left: `${10 + Math.random() * 80}%`,
+            rotate: Math.random() * 180,
+          }}
+          animate={{ 
+            top: '112%',
+            rotate: [0, 90, 180, 270, 360],
+            x: [0, Math.cos(i * 30) * 50, Math.sin(i * 30) * -30, 0],
+          }}
+          transition={{ 
+            duration: 11 + Math.random() * 4,
+            repeat: Infinity,
+            delay: i * 0.9 + 1,
+            ease: "linear"
+          }}
+        >
+          <svg viewBox="0 0 30 30" className="w-6 h-6" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}>
+            {/* 5 petal jasmine */}
+            {[...Array(5)].map((_, j) => (
+              <ellipse 
+                key={j}
+                cx="15" 
+                cy="7" 
+                rx="4" 
+                ry="7" 
+                fill="white"
+                stroke="#F5F5DC"
+                strokeWidth="0.5"
+                transform={`rotate(${j * 72} 15 15)`}
+                opacity="0.85"
+              />
+            ))}
+            <circle cx="15" cy="15" r="3" fill="#FFFACD" />
+            <circle cx="15" cy="15" r="1.5" fill="#FFD700" />
+          </svg>
+        </motion.div>
+      ))}
+      
+      {/* Falling Hibiscus Petals - Red */}
+      {[...Array(8)].map((_, i) => (
+        <motion.div
+          key={`hibiscus-${i}`}
+          className="absolute pointer-events-none z-10"
+          initial={{ 
+            top: -35, 
+            left: `${15 + Math.random() * 70}%`,
+            rotate: Math.random() * 90,
+          }}
+          animate={{ 
+            top: '118%',
+            rotate: [0, -180, -360],
+            x: [0, Math.random() > 0.5 ? 70 : -70, 0],
+          }}
+          transition={{ 
+            duration: 13 + Math.random() * 5,
+            repeat: Infinity,
+            delay: i * 1.5 + 3,
+            ease: "linear"
+          }}
+        >
+          <svg viewBox="0 0 35 40" className="w-8 h-9" style={{ filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.15))' }}>
+            <defs>
+              <linearGradient id={`hibiscusGrad${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FF4444" />
+                <stop offset="50%" stopColor="#DC143C" />
+                <stop offset="100%" stopColor="#8B0000" />
+              </linearGradient>
+            </defs>
+            <path d="M17.5 3 Q25 10 23 22 Q20 35 17.5 38 Q15 35 12 22 Q10 10 17.5 3" fill={`url(#hibiscusGrad${i})`} opacity="0.75" />
+            <path d="M17.5 8 Q20 15 19 25" stroke="#FF6B6B" strokeWidth="0.8" fill="none" opacity="0.5" />
+          </svg>
+        </motion.div>
+      ))}
+      
       {/* Floating Devotional Icons - Scattered across screen */}
       
       {/* Om Symbol - Top Left */}
@@ -431,23 +609,76 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
         </svg>
       </motion.div>
       
-      {/* Trishul - Left */}
+      {/* Authentic Trishul - Left */}
       <motion.div
-        className="absolute left-24 top-1/4"
-        animate={{ y: [0, -8, 0], rotate: [0, 2, -2, 0] }}
+        className="absolute left-20 top-1/4"
+        animate={{ y: [0, -10, 0], rotate: [0, 3, -3, 0] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
       >
-        <svg viewBox="0 0 60 100" className="w-16 h-24 opacity-25">
+        <svg viewBox="0 0 80 140" className="w-20 h-32 opacity-35">
           <defs>
-            <linearGradient id="trishulGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="trishulGold" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FFD700" />
-              <stop offset="100%" stopColor="#CD853F" />
+              <stop offset="50%" stopColor="#DAA520" />
+              <stop offset="100%" stopColor="#B8860B" />
+            </linearGradient>
+            <linearGradient id="trishulShine" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#FFF8DC" />
+              <stop offset="50%" stopColor="#FFD700" />
+              <stop offset="100%" stopColor="#B8860B" />
             </linearGradient>
           </defs>
-          <rect x="27" y="25" width="6" height="75" fill="url(#trishulGrad)" />
-          <path d="M30 5 L25 25 L35 25 Z" fill="url(#trishulGrad)" />
-          <path d="M10 30 Q15 15 20 25 L20 35 Q15 30 10 30" fill="url(#trishulGrad)" />
-          <path d="M50 30 Q45 15 40 25 L40 35 Q45 30 50 30" fill="url(#trishulGrad)" />
+          {/* Main shaft */}
+          <rect x="36" y="55" width="8" height="85" fill="url(#trishulGold)" rx="2" />
+          {/* Shaft decorative bands */}
+          <rect x="34" y="60" width="12" height="4" fill="#DAA520" rx="1" />
+          <rect x="34" y="70" width="12" height="3" fill="#B8860B" rx="1" />
+          {/* Center prong (tallest) */}
+          <path d="M40 5 C38 5 36 10 36 15 L36 55 L44 55 L44 15 C44 10 42 5 40 5" fill="url(#trishulShine)" />
+          <path d="M40 2 L37 12 L40 8 L43 12 Z" fill="#FFD700" />
+          {/* Left prong */}
+          <path d="M15 25 C12 22 10 25 12 30 L18 45 C20 50 28 55 36 55 L36 50 C30 50 24 47 22 43 L18 32 C17 30 17 27 15 25" fill="url(#trishulGold)" />
+          <path d="M12 20 L10 28 L15 24 L18 30 Z" fill="#FFD700" />
+          {/* Right prong */}
+          <path d="M65 25 C68 22 70 25 68 30 L62 45 C60 50 52 55 44 55 L44 50 C50 50 56 47 58 43 L62 32 C63 30 63 27 65 25" fill="url(#trishulGold)" />
+          <path d="M68 20 L70 28 L65 24 L62 30 Z" fill="#FFD700" />
+          {/* Decorative crescent moon */}
+          <path d="M30 52 Q40 45 50 52" stroke="#DAA520" strokeWidth="3" fill="none" />
+          {/* Center jewel */}
+          <circle cx="40" cy="58" r="4" fill="#FF6347" />
+          <circle cx="40" cy="58" r="2" fill="#FFB6C1" />
+        </svg>
+      </motion.div>
+      
+      {/* Authentic Trishul - Right */}
+      <motion.div
+        className="absolute right-20 bottom-1/3"
+        animate={{ y: [0, 8, 0], rotate: [0, -2, 2, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+      >
+        <svg viewBox="0 0 80 140" className="w-16 h-28 opacity-25">
+          <defs>
+            <linearGradient id="trishulGold2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFD700" />
+              <stop offset="50%" stopColor="#DAA520" />
+              <stop offset="100%" stopColor="#B8860B" />
+            </linearGradient>
+          </defs>
+          {/* Main shaft */}
+          <rect x="36" y="55" width="8" height="85" fill="url(#trishulGold2)" rx="2" />
+          <rect x="34" y="60" width="12" height="4" fill="#DAA520" rx="1" />
+          {/* Center prong */}
+          <path d="M40 5 C38 5 36 10 36 15 L36 55 L44 55 L44 15 C44 10 42 5 40 5" fill="url(#trishulGold2)" />
+          <path d="M40 2 L37 12 L40 8 L43 12 Z" fill="#FFD700" />
+          {/* Left prong */}
+          <path d="M15 25 C12 22 10 25 12 30 L18 45 C20 50 28 55 36 55 L36 50 C30 50 24 47 22 43 L18 32 C17 30 17 27 15 25" fill="url(#trishulGold2)" />
+          <path d="M12 20 L10 28 L15 24 L18 30 Z" fill="#FFD700" />
+          {/* Right prong */}
+          <path d="M65 25 C68 22 70 25 68 30 L62 45 C60 50 52 55 44 55 L44 50 C50 50 56 47 58 43 L62 32 C63 30 63 27 65 25" fill="url(#trishulGold2)" />
+          <path d="M68 20 L70 28 L65 24 L62 30 Z" fill="#FFD700" />
+          {/* Decorative crescent */}
+          <path d="M30 52 Q40 45 50 52" stroke="#DAA520" strokeWidth="3" fill="none" />
+          <circle cx="40" cy="58" r="4" fill="#FF6347" />
         </svg>
       </motion.div>
       
