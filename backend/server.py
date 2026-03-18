@@ -131,7 +131,7 @@ async def upload_image(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://divine-spiritual-1.preview.emergentagent.com"
+        backend_url = "https://temple-gateway.preview.emergentagent.com"
     
     # Return the URL
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -175,7 +175,7 @@ async def upload_video(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://divine-spiritual-1.preview.emergentagent.com"
+        backend_url = "https://temple-gateway.preview.emergentagent.com"
     
     # Return the URL
     video_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -1989,19 +1989,34 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
             
             return {"message": "Successfully enrolled in class", "class_id": class_id, "is_free": False, "paid": True}
         else:
-            # Create payment intent for the class
+            # Create payment intent for the class with platform fee and taxes
             import stripe
             stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
             
             try:
+                base_price = cls.get("price", 0)
+                
+                # Calculate platform fee (10%) and GST (18% on platform fee)
+                platform_fee_percent = 10
+                gst_percent = 18
+                
+                platform_fee = round(base_price * platform_fee_percent / 100, 2)
+                gst_on_platform_fee = round(platform_fee * gst_percent / 100, 2)
+                
+                # Total amount = base price + platform fee + GST
+                total_amount = base_price + platform_fee + gst_on_platform_fee
+                
                 payment_intent = stripe.PaymentIntent.create(
-                    amount=int(cls.get("price", 0) * 100),  # Convert to cents/paise
+                    amount=int(total_amount * 100),  # Convert to paise
                     currency="inr",
                     metadata={
                         "type": "class_enrollment",
                         "class_id": class_id,
                         "user_id": str(user["_id"]),
-                        "priest_id": cls["priest_id"]
+                        "priest_id": cls["priest_id"],
+                        "base_price": str(base_price),
+                        "platform_fee": str(platform_fee),
+                        "gst": str(gst_on_platform_fee)
                     }
                 )
                 
@@ -2009,7 +2024,15 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
                     "message": "Payment required for this class",
                     "requires_payment": True,
                     "is_free": False,
-                    "price": cls.get("price", 0),
+                    "price_breakdown": {
+                        "base_price": base_price,
+                        "platform_fee": platform_fee,
+                        "platform_fee_percent": platform_fee_percent,
+                        "gst": gst_on_platform_fee,
+                        "gst_percent": gst_percent,
+                        "total": total_amount
+                    },
+                    "price": total_amount,
                     "client_secret": payment_intent.client_secret,
                     "payment_intent_id": payment_intent.id
                 }
@@ -3323,6 +3346,59 @@ async def create_stripe_payment_intent(data: StripeIntentRequest, user: dict = D
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+class StripeConfirmRequest(BaseModel):
+    payment_intent_id: str
+    card_number: str
+    exp_month: str
+    exp_year: str
+    cvc: str
+
+@app.post("/api/payments/stripe/confirm")
+async def confirm_stripe_payment(data: StripeConfirmRequest, user: dict = Depends(get_current_user)):
+    """Confirm a Stripe payment intent with card details"""
+    import stripe
+    
+    # Get Stripe credentials from system config or env
+    stripe_creds = await get_stripe_credentials()
+    stripe.api_key = stripe_creds["secret_key"]
+    
+    if not stripe.api_key:
+        raise HTTPException(status_code=500, detail="Stripe API key not configured")
+    
+    try:
+        # Create a payment method with the card details
+        payment_method = stripe.PaymentMethod.create(
+            type="card",
+            card={
+                "number": data.card_number,
+                "exp_month": int(data.exp_month),
+                "exp_year": int(data.exp_year),
+                "cvc": data.cvc,
+            },
+        )
+        
+        # Confirm the payment intent with the payment method
+        intent = stripe.PaymentIntent.confirm(
+            data.payment_intent_id,
+            payment_method=payment_method.id
+        )
+        
+        # Update the transaction record
+        await payment_transactions_collection.update_one(
+            {"payment_intent_id": data.payment_intent_id},
+            {"$set": {"payment_status": intent.status, "updated_at": datetime.now(timezone.utc)}}
+        )
+        
+        return {
+            "status": intent.status,
+            "success": intent.status == "succeeded",
+            "payment_intent_id": intent.id
+        }
+    except stripe.error.CardError as e:
+        raise HTTPException(status_code=400, detail=str(e.user_message))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.post("/api/payments/razorpay/create-order")
 async def create_razorpay_order(data: RazorpayOrderRequest, user: dict = Depends(get_current_user)):
     """Create a Razorpay order"""
@@ -4164,7 +4240,7 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     order_id = str(result.inserted_id)
     
     # Get frontend URL for redirect
-    frontend_url = os.environ.get("FRONTEND_URL", "https://divine-spiritual-1.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://temple-gateway.preview.emergentagent.com")
     
     # Create Stripe checkout session
     try:

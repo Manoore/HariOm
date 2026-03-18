@@ -3906,6 +3906,7 @@ function ClassesTab({ isDesktop }) {
           classId: cls.id,
           className: cls.title,
           price: res.data.price,
+          priceBreakdown: res.data.price_breakdown,
           clientSecret: res.data.client_secret,
           paymentIntentId: res.data.payment_intent_id
         });
@@ -4147,14 +4148,36 @@ function ClassesTab({ isDesktop }) {
             </p>
             
             <div className="bg-orange-50 rounded-xl p-4 mb-6">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Class Fee</span>
-                <span className="text-xl font-bold text-maroon">₹{paymentModal.price}</span>
-              </div>
+              {paymentModal.priceBreakdown ? (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Class Fee</span>
+                    <span className="text-gray-800">₹{paymentModal.priceBreakdown.base_price}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Platform Fee ({paymentModal.priceBreakdown.platform_fee_percent}%)</span>
+                    <span className="text-gray-800">₹{paymentModal.priceBreakdown.platform_fee}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">GST ({paymentModal.priceBreakdown.gst_percent}%)</span>
+                    <span className="text-gray-800">₹{paymentModal.priceBreakdown.gst}</span>
+                  </div>
+                  <div className="border-t border-orange-200 pt-2 mt-2 flex justify-between items-center">
+                    <span className="font-semibold text-gray-700">Total</span>
+                    <span className="text-xl font-bold text-maroon">₹{paymentModal.priceBreakdown.total}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Class Fee</span>
+                  <span className="text-xl font-bold text-maroon">₹{paymentModal.price}</span>
+                </div>
+              )}
             </div>
 
             <SmartPayment
               amount={paymentModal.price}
+              clientSecret={paymentModal.clientSecret}
               onSuccess={handlePaymentSuccess}
               onError={handlePaymentError}
               description={`Enrollment: ${paymentModal.className}`}

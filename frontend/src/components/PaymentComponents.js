@@ -5,34 +5,67 @@ import { usePayment } from '../contexts/PaymentContext';
 import api from '../lib/api';
 
 // Stripe Payment Component
-export function StripePayment({ amount, currency = 'USD', onSuccess, onError, description, metadata }) {
+export function StripePayment({ amount, currency = 'INR', clientSecret, onSuccess, onError, description, metadata }) {
   const [loading, setLoading] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
 
   const handlePayment = async () => {
+    // Validate inputs
+    if (!cardNumber || cardNumber.length < 16) {
+      onError('Please enter a valid card number');
+      return;
+    }
+    if (!expiry || expiry.length < 5) {
+      onError('Please enter a valid expiry date');
+      return;
+    }
+    if (!cvc || cvc.length < 3) {
+      onError('Please enter a valid CVC');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Create payment intent on backend
-      const response = await api.post('/api/payments/stripe/create-intent', {
-        amount: Math.round(amount * 100), // Convert to cents
-        currency,
-        description,
-        metadata
+      let paymentClientSecret = clientSecret;
+      let paymentIntentId = null;
+      
+      // If no clientSecret provided, create a new payment intent
+      if (!paymentClientSecret) {
+        const response = await api.post('/api/payments/stripe/create-intent', {
+          amount: Math.round(amount * 100), // Convert to paise
+          currency,
+          description,
+          metadata
+        });
+        paymentClientSecret = response.data.client_secret;
+        paymentIntentId = response.data.payment_intent_id;
+      } else {
+        // Extract payment intent ID from clientSecret
+        paymentIntentId = clientSecret.split('_secret_')[0];
+      }
+
+      // Confirm the payment with Stripe
+      const confirmResponse = await api.post('/api/payments/stripe/confirm', {
+        payment_intent_id: paymentIntentId,
+        card_number: cardNumber.replace(/\s/g, ''),
+        exp_month: expiry.split('/')[0],
+        exp_year: '20' + expiry.split('/')[1],
+        cvc: cvc
       });
 
-      // In production, use Stripe.js to confirm payment
-      // For now, simulate successful payment
-      if (response.data.client_secret) {
-        // Simulate payment confirmation
-        await new Promise(resolve => setTimeout(resolve, 2000));
+      if (confirmResponse.data.status === 'succeeded' || confirmResponse.data.success) {
         onSuccess({
-          payment_id: response.data.payment_intent_id,
+          payment_id: paymentIntentId,
           method: 'stripe',
           amount,
           currency
         });
+      } else if (confirmResponse.data.status === 'requires_action') {
+        onError('3D Secure authentication required. Please try a different card.');
+      } else {
+        onError('Payment could not be processed. Please try again.');
       }
     } catch (error) {
       onError(error.response?.data?.detail || 'Payment failed');
@@ -254,7 +287,7 @@ export function RazorpayPayment({ amount, currency = 'INR', onSuccess, onError, 
 }
 
 // Smart Payment Component - Auto-selects based on location
-export function SmartPayment({ amount, onSuccess, onError, description, metadata, userEmail, userName }) {
+export function SmartPayment({ amount, clientSecret, onSuccess, onError, description, metadata, userEmail, userName }) {
   const { paymentMethod, country, loading: locationLoading, setManualPaymentMethod, isIndia } = usePayment();
   const [showOptions, setShowOptions] = useState(false);
 
@@ -334,7 +367,8 @@ export function SmartPayment({ amount, onSuccess, onError, description, metadata
       ) : (
         <StripePayment
           amount={amount}
-          currency="USD"
+          currency="INR"
+          clientSecret={clientSecret}
           onSuccess={onSuccess}
           onError={onError}
           description={description}
