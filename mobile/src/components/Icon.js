@@ -1,142 +1,148 @@
 import React from 'react';
-import { Platform, View, Text } from 'react-native';
-import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import { Platform, Text, View } from 'react-native';
 
-// SVG paths for common icons
-const iconPaths = {
-  'flame-outline': 'M12 23c-4.97 0-9-3.03-9-7 0-2.79 1.44-5.21 3.62-6.62C6.47 8.78 5.75 8 5.75 8c2.5.25 4.5 1.75 5.75 3.5C12.25 10 13.5 8.5 15 7c1 2.5 2 4.5 2 6 0 4.97-4.03 7-5 7z',
-  'flame': 'M12 23c-4.97 0-9-3.03-9-7 0-2.79 1.44-5.21 3.62-6.62C6.47 8.78 5.75 8 5.75 8c2.5.25 4.5 1.75 5.75 3.5C12.25 10 13.5 8.5 15 7c1 2.5 2 4.5 2 6 0 4.97-4.03 7-5 7z',
-  'planet-outline': 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z',
-  'storefront-outline': 'M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z',
-  'book-outline': 'M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z',
-  'musical-notes-outline': 'M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z',
-  'newspaper-outline': 'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z',
-  'chatbubbles-outline': 'M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z',
-  'videocam-outline': 'M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z',
-  'call-outline': 'M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z',
-  'calendar-outline': 'M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z',
-  'home-outline': 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z',
-  'cart-outline': 'M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z',
-  'person-outline': 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
-  'star-outline': 'M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z',
-  'heart-outline': 'M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3z',
-  'search-outline': 'M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z',
-  'notifications-outline': 'M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z',
-  'arrow-back': 'M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z',
-  'chevron-forward': 'M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z',
-  'checkmark-circle': 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
-  'time-outline': 'M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z',
-  'location-outline': 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
-  'eye-outline': 'M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z',
-  'eye-off-outline': 'M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z',
-  'ellipsis-vertical': 'M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z',
-  'play': 'M8 5v14l11-7z',
-  'pause': 'M6 19h4V5H6v14zm8-14v14h4V5h-4z',
-  'close': 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
-  'add': 'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z',
-  'remove': 'M19 13H5v-2h14v2z',
-  'globe-outline': 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z',
-  'receipt-outline': 'M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z',
-  'card-outline': 'M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z',
-  'help-circle-outline': 'M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z',
-  'shield-outline': 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z',
-  'settings-outline': 'M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z',
-  'log-out-outline': 'M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z',
-  'create-outline': 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z',
-  'trash-outline': 'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z',
-  'send': 'M2.01 21L23 12 2.01 3 2 10l15 2-15 2z',
-  'image-outline': 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z',
-  'headset-outline': 'M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z',
-  'people-outline': 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z',
-  'menu': 'M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z',
-  'apps': 'M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z',
-  'sunny': 'M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z',
-  'leaf': 'M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z',
-  'water': 'M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2z',
-};
-
-// Emoji fallbacks for icons
+// Simple emoji icons that work everywhere
 const emojiMap = {
   'flame-outline': '🔥',
   'flame': '🔥',
   'planet-outline': '🪐',
+  'planet': '🪐',
   'storefront-outline': '🏪',
-  'book-outline': '📖',
+  'storefront': '🏪',
+  'book-outline': '📚',
+  'book': '📚',
   'musical-notes-outline': '🎵',
+  'musical-notes': '🎵',
+  'musical-note-outline': '🎵',
+  'musical-note': '🎵',
   'newspaper-outline': '📰',
+  'newspaper': '📰',
   'chatbubbles-outline': '💬',
+  'chatbubbles': '💬',
+  'chatbubble-outline': '💬',
+  'chatbubble': '💬',
   'videocam-outline': '📹',
+  'videocam': '📹',
+  'videocam-off-outline': '📹',
   'call-outline': '📞',
+  'call': '📞',
   'calendar-outline': '📅',
+  'calendar': '📅',
   'home-outline': '🏠',
+  'home': '🏠',
   'cart-outline': '🛒',
+  'cart': '🛒',
   'person-outline': '👤',
+  'person': '👤',
   'star-outline': '⭐',
+  'star': '⭐',
   'heart-outline': '❤️',
+  'heart': '❤️',
   'search-outline': '🔍',
+  'search': '🔍',
   'notifications-outline': '🔔',
+  'notifications': '🔔',
+  'settings-outline': '⚙️',
+  'settings': '⚙️',
   'arrow-back': '←',
+  'arrow-forward': '→',
+  'chevron-back': '‹',
   'chevron-forward': '›',
+  'chevron-down': '▼',
+  'chevron-up': '▲',
+  'close': '✕',
+  'close-circle': '⊗',
+  'checkmark': '✓',
   'checkmark-circle': '✓',
+  'checkmark-done-circle': '✓',
+  'add': '+',
+  'add-circle': '⊕',
+  'add-circle-outline': '⊕',
+  'remove': '−',
+  'remove-circle': '⊖',
   'time-outline': '⏰',
+  'time': '⏰',
   'location-outline': '📍',
+  'location': '📍',
+  'mail-outline': '✉️',
+  'mail': '✉️',
+  'lock-closed-outline': '🔒',
+  'lock-closed': '🔒',
   'eye-outline': '👁',
+  'eye': '👁',
   'eye-off-outline': '👁',
+  'eye-off': '👁',
+  'menu': '☰',
+  'menu-outline': '☰',
+  'ellipsis-horizontal': '•••',
   'ellipsis-vertical': '⋮',
+  'share-outline': '↗️',
+  'share': '↗️',
+  'globe-outline': '🌐',
+  'globe': '🌐',
+  'water-outline': '💧',
+  'water': '💧',
+  'sunny-outline': '☀️',
+  'sunny': '☀️',
+  'moon-outline': '🌙',
+  'moon': '🌙',
+  'leaf-outline': '🍃',
+  'leaf': '🍃',
+  'apps': '⊞',
   'play': '▶',
   'pause': '⏸',
-  'close': '✕',
-  'add': '+',
-  'remove': '-',
-  'globe-outline': '🌐',
+  'play-skip-back': '⏮',
+  'play-skip-forward': '⏭',
+  'play-circle': '▶',
+  'document-outline': '📄',
+  'document': '📄',
+  'document-text-outline': '📄',
   'receipt-outline': '🧾',
+  'receipt': '🧾',
   'card-outline': '💳',
+  'card': '💳',
   'help-circle-outline': '❓',
-  'shield-outline': '🛡',
-  'settings-outline': '⚙️',
+  'help-circle': '❓',
+  'shield-outline': '🛡️',
+  'shield': '🛡️',
   'log-out-outline': '🚪',
+  'log-out': '🚪',
   'create-outline': '✏️',
-  'trash-outline': '🗑',
+  'create': '✏️',
+  'trash-outline': '🗑️',
+  'trash': '🗑️',
+  'pencil': '✏️',
   'send': '➤',
-  'image-outline': '🖼',
+  'image-outline': '🖼️',
+  'image': '🖼️',
+  'camera-outline': '📷',
+  'camera': '📷',
   'headset-outline': '🎧',
+  'headset': '🎧',
   'people-outline': '👥',
-  'menu': '☰',
-  'apps': '⊞',
-  'sunny': '☀️',
-  'leaf': '🍃',
-  'water': '💧',
+  'people': '👥',
 };
 
 const Icon = ({ name, size = 24, color = '#000', style }) => {
-  if (Platform.OS === 'web') {
-    // Try SVG first
-    const path = iconPaths[name];
-    if (path) {
-      return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" style={style}>
-          <Path d={path} fill={color} />
-        </Svg>
-      );
-    }
-    
-    // Fallback to emoji
-    const emoji = emojiMap[name];
-    if (emoji) {
-      return (
-        <Text style={[{ fontSize: size * 0.8, lineHeight: size }, style]}>
-          {emoji}
-        </Text>
-      );
-    }
-    
-    // Last resort - empty view
-    return <View style={{ width: size, height: size, ...style }} />;
-  }
+  // Always use emoji for simplicity - works on all platforms
+  const emoji = emojiMap[name] || '•';
   
-  // For native, use Ionicons
-  const { Ionicons } = require('@expo/vector-icons');
-  return <Ionicons name={name} size={size} color={color} style={style} />;
+  return (
+    <Text 
+      style={[
+        { 
+          fontSize: size * 0.85, 
+          lineHeight: size,
+          textAlign: 'center',
+          width: size,
+          height: size,
+        }, 
+        style
+      ]}
+    >
+      {emoji}
+    </Text>
+  );
 };
 
 export default Icon;
