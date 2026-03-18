@@ -3650,13 +3650,26 @@ async def get_puja_types_public():
     # Fetch only active puja types
     cursor = puja_types_collection.find({"is_active": {"$ne": False}}).sort("name", 1)
     puja_types = []
+    categories = {}
+    
     async for puja in cursor:
-        puja_types.append({
+        puja_item = {
             "id": str(puja["_id"]),
             "name": puja["name"],
             "category": puja.get("category", "General")
-        })
-    return {"puja_types": puja_types}
+        }
+        puja_types.append(puja_item)
+        
+        # Group by category for dropdown
+        cat = puja.get("category", "General")
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(puja_item)
+    
+    # Sort categories alphabetically
+    sorted_categories = dict(sorted(categories.items()))
+    
+    return {"puja_types": puja_types, "categories": sorted_categories}
 
 @app.get("/api/priests/{priest_id}/reviews")
 async def get_priest_reviews_public(priest_id: str, limit: int = 20, skip: int = 0):
