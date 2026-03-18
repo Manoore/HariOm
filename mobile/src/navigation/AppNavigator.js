@@ -332,6 +332,66 @@ const FestivalsScreen = ({ navigation }) => (
   </SafeAreaView>
 );
 
+// Mantras & Music Screen
+const MantrasScreen = ({ navigation }) => (
+  <SafeAreaView style={styles.screenContainer}>
+    <View style={styles.header}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>Mantras & Shlokas</Text>
+      <View style={{ width: 24 }} />
+    </View>
+    <ScrollView style={styles.content}>
+      {[
+        { name: 'Gayatri Mantra', description: 'Most powerful Vedic hymn', duration: '3:45' },
+        { name: 'Om Namah Shivaya', description: 'Sacred mantra for Lord Shiva', duration: '5:20' },
+        { name: 'Hanuman Chalisa', description: '40 verses praising Hanuman', duration: '8:15' },
+        { name: 'Vishnu Sahasranama', description: '1000 names of Lord Vishnu', duration: '25:00' },
+        { name: 'Lalitha Sahasranama', description: '1000 names of Goddess Lalitha', duration: '30:00' },
+        { name: 'Mahamrityunjaya Mantra', description: 'Mantra for healing and longevity', duration: '4:30' },
+      ].map((mantra, i) => (
+        <TouchableOpacity key={i} style={styles.serviceItem}>
+          <View style={[styles.serviceIcon, { backgroundColor: 'rgba(244, 114, 182, 0.1)' }]}>
+            <Ionicons name="musical-notes" size={24} color="#F472B6" />
+          </View>
+          <View style={styles.serviceInfo}>
+            <Text style={styles.serviceName}>{mantra.name}</Text>
+            <Text style={styles.serviceDuration}>{mantra.description}</Text>
+          </View>
+          <TouchableOpacity style={{ padding: 8 }}>
+            <Ionicons name="play-circle" size={32} color={COLORS.saffron} />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  </SafeAreaView>
+);
+
+// Live Events Screen
+const LiveEventsScreen = ({ navigation }) => (
+  <SafeAreaView style={styles.screenContainer}>
+    <View style={styles.header}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>Live Events</Text>
+      <View style={{ width: 24 }} />
+    </View>
+    <View style={styles.emptyState}>
+      <Ionicons name="videocam-outline" size={64} color="#EF4444" />
+      <Text style={styles.emptyTitle}>Live Spiritual Events</Text>
+      <Text style={styles.emptyText}>Watch live pujas, satsangs, and spiritual discourses</Text>
+      <Button 
+        title="Coming Soon" 
+        variant="outline" 
+        style={{ marginTop: 20 }}
+        onPress={() => navigation.goBack()}
+      />
+    </View>
+  </SafeAreaView>
+);
+
 // ============ TAB NAVIGATOR ============
 
 const MainTabs = () => {
@@ -408,6 +468,8 @@ const AppNavigator = () => {
             <Stack.Screen name="FestivalDetail" component={FestivalDetailScreen} />
             <Stack.Screen name="Festivals" component={FestivalsScreen} />
             <Stack.Screen name="BookPriest" component={PriestDetailScreen} />
+            <Stack.Screen name="Mantras" component={MantrasScreen} />
+            <Stack.Screen name="LiveEvents" component={LiveEventsScreen} />
           </>
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />

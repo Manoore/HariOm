@@ -18,7 +18,7 @@ import { ProductCard, PriestCard, FestivalCard, ServiceCard } from '../component
 import { SearchInput } from '../components/Input';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import { priestAPI, productAPI, festivalAPI } from '../services/api';
+import { priestAPI, productAPI, festivalAPI, astrologyAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -54,7 +54,13 @@ const HomeScreen = ({ navigation }) => {
   const [priests, setPriests] = useState([]);
   const [products, setProducts] = useState([]);
   const [festivals, setFestivals] = useState([]);
+  const [horoscope, setHoroscope] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Get user's zodiac sign from profile or default to Aries
+  const getUserZodiacSign = () => {
+    return user?.zodiac_sign || 'aries';
+  };
 
   useEffect(() => {
     fetchData();
@@ -63,15 +69,29 @@ const HomeScreen = ({ navigation }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [priestsRes, productsRes, festivalsRes] = await Promise.all([
-        priestAPI.getAll({ limit: 3 }).catch(() => ({ data: { priests: [] } })),
-        productAPI.getAll({ limit: 6 }).catch(() => ({ data: { products: [] } })),
-        festivalAPI.getAll().catch(() => ({ data: { festivals: [] } })),
+      console.log('Fetching data from API...');
+      
+      const [priestsRes, productsRes, festivalsRes, horoscopeRes] = await Promise.all([
+        priestAPI.getAll({ limit: 3 }).catch((e) => { console.log('Priests error:', e); return { data: { priests: [] } }; }),
+        productAPI.getAll({ limit: 6 }).catch((e) => { console.log('Products error:', e); return { data: { products: [] } }; }),
+        festivalAPI.getAll().catch((e) => { console.log('Festivals error:', e); return { data: { festivals: [] } }; }),
+        astrologyAPI.getDailyHoroscope(getUserZodiacSign()).catch((e) => { console.log('Horoscope error:', e); return { data: null }; }),
       ]);
+      
+      console.log('Priests received:', priestsRes.data?.priests?.length || 0);
+      console.log('Products received:', productsRes.data?.products?.length || 0);
+      console.log('Festivals received:', festivalsRes.data?.festivals?.length || 0);
       
       setPriests(priestsRes.data.priests || []);
       setProducts(productsRes.data.products || []);
       setFestivals((festivalsRes.data.festivals || []).slice(0, 4));
+      
+      // Handle horoscope data
+      if (horoscopeRes.data?.horoscope) {
+        setHoroscope(horoscopeRes.data.horoscope);
+      } else if (horoscopeRes.data?.prediction) {
+        setHoroscope(horoscopeRes.data);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -102,7 +122,9 @@ const HomeScreen = ({ navigation }) => {
     { icon: 'flame-outline', label: 'Book Puja', color: COLORS.saffron, screen: 'Priests' },
     { icon: 'planet-outline', label: 'Astrology', color: '#818CF8', screen: 'Astrology' },
     { icon: 'storefront-outline', label: 'Shop', color: COLORS.gold, screen: 'Store' },
-    { icon: 'chatbubbles-outline', label: 'Chat', color: COLORS.success, screen: 'Chat' },
+    { icon: 'musical-notes-outline', label: 'Mantras', color: '#F472B6', screen: 'Mantras' },
+    { icon: 'videocam-outline', label: 'Live Events', color: '#EF4444', screen: 'LiveEvents' },
+    { icon: 'calendar-outline', label: 'Festivals', color: '#10B981', screen: 'Festivals' },
   ];
 
   const services = [
@@ -170,6 +192,45 @@ const HomeScreen = ({ navigation }) => {
             onSubmit={handleSearch}
           />
         </View>
+
+        {/* Daily Horoscope Card */}
+        {horoscope && (
+          <TouchableOpacity 
+            style={styles.horoscopeCard}
+            onPress={() => navigation.navigate('Astrology')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#6366F1', '#8B5CF6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.horoscopeGradient}
+            >
+              <View style={styles.horoscopeHeader}>
+                <Ionicons name="planet" size={28} color="#fff" />
+                <Text style={styles.horoscopeTitle}>Today's Horoscope</Text>
+              </View>
+              <Text style={styles.horoscopeSign}>{getUserZodiacSign().charAt(0).toUpperCase() + getUserZodiacSign().slice(1)}</Text>
+              <Text style={styles.horoscopePrediction} numberOfLines={2}>
+                {horoscope.prediction || horoscope.description || 'Tap to view your daily horoscope'}
+              </Text>
+              <View style={styles.horoscopeMeta}>
+                {horoscope.lucky_number && (
+                  <View style={styles.horoscopeMetaItem}>
+                    <Text style={styles.horoscopeMetaLabel}>Lucky Number</Text>
+                    <Text style={styles.horoscopeMetaValue}>{horoscope.lucky_number}</Text>
+                  </View>
+                )}
+                {horoscope.lucky_color && (
+                  <View style={styles.horoscopeMetaItem}>
+                    <Text style={styles.horoscopeMetaLabel}>Lucky Color</Text>
+                    <Text style={styles.horoscopeMetaValue}>{horoscope.lucky_color}</Text>
+                  </View>
+                )}
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
 
         {/* Quick Actions */}
         <View style={styles.quickActionsContainer}>
@@ -502,6 +563,55 @@ const styles = StyleSheet.create({
   serviceDuration: {
     fontSize: 11,
     color: COLORS.gray[500],
+  },
+  // Horoscope Card Styles
+  horoscopeCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+  },
+  horoscopeGradient: {
+    padding: 20,
+  },
+  horoscopeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  horoscopeTitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  horoscopeSign: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  horoscopePrediction: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  horoscopeMeta: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  horoscopeMetaItem: {},
+  horoscopeMetaLabel: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: 2,
+  },
+  horoscopeMetaValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
 
