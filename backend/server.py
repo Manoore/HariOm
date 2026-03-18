@@ -1996,15 +1996,19 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
             try:
                 base_price = cls.get("price", 0)
                 
-                # Calculate platform fee (10%) and GST (18% on platform fee)
-                platform_fee_percent = 10
-                gst_percent = 18
+                # Get admin-configurable fees from system config
+                from system_config import get_fees_and_taxes, calculate_fees_and_taxes
+                fees_config = await get_fees_and_taxes()
+                fees_calc = calculate_fees_and_taxes(base_price, fees_config)
                 
-                platform_fee = round(base_price * platform_fee_percent / 100, 2)
-                gst_on_platform_fee = round(platform_fee * gst_percent / 100, 2)
+                platform_fee = fees_calc["platform_fee"]
+                gst_amount = fees_calc["tax_amount"]
+                platform_fee_percent = fees_config["platform_fee"]["value"] if fees_config["platform_fee"]["enabled"] else 0
+                gst_percent = fees_calc["tax_percentage"]
+                tax_label = fees_calc["tax_label"]
                 
                 # Total amount = base price + platform fee + GST
-                total_amount = base_price + platform_fee + gst_on_platform_fee
+                total_amount = base_price + platform_fee + gst_amount
                 
                 payment_intent = stripe.PaymentIntent.create(
                     amount=int(total_amount * 100),  # Convert to paise
@@ -2016,7 +2020,7 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
                         "priest_id": cls["priest_id"],
                         "base_price": str(base_price),
                         "platform_fee": str(platform_fee),
-                        "gst": str(gst_on_platform_fee)
+                        "gst": str(gst_amount)
                     }
                 )
                 
@@ -2028,8 +2032,9 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
                         "base_price": base_price,
                         "platform_fee": platform_fee,
                         "platform_fee_percent": platform_fee_percent,
-                        "gst": gst_on_platform_fee,
+                        "gst": gst_amount,
                         "gst_percent": gst_percent,
+                        "tax_label": tax_label,
                         "total": total_amount
                     },
                     "price": total_amount,

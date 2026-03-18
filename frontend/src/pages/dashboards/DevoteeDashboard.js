@@ -4154,14 +4154,18 @@ function ClassesTab({ isDesktop }) {
                     <span className="text-gray-600">Class Fee</span>
                     <span className="text-gray-800">₹{paymentModal.priceBreakdown.base_price}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Platform Fee ({paymentModal.priceBreakdown.platform_fee_percent}%)</span>
-                    <span className="text-gray-800">₹{paymentModal.priceBreakdown.platform_fee}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">GST ({paymentModal.priceBreakdown.gst_percent}%)</span>
-                    <span className="text-gray-800">₹{paymentModal.priceBreakdown.gst}</span>
-                  </div>
+                  {paymentModal.priceBreakdown.platform_fee > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Platform Fee ({paymentModal.priceBreakdown.platform_fee_percent}%)</span>
+                      <span className="text-gray-800">₹{paymentModal.priceBreakdown.platform_fee}</span>
+                    </div>
+                  )}
+                  {paymentModal.priceBreakdown.gst > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">{paymentModal.priceBreakdown.tax_label || 'GST'} ({paymentModal.priceBreakdown.gst_percent}%)</span>
+                      <span className="text-gray-800">₹{paymentModal.priceBreakdown.gst}</span>
+                    </div>
+                  )}
                   <div className="border-t border-orange-200 pt-2 mt-2 flex justify-between items-center">
                     <span className="font-semibold text-gray-700">Total</span>
                     <span className="text-xl font-bold text-maroon">₹{paymentModal.priceBreakdown.total}</span>

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Settings, Save, Loader2, Key, CreditCard, Video, Bell, 
   Palette, Wrench, Shield, Eye, EyeOff, CheckCircle, AlertCircle,
-  RefreshCw, ChevronDown, ChevronRight, Flame, Phone, Mail
+  RefreshCw, ChevronDown, ChevronRight, Flame, Phone, Mail, Receipt
 } from 'lucide-react';
 import api from '../../lib/api';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ const CategoryIcons = {
   branding: Palette,
   maintenance: Wrench,
   notifications: Bell,
+  fees_taxes: Receipt,
 };
 
 // Single Config Item Component

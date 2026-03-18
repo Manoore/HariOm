@@ -446,9 +446,13 @@ async def get_all_config(include_sensitive: bool = False) -> Dict[str, Any]:
     result = {}
     settings = config.get("settings", {})
     
+    # First add all settings from database, merging with DEFAULT_CONFIG for metadata
     for key, setting in settings.items():
         value = setting.get("value", "")
-        is_sensitive = setting.get("sensitive", False)
+        
+        # Get default config if available (for metadata like category, label, etc.)
+        default = DEFAULT_CONFIG.get(key, {})
+        is_sensitive = default.get("sensitive", setting.get("sensitive", False))
         
         # Decrypt if sensitive
         if is_sensitive and value:
@@ -458,17 +462,40 @@ async def get_all_config(include_sensitive: bool = False) -> Dict[str, Any]:
             else:
                 value = mask_value(decrypted)
         
+        # Prefer DEFAULT_CONFIG metadata, fall back to stored values
         result[key] = {
             "value": value,
-            "category": setting.get("category", "general"),
-            "label": setting.get("label", key),
-            "description": setting.get("description", ""),
+            "category": default.get("category", setting.get("category", "general")),
+            "label": default.get("label", setting.get("label", key)),
+            "description": default.get("description", setting.get("description", "")),
             "sensitive": is_sensitive,
-            "required": setting.get("required", False),
-            "options": setting.get("options"),
-            "type": setting.get("type", "string"),
+            "required": default.get("required", setting.get("required", False)),
+            "options": default.get("options", setting.get("options")),
+            "type": default.get("type", setting.get("type", "string")),
             "updated_at": setting.get("updated_at")
         }
+    
+    # Then add any DEFAULT_CONFIG keys that are missing from database
+    for key, default_config in DEFAULT_CONFIG.items():
+        if key not in result:
+            value = default_config.get("value", "")
+            is_sensitive = default_config.get("sensitive", False)
+            
+            # Mask sensitive values if not including them
+            if is_sensitive and value and not include_sensitive:
+                value = mask_value(str(value)) if isinstance(value, str) and value else ""
+            
+            result[key] = {
+                "value": value,
+                "category": default_config.get("category", "general"),
+                "label": default_config.get("label", key),
+                "description": default_config.get("description", ""),
+                "sensitive": is_sensitive,
+                "required": default_config.get("required", False),
+                "options": default_config.get("options"),
+                "type": default_config.get("type", "string"),
+                "updated_at": None
+            }
     
     return result
 
