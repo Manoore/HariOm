@@ -75,14 +75,15 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 5. ~~**Class Enrollment Payments (P0)**~~ ✅ COMPLETED (March 17, 2026)
    - Integrated SmartPayment component for Stripe payments
    - Full payment flow for Vedic class enrollment
-   - **Platform Fees & GST** (December 2025):
-     - 10% Platform Fee added to base class price
-     - 18% GST calculated on platform fee
-     - Price breakdown displayed in payment modal (Base Price + Platform Fee + GST = Total)
-     - Example: ₹500 class → ₹500 + ₹50 (10%) + ₹9 (18% of ₹50) = ₹559 total
-     - Backend calculates fees and creates Stripe Payment Intent with metadata
-     - Frontend uses clientSecret from backend for secure payment processing
-     - `/api/payments/stripe/confirm` endpoint added for payment confirmation
+   - **Platform Fees & GST - Admin Configurable** (December 2025):
+     - Admin can manage fees from **System Settings > Fees & Taxes** in Admin Dashboard
+     - Platform Fee: Enable/disable, percentage/fixed type, configurable value (default 2.5%)
+     - GST: Enable/disable, configurable percentage (default 18%)
+     - Option to apply GST on platform fee
+     - Tax label customizable (GST, VAT, etc.)
+     - Price breakdown displayed in payment modal (Base Price + Platform Fee + Tax = Total)
+     - Same fee config used for class enrollment and store checkout (unified)
+     - Example with 2.5%/18%: ₹500 class → ₹500 + ₹12.50 + ₹92.25 = ₹604.75 total
 
 6. ~~**Edit/Delete Functionality (P1)**~~ ✅ COMPLETED (March 17, 2026)
    - Services: Edit/Delete already existed
