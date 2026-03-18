@@ -123,8 +123,15 @@ const HomeScreen = ({ navigation }) => {
     { icon: 'planet-outline', label: 'Astrology', color: '#818CF8', screen: 'Astrology' },
     { icon: 'storefront-outline', label: 'Shop', color: COLORS.gold, screen: 'Store' },
     { icon: 'book-outline', label: 'Classes', color: '#10B981', screen: 'VedicClasses' },
-    { icon: 'musical-notes-outline', label: 'Mantras', color: '#F472B6', screen: 'Mantras' },
+    { icon: 'musical-notes-outline', label: 'Mantras', color: '#F472B6', screen: 'MantrasLibrary' },
     { icon: 'newspaper-outline', label: 'Feed', color: '#3B82F6', screen: 'SpiritualFeed' },
+  ];
+
+  const moreFeatures = [
+    { icon: 'chatbubbles-outline', label: 'Messages', color: '#10B981', screen: 'Messages' },
+    { icon: 'videocam-outline', label: 'Live Events', color: '#EF4444', screen: 'LiveEventsScreen' },
+    { icon: 'call-outline', label: 'Call Astrologer', color: '#8B5CF6', screen: 'Consultation' },
+    { icon: 'calendar-outline', label: 'Festivals', color: '#F59E0B', screen: 'FestivalCalendar' },
   ];
 
   const services = [
@@ -243,6 +250,26 @@ const HomeScreen = ({ navigation }) => {
               onPress={() => navigation.navigate(action.screen)}
             />
           ))}
+        </View>
+
+        {/* More Features */}
+        <View style={styles.moreFeaturesContainer}>
+          <Text style={styles.moreFeaturesTitle}>More Features</Text>
+          <View style={styles.moreFeaturesGrid}>
+            {moreFeatures.map((feature, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.moreFeatureItem}
+                onPress={() => navigation.navigate(feature.screen)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.moreFeatureIcon, { backgroundColor: `${feature.color}15` }]}>
+                  <Ionicons name={feature.icon} size={22} color={feature.color} />
+                </View>
+                <Text style={styles.moreFeatureLabel}>{feature.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {/* Upcoming Festival Banner */}
@@ -612,6 +639,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#fff',
+  },
+  // More Features Styles
+  moreFeaturesContainer: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    ...SHADOWS.small,
+  },
+  moreFeaturesTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.gray[800],
+    marginBottom: 12,
+  },
+  moreFeaturesGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  moreFeatureItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  moreFeatureIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  moreFeatureLabel: {
+    fontSize: 11,
+    color: COLORS.gray[600],
+    textAlign: 'center',
   },
 });
 

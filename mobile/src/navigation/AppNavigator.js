@@ -24,6 +24,11 @@ import VedicClassesScreen from '../screens/VedicClassesScreen';
 import SpiritualFeedScreen from '../screens/SpiritualFeedScreen';
 import PriestsListScreen from '../screens/PriestsListScreen';
 import MyBookingsScreen from '../screens/MyBookingsScreen';
+import MessagesScreen from '../screens/MessagesScreen';
+import ConsultationScreen from '../screens/ConsultationScreen';
+import FestivalCalendarScreen from '../screens/FestivalCalendarScreen';
+import MantrasShlokaScreen from '../screens/MantrasShlokaScreen';
+import LiveEventsFullScreen from '../screens/LiveEventsFullScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -477,6 +482,11 @@ const AppNavigator = () => {
             <Stack.Screen name="VedicClasses" component={VedicClassesScreen} />
             <Stack.Screen name="SpiritualFeed" component={SpiritualFeedScreen} />
             <Stack.Screen name="MyBookings" component={MyBookingsScreen} />
+            <Stack.Screen name="Messages" component={MessagesScreen} />
+            <Stack.Screen name="Consultation" component={ConsultationScreen} />
+            <Stack.Screen name="FestivalCalendar" component={FestivalCalendarScreen} />
+            <Stack.Screen name="MantrasLibrary" component={MantrasShlokaScreen} />
+            <Stack.Screen name="LiveEventsScreen" component={LiveEventsFullScreen} />
           </>
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />
