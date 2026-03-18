@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Star, Sun, ShoppingBag, User, Calendar, MapPin,
-  Bell, ChevronRight, Clock, Package, Search, Filter,
+  Bell, BellRing, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
   CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
   Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet, Edit, Globe, Check
@@ -4185,9 +4185,12 @@ function LiveEventsTab({ isDesktop }) {
   const [upcomingStreams, setUpcomingStreams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState('live'); // 'live' or 'upcoming'
+  const [remindedStreams, setRemindedStreams] = useState(new Set());
+  const [settingReminder, setSettingReminder] = useState(null);
 
   useEffect(() => {
     fetchStreams();
+    loadReminders();
   }, []);
 
   const fetchStreams = async () => {
@@ -4202,6 +4205,51 @@ function LiveEventsTab({ isDesktop }) {
       console.error('Error fetching streams:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadReminders = async () => {
+    try {
+      const res = await api.get('/api/stream-reminders');
+      const reminderIds = new Set(res.data.reminders?.map(r => r.stream_id) || []);
+      setRemindedStreams(reminderIds);
+    } catch (error) {
+      // Silently fail - reminders feature might not exist yet
+    }
+  };
+
+  const handleSetReminder = async (stream) => {
+    setSettingReminder(stream.id);
+    try {
+      await api.post('/api/stream-reminders', { stream_id: stream.id });
+      setRemindedStreams(prev => new Set([...prev, stream.id]));
+      toast.success(`Reminder set for "${stream.title}"! You'll be notified before it starts.`);
+    } catch (error) {
+      if (error.response?.data?.detail?.includes('already')) {
+        toast.info('Reminder already set for this stream');
+        setRemindedStreams(prev => new Set([...prev, stream.id]));
+      } else {
+        toast.error('Failed to set reminder. Please try again.');
+      }
+    } finally {
+      setSettingReminder(null);
+    }
+  };
+
+  const handleRemoveReminder = async (stream) => {
+    setSettingReminder(stream.id);
+    try {
+      await api.delete(`/api/stream-reminders/${stream.id}`);
+      setRemindedStreams(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(stream.id);
+        return newSet;
+      });
+      toast.success('Reminder removed');
+    } catch (error) {
+      toast.error('Failed to remove reminder');
+    } finally {
+      setSettingReminder(null);
     }
   };
 
@@ -4372,6 +4420,31 @@ function LiveEventsTab({ isDesktop }) {
                       <Calendar className="w-3.5 h-3.5" />
                       <span>{formatDate(stream.scheduled_time)}</span>
                     </div>
+                    
+                    {/* Set Reminder Button */}
+                    <button
+                      onClick={() => remindedStreams.has(stream.id) ? handleRemoveReminder(stream) : handleSetReminder(stream)}
+                      disabled={settingReminder === stream.id}
+                      className={`mt-4 w-full py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${
+                        remindedStreams.has(stream.id)
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                          : 'bg-saffron/10 text-saffron hover:bg-saffron/20'
+                      }`}
+                    >
+                      {settingReminder === stream.id ? (
+                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : remindedStreams.has(stream.id) ? (
+                        <>
+                          <Bell className="w-4 h-4" />
+                          <span>Reminder Set</span>
+                        </>
+                      ) : (
+                        <>
+                          <BellRing className="w-4 h-4" />
+                          <span>Remind Me</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </motion.div>
               ))

@@ -2058,6 +2058,83 @@ async def get_public_live_streams(
     total = await priest_streams_collection.count_documents(query)
     return {"streams": streams, "total": total}
 
+# Stream Reminders API
+from database import stream_reminders_collection
+
+@app.get("/api/stream-reminders")
+async def get_stream_reminders(user: dict = Depends(get_current_user)):
+    """Get all stream reminders for the current user"""
+    cursor = stream_reminders_collection.find({"user_id": str(user["_id"])})
+    reminders = []
+    async for reminder in cursor:
+        reminders.append({
+            "id": str(reminder["_id"]),
+            "stream_id": reminder["stream_id"],
+            "created_at": safe_isoformat(reminder.get("created_at"))
+        })
+    return {"reminders": reminders}
+
+@app.post("/api/stream-reminders")
+async def set_stream_reminder(
+    data: dict,
+    user: dict = Depends(get_current_user)
+):
+    """Set a reminder for an upcoming live stream"""
+    stream_id = data.get("stream_id")
+    if not stream_id:
+        raise HTTPException(status_code=400, detail="stream_id is required")
+    
+    # Check if stream exists
+    stream = await priest_streams_collection.find_one({"_id": ObjectId(stream_id)})
+    if not stream:
+        raise HTTPException(status_code=404, detail="Stream not found")
+    
+    # Check if already reminded
+    existing = await stream_reminders_collection.find_one({
+        "user_id": str(user["_id"]),
+        "stream_id": stream_id
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Reminder already set for this stream")
+    
+    # Create reminder
+    reminder = {
+        "user_id": str(user["_id"]),
+        "stream_id": stream_id,
+        "stream_title": stream.get("title", ""),
+        "scheduled_time": stream.get("scheduled_time"),
+        "notified": False,
+        "created_at": datetime.now(timezone.utc)
+    }
+    result = await stream_reminders_collection.insert_one(reminder)
+    
+    # Create in-app notification for confirmation
+    from database import user_notifications_collection
+    await user_notifications_collection.insert_one({
+        "user_id": str(user["_id"]),
+        "title": "Reminder Set",
+        "message": f"You'll be notified before \"{stream.get('title', 'the stream')}\" starts.",
+        "is_read": False,
+        "created_at": datetime.now(timezone.utc),
+        "link": "/dashboard?tab=live"
+    })
+    
+    return {"message": "Reminder set successfully", "reminder_id": str(result.inserted_id)}
+
+@app.delete("/api/stream-reminders/{stream_id}")
+async def remove_stream_reminder(
+    stream_id: str,
+    user: dict = Depends(get_current_user)
+):
+    """Remove a stream reminder"""
+    result = await stream_reminders_collection.delete_one({
+        "user_id": str(user["_id"]),
+        "stream_id": stream_id
+    })
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Reminder not found")
+    return {"message": "Reminder removed successfully"}
+
 @app.get("/api/my-enrollments")
 async def get_my_enrollments(user: dict = Depends(get_current_user)):
     """Get classes the current user is enrolled in"""
