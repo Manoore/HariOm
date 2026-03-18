@@ -3605,6 +3605,59 @@ async def create_service_review(booking_id: str, request: Request, user: dict = 
         "review_id": str(result.inserted_id)
     }
 
+# ===================== PUBLIC PUJA TYPES =====================
+@app.get("/api/puja-types")
+async def get_puja_types_public():
+    """Get all active puja types (public endpoint for devotee and priest screens)"""
+    # Seed default puja types if collection is empty
+    count = await puja_types_collection.count_documents({})
+    if count == 0:
+        default_puja_types = [
+            {"name": "Satyanarayan Pooja", "category": "Worship"},
+            {"name": "Griha Pravesh", "category": "Home"},
+            {"name": "Ganesh Pooja", "category": "Worship"},
+            {"name": "Lakshmi Pooja", "category": "Worship"},
+            {"name": "Durga Pooja", "category": "Worship"},
+            {"name": "Rudrabhishekam", "category": "Shiva"},
+            {"name": "Navagraha Shanti", "category": "Planetary"},
+            {"name": "Vastu Shanti", "category": "Home"},
+            {"name": "Marriage Ceremony", "category": "Life Events"},
+            {"name": "Engagement Ceremony", "category": "Life Events"},
+            {"name": "Mundan Ceremony", "category": "Life Events"},
+            {"name": "Naming Ceremony", "category": "Life Events"},
+            {"name": "Thread Ceremony (Upanayana)", "category": "Life Events"},
+            {"name": "Last Rites (Antim Sanskar)", "category": "Life Events"},
+            {"name": "Shraddh/Tarpan", "category": "Ancestral"},
+            {"name": "Homam/Havan", "category": "Fire Rituals"},
+            {"name": "Kaal Sarp Dosh Puja", "category": "Planetary"},
+            {"name": "Mangal Dosh Shanti", "category": "Planetary"},
+            {"name": "Sunderkand Path", "category": "Recitation"},
+            {"name": "Hanuman Chalisa", "category": "Recitation"},
+            {"name": "Vishnu Sahasranama", "category": "Recitation"},
+            {"name": "Lalita Sahasranama", "category": "Recitation"},
+            {"name": "Satyanarayana Katha", "category": "Recitation"},
+            {"name": "Birthday Pooja", "category": "Personal"},
+            {"name": "Anniversary Pooja", "category": "Personal"},
+            {"name": "Vehicle Pooja", "category": "Blessing"},
+            {"name": "Office/Shop Pooja", "category": "Blessing"},
+            {"name": "Other", "category": "Custom"}
+        ]
+        for puja in default_puja_types:
+            puja["is_active"] = True
+            puja["created_at"] = datetime.now(timezone.utc)
+        await puja_types_collection.insert_many(default_puja_types)
+    
+    # Fetch only active puja types
+    cursor = puja_types_collection.find({"is_active": {"$ne": False}}).sort("name", 1)
+    puja_types = []
+    async for puja in cursor:
+        puja_types.append({
+            "id": str(puja["_id"]),
+            "name": puja["name"],
+            "category": puja.get("category", "General")
+        })
+    return {"puja_types": puja_types}
+
 @app.get("/api/priests/{priest_id}/reviews")
 async def get_priest_reviews_public(priest_id: str, limit: int = 20, skip: int = 0):
     """Get reviews for a priest (public)"""

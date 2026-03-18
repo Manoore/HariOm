@@ -1126,6 +1126,7 @@ function ProfileTab({ profile, user, onRefresh }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const [specializations, setSpecializations] = useState([]);
   const [formData, setFormData] = useState({
     bio: profile?.bio || '',
     experience_years: profile?.experience_years || 5,
@@ -1138,6 +1139,21 @@ function ProfileTab({ profile, user, onRefresh }) {
     profile_photo: profile?.profile_photo || ''
   });
   const [newLocation, setNewLocation] = useState('');
+
+  // Fetch specializations (puja types) from API
+  useEffect(() => {
+    const fetchSpecializations = async () => {
+      try {
+        const res = await api.get('/api/puja-types');
+        const pujaNames = (res.data.puja_types || []).map(p => p.name);
+        setSpecializations(pujaNames.length > 0 ? pujaNames : SPECIALIZATIONS);
+      } catch (error) {
+        // Fallback to hardcoded if API fails
+        setSpecializations(SPECIALIZATIONS);
+      }
+    };
+    fetchSpecializations();
+  }, []);
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -1294,7 +1310,7 @@ function ProfileTab({ profile, user, onRefresh }) {
       <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
         <h3 className="font-semibold text-gray-800 mb-3">Specializations</h3>
         <div className="flex flex-wrap gap-2">
-          {SPECIALIZATIONS.map((spec) => (
+          {specializations.map((spec) => (
             <button
               key={spec}
               onClick={() => editing && toggleSpecialization(spec)}
