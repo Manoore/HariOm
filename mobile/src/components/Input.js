@@ -70,7 +70,7 @@ export const Input = ({
             onPress={() => setShowPassword(!showPassword)}
             style={styles.iconRight}
           >
-            <Ionicons
+            <Icon
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
               size={20}
               color={COLORS.gray[500]}

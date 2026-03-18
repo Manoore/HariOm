@@ -180,7 +180,7 @@ const LoginScreen = ({ navigation }) => {
                         onPress={() => updateFormData('role', role.value)}
                         activeOpacity={0.7}
                       >
-                        <Ionicons
+                        <Icon
                           name={role.icon}
                           size={24}
                           color={formData.role === role.value ? COLORS.saffron : COLORS.gray[400]}
