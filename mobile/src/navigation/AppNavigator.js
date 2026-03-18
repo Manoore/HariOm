@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } fr
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -36,7 +36,7 @@ const Tab = createBottomTabNavigator();
 // Tab Bar Icon Component
 const TabIcon = ({ name, focused }) => (
   <View style={[styles.tabIconContainer, focused && styles.tabIconContainerActive]}>
-    <Ionicons 
+    <Icon 
       name={focused ? name : `${name}-outline`} 
       size={24} 
       color={focused ? COLORS.saffron : COLORS.gray[400]} 
@@ -67,11 +67,11 @@ const ProductDetailScreen = ({ route, navigation }) => {
     <SafeAreaView style={styles.screenContainer}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Product Details</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
-          <Ionicons name="cart-outline" size={24} color={COLORS.gray[700]} />
+          <Icon name="cart-outline" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
       </View>
       
@@ -81,7 +81,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
             <Image source={{ uri: product.images[0] }} style={styles.productImg} />
           ) : (
             <View style={styles.imagePlaceholder}>
-              <Ionicons name="cube-outline" size={80} color={COLORS.gray[300]} />
+              <Icon name="cube-outline" size={80} color={COLORS.gray[300]} />
             </View>
           )}
         </View>
@@ -98,14 +98,14 @@ const ProductDetailScreen = ({ route, navigation }) => {
                 style={styles.qtyBtn} 
                 onPress={() => setQuantity(Math.max(1, quantity - 1))}
               >
-                <Ionicons name="remove" size={20} color={COLORS.saffron} />
+                <Icon name="remove" size={20} color={COLORS.saffron} />
               </TouchableOpacity>
               <Text style={styles.qtyText}>{quantity}</Text>
               <TouchableOpacity 
                 style={styles.qtyBtn} 
                 onPress={() => setQuantity(quantity + 1)}
               >
-                <Ionicons name="add" size={20} color={COLORS.saffron} />
+                <Icon name="add" size={20} color={COLORS.saffron} />
               </TouchableOpacity>
             </View>
           </View>
@@ -131,7 +131,7 @@ const PriestDetailScreen = ({ route, navigation }) => {
     <SafeAreaView style={styles.screenContainer}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Priest Profile</Text>
         <View style={{ width: 24 }} />
@@ -146,7 +146,7 @@ const PriestDetailScreen = ({ route, navigation }) => {
           </View>
           <Text style={styles.priestNameLarge}>{priest?.user_name || 'Priest Name'}</Text>
           <View style={styles.ratingRow}>
-            <Ionicons name="star" size={18} color={COLORS.gold} />
+            <Icon name="star" size={18} color={COLORS.gold} />
             <Text style={styles.ratingText}>{priest?.rating || 4.8} ({priest?.total_reviews || 0} reviews)</Text>
           </View>
           <Text style={styles.experienceText}>{priest?.experience_years || 0} years experience</Text>
@@ -186,13 +186,13 @@ const NotificationsScreen = ({ navigation }) => (
   <SafeAreaView style={styles.screenContainer}>
     <View style={styles.header}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+        <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Notifications</Text>
       <View style={{ width: 24 }} />
     </View>
     <View style={styles.emptyState}>
-      <Ionicons name="notifications-outline" size={64} color={COLORS.gray[300]} />
+      <Icon name="notifications-outline" size={64} color={COLORS.gray[300]} />
       <Text style={styles.emptyTitle}>No Notifications</Text>
       <Text style={styles.emptyText}>You're all caught up!</Text>
     </View>
@@ -206,13 +206,13 @@ const SearchScreen = ({ route, navigation }) => {
     <SafeAreaView style={styles.screenContainer}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Search: {query}</Text>
         <View style={{ width: 24 }} />
       </View>
       <View style={styles.emptyState}>
-        <Ionicons name="search-outline" size={64} color={COLORS.gray[300]} />
+        <Icon name="search-outline" size={64} color={COLORS.gray[300]} />
         <Text style={styles.emptyTitle}>Search Results</Text>
         <Text style={styles.emptyText}>Search functionality coming soon</Text>
       </View>
@@ -225,13 +225,13 @@ const PriestsScreen = ({ navigation }) => (
   <SafeAreaView style={styles.screenContainer}>
     <View style={styles.header}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+        <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Book a Priest</Text>
       <View style={{ width: 24 }} />
     </View>
     <View style={styles.emptyState}>
-      <Ionicons name="flame-outline" size={64} color={COLORS.saffron} />
+      <Icon name="flame-outline" size={64} color={COLORS.saffron} />
       <Text style={styles.emptyTitle}>Find Priests</Text>
       <Text style={styles.emptyText}>Browse verified priests for your puja</Text>
       <Button 
@@ -249,13 +249,13 @@ const ChatScreen = ({ navigation }) => (
   <SafeAreaView style={styles.screenContainer}>
     <View style={styles.header}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+        <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Messages</Text>
       <View style={{ width: 24 }} />
     </View>
     <View style={styles.emptyState}>
-      <Ionicons name="chatbubbles-outline" size={64} color={COLORS.success} />
+      <Icon name="chatbubbles-outline" size={64} color={COLORS.success} />
       <Text style={styles.emptyTitle}>No Messages</Text>
       <Text style={styles.emptyText}>Start a conversation with priests or astrologers</Text>
     </View>
@@ -267,7 +267,7 @@ const ServicesScreen = ({ navigation }) => (
   <SafeAreaView style={styles.screenContainer}>
     <View style={styles.header}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+        <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Puja Services</Text>
       <View style={{ width: 24 }} />
@@ -283,7 +283,7 @@ const ServicesScreen = ({ navigation }) => (
       ].map((service, i) => (
         <TouchableOpacity key={i} style={styles.serviceItem}>
           <View style={styles.serviceIcon}>
-            <Ionicons name="flame-outline" size={24} color={COLORS.saffron} />
+            <Icon name="flame-outline" size={24} color={COLORS.saffron} />
           </View>
           <View style={styles.serviceInfo}>
             <Text style={styles.serviceName}>{service.name}</Text>
@@ -303,14 +303,14 @@ const FestivalDetailScreen = ({ route, navigation }) => {
     <SafeAreaView style={styles.screenContainer}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Festival Details</Text>
         <View style={{ width: 24 }} />
       </View>
       <ScrollView style={styles.content}>
         <View style={styles.festivalHeader}>
-          <Ionicons name="calendar" size={48} color={COLORS.saffron} />
+          <Icon name="calendar" size={48} color={COLORS.saffron} />
           <Text style={styles.festivalName}>{festival?.name || 'Festival'}</Text>
           <Text style={styles.festivalDate}>{festival?.date || 'Date TBD'}</Text>
         </View>
@@ -328,13 +328,13 @@ const FestivalsScreen = ({ navigation }) => (
   <SafeAreaView style={styles.screenContainer}>
     <View style={styles.header}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+        <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Upcoming Festivals</Text>
       <View style={{ width: 24 }} />
     </View>
     <View style={styles.emptyState}>
-      <Ionicons name="calendar-outline" size={64} color={COLORS.saffron} />
+      <Icon name="calendar-outline" size={64} color={COLORS.saffron} />
       <Text style={styles.emptyTitle}>Festival Calendar</Text>
       <Text style={styles.emptyText}>View all upcoming Hindu festivals</Text>
     </View>
@@ -346,7 +346,7 @@ const MantrasScreen = ({ navigation }) => (
   <SafeAreaView style={styles.screenContainer}>
     <View style={styles.header}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+        <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Mantras & Shlokas</Text>
       <View style={{ width: 24 }} />
@@ -362,14 +362,14 @@ const MantrasScreen = ({ navigation }) => (
       ].map((mantra, i) => (
         <TouchableOpacity key={i} style={styles.serviceItem}>
           <View style={[styles.serviceIcon, { backgroundColor: 'rgba(244, 114, 182, 0.1)' }]}>
-            <Ionicons name="musical-notes" size={24} color="#F472B6" />
+            <Icon name="musical-notes" size={24} color="#F472B6" />
           </View>
           <View style={styles.serviceInfo}>
             <Text style={styles.serviceName}>{mantra.name}</Text>
             <Text style={styles.serviceDuration}>{mantra.description}</Text>
           </View>
           <TouchableOpacity style={{ padding: 8 }}>
-            <Ionicons name="play-circle" size={32} color={COLORS.saffron} />
+            <Icon name="play-circle" size={32} color={COLORS.saffron} />
           </TouchableOpacity>
         </TouchableOpacity>
       ))}
@@ -382,13 +382,13 @@ const LiveEventsScreen = ({ navigation }) => (
   <SafeAreaView style={styles.screenContainer}>
     <View style={styles.header}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+        <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Live Events</Text>
       <View style={{ width: 24 }} />
     </View>
     <View style={styles.emptyState}>
-      <Ionicons name="videocam-outline" size={64} color="#EF4444" />
+      <Icon name="videocam-outline" size={64} color="#EF4444" />
       <Text style={styles.emptyTitle}>Live Spiritual Events</Text>
       <Text style={styles.emptyText}>Watch live pujas, satsangs, and spiritual discourses</Text>
       <Button 

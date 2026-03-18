@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './Icon';
 import { COLORS, SHADOWS } from '../constants/theme';
 
 export const Input = ({
@@ -104,7 +104,7 @@ export const SearchInput = ({
 }) => {
   return (
     <View style={[styles.searchContainer, style]}>
-      <Ionicons name="search-outline" size={20} color={COLORS.gray[400]} />
+      <Icon name="search-outline" size={20} color={COLORS.gray[400]} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -117,7 +117,7 @@ export const SearchInput = ({
       />
       {value ? (
         <TouchableOpacity onPress={() => onChangeText('')}>
-          <Ionicons name="close-circle" size={20} color={COLORS.gray[400]} />
+          <Icon name="close-circle" size={20} color={COLORS.gray[400]} />
         </TouchableOpacity>
       ) : null}
     </View>

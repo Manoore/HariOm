@@ -8,7 +8,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { orderAPI } from '../services/api';
@@ -92,7 +92,7 @@ const OrdersScreen = ({ navigation }) => {
           <Text style={styles.orderDate}>{formatDate(order.created_at)}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
-          <Ionicons 
+          <Icon 
             name={getStatusIcon(order.status)} 
             size={14} 
             color={getStatusColor(order.status)} 
@@ -126,7 +126,7 @@ const OrdersScreen = ({ navigation }) => {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+            <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>My Orders</Text>
           <View style={{ width: 24 }} />
@@ -142,7 +142,7 @@ const OrdersScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Orders</Text>
         <View style={{ width: 24 }} />
@@ -150,7 +150,7 @@ const OrdersScreen = ({ navigation }) => {
       
       {orders.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="receipt-outline" size={64} color={COLORS.gray[300]} />
+          <Icon name="receipt-outline" size={64} color={COLORS.gray[300]} />
           <Text style={styles.emptyTitle}>No Orders Yet</Text>
           <Text style={styles.emptyText}>Your order history will appear here</Text>
           <TouchableOpacity 

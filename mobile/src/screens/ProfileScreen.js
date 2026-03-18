@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, GRADIENTS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -74,11 +74,11 @@ const ProfileScreen = ({ navigation }) => {
     <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.menuItemLeft}>
         <View style={styles.menuIconContainer}>
-          <Ionicons name={icon} size={20} color={COLORS.saffron} />
+          <Icon name={icon} size={20} color={COLORS.saffron} />
         </View>
         <Text style={styles.menuLabel}>{label}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={COLORS.gray[400]} />
+      <Icon name="chevron-forward" size={20} color={COLORS.gray[400]} />
     </TouchableOpacity>
   );
 
@@ -92,7 +92,7 @@ const ProfileScreen = ({ navigation }) => {
             style={styles.settingsButton}
             onPress={() => handleMenuPress('Settings', 'Settings')}
           >
-            <Ionicons name="settings-outline" size={24} color={COLORS.gray[700]} />
+            <Icon name="settings-outline" size={24} color={COLORS.gray[700]} />
           </TouchableOpacity>
         </View>
 
@@ -114,7 +114,7 @@ const ProfileScreen = ({ navigation }) => {
                 style={styles.editAvatarButton}
                 onPress={() => handleMenuPress('EditProfile', 'Change Photo')}
               >
-                <Ionicons name="camera-outline" size={16} color={COLORS.white} />
+                <Icon name="camera-outline" size={16} color={COLORS.white} />
               </TouchableOpacity>
             </View>
 
@@ -122,7 +122,7 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.profileName}>{user?.name || 'Devotee'}</Text>
               <Text style={styles.profileEmail}>{user?.email || user?.phoneNumber || 'devotee@divine.com'}</Text>
               <View style={styles.roleBadge}>
-                <Ionicons name="person-outline" size={12} color={COLORS.white} />
+                <Icon name="person-outline" size={12} color={COLORS.white} />
                 <Text style={styles.roleText}>
                   {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1) || 'Devotee'}
                 </Text>
@@ -179,7 +179,7 @@ const ProfileScreen = ({ navigation }) => {
 
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
-          <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
+          <Icon name="log-out-outline" size={20} color={COLORS.error} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 

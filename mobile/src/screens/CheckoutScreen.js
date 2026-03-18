@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Linking,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { Button } from '../components/Button';
@@ -218,13 +218,13 @@ const CheckoutScreen = ({ navigation }) => {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+            <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Checkout</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.emptyContainer}>
-          <Ionicons name="cart-outline" size={64} color={COLORS.gray[300]} />
+          <Icon name="cart-outline" size={64} color={COLORS.gray[300]} />
           <Text style={styles.emptyText}>Your cart is empty</Text>
           <Button
             title="Continue Shopping"
@@ -241,7 +241,7 @@ const CheckoutScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => step === 1 ? navigation.goBack() : setStep(1)}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
           {step === 1 ? 'Shipping Details' : 'Review Order'}
@@ -254,7 +254,7 @@ const CheckoutScreen = ({ navigation }) => {
         <View style={styles.progressStep}>
           <View style={[styles.progressDot, step >= 1 && styles.progressDotActive]}>
             {step > 1 ? (
-              <Ionicons name="checkmark" size={14} color={COLORS.white} />
+              <Icon name="checkmark" size={14} color={COLORS.white} />
             ) : (
               <Text style={styles.progressDotText}>1</Text>
             )}
@@ -353,7 +353,7 @@ const CheckoutScreen = ({ navigation }) => {
             {/* Shipping Address Card */}
             <View style={styles.reviewCard}>
               <View style={styles.reviewCardHeader}>
-                <Ionicons name="location-outline" size={20} color={COLORS.saffron} />
+                <Icon name="location-outline" size={20} color={COLORS.saffron} />
                 <Text style={styles.reviewCardTitle}>Delivery Address</Text>
                 <TouchableOpacity onPress={() => setStep(1)}>
                   <Text style={styles.editText}>Edit</Text>
@@ -370,7 +370,7 @@ const CheckoutScreen = ({ navigation }) => {
             {/* Order Items */}
             <View style={styles.reviewCard}>
               <View style={styles.reviewCardHeader}>
-                <Ionicons name="cart-outline" size={20} color={COLORS.saffron} />
+                <Icon name="cart-outline" size={20} color={COLORS.saffron} />
                 <Text style={styles.reviewCardTitle}>Order Items ({cartItemCount})</Text>
               </View>
               {cart.map((item, index) => (
@@ -381,7 +381,7 @@ const CheckoutScreen = ({ navigation }) => {
             {/* Price Summary */}
             <View style={styles.reviewCard}>
               <View style={styles.reviewCardHeader}>
-                <Ionicons name="receipt-outline" size={20} color={COLORS.saffron} />
+                <Icon name="receipt-outline" size={20} color={COLORS.saffron} />
                 <Text style={styles.reviewCardTitle}>Price Details</Text>
               </View>
               
@@ -411,7 +411,7 @@ const CheckoutScreen = ({ navigation }) => {
             {/* Payment Method */}
             <View style={styles.reviewCard}>
               <View style={styles.reviewCardHeader}>
-                <Ionicons name="card-outline" size={20} color={COLORS.saffron} />
+                <Icon name="card-outline" size={20} color={COLORS.saffron} />
                 <Text style={styles.reviewCardTitle}>Payment Method</Text>
               </View>
               <View style={styles.paymentMethod}>
@@ -444,7 +444,7 @@ const CheckoutScreen = ({ navigation }) => {
           loading={loading}
           style={styles.bottomButton}
           icon={
-            <Ionicons 
+            <Icon 
               name={step === 1 ? 'arrow-forward' : 'card-outline'} 
               size={18} 
               color={COLORS.white} 

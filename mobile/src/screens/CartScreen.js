@@ -8,7 +8,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { Button } from '../components/Button';
@@ -70,7 +70,7 @@ const CartScreen = ({ navigation }) => {
             <Image source={{ uri: imageUrl }} style={styles.itemImage} />
           ) : (
             <View style={styles.imagePlaceholder}>
-              <Ionicons name="cube-outline" size={24} color={COLORS.gray[300]} />
+              <Icon name="cube-outline" size={24} color={COLORS.gray[300]} />
             </View>
           )}
         </View>
@@ -85,7 +85,7 @@ const CartScreen = ({ navigation }) => {
               onPress={() => handleUpdateQuantity(product.id, item.quantity - 1)}
               disabled={loading}
             >
-              <Ionicons name="remove" size={18} color={COLORS.saffron} />
+              <Icon name="remove" size={18} color={COLORS.saffron} />
             </TouchableOpacity>
 
             <Text style={styles.quantityText}>{item.quantity}</Text>
@@ -95,7 +95,7 @@ const CartScreen = ({ navigation }) => {
               onPress={() => handleUpdateQuantity(product.id, item.quantity + 1)}
               disabled={loading}
             >
-              <Ionicons name="add" size={18} color={COLORS.saffron} />
+              <Icon name="add" size={18} color={COLORS.saffron} />
             </TouchableOpacity>
           </View>
         </View>
@@ -105,7 +105,7 @@ const CartScreen = ({ navigation }) => {
             style={styles.removeButton}
             onPress={() => handleRemoveItem(product.id, product.name)}
           >
-            <Ionicons name="trash-outline" size={20} color={COLORS.error} />
+            <Icon name="trash-outline" size={20} color={COLORS.error} />
           </TouchableOpacity>
 
           <Text style={styles.itemTotal}>
@@ -121,7 +121,7 @@ const CartScreen = ({ navigation }) => {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+            <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>My Cart</Text>
           <View style={{ width: 24 }} />
@@ -129,7 +129,7 @@ const CartScreen = ({ navigation }) => {
 
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconContainer}>
-            <Ionicons name="cart-outline" size={80} color={COLORS.gray[300]} />
+            <Icon name="cart-outline" size={80} color={COLORS.gray[300]} />
           </View>
           <Text style={styles.emptyTitle}>Your cart is empty</Text>
           <Text style={styles.emptySubtitle}>
@@ -150,7 +150,7 @@ const CartScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Cart ({cartItemCount})</Text>
         <TouchableOpacity onPress={handleClearCart}>
@@ -194,9 +194,9 @@ const CartScreen = ({ navigation }) => {
 
         {/* Promo Code */}
         <TouchableOpacity style={styles.promoContainer}>
-          <Ionicons name="pricetag-outline" size={20} color={COLORS.saffron} />
+          <Icon name="pricetag-outline" size={20} color={COLORS.saffron} />
           <Text style={styles.promoText}>Apply Promo Code</Text>
-          <Ionicons name="chevron-forward" size={20} color={COLORS.gray[400]} />
+          <Icon name="chevron-forward" size={20} color={COLORS.gray[400]} />
         </TouchableOpacity>
 
         <View style={{ height: 120 }} />
@@ -212,7 +212,7 @@ const CartScreen = ({ navigation }) => {
           title="Proceed to Checkout"
           onPress={() => navigation.navigate('Checkout')}
           style={styles.checkoutButton}
-          icon={<Ionicons name="arrow-forward" size={18} color={COLORS.white} />}
+          icon={<Icon name="arrow-forward" size={18} color={COLORS.white} />}
           iconPosition="right"
         />
       </View>

@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, GRADIENTS } from '../constants/theme';
 import { ProductCard, PriestCard, FestivalCard, ServiceCard } from '../components/Cards';
@@ -26,7 +26,7 @@ const { width } = Dimensions.get('window');
 const QuickAction = ({ icon, label, onPress, color = COLORS.saffron }) => (
   <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.7}>
     <View style={[styles.quickActionIcon, { backgroundColor: `${color}15` }]}>
-      <Ionicons name={icon} size={24} color={color} />
+      <Icon name={icon} size={24} color={color} />
     </View>
     <Text style={styles.quickActionLabel}>{label}</Text>
   </TouchableOpacity>
@@ -39,7 +39,7 @@ const SectionHeader = ({ title, onSeeAll }) => (
     {onSeeAll && (
       <TouchableOpacity onPress={onSeeAll} style={styles.seeAllButton} activeOpacity={0.7}>
         <Text style={styles.seeAllText}>See All</Text>
-        <Ionicons name="chevron-forward" size={16} color={COLORS.saffron} />
+        <Icon name="chevron-forward" size={16} color={COLORS.saffron} />
       </TouchableOpacity>
     )}
   </View>
@@ -172,7 +172,7 @@ const HomeScreen = ({ navigation }) => {
               onPress={() => navigation.navigate('Notifications')}
               activeOpacity={0.7}
             >
-              <Ionicons name="notifications-outline" size={24} color={COLORS.gray[700]} />
+              <Icon name="notifications-outline" size={24} color={COLORS.gray[700]} />
               <View style={styles.notificationBadge} />
             </TouchableOpacity>
             <TouchableOpacity 
@@ -180,7 +180,7 @@ const HomeScreen = ({ navigation }) => {
               onPress={() => navigation.navigate('Cart')}
               activeOpacity={0.7}
             >
-              <Ionicons name="cart-outline" size={24} color={COLORS.gray[700]} />
+              <Icon name="cart-outline" size={24} color={COLORS.gray[700]} />
               {cartItemCount > 0 && (
                 <View style={styles.cartBadge}>
                   <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
@@ -214,7 +214,7 @@ const HomeScreen = ({ navigation }) => {
               style={styles.horoscopeGradient}
             >
               <View style={styles.horoscopeHeader}>
-                <Ionicons name="planet" size={28} color="#fff" />
+                <Icon name="planet" size={28} color="#fff" />
                 <Text style={styles.horoscopeTitle}>Today's Horoscope</Text>
               </View>
               <Text style={styles.horoscopeSign}>{getUserZodiacSign().charAt(0).toUpperCase() + getUserZodiacSign().slice(1)}</Text>
@@ -264,7 +264,7 @@ const HomeScreen = ({ navigation }) => {
                 activeOpacity={0.7}
               >
                 <View style={[styles.moreFeatureIcon, { backgroundColor: `${feature.color}15` }]}>
-                  <Ionicons name={feature.icon} size={22} color={feature.color} />
+                  <Icon name={feature.icon} size={22} color={feature.color} />
                 </View>
                 <Text style={styles.moreFeatureLabel}>{feature.label}</Text>
               </TouchableOpacity>
@@ -292,7 +292,7 @@ const HomeScreen = ({ navigation }) => {
                   <Text style={styles.festivalBannerDate}>{festivals[0].date}</Text>
                 </View>
                 <View style={styles.festivalBannerIcon}>
-                  <Ionicons name="flame" size={40} color="rgba(255,255,255,0.8)" />
+                  <Icon name="flame" size={40} color="rgba(255,255,255,0.8)" />
                 </View>
               </View>
             </LinearGradient>
@@ -318,12 +318,12 @@ const HomeScreen = ({ navigation }) => {
                 activeOpacity={0.8}
               >
                 <View style={styles.serviceIconContainer}>
-                  <Ionicons name={service.icon} size={28} color={COLORS.saffron} />
+                  <Icon name={service.icon} size={28} color={COLORS.saffron} />
                 </View>
                 <Text style={styles.serviceName}>{service.name}</Text>
                 <Text style={styles.servicePrice}>₹{service.price}</Text>
                 <Text style={styles.serviceDuration}>
-                  <Ionicons name="time-outline" size={12} color={COLORS.gray[500]} /> {service.duration}
+                  <Icon name="time-outline" size={12} color={COLORS.gray[500]} /> {service.duration}
                 </Text>
               </TouchableOpacity>
             ))}

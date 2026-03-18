@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS } from '../constants/theme';
@@ -111,11 +111,11 @@ const FestivalCalendarScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Festival Calendar</Text>
         <TouchableOpacity style={styles.headerIcon}>
-          <Ionicons name="notifications-outline" size={24} color={COLORS.saffron} />
+          <Icon name="notifications-outline" size={24} color={COLORS.saffron} />
         </TouchableOpacity>
       </View>
 
@@ -170,7 +170,7 @@ const FestivalCalendarScreen = ({ navigation }) => {
               }
             }}
           >
-            <Ionicons name="chevron-back" size={24} color={COLORS.gray[700]} />
+            <Icon name="chevron-back" size={24} color={COLORS.gray[700]} />
           </TouchableOpacity>
           
           <Text style={styles.monthText}>
@@ -188,7 +188,7 @@ const FestivalCalendarScreen = ({ navigation }) => {
               }
             }}
           >
-            <Ionicons name="chevron-forward" size={24} color={COLORS.gray[700]} />
+            <Icon name="chevron-forward" size={24} color={COLORS.gray[700]} />
           </TouchableOpacity>
         </View>
 
@@ -196,7 +196,7 @@ const FestivalCalendarScreen = ({ navigation }) => {
         <View style={styles.content}>
           {filteredFestivals.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="calendar-outline" size={48} color={COLORS.gray[300]} />
+              <Icon name="calendar-outline" size={48} color={COLORS.gray[300]} />
               <Text style={styles.emptyText}>No festivals in {months[selectedMonth]}</Text>
             </View>
           ) : (
@@ -229,7 +229,7 @@ const FestivalCalendarScreen = ({ navigation }) => {
                 </View>
                 
                 <TouchableOpacity style={styles.reminderButton}>
-                  <Ionicons name="notifications-outline" size={20} color={COLORS.saffron} />
+                  <Icon name="notifications-outline" size={20} color={COLORS.saffron} />
                 </TouchableOpacity>
               </TouchableOpacity>
             ))

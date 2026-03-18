@@ -9,7 +9,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS } from '../constants/theme';
@@ -129,7 +129,7 @@ const ConsultationScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Call Astrologer</Text>
         <View style={{ width: 24 }} />
@@ -144,7 +144,7 @@ const ConsultationScreen = ({ navigation }) => {
           style={styles.bannerGradient}
         >
           <View style={styles.bannerContent}>
-            <Ionicons name="planet" size={40} color="#fff" style={{ opacity: 0.9 }} />
+            <Icon name="planet" size={40} color="#fff" style={{ opacity: 0.9 }} />
             <View style={styles.bannerText}>
               <Text style={styles.bannerTitle}>Talk to Expert Astrologers</Text>
               <Text style={styles.bannerSubtitle}>Get guidance on life, career, relationships & more</Text>
@@ -169,7 +169,7 @@ const ConsultationScreen = ({ navigation }) => {
             ]}
             onPress={() => setSelectedType(type.id)}
           >
-            <Ionicons 
+            <Icon 
               name={type.icon} 
               size={18} 
               color={selectedType === type.id ? COLORS.white : COLORS.gray[600]} 
@@ -209,7 +209,7 @@ const ConsultationScreen = ({ navigation }) => {
               <View style={styles.profileInfo}>
                 <Text style={styles.astrologerName}>{astrologer.name}</Text>
                 <View style={styles.ratingRow}>
-                  <Ionicons name="star" size={14} color="#F59E0B" />
+                  <Icon name="star" size={14} color="#F59E0B" />
                   <Text style={styles.ratingText}>
                     {astrologer.rating} • {astrologer.total_consultations} consultations
                   </Text>
@@ -236,7 +236,7 @@ const ConsultationScreen = ({ navigation }) => {
 
             {/* Languages */}
             <Text style={styles.languagesText}>
-              <Ionicons name="globe-outline" size={12} /> {astrologer.languages?.join(', ')}
+              <Icon name="globe-outline" size={12} /> {astrologer.languages?.join(', ')}
             </Text>
 
             {/* Action Buttons */}
@@ -246,7 +246,7 @@ const ConsultationScreen = ({ navigation }) => {
                   style={[styles.actionButton, styles.chatButton]}
                   onPress={() => handleStartConsultation(astrologer, 'chat')}
                 >
-                  <Ionicons name="chatbubbles-outline" size={18} color="#10B981" />
+                  <Icon name="chatbubbles-outline" size={18} color="#10B981" />
                   <Text style={[styles.actionButtonText, { color: '#10B981' }]}>Chat</Text>
                 </TouchableOpacity>
               )}
@@ -255,7 +255,7 @@ const ConsultationScreen = ({ navigation }) => {
                   style={[styles.actionButton, styles.voiceButton]}
                   onPress={() => handleStartConsultation(astrologer, 'voice')}
                 >
-                  <Ionicons name="call-outline" size={18} color="#3B82F6" />
+                  <Icon name="call-outline" size={18} color="#3B82F6" />
                   <Text style={[styles.actionButtonText, { color: '#3B82F6' }]}>Call</Text>
                 </TouchableOpacity>
               )}
@@ -265,7 +265,7 @@ const ConsultationScreen = ({ navigation }) => {
                   onPress={() => handleStartConsultation(astrologer, 'video')}
                   disabled={!astrologer.available}
                 >
-                  <Ionicons name="videocam" size={18} color={astrologer.available ? COLORS.white : COLORS.gray[400]} />
+                  <Icon name="videocam" size={18} color={astrologer.available ? COLORS.white : COLORS.gray[400]} />
                   <Text style={[styles.actionButtonText, { color: astrologer.available ? COLORS.white : COLORS.gray[400] }]}>
                     {astrologer.available ? 'Video' : 'Offline'}
                   </Text>

@@ -9,7 +9,7 @@ import {
   RefreshControl,
   TextInput,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -123,11 +123,11 @@ const SpiritualFeedScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Spiritual Feed</Text>
         <TouchableOpacity style={styles.headerIcon}>
-          <Ionicons name="add-circle-outline" size={24} color={COLORS.saffron} />
+          <Icon name="add-circle-outline" size={24} color={COLORS.saffron} />
         </TouchableOpacity>
       </View>
 
@@ -159,7 +159,7 @@ const SpiritualFeedScreen = ({ navigation }) => {
                 <Text style={styles.postTime}>{formatTime(post.createdAt)}</Text>
               </View>
               <TouchableOpacity>
-                <Ionicons name="ellipsis-horizontal" size={20} color={COLORS.gray[400]} />
+                <Icon name="ellipsis-horizontal" size={20} color={COLORS.gray[400]} />
               </TouchableOpacity>
             </View>
 
@@ -172,7 +172,7 @@ const SpiritualFeedScreen = ({ navigation }) => {
                 style={styles.actionButton}
                 onPress={() => handleLike(post.id)}
               >
-                <Ionicons 
+                <Icon 
                   name={post.liked ? "heart" : "heart-outline"} 
                   size={22} 
                   color={post.liked ? '#EF4444' : COLORS.gray[500]} 
@@ -183,12 +183,12 @@ const SpiritualFeedScreen = ({ navigation }) => {
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.actionButton}>
-                <Ionicons name="chatbubble-outline" size={20} color={COLORS.gray[500]} />
+                <Icon name="chatbubble-outline" size={20} color={COLORS.gray[500]} />
                 <Text style={styles.actionText}>{post.comments}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.actionButton}>
-                <Ionicons name="share-outline" size={22} color={COLORS.gray[500]} />
+                <Icon name="share-outline" size={22} color={COLORS.gray[500]} />
                 <Text style={styles.actionText}>Share</Text>
               </TouchableOpacity>
             </View>

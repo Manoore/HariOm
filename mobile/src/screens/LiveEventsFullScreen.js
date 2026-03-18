@@ -8,7 +8,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS } from '../constants/theme';
@@ -159,11 +159,11 @@ const LiveEventsScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Live Events</Text>
         <TouchableOpacity style={styles.headerIcon}>
-          <Ionicons name="calendar-outline" size={24} color={COLORS.saffron} />
+          <Icon name="calendar-outline" size={24} color={COLORS.saffron} />
         </TouchableOpacity>
       </View>
 
@@ -190,13 +190,13 @@ const LiveEventsScreen = ({ navigation }) => {
             <View style={styles.liveBannerMeta}>
               <Text style={styles.liveBannerHost}>{liveEvents[0].host}</Text>
               <View style={styles.viewersCount}>
-                <Ionicons name="eye" size={14} color="rgba(255,255,255,0.9)" />
+                <Icon name="eye" size={14} color="rgba(255,255,255,0.9)" />
                 <Text style={styles.viewersText}>{liveEvents[0].viewers} watching</Text>
               </View>
             </View>
             <View style={styles.joinButton}>
               <Text style={styles.joinButtonText}>Join Now</Text>
-              <Ionicons name="arrow-forward" size={16} color="#EF4444" />
+              <Icon name="arrow-forward" size={16} color="#EF4444" />
             </View>
           </LinearGradient>
         </TouchableOpacity>
@@ -234,7 +234,7 @@ const LiveEventsScreen = ({ navigation }) => {
       >
         {displayEvents.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons 
+            <Icon 
               name={selectedTab === 'live' ? "videocam-off-outline" : "calendar-outline"} 
               size={64} 
               color={COLORS.gray[300]} 
@@ -261,7 +261,7 @@ const LiveEventsScreen = ({ navigation }) => {
                   colors={[getTypeColor(event.type), getTypeColor(event.type) + 'CC']}
                   style={styles.thumbnailGradient}
                 >
-                  <Ionicons name="videocam" size={32} color="#fff" />
+                  <Icon name="videocam" size={32} color="#fff" />
                   {event.isLive && (
                     <View style={styles.liveIndicator}>
                       <View style={styles.liveDot} />
@@ -281,12 +281,12 @@ const LiveEventsScreen = ({ navigation }) => {
                 <View style={styles.eventMeta}>
                   {event.isLive ? (
                     <View style={styles.viewersContainer}>
-                      <Ionicons name="eye" size={14} color={COLORS.gray[500]} />
+                      <Icon name="eye" size={14} color={COLORS.gray[500]} />
                       <Text style={styles.metaText}>{event.viewers} watching</Text>
                     </View>
                   ) : (
                     <View style={styles.timeContainer}>
-                      <Ionicons name="time-outline" size={14} color={COLORS.gray[500]} />
+                      <Icon name="time-outline" size={14} color={COLORS.gray[500]} />
                       <Text style={styles.metaText}>{formatScheduledTime(event.scheduledAt)}</Text>
                     </View>
                   )}
@@ -297,7 +297,7 @@ const LiveEventsScreen = ({ navigation }) => {
                 style={[styles.actionButton, event.isLive && styles.actionButtonLive]}
                 onPress={() => handleJoinEvent(event)}
               >
-                <Ionicons 
+                <Icon 
                   name={event.isLive ? "play" : "notifications-outline"} 
                   size={18} 
                   color={event.isLive ? COLORS.white : COLORS.saffron} 

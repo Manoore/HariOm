@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { ProductCard } from '../components/Cards';
@@ -135,7 +135,7 @@ const StoreScreen = ({ navigation }) => {
           style={styles.filterButton}
           onPress={() => Alert.alert('Filter', 'Filter functionality coming soon!')}
         >
-          <Ionicons name="filter-outline" size={18} color={COLORS.gray[600]} />
+          <Icon name="filter-outline" size={18} color={COLORS.gray[600]} />
           <Text style={styles.filterText}>Filter</Text>
         </TouchableOpacity>
       </View>
@@ -173,7 +173,7 @@ const StoreScreen = ({ navigation }) => {
           onPress={() => navigation.navigate('Cart')}
           activeOpacity={0.7}
         >
-          <Ionicons name="cart-outline" size={24} color={COLORS.gray[700]} />
+          <Icon name="cart-outline" size={24} color={COLORS.gray[700]} />
           {cartItemCount > 0 && (
             <View style={styles.cartBadge}>
               <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
@@ -206,7 +206,7 @@ const StoreScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="cube-outline" size={64} color={COLORS.gray[300]} />
+              <Icon name="cube-outline" size={64} color={COLORS.gray[300]} />
               <Text style={styles.emptyTitle}>No Products Found</Text>
               <Text style={styles.emptySubtitle}>Try adjusting your search or filters</Text>
             </View>

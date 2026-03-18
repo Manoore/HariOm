@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS } from '../constants/theme';
@@ -167,11 +167,11 @@ const MantrasShlokaScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mantras & Shlokas</Text>
         <TouchableOpacity style={styles.headerIcon}>
-          <Ionicons name="search-outline" size={24} color={COLORS.saffron} />
+          <Icon name="search-outline" size={24} color={COLORS.saffron} />
         </TouchableOpacity>
       </View>
 
@@ -183,13 +183,13 @@ const MantrasShlokaScreen = ({ navigation }) => {
           end={{ x: 1, y: 1 }}
           style={styles.featuredGradient}
         >
-          <Ionicons name="musical-notes" size={32} color="#fff" style={{ opacity: 0.9 }} />
+          <Icon name="musical-notes" size={32} color="#fff" style={{ opacity: 0.9 }} />
           <View style={styles.featuredText}>
             <Text style={styles.featuredTitle}>Daily Mantra</Text>
             <Text style={styles.featuredSubtitle}>Start your day with divine vibrations</Text>
           </View>
           <TouchableOpacity style={styles.featuredPlayButton}>
-            <Ionicons name="play" size={24} color="#EC4899" />
+            <Icon name="play" size={24} color="#EC4899" />
           </TouchableOpacity>
         </LinearGradient>
       </TouchableOpacity>
@@ -210,7 +210,7 @@ const MantrasShlokaScreen = ({ navigation }) => {
             ]}
             onPress={() => setSelectedCategory(cat.id)}
           >
-            <Ionicons 
+            <Icon 
               name={cat.icon} 
               size={16} 
               color={selectedCategory === cat.id ? COLORS.white : COLORS.gray[600]} 
@@ -249,7 +249,7 @@ const MantrasShlokaScreen = ({ navigation }) => {
                 colors={currentPlaying?.id === mantra.id ? ['#F472B6', '#EC4899'] : [COLORS.saffron, '#FF6600']}
                 style={styles.mantraIcon}
               >
-                <Ionicons 
+                <Icon 
                   name={currentPlaying?.id === mantra.id && isPlaying ? "pause" : "play"} 
                   size={24} 
                   color="#fff" 
@@ -262,18 +262,18 @@ const MantrasShlokaScreen = ({ navigation }) => {
               <Text style={styles.mantraDeity}>{mantra.deity}</Text>
               <View style={styles.mantraMetaRow}>
                 <View style={styles.mantraMeta}>
-                  <Ionicons name="time-outline" size={12} color={COLORS.gray[500]} />
+                  <Icon name="time-outline" size={12} color={COLORS.gray[500]} />
                   <Text style={styles.mantraMetaText}>{mantra.duration}</Text>
                 </View>
                 <View style={styles.mantraMeta}>
-                  <Ionicons name="headset-outline" size={12} color={COLORS.gray[500]} />
+                  <Icon name="headset-outline" size={12} color={COLORS.gray[500]} />
                   <Text style={styles.mantraMetaText}>{formatPlayCount(mantra.playCount)}</Text>
                 </View>
               </View>
             </View>
             
             <TouchableOpacity style={styles.mantraMoreButton}>
-              <Ionicons name="ellipsis-vertical" size={20} color={COLORS.gray[400]} />
+              <Icon name="ellipsis-vertical" size={20} color={COLORS.gray[400]} />
             </TouchableOpacity>
           </TouchableOpacity>
         ))}
@@ -291,7 +291,7 @@ const MantrasShlokaScreen = ({ navigation }) => {
             style={styles.nowPlayingGradient}
           >
             <View style={styles.nowPlayingInfo}>
-              <Ionicons name="musical-note" size={20} color="#fff" />
+              <Icon name="musical-note" size={20} color="#fff" />
               <View style={styles.nowPlayingText}>
                 <Text style={styles.nowPlayingTitle} numberOfLines={1}>{currentPlaying.name}</Text>
                 <Text style={styles.nowPlayingSubtitle}>{currentPlaying.deity}</Text>
@@ -299,16 +299,16 @@ const MantrasShlokaScreen = ({ navigation }) => {
             </View>
             <View style={styles.nowPlayingControls}>
               <TouchableOpacity style={styles.controlButton}>
-                <Ionicons name="play-skip-back" size={22} color="#fff" />
+                <Icon name="play-skip-back" size={22} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.playPauseButton}
                 onPress={() => setIsPlaying(!isPlaying)}
               >
-                <Ionicons name={isPlaying ? "pause" : "play"} size={26} color="#EC4899" />
+                <Icon name={isPlaying ? "pause" : "play"} size={26} color="#EC4899" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.controlButton}>
-                <Ionicons name="play-skip-forward" size={22} color="#fff" />
+                <Icon name="play-skip-forward" size={22} color="#fff" />
               </TouchableOpacity>
             </View>
           </LinearGradient>

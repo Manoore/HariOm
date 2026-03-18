@@ -8,7 +8,7 @@ import {
   RefreshControl,
   TextInput,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { priestAPI } from '../services/api';
@@ -104,7 +104,7 @@ const PriestsListScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Book a Priest</Text>
         <View style={{ width: 24 }} />
@@ -113,7 +113,7 @@ const PriestsListScreen = ({ navigation }) => {
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Ionicons name="search-outline" size={20} color={COLORS.gray[400]} />
+          <Icon name="search-outline" size={20} color={COLORS.gray[400]} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search by name or service..."
@@ -123,7 +123,7 @@ const PriestsListScreen = ({ navigation }) => {
           />
           {searchQuery ? (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color={COLORS.gray[400]} />
+              <Icon name="close-circle" size={20} color={COLORS.gray[400]} />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -170,7 +170,7 @@ const PriestsListScreen = ({ navigation }) => {
           </View>
         ) : filteredPriests.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="person-outline" size={64} color={COLORS.gray[300]} />
+            <Icon name="person-outline" size={64} color={COLORS.gray[300]} />
             <Text style={styles.emptyText}>No priests found</Text>
           </View>
         ) : (
@@ -192,7 +192,7 @@ const PriestsListScreen = ({ navigation }) => {
                 <Text style={styles.priestName}>{priest.user_name}</Text>
                 
                 <View style={styles.ratingRow}>
-                  <Ionicons name="star" size={14} color="#F59E0B" />
+                  <Icon name="star" size={14} color="#F59E0B" />
                   <Text style={styles.ratingText}>
                     {priest.rating || 4.5} ({priest.total_reviews || 0} reviews)
                   </Text>

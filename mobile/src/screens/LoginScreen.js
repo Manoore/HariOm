@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, GRADIENTS } from '../constants/theme';
 import { Button } from '../components/Button';
@@ -149,7 +149,7 @@ const LoginScreen = ({ navigation }) => {
               {/* Error Message */}
               {formErrors.general && (
                 <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={18} color={COLORS.error} />
+                  <Icon name="alert-circle" size={18} color={COLORS.error} />
                   <Text style={styles.errorText}>{formErrors.general}</Text>
                 </View>
               )}
@@ -162,7 +162,7 @@ const LoginScreen = ({ navigation }) => {
                     value={formData.name}
                     onChangeText={(value) => updateFormData('name', value)}
                     placeholder="Enter your full name"
-                    icon={<Ionicons name="person-outline" size={20} color={COLORS.gray[400]} />}
+                    icon={<Icon name="person-outline" size={20} color={COLORS.gray[400]} />}
                     error={formErrors.name}
                     autoCapitalize="words"
                   />
@@ -206,7 +206,7 @@ const LoginScreen = ({ navigation }) => {
                 onChangeText={(value) => updateFormData('email', value)}
                 placeholder="Enter your email"
                 keyboardType="email-address"
-                icon={<Ionicons name="mail-outline" size={20} color={COLORS.gray[400]} />}
+                icon={<Icon name="mail-outline" size={20} color={COLORS.gray[400]} />}
                 error={formErrors.email}
               />
 
@@ -216,7 +216,7 @@ const LoginScreen = ({ navigation }) => {
                 onChangeText={(value) => updateFormData('password', value)}
                 placeholder="Enter your password"
                 secureTextEntry
-                icon={<Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[400]} />}
+                icon={<Icon name="lock-closed-outline" size={20} color={COLORS.gray[400]} />}
                 error={formErrors.password}
               />
 
@@ -227,7 +227,7 @@ const LoginScreen = ({ navigation }) => {
                   onChangeText={(value) => updateFormData('confirmPassword', value)}
                   placeholder="Confirm your password"
                   secureTextEntry
-                  icon={<Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[400]} />}
+                  icon={<Icon name="lock-closed-outline" size={20} color={COLORS.gray[400]} />}
                   error={formErrors.confirmPassword}
                 />
               )}
@@ -258,10 +258,10 @@ const LoginScreen = ({ navigation }) => {
               {/* Social Login Buttons */}
               <View style={styles.socialButtons}>
                 <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                  <Ionicons name="logo-google" size={24} color="#DB4437" />
+                  <Icon name="logo-google" size={24} color="#DB4437" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                  <Ionicons name="call-outline" size={24} color={COLORS.saffron} />
+                  <Icon name="call-outline" size={24} color={COLORS.saffron} />
                 </TouchableOpacity>
               </View>
             </View>

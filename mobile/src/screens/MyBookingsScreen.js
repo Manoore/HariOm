@@ -8,7 +8,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import api from '../services/api';
@@ -151,7 +151,7 @@ const MyBookingsScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Bookings</Text>
         <View style={{ width: 24 }} />
@@ -186,7 +186,7 @@ const MyBookingsScreen = ({ navigation }) => {
       >
         {filteredBookings.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={64} color={COLORS.gray[300]} />
+            <Icon name="calendar-outline" size={64} color={COLORS.gray[300]} />
             <Text style={styles.emptyTitle}>No {activeTab} bookings</Text>
             <Text style={styles.emptyText}>
               {activeTab === 'upcoming' 
@@ -208,7 +208,7 @@ const MyBookingsScreen = ({ navigation }) => {
               {/* Status Badge */}
               <View style={styles.statusRow}>
                 <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(booking.status)}15` }]}>
-                  <Ionicons name={getStatusIcon(booking.status)} size={14} color={getStatusColor(booking.status)} />
+                  <Icon name={getStatusIcon(booking.status)} size={14} color={getStatusColor(booking.status)} />
                   <Text style={[styles.statusText, { color: getStatusColor(booking.status) }]}>
                     {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                   </Text>
@@ -223,18 +223,18 @@ const MyBookingsScreen = ({ navigation }) => {
               {/* Date & Time */}
               <View style={styles.detailsRow}>
                 <View style={styles.detailItem}>
-                  <Ionicons name="calendar-outline" size={16} color={COLORS.gray[500]} />
+                  <Icon name="calendar-outline" size={16} color={COLORS.gray[500]} />
                   <Text style={styles.detailText}>{formatDate(booking.date)}</Text>
                 </View>
                 <View style={styles.detailItem}>
-                  <Ionicons name="time-outline" size={16} color={COLORS.gray[500]} />
+                  <Icon name="time-outline" size={16} color={COLORS.gray[500]} />
                   <Text style={styles.detailText}>{booking.time}</Text>
                 </View>
               </View>
 
               {/* Location */}
               <View style={styles.detailItem}>
-                <Ionicons name="location-outline" size={16} color={COLORS.gray[500]} />
+                <Icon name="location-outline" size={16} color={COLORS.gray[500]} />
                 <Text style={styles.detailText}>{booking.location}</Text>
               </View>
 
@@ -248,13 +248,13 @@ const MyBookingsScreen = ({ navigation }) => {
                     <Text style={styles.cancelButtonText}>Cancel Booking</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.contactButton}>
-                    <Ionicons name="chatbubble-outline" size={18} color={COLORS.saffron} />
+                    <Icon name="chatbubble-outline" size={18} color={COLORS.saffron} />
                     <Text style={styles.contactButtonText}>Contact</Text>
                   </TouchableOpacity>
                 </View>
               ) : booking.status === 'completed' ? (
                 <TouchableOpacity style={styles.reviewButton}>
-                  <Ionicons name="star-outline" size={18} color={COLORS.white} />
+                  <Icon name="star-outline" size={18} color={COLORS.white} />
                   <Text style={styles.reviewButtonText}>Write a Review</Text>
                 </TouchableOpacity>
               ) : null}

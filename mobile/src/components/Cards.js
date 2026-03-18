@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './Icon';
 import { COLORS, SHADOWS, GRADIENTS } from '../constants/theme';
 
 // Basic Card Component
@@ -38,7 +38,7 @@ export const ProductCard = ({ product, onPress, onAddToCart }) => {
           <Image source={{ uri: imageUrl }} style={styles.productImage} />
         ) : (
           <View style={styles.productImagePlaceholder}>
-            <Ionicons name="cube-outline" size={40} color={COLORS.gray[300]} />
+            <Icon name="cube-outline" size={40} color={COLORS.gray[300]} />
           </View>
         )}
         {product.discount && (
@@ -52,7 +52,7 @@ export const ProductCard = ({ product, onPress, onAddToCart }) => {
         <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
         
         <View style={styles.productRating}>
-          <Ionicons name="star" size={14} color={COLORS.gold} />
+          <Icon name="star" size={14} color={COLORS.gold} />
           <Text style={styles.ratingText}>{product.rating || '4.5'}</Text>
           <Text style={styles.reviewsText}>({product.review_count || 0})</Text>
         </View>
@@ -73,7 +73,7 @@ export const ProductCard = ({ product, onPress, onAddToCart }) => {
             onAddToCart(product);
           }}
         >
-          <Ionicons name="add" size={20} color={COLORS.white} />
+          <Icon name="add" size={20} color={COLORS.white} />
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -108,12 +108,12 @@ export const PriestCard = ({ priest, onPress, onBook }) => {
           <View style={styles.priestNameRow}>
             <Text style={styles.priestName}>{priest.user_name}</Text>
             {priest.is_verified && (
-              <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+              <Icon name="checkmark-circle" size={16} color={COLORS.success} />
             )}
           </View>
           
           <View style={styles.priestRating}>
-            <Ionicons name="star" size={14} color={COLORS.gold} />
+            <Icon name="star" size={14} color={COLORS.gold} />
             <Text style={styles.ratingText}>{priest.rating || '4.8'}</Text>
             <Text style={styles.reviewsText}>({priest.total_reviews || 0} reviews)</Text>
           </View>
@@ -169,7 +169,7 @@ export const FestivalCard = ({ festival, onPress }) => {
         end={{ x: 1, y: 1 }}
         style={styles.festivalCard}
       >
-        <Ionicons name="calendar-outline" size={24} color={COLORS.white} style={styles.festivalIcon} />
+        <Icon name="calendar-outline" size={24} color={COLORS.white} style={styles.festivalIcon} />
         <Text style={styles.festivalName}>{festival.name}</Text>
         <Text style={styles.festivalDate}>{festival.date}</Text>
         {festival.description && (
@@ -189,12 +189,12 @@ export const ServiceCard = ({ service, onPress }) => {
       activeOpacity={0.8}
     >
       <View style={styles.serviceIconContainer}>
-        <Ionicons name={service.icon || 'flame-outline'} size={28} color={COLORS.saffron} />
+        <Icon name={service.icon || 'flame-outline'} size={28} color={COLORS.saffron} />
       </View>
       <Text style={styles.serviceName}>{service.name}</Text>
       <Text style={styles.servicePrice}>₹{service.price}</Text>
       <Text style={styles.serviceDuration}>
-        <Ionicons name="time-outline" size={12} color={COLORS.gray[500]} /> {service.duration}
+        <Icon name="time-outline" size={12} color={COLORS.gray[500]} /> {service.duration}
       </Text>
     </TouchableOpacity>
   );

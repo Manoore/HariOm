@@ -9,7 +9,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS } from '../constants/theme';
@@ -143,7 +143,7 @@ const VedicClassesScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Vedic Classes</Text>
         <View style={{ width: 24 }} />
@@ -196,7 +196,7 @@ const VedicClassesScreen = ({ navigation }) => {
                 colors={['#FF9933', '#FF6600']}
                 style={styles.classImagePlaceholder}
               >
-                <Ionicons name="book-outline" size={40} color="#fff" />
+                <Icon name="book-outline" size={40} color="#fff" />
               </LinearGradient>
             </View>
             
@@ -208,7 +208,7 @@ const VedicClassesScreen = ({ navigation }) => {
                   </Text>
                 </View>
                 <View style={styles.ratingContainer}>
-                  <Ionicons name="star" size={14} color="#F59E0B" />
+                  <Icon name="star" size={14} color="#F59E0B" />
                   <Text style={styles.ratingText}>{classItem.rating}</Text>
                 </View>
               </View>
@@ -218,11 +218,11 @@ const VedicClassesScreen = ({ navigation }) => {
               
               <View style={styles.classMetaRow}>
                 <View style={styles.classMeta}>
-                  <Ionicons name="time-outline" size={14} color={COLORS.gray[500]} />
+                  <Icon name="time-outline" size={14} color={COLORS.gray[500]} />
                   <Text style={styles.classMetaText}>{classItem.duration}</Text>
                 </View>
                 <View style={styles.classMeta}>
-                  <Ionicons name="people-outline" size={14} color={COLORS.gray[500]} />
+                  <Icon name="people-outline" size={14} color={COLORS.gray[500]} />
                   <Text style={styles.classMetaText}>{classItem.enrolled} enrolled</Text>
                 </View>
               </View>

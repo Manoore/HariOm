@@ -9,7 +9,7 @@ import {
   TextInput,
   FlatList,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -144,18 +144,18 @@ const MessagesScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
+          <Icon name="arrow-back" size={24} color={COLORS.gray[700]} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Messages</Text>
         <TouchableOpacity style={styles.headerIcon}>
-          <Ionicons name="create-outline" size={24} color={COLORS.saffron} />
+          <Icon name="create-outline" size={24} color={COLORS.saffron} />
         </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Ionicons name="search-outline" size={20} color={COLORS.gray[400]} />
+          <Icon name="search-outline" size={20} color={COLORS.gray[400]} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search conversations..."
@@ -169,7 +169,7 @@ const MessagesScreen = ({ navigation }) => {
       {/* Conversations List */}
       {filteredConversations.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="chatbubbles-outline" size={64} color={COLORS.gray[300]} />
+          <Icon name="chatbubbles-outline" size={64} color={COLORS.gray[300]} />
           <Text style={styles.emptyTitle}>No Messages</Text>
           <Text style={styles.emptyText}>
             Start a conversation with priests or astrologers

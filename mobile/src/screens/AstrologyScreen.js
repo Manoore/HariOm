@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -66,12 +66,12 @@ const ServiceCard = ({ icon, title, description, onPress }) => (
       style={styles.serviceGradient}
     >
       <View style={styles.serviceIcon}>
-        <Ionicons name={icon} size={28} color={COLORS.gold} />
+        <Icon name={icon} size={28} color={COLORS.gold} />
       </View>
       <Text style={styles.serviceTitle}>{title}</Text>
       <Text style={styles.serviceDescription}>{description}</Text>
       <View style={styles.serviceArrow}>
-        <Ionicons name="arrow-forward" size={16} color={COLORS.gold} />
+        <Icon name="arrow-forward" size={16} color={COLORS.gold} />
       </View>
     </LinearGradient>
   </TouchableOpacity>
@@ -203,7 +203,7 @@ const AstrologyScreen = ({ navigation }) => {
             colors={['rgba(129, 140, 248, 0.15)', 'rgba(129, 140, 248, 0.05)']}
             style={styles.tipGradient}
           >
-            <Ionicons name="sparkles" size={20} color={COLORS.cosmicAccent} />
+            <Icon name="sparkles" size={20} color={COLORS.cosmicAccent} />
             <View style={styles.tipContent}>
               <Text style={styles.tipTitle}>Cosmic Tip of the Day</Text>
               <Text style={styles.tipText}>
@@ -278,7 +278,7 @@ const AstrologyScreen = ({ navigation }) => {
                   </View>
                   <Text style={styles.astrologerName}>{astrologer.name}</Text>
                   <View style={styles.ratingContainer}>
-                    <Ionicons name="star" size={12} color={COLORS.gold} />
+                    <Icon name="star" size={12} color={COLORS.gold} />
                     <Text style={styles.ratingText}>{astrologer.rating}</Text>
                   </View>
                   <Text style={styles.astrologerSpec}>{astrologer.spec}</Text>
