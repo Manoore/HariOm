@@ -23,7 +23,8 @@ from database import (
     festivals_collection, temples_collection,
     deities_collection, mantras_collection, stotras_collection, daily_schedule_collection,
     product_reviews_collection, feedback_collection, testimonials_collection,
-    puja_types_collection, service_reviews_collection, audio_library_collection
+    puja_types_collection, service_reviews_collection, audio_library_collection,
+    stream_reminders_collection, user_notifications_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -2087,7 +2088,6 @@ async def get_public_live_streams(
     return {"streams": streams, "total": total}
 
 # Stream Reminders API
-from database import stream_reminders_collection
 
 @app.get("/api/stream-reminders")
 async def get_stream_reminders(user: dict = Depends(get_current_user)):
@@ -2137,7 +2137,6 @@ async def set_stream_reminder(
     result = await stream_reminders_collection.insert_one(reminder)
     
     # Create in-app notification for confirmation
-    from database import user_notifications_collection
     await user_notifications_collection.insert_one({
         "user_id": str(user["_id"]),
         "title": "Reminder Set",
