@@ -20,6 +20,10 @@ import CheckoutScreen from '../screens/CheckoutScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AstrologyScreen from '../screens/AstrologyScreen';
+import VedicClassesScreen from '../screens/VedicClassesScreen';
+import SpiritualFeedScreen from '../screens/SpiritualFeedScreen';
+import PriestsListScreen from '../screens/PriestsListScreen';
+import MyBookingsScreen from '../screens/MyBookingsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -461,7 +465,7 @@ const AppNavigator = () => {
             <Stack.Screen name="PriestDetail" component={PriestDetailScreen} />
             <Stack.Screen name="Notifications" component={NotificationsScreen} />
             <Stack.Screen name="Search" component={SearchScreen} />
-            <Stack.Screen name="Priests" component={PriestsScreen} />
+            <Stack.Screen name="Priests" component={PriestsListScreen} />
             <Stack.Screen name="Chat" component={ChatScreen} />
             <Stack.Screen name="Services" component={ServicesScreen} />
             <Stack.Screen name="ServiceDetail" component={ServicesScreen} />
@@ -470,6 +474,9 @@ const AppNavigator = () => {
             <Stack.Screen name="BookPriest" component={PriestDetailScreen} />
             <Stack.Screen name="Mantras" component={MantrasScreen} />
             <Stack.Screen name="LiveEvents" component={LiveEventsScreen} />
+            <Stack.Screen name="VedicClasses" component={VedicClassesScreen} />
+            <Stack.Screen name="SpiritualFeed" component={SpiritualFeedScreen} />
+            <Stack.Screen name="MyBookings" component={MyBookingsScreen} />
           </>
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />

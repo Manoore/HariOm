@@ -122,9 +122,9 @@ const HomeScreen = ({ navigation }) => {
     { icon: 'flame-outline', label: 'Book Puja', color: COLORS.saffron, screen: 'Priests' },
     { icon: 'planet-outline', label: 'Astrology', color: '#818CF8', screen: 'Astrology' },
     { icon: 'storefront-outline', label: 'Shop', color: COLORS.gold, screen: 'Store' },
+    { icon: 'book-outline', label: 'Classes', color: '#10B981', screen: 'VedicClasses' },
     { icon: 'musical-notes-outline', label: 'Mantras', color: '#F472B6', screen: 'Mantras' },
-    { icon: 'videocam-outline', label: 'Live Events', color: '#EF4444', screen: 'LiveEvents' },
-    { icon: 'calendar-outline', label: 'Festivals', color: '#10B981', screen: 'Festivals' },
+    { icon: 'newspaper-outline', label: 'Feed', color: '#3B82F6', screen: 'SpiritualFeed' },
   ];
 
   const services = [
