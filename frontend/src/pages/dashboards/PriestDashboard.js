@@ -8,7 +8,7 @@ import {
   Save, X, AlertCircle, Shield, MapPin, Phone, Mail, Camera,
   Image, Upload, MessageSquare, ThumbsUp, Sun, Moon, Sunrise, Sunset,
   IndianRupee, Filter, Search, ChevronLeft, Award, Briefcase,
-  Menu, Send, Repeat, MessageCircle
+  Menu, Send, Repeat, MessageCircle, ChevronDown
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -1306,25 +1306,74 @@ function ProfileTab({ profile, user, onRefresh }) {
         )}
       </div>
 
-      {/* Specializations */}
+      {/* Specializations - Dropdown Multi-Select */}
       <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
         <h3 className="font-semibold text-gray-800 mb-3">Specializations</h3>
-        <div className="flex flex-wrap gap-2">
-          {specializations.map((spec) => (
-            <button
-              key={spec}
-              onClick={() => editing && toggleSpecialization(spec)}
-              disabled={!editing}
-              className={`px-3 py-1.5 rounded-full text-xs md:text-sm transition-colors ${
-                formData.specializations.includes(spec)
-                  ? 'bg-saffron text-white'
-                  : editing ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-gray-100 text-gray-400'
-              }`}
-            >
-              {spec}
-            </button>
-          ))}
-        </div>
+        
+        {editing ? (
+          <div className="space-y-3">
+            {/* Dropdown Select */}
+            <div className="relative">
+              <select
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron text-sm appearance-none bg-white"
+                onChange={(e) => {
+                  if (e.target.value && !formData.specializations.includes(e.target.value)) {
+                    setFormData({ ...formData, specializations: [...formData.specializations, e.target.value] });
+                  }
+                  e.target.value = '';
+                }}
+                defaultValue=""
+              >
+                <option value="" disabled>+ Add a specialization...</option>
+                {specializations
+                  .filter(spec => !formData.specializations.includes(spec))
+                  .map((spec) => (
+                    <option key={spec} value={spec}>{spec}</option>
+                  ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
+            
+            {/* Selected Specializations */}
+            {formData.specializations.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.specializations.map((spec) => (
+                  <span
+                    key={spec}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-saffron text-white rounded-full text-xs md:text-sm"
+                  >
+                    {spec}
+                    <button
+                      onClick={() => toggleSpecialization(spec)}
+                      className="hover:bg-white/20 rounded-full p-0.5"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            
+            <p className="text-xs text-gray-500">
+              {formData.specializations.length} selected • Select from dropdown to add more
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {formData.specializations.length > 0 ? (
+              formData.specializations.map((spec) => (
+                <span
+                  key={spec}
+                  className="px-3 py-1.5 bg-saffron/10 text-saffron rounded-full text-xs md:text-sm font-medium"
+                >
+                  {spec}
+                </span>
+              ))
+            ) : (
+              <p className="text-gray-400 text-sm">No specializations added yet</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Languages */}
