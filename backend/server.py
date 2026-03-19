@@ -3683,16 +3683,39 @@ async def confirm_stripe_payment(data: StripeConfirmRequest, user: dict = Depend
         raise HTTPException(status_code=500, detail="Stripe API key not configured")
     
     try:
-        # Create a payment method with the card details
-        payment_method = stripe.PaymentMethod.create(
-            type="card",
-            card={
-                "number": data.card_number,
-                "exp_month": int(data.exp_month),
-                "exp_year": int(data.exp_year),
-                "cvc": data.cvc,
-            },
-        )
+        # For test mode, use test tokens instead of raw card numbers
+        # This avoids the "Sending credit card numbers directly to the Stripe API is unsafe" error
+        test_card_tokens = {
+            "4242424242424242": "tok_visa",
+            "4000056655665556": "tok_visa_debit", 
+            "5555555555554444": "tok_mastercard",
+            "378282246310005": "tok_amex",
+            "4000000000003220": "tok_threeDSecure2Required",
+            "4000000000000002": "tok_chargeDeclined",
+        }
+        
+        # Check if this is a test card number
+        clean_card = data.card_number.replace(" ", "").replace("-", "")
+        test_token = test_card_tokens.get(clean_card)
+        
+        if test_token:
+            # Use test token directly
+            payment_method = stripe.PaymentMethod.create(
+                type="card",
+                card={"token": test_token},
+            )
+        else:
+            # For production/real cards, create payment method with card details
+            # Note: This requires PCI compliance or "raw card data APIs" enabled in Stripe dashboard
+            payment_method = stripe.PaymentMethod.create(
+                type="card",
+                card={
+                    "number": data.card_number,
+                    "exp_month": int(data.exp_month),
+                    "exp_year": int(data.exp_year),
+                    "cvc": data.cvc,
+                },
+            )
         
         # Confirm the payment intent with the payment method
         intent = stripe.PaymentIntent.confirm(
