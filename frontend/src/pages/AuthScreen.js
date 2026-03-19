@@ -105,7 +105,7 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const { login, register, loginWithGoogle, initPhoneAuth, sendOTP, verifyOTPAndSignIn } = useAuth();
+  const { login, register, loginWithGoogle, forgotPassword, initPhoneAuth, sendOTP, verifyOTPAndSignIn } = useAuth();
 
   const [loginData, setLoginData] = useState({ email: '', password: '', phone: '' });
   const [registerData, setRegisterData] = useState({
@@ -121,6 +121,31 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   // Country code state
   const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]); // Default to India
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      toast.error('Please enter your email');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      await forgotPassword(forgotEmail);
+      toast.success('Password reset email sent! Check your inbox.');
+      setShowForgotPassword(false);
+      setForgotEmail('');
+    } catch (error) {
+      const errorMessage = error.code === 'auth/user-not-found'
+        ? 'No account found with this email'
+        : error.message || 'Failed to send reset email';
+      toast.error(errorMessage);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -924,6 +949,53 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
           />
         )}
       </AnimatePresence>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-6 max-w-sm w-full"
+          >
+            <h2 className="font-cinzel text-xl font-bold text-maroon mb-2">Reset Password</h2>
+            <p className="text-sm text-gray-500 mb-4">Enter your email and we'll send you a link to reset your password.</p>
+            
+            <form onSubmit={handleForgotPassword}>
+              <div className="relative mb-4">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-3 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
+                  placeholder="Enter your email"
+                  required
+                  data-testid="forgot-password-email"
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setShowForgotPassword(false); setForgotEmail(''); }}
+                  className="flex-1 py-3 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  className="flex-1 py-3 bg-saffron text-white rounded-xl hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  data-testid="forgot-password-submit"
+                >
+                  {forgotLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Link'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
@@ -956,7 +1028,7 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
           <div className="w-32 h-32 rounded-xl overflow-hidden">
             <img 
               src="/temple-logo.png" 
-              alt="Sri Anantha Padmanabha Swamy Temple"
+              alt="Divine App - Om Symbol"
               className="w-full h-full object-cover"
             />
           </div>
@@ -977,7 +1049,7 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.35 }}
         >
-          Sri Anantha Padmanabha Swamy
+          Spiritual Services
         </motion.p>
         
         <motion.p 
@@ -1189,6 +1261,14 @@ function LoginScreen({
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-saffron hover:text-orange-600 mt-2 text-right block w-full"
+                data-testid="forgot-password-link"
+              >
+                Forgot Password?
+              </button>
             </motion.div>
 
             <motion.button

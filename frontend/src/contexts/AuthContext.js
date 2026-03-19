@@ -6,6 +6,8 @@ import {
   firebaseSignUp, 
   firebaseSignOut,
   firebaseGoogleSignIn,
+  firebasePasswordReset,
+  checkGoogleRedirectResult,
   getIdToken,
   isFirebaseConfigured,
   setupRecaptcha,
@@ -35,6 +37,21 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let isMounted = true;
+    
+    // Check for Google redirect result first (for mobile sign-in)
+    const handleRedirectResult = async () => {
+      try {
+        const result = await checkGoogleRedirectResult();
+        if (result && result.user) {
+          console.log('Google redirect sign-in detected:', result.user.email);
+          // The onAuthStateChanged will handle the rest
+        }
+      } catch (error) {
+        console.error('Error checking redirect result:', error);
+      }
+    };
+    
+    handleRedirectResult();
     
     const unsubscribe = onFirebaseAuthStateChanged(async (fbUser) => {
       if (!isMounted || !authListenerActive.current) return;
@@ -302,6 +319,17 @@ export function AuthProvider({ children }) {
 
   // ==================== END PHONE AUTHENTICATION ====================
 
+  // Forgot Password
+  const forgotPassword = async (email) => {
+    try {
+      await firebasePasswordReset(email);
+      return { success: true };
+    } catch (error) {
+      console.error('Password reset error:', error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -313,6 +341,7 @@ export function AuthProvider({ children }) {
       updateUser,
       refreshToken,
       firebaseUser,
+      forgotPassword,
       // Phone auth methods
       initPhoneAuth,
       sendOTP,

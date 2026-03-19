@@ -8,13 +8,16 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   updateProfile,
   browserLocalPersistence,
   setPersistence,
   RecaptchaVerifier,
   signInWithPhoneNumber,
   PhoneAuthProvider,
-  signInWithCredential
+  signInWithCredential,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 
 // Firebase configuration from environment variables
@@ -80,14 +83,50 @@ export const firebaseGoogleSignIn = async () => {
   }
   
   try {
-    console.log('Initiating Google Sign-In popup...');
-    const result = await signInWithPopup(auth, googleProvider);
-    console.log('Google Sign-In successful:', result.user.email);
-    return result;
+    console.log('Initiating Google Sign-In...');
+    
+    // Check if mobile device
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // Use redirect for mobile (popups are often blocked)
+      console.log('Mobile detected, using redirect flow...');
+      await signInWithRedirect(auth, googleProvider);
+      // The result will be handled by getRedirectResult in AuthContext
+      return null;
+    } else {
+      // Use popup for desktop
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('Google Sign-In successful:', result.user.email);
+      return result;
+    }
   } catch (error) {
     console.error('Google Sign-In error:', error.code, error.message);
     throw error;
   }
+};
+
+// Check for redirect result (for mobile Google Sign-In)
+export const checkGoogleRedirectResult = async () => {
+  if (!auth) return null;
+  try {
+    const result = await getRedirectResult(auth);
+    if (result) {
+      console.log('Google redirect sign-in successful:', result.user.email);
+    }
+    return result;
+  } catch (error) {
+    console.error('Google redirect result error:', error);
+    return null;
+  }
+};
+
+// Password Reset
+export const firebasePasswordReset = async (email) => {
+  if (!auth) {
+    throw new Error('Firebase not configured');
+  }
+  return sendPasswordResetEmail(auth, email);
 };
 
 // ==================== PHONE AUTHENTICATION ====================

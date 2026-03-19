@@ -60,7 +60,7 @@ const TempleLogo = ({ className = "", onClick, size = "medium" }) => {
     >
       <img 
         src="/temple-logo.png" 
-        alt="Sri Anantha Padmanabha Swamy Temple"
+        alt="Divine App - Om Symbol"
         className={`${sizeClasses[size]} rounded-lg object-cover`}
       />
     </motion.div>
@@ -590,7 +590,7 @@ export default function LandingPage({ onGetStarted }) {
               <TempleLogo size="small" onClick={scrollToTop} />
               <div className="flex flex-col">
                 <span className="font-cinzel text-xl font-bold text-maroon">DIVINE</span>
-                <span className="text-[10px] text-gray-500 -mt-1">Sri Padmanabha</span>
+                <span className="text-[10px] text-gray-500 -mt-1">Spiritual Services</span>
               </div>
             </button>
 
@@ -1707,7 +1707,7 @@ export default function LandingPage({ onGetStarted }) {
                   <TempleLogo size="medium" onClick={scrollToTop} />
                   <div className="flex flex-col">
                     <span className="font-cinzel text-xl font-bold">DIVINE</span>
-                    <span className="text-[10px] text-gray-400">Sri Anantha Padmanabha</span>
+                    <span className="text-[10px] text-gray-400">Spiritual Services</span>
                   </div>
                 </button>
                 <p className="text-gray-400 text-sm mb-4">
