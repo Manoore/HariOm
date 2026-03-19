@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { PaymentProvider } from './contexts/PaymentContext';
 import MobileApp from './pages/MobileApp';
+import InstallPWA from './components/InstallPWA';
 import api from './lib/api';
 import { toast, Toaster } from 'sonner';
 import './App.css';
@@ -69,6 +70,7 @@ function App() {
           <PaymentHandler>
             <Toaster position="top-center" richColors />
             <MobileApp />
+            <InstallPWA />
           </PaymentHandler>
         </PaymentProvider>
       </CartProvider>
