@@ -171,20 +171,20 @@ export function CartSidebar({ isOpen, onClose, onCheckout }) {
 
             {/* Footer with Totals */}
             {cartData?.items?.length > 0 && (
-              <div className="border-t border-orange-100 p-4 space-y-3">
+              <div className="border-t border-orange-100 p-4 pb-24 lg:pb-4 space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Subtotal ({cartData.item_count} items)</span>
-                  <span className="font-medium">₹{cartData.subtotal}</span>
+                  <span className="text-gray-600">Subtotal ({cartData.item_count || cartData.items?.length || 0} items)</span>
+                  <span className="font-medium">₹{cartData.subtotal || 0}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
-                  <span className={cartData.shipping === 0 ? 'text-green-600 font-medium' : 'font-medium'}>
-                    {cartData.shipping === 0 ? 'FREE' : `₹${cartData.shipping}`}
+                  <span className={cartData.shipping === 0 || !cartData.shipping ? 'text-green-600 font-medium' : 'font-medium'}>
+                    {cartData.shipping === 0 || !cartData.shipping ? 'FREE' : `₹${cartData.shipping}`}
                   </span>
                 </div>
                 <div className="flex justify-between text-lg font-bold pt-2 border-t">
                   <span>Total</span>
-                  <span className="text-saffron">₹{cartData.total}</span>
+                  <span className="text-saffron">₹{cartData.total || 0}</span>
                 </div>
                 <button
                   onClick={onCheckout}

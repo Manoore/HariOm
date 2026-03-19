@@ -2863,25 +2863,39 @@ async def get_product_categories():
 async def get_cart(user: dict = Depends(get_current_user)):
     cart = await cart_collection.find_one({"user_id": str(user["_id"])})
     if not cart:
-        return {"items": [], "total": 0}
+        return {"items": [], "total": 0, "subtotal": 0, "shipping": 0, "item_count": 0}
     
     items = []
-    total = 0
+    subtotal = 0
+    item_count = 0
     for item in cart.get("items", []):
         product = await products_collection.find_one({"_id": ObjectId(item["product_id"])})
         if product:
             item_total = product["price"] * item["quantity"]
-            total += item_total
+            subtotal += item_total
+            item_count += item["quantity"]
             items.append({
                 "product_id": item["product_id"],
                 "name": product["name"],
                 "price": product["price"],
                 "quantity": item["quantity"],
                 "subtotal": item_total,
-                "image": product.get("images", [""])[0] if product.get("images") else ""
+                "image": product.get("images", [""])[0] if product.get("images") else "",
+                "stock": product.get("stock", 10),
+                "shop_name": product.get("shop_name", "Divine Store")
             })
     
-    return {"items": items, "total": total}
+    # Calculate shipping (free for orders over 500)
+    shipping = 0 if subtotal >= 500 else 50
+    total = subtotal + shipping
+    
+    return {
+        "items": items, 
+        "subtotal": subtotal,
+        "shipping": shipping,
+        "total": total,
+        "item_count": item_count
+    }
 
 @app.post("/api/cart/add")
 async def add_to_cart(item: CartItem, user: dict = Depends(get_current_user)):

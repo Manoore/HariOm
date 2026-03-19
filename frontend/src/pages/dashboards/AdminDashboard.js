@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Users, Star, ShoppingBag, Calendar, Settings, LogOut,
   ChevronRight, CheckCircle, AlertCircle, Loader2, TrendingUp,
-  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2, Search, User, Shield, Music, Play, Pause, Volume2
+  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2, Search, User, Shield, Music, Play, Pause, Volume2, Menu, FileText
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -108,33 +108,77 @@ function AdminSidebar({ activeTab, setActiveTab, user }) {
 
 // Bottom Navigation for Mobile
 function AdminBottomNav({ activeTab, setActiveTab }) {
-  const tabs = [
+  const [showMore, setShowMore] = useState(false);
+  
+  const mainTabs = [
     { id: 'overview', icon: Home, label: 'Home' },
     { id: 'users', icon: Users, label: 'Users' },
     { id: 'priests', icon: UserCheck, label: 'Priests' },
+    { id: 'more', icon: Menu, label: 'More', isMore: true },
+  ];
+
+  const moreTabs = [
     { id: 'products', icon: Package, label: 'Products' },
+    { id: 'bookings', icon: Calendar, label: 'Bookings' },
+    { id: 'orders', icon: ShoppingBag, label: 'Orders' },
+    { id: 'content', icon: FileText, label: 'Content' },
+    { id: 'system', icon: Settings, label: 'Settings' },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-orange-200 px-2 py-2 z-50 lg:hidden shadow-lg">
-      <div className="flex justify-around items-center">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all ${
-              activeTab === tab.id ? 'text-saffron' : 'text-gray-500'
-            }`}
-            data-testid={`admin-nav-${tab.id}`}
-          >
-            <tab.icon className={`w-6 h-6 ${activeTab === tab.id ? 'stroke-[2.5]' : ''}`} />
-            <span className={`text-xs mt-1 ${activeTab === tab.id ? 'font-semibold' : ''}`}>
-              {tab.label}
-            </span>
-          </button>
-        ))}
+    <>
+      {/* More Menu Overlay */}
+      {showMore && (
+        <div className="fixed inset-0 z-40" onClick={() => setShowMore(false)}>
+          <div className="absolute bottom-20 left-4 right-4 bg-white rounded-2xl shadow-2xl border border-orange-200 p-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-cinzel font-semibold text-maroon">More Options</h3>
+              <button onClick={() => setShowMore(false)} className="p-1">
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              {moreTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setShowMore(false);
+                  }}
+                  className="flex flex-col items-center p-2 rounded-xl hover:bg-orange-50 transition-colors"
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-saffron/10 to-gold/10 rounded-xl flex items-center justify-center mb-1">
+                    <tab.icon className="w-6 h-6 text-saffron" />
+                  </div>
+                  <span className="text-xs text-gray-600 text-center leading-tight">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-orange-200 px-2 py-2 z-50 lg:hidden shadow-lg">
+        <div className="flex justify-around items-center">
+          {mainTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => tab.isMore ? setShowMore(!showMore) : setActiveTab(tab.id)}
+              className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all ${
+                tab.isMore && showMore ? 'text-saffron' :
+                activeTab === tab.id && !tab.isMore ? 'text-saffron' : 'text-gray-500'
+              }`}
+              data-testid={`admin-nav-${tab.id}`}
+            >
+              <tab.icon className={`w-6 h-6 ${(activeTab === tab.id || (tab.isMore && showMore)) ? 'stroke-[2.5]' : ''}`} />
+              <span className={`text-xs mt-1 ${(activeTab === tab.id || (tab.isMore && showMore)) ? 'font-semibold' : ''}`}>
+                {tab.label}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
