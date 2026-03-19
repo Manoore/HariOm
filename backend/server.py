@@ -2513,6 +2513,8 @@ async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]
         "math_mutt": priest.get("math_mutt", ""),
         "math_mutt_other": priest.get("math_mutt_other", ""),
         "is_verified": priest.get("is_verified", False),
+        "approval_status": priest.get("approval_status", "pending"),
+        "rejection_reason": priest.get("rejection_reason", ""),
         "address": priest.get("address", ""),
         "city": priest.get("city", ""),
         "state": priest.get("state", ""),
@@ -3073,7 +3075,21 @@ async def get_products(
     skip: int = 0,
     limit: int = 20
 ):
-    query = {}
+    # First, get all approved shop IDs
+    approved_shops_query = {
+        "$or": [
+            {"approval_status": "approved"},
+            {"is_verified": True, "approval_status": {"$exists": False}}  # Legacy support
+        ]
+    }
+    approved_shops_cursor = shops_collection.find(approved_shops_query, {"_id": 1})
+    approved_shop_ids = []
+    async for shop in approved_shops_cursor:
+        approved_shop_ids.append(str(shop["_id"]))
+    
+    # Only show products from approved shops
+    query = {"shop_id": {"$in": approved_shop_ids}} if approved_shop_ids else {"shop_id": {"$in": []}}
+    
     if category:
         query["category"] = {"$regex": category, "$options": "i"}
     if search:
@@ -3086,19 +3102,23 @@ async def get_products(
     if max_price is not None:
         query.setdefault("price", {})["$lte"] = max_price
     
-    # If location filter is provided, first get shops in that location
+    # If location filter is provided, first get approved shops in that location
     shop_ids_in_location = None
     if location:
-        shops_cursor = shops_collection.find({
-            "$or": [
-                {"city": {"$regex": location, "$options": "i"}},
-                {"state": {"$regex": location, "$options": "i"}},
-                {"address": {"$regex": location, "$options": "i"}},
-                {"pincode": location},
-                {"location.city": {"$regex": location, "$options": "i"}},
-                {"location.state": {"$regex": location, "$options": "i"}}
+        location_query = {
+            "$and": [
+                approved_shops_query,
+                {"$or": [
+                    {"city": {"$regex": location, "$options": "i"}},
+                    {"state": {"$regex": location, "$options": "i"}},
+                    {"address": {"$regex": location, "$options": "i"}},
+                    {"pincode": location},
+                    {"location.city": {"$regex": location, "$options": "i"}},
+                    {"location.state": {"$regex": location, "$options": "i"}}
+                ]}
             ]
-        })
+        }
+        shops_cursor = shops_collection.find(location_query)
         shop_ids_in_location = []
         async for shop in shops_cursor:
             shop_ids_in_location.append(str(shop["_id"]))
@@ -3555,7 +3575,14 @@ async def get_zodiac_signs():
 # ===================== ASTROLOGER ROUTES =====================
 @app.get("/api/astrologers")
 async def get_astrologers(skip: int = 0, limit: int = 20):
-    cursor = astrologers_collection.find({"is_verified": True}).skip(skip).limit(limit)
+    # Only show astrologers that are approved by admin
+    query = {
+        "$or": [
+            {"approval_status": "approved"},
+            {"is_verified": True, "approval_status": {"$exists": False}}  # Legacy support
+        ]
+    }
+    cursor = astrologers_collection.find(query).skip(skip).limit(limit)
     astrologers = []
     async for astro in cursor:
         user = await users_collection.find_one({"_id": ObjectId(astro["user_id"])})
@@ -4123,6 +4150,138 @@ async def delete_math_mutt(mutt_id: str, user: dict = Depends(require_role([User
     await math_mutt_collection.delete_one({"_id": ObjectId(mutt_id)})
     return {"message": "Math/Mutt deleted"}
 
+# ===================== ADMIN APPROVAL MANAGEMENT =====================
+@app.get("/api/admin/pending-approvals")
+async def get_pending_approvals(user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Get all pending provider approvals"""
+    pending = {
+        "priests": [],
+        "astrologers": [],
+        "shops": []
+    }
+    
+    # Get pending priests
+    cursor = priests_collection.find({"approval_status": "pending"})
+    async for priest in cursor:
+        priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
+        pending["priests"].append({
+            "id": str(priest["_id"]),
+            "user_id": priest["user_id"],
+            "name": priest_user.get("name", "Unknown") if priest_user else "Unknown",
+            "email": priest_user.get("email", "") if priest_user else "",
+            "phone": priest_user.get("phone", "") if priest_user else "",
+            "specializations": priest.get("specializations", []),
+            "experience_years": priest.get("experience_years", 0),
+            "created_at": priest.get("created_at").isoformat() if priest.get("created_at") else None
+        })
+    
+    # Get pending astrologers
+    cursor = astrologers_collection.find({"approval_status": "pending"})
+    async for astro in cursor:
+        astro_user = await users_collection.find_one({"_id": ObjectId(astro["user_id"])})
+        pending["astrologers"].append({
+            "id": str(astro["_id"]),
+            "user_id": astro["user_id"],
+            "name": astro_user.get("name", "Unknown") if astro_user else "Unknown",
+            "email": astro_user.get("email", "") if astro_user else "",
+            "phone": astro_user.get("phone", "") if astro_user else "",
+            "specializations": astro.get("specializations", []),
+            "experience_years": astro.get("experience_years", 0),
+            "created_at": astro.get("created_at").isoformat() if astro.get("created_at") else None
+        })
+    
+    # Get pending shops
+    cursor = shops_collection.find({"approval_status": "pending"})
+    async for shop in cursor:
+        shop_user = await users_collection.find_one({"_id": ObjectId(shop["owner_id"])})
+        pending["shops"].append({
+            "id": str(shop["_id"]),
+            "owner_id": shop["owner_id"],
+            "owner_name": shop_user.get("name", "Unknown") if shop_user else "Unknown",
+            "email": shop_user.get("email", "") if shop_user else "",
+            "shop_name": shop.get("shop_name", ""),
+            "created_at": shop.get("created_at").isoformat() if shop.get("created_at") else None
+        })
+    
+    return pending
+
+@app.put("/api/admin/approve/{provider_type}/{provider_id}")
+async def approve_provider(provider_type: str, provider_id: str, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Approve a provider (priest, astrologer, or shop)"""
+    collection_map = {
+        "priest": priests_collection,
+        "astrologer": astrologers_collection,
+        "shop": shops_collection
+    }
+    
+    if provider_type not in collection_map:
+        raise HTTPException(status_code=400, detail="Invalid provider type")
+    
+    collection = collection_map[provider_type]
+    result = await collection.update_one(
+        {"_id": ObjectId(provider_id)},
+        {"$set": {"approval_status": "approved", "is_verified": True, "approved_at": datetime.now(timezone.utc)}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    
+    # Get provider and notify them
+    provider = await collection.find_one({"_id": ObjectId(provider_id)})
+    user_id = provider.get("user_id") or provider.get("owner_id")
+    
+    if user_id:
+        await user_notifications_collection.insert_one({
+            "user_id": user_id,
+            "type": "approval_status",
+            "title": "Profile Approved!",
+            "message": f"Congratulations! Your {provider_type} profile has been approved. You are now visible to devotees.",
+            "read": False,
+            "created_at": datetime.now(timezone.utc)
+        })
+    
+    return {"message": f"{provider_type.capitalize()} approved successfully"}
+
+@app.put("/api/admin/reject/{provider_type}/{provider_id}")
+async def reject_provider(provider_type: str, provider_id: str, request: Request, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Reject a provider (priest, astrologer, or shop)"""
+    data = await request.json()
+    reason = data.get("reason", "Your profile does not meet our requirements")
+    
+    collection_map = {
+        "priest": priests_collection,
+        "astrologer": astrologers_collection,
+        "shop": shops_collection
+    }
+    
+    if provider_type not in collection_map:
+        raise HTTPException(status_code=400, detail="Invalid provider type")
+    
+    collection = collection_map[provider_type]
+    result = await collection.update_one(
+        {"_id": ObjectId(provider_id)},
+        {"$set": {"approval_status": "rejected", "rejection_reason": reason, "rejected_at": datetime.now(timezone.utc)}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    
+    # Get provider and notify them
+    provider = await collection.find_one({"_id": ObjectId(provider_id)})
+    user_id = provider.get("user_id") or provider.get("owner_id")
+    
+    if user_id:
+        await user_notifications_collection.insert_one({
+            "user_id": user_id,
+            "type": "approval_status",
+            "title": "Profile Update Required",
+            "message": f"Your {provider_type} profile needs some updates: {reason}. Please update your profile and it will be reviewed again.",
+            "read": False,
+            "created_at": datetime.now(timezone.utc)
+        })
+    
+    return {"message": f"{provider_type.capitalize()} rejected"}
+
 @app.get("/api/priests/{priest_id}/reviews")
 async def get_priest_reviews_public(priest_id: str, limit: int = 20, skip: int = 0):
     """Get reviews for a priest (public)"""
@@ -4351,6 +4510,8 @@ async def get_shop_profile(user: dict = Depends(require_role([UserRole.SHOP_OWNE
         "free_shipping_above": shop.get("free_shipping_above", 0),
         "rating": shop.get("rating", 0),
         "is_verified": shop.get("is_verified", False),
+        "approval_status": shop.get("approval_status", "pending"),
+        "rejection_reason": shop.get("rejection_reason", ""),
         "created_at": shop.get("created_at", datetime.now(timezone.utc)).isoformat()
     }
 

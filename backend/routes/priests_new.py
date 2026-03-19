@@ -30,8 +30,14 @@ async def get_priests(
     skip: int = 0,
     limit: int = 20
 ):
-    """Get list of verified priests with optional filters"""
-    query = {"is_verified": True}
+    """Get list of approved priests with optional filters"""
+    # Only show priests that are approved by admin
+    query = {
+        "$or": [
+            {"approval_status": "approved"},
+            {"is_verified": True, "approval_status": {"$exists": False}}  # Legacy support
+        ]
+    }
     
     if specialization:
         query["specializations"] = {"$regex": specialization, "$options": "i"}

@@ -29,6 +29,7 @@ function AdminSidebar({ activeTab, setActiveTab, user }) {
   
   const tabs = [
     { id: 'overview', icon: Home, label: 'Overview' },
+    { id: 'approvals', icon: CheckCircle, label: 'Approvals' },
     { id: 'users', icon: Users, label: 'Users' },
     { id: 'priests', icon: UserCheck, label: 'Priests' },
     { id: 'products', icon: Package, label: 'Products' },
@@ -591,6 +592,215 @@ function BookingsTab({ bookings, isDesktop, loading }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Approvals Management Tab
+function ApprovalsTab({ isDesktop }) {
+  const [pendingApprovals, setPendingApprovals] = useState({ priests: [], astrologers: [], shops: [] });
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
+  const [showRejectModal, setShowRejectModal] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  const fetchPendingApprovals = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/api/admin/pending-approvals');
+      setPendingApprovals(res.data);
+    } catch (error) {
+      toast.error('Failed to load pending approvals');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingApprovals();
+  }, []);
+
+  const handleApprove = async (type, id) => {
+    setProcessingId(id);
+    try {
+      await api.put(`/api/admin/approve/${type}/${id}`);
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully!`);
+      fetchPendingApprovals();
+    } catch (error) {
+      toast.error('Failed to approve');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!showRejectModal) return;
+    const { type, id } = showRejectModal;
+    setProcessingId(id);
+    try {
+      await api.put(`/api/admin/reject/${type}/${id}`, { reason: rejectReason });
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} rejected`);
+      setShowRejectModal(null);
+      setRejectReason('');
+      fetchPendingApprovals();
+    } catch (error) {
+      toast.error('Failed to reject');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const totalPending = pendingApprovals.priests.length + pendingApprovals.astrologers.length + pendingApprovals.shops.length;
+
+  const ProviderCard = ({ provider, type }) => (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="font-semibold text-gray-800">{provider.name || provider.owner_name}</h3>
+          <p className="text-sm text-gray-500">{provider.email}</p>
+          {provider.phone && <p className="text-xs text-gray-400">{provider.phone}</p>}
+          {type === 'shop' && provider.shop_name && (
+            <p className="text-xs text-saffron mt-1">Shop: {provider.shop_name}</p>
+          )}
+          {(provider.specializations?.length > 0) && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {provider.specializations.slice(0, 3).map((s, i) => (
+                <span key={i} className="text-xs bg-orange-50 text-saffron px-2 py-0.5 rounded-full">{s}</span>
+              ))}
+            </div>
+          )}
+          {provider.experience_years > 0 && (
+            <p className="text-xs text-gray-500 mt-1">{provider.experience_years} years experience</p>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleApprove(type, provider.id)}
+            disabled={processingId === provider.id}
+            className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
+            data-testid={`approve-${type}-${provider.id}`}
+          >
+            {processingId === provider.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => setShowRejectModal({ type, id: provider.id, name: provider.name || provider.owner_name })}
+            disabled={processingId === provider.id}
+            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+            data-testid={`reject-${type}-${provider.id}`}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-saffron" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-cinzel font-bold text-maroon">Pending Approvals</h2>
+        <span className="bg-orange-100 text-saffron px-3 py-1 rounded-full text-sm font-medium">
+          {totalPending} pending
+        </span>
+      </div>
+
+      {totalPending === 0 ? (
+        <div className="bg-white rounded-xl p-8 text-center">
+          <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+          <p className="text-gray-500">No pending approvals</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Priests */}
+          {pendingApprovals.priests.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-saffron" />
+                Priests ({pendingApprovals.priests.length})
+              </h3>
+              <div className="grid gap-3">
+                {pendingApprovals.priests.map(priest => (
+                  <ProviderCard key={priest.id} provider={priest} type="priest" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Astrologers */}
+          {pendingApprovals.astrologers.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <Star className="w-5 h-5 text-saffron" />
+                Astrologers ({pendingApprovals.astrologers.length})
+              </h3>
+              <div className="grid gap-3">
+                {pendingApprovals.astrologers.map(astro => (
+                  <ProviderCard key={astro.id} provider={astro} type="astrologer" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Shops */}
+          {pendingApprovals.shops.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-saffron" />
+                Shops ({pendingApprovals.shops.length})
+              </h3>
+              <div className="grid gap-3">
+                {pendingApprovals.shops.map(shop => (
+                  <ProviderCard key={shop.id} provider={shop} type="shop" />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-6 max-w-md w-full"
+          >
+            <h3 className="font-semibold text-lg text-gray-800 mb-2">Reject {showRejectModal.name}?</h3>
+            <p className="text-sm text-gray-500 mb-4">Please provide a reason (this will be sent to the provider):</p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-saffron/50"
+              rows={3}
+              placeholder="e.g., Please complete your profile with valid credentials..."
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowRejectModal(null); setRejectReason(''); }}
+                className="flex-1 py-2 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={processingId}
+                className="flex-1 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {processingId ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Reject'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1979,6 +2189,7 @@ export default function AdminDashboard() {
 
       {/* Content - show skeleton/loading states inside tabs instead of full page spinner */}
       {activeTab === 'overview' && <OverviewTab stats={stats} users={users} isDesktop={isDesktop} loading={loading} />}
+      {activeTab === 'approvals' && <ApprovalsTab isDesktop={isDesktop} />}
       {activeTab === 'users' && <UsersTab users={users} isDesktop={isDesktop} loading={loading} onRefresh={fetchData} />}
       {activeTab === 'priests' && <PriestsTab priests={priests} isDesktop={isDesktop} loading={loading} />}
       {activeTab === 'products' && <ProductsTab products={products} isDesktop={isDesktop} loading={loading} />}

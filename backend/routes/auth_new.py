@@ -272,6 +272,7 @@ async def firebase_sync(data: FirebaseSyncRequest):
                 "rating": 0.0,
                 "total_reviews": 0,
                 "is_verified": False,
+                "approval_status": "pending",  # pending, approved, rejected
                 "created_at": datetime.now(timezone.utc)
             }
             await priests_collection.insert_one(priest_profile)
@@ -289,6 +290,7 @@ async def firebase_sync(data: FirebaseSyncRequest):
                 "rating": 0.0,
                 "total_reviews": 0,
                 "is_verified": False,
+                "approval_status": "pending",  # pending, approved, rejected
                 "is_available": False,
                 "created_at": datetime.now(timezone.utc)
             }
@@ -305,6 +307,7 @@ async def firebase_sync(data: FirebaseSyncRequest):
                 "rating": 0.0,
                 "total_reviews": 0,
                 "is_verified": False,
+                "approval_status": "pending",  # pending, approved, rejected
                 "is_active": True,
                 "created_at": datetime.now(timezone.utc)
             }

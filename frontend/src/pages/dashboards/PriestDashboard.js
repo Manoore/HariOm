@@ -272,6 +272,28 @@ export default function PriestDashboard() {
     <div className="min-h-screen bg-gradient-to-b from-cream to-parchment">
       <Toaster position="top-center" richColors />
       
+      {/* Approval Status Banner */}
+      {priestProfile?.approval_status === 'pending' && (
+        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+            <p className="text-sm text-yellow-800">
+              <strong>Profile Pending Approval:</strong> Your profile is under review. You can set up everything, but devotees won't see your profile until approved by admin.
+            </p>
+          </div>
+        </div>
+      )}
+      {priestProfile?.approval_status === 'rejected' && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-3">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <p className="text-sm text-red-800">
+              <strong>Profile Needs Updates:</strong> {priestProfile?.rejection_reason || 'Please update your profile and it will be reviewed again.'}
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* Desktop Layout with Sidebar */}
       <div className="hidden lg:flex">
         {/* Sidebar */}

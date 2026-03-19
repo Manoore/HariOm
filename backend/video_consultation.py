@@ -310,6 +310,8 @@ async def get_astrologer_profile(user_id: str) -> Optional[Dict[str, Any]]:
             "experience_years": profile.get("experience_years", 0),
             "languages": profile.get("languages", ["Hindi", "English"]),
             "is_available": profile.get("is_available", False),
+            "approval_status": profile.get("approval_status", "pending"),
+            "rejection_reason": profile.get("rejection_reason", ""),
             "total_consultations": profile.get("total_consultations", 0),
             "total_earnings": profile.get("total_earnings", 0),
             "avg_rating": profile.get("avg_rating", 0),
