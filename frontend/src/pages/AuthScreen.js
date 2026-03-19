@@ -228,11 +228,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
       {/* Hidden reCAPTCHA container */}
       <div id="recaptcha-container"></div>
       
-      {/* Falling Rose Petals - Soft Pink - LEFT SIDE ONLY */}
+      {/* Falling Rose Petals - Soft Pink - LEFT SIDE ONLY - Hidden on mobile */}
       {[...Array(8)].map((_, i) => (
         <motion.div
           key={`rose-left-${i}`}
-          className="absolute pointer-events-none z-10"
+          className="absolute pointer-events-none z-0 hidden md:block"
           initial={{ 
             top: -30, 
             left: `${2 + Math.random() * 20}%`,
@@ -263,11 +263,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
         </motion.div>
       ))}
       
-      {/* Falling Rose Petals - RIGHT SIDE ONLY */}
+      {/* Falling Rose Petals - RIGHT SIDE ONLY - Hidden on mobile */}
       {[...Array(8)].map((_, i) => (
         <motion.div
           key={`rose-right-${i}`}
-          className="absolute pointer-events-none z-10"
+          className="absolute pointer-events-none z-0 hidden md:block"
           initial={{ 
             top: -30, 
             left: `${78 + Math.random() * 20}%`,
@@ -298,11 +298,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
         </motion.div>
       ))}
       
-      {/* Falling Marigold Flowers - LEFT SIDE */}
+      {/* Falling Marigold Flowers - LEFT SIDE - Hidden on mobile */}
       {[...Array(5)].map((_, i) => (
         <motion.div
           key={`marigold-left-${i}`}
-          className="absolute pointer-events-none z-10"
+          className="absolute pointer-events-none z-0 hidden md:block"
           initial={{ 
             top: -40, 
             left: `${3 + Math.random() * 18}%`,
@@ -351,11 +351,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
         </motion.div>
       ))}
       
-      {/* Falling Marigold Flowers - RIGHT SIDE */}
+      {/* Falling Marigold Flowers - RIGHT SIDE - Hidden on mobile */}
       {[...Array(5)].map((_, i) => (
         <motion.div
           key={`marigold-right-${i}`}
-          className="absolute pointer-events-none z-10"
+          className="absolute pointer-events-none z-0 hidden md:block"
           initial={{ 
             top: -40, 
             left: `${79 + Math.random() * 18}%`,
@@ -404,11 +404,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
         </motion.div>
       ))}
       
-      {/* Falling Jasmine Flowers - LEFT SIDE */}
+      {/* Falling Jasmine Flowers - LEFT SIDE - Hidden on mobile */}
       {[...Array(6)].map((_, i) => (
         <motion.div
           key={`jasmine-left-${i}`}
-          className="absolute pointer-events-none z-10"
+          className="absolute pointer-events-none z-0 hidden md:block"
           initial={{ 
             top: -25, 
             left: `${5 + Math.random() * 18}%`,
@@ -444,11 +444,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
         </motion.div>
       ))}
       
-      {/* Falling Jasmine Flowers - RIGHT SIDE */}
+      {/* Falling Jasmine Flowers - RIGHT SIDE - Hidden on mobile */}
       {[...Array(6)].map((_, i) => (
         <motion.div
           key={`jasmine-right-${i}`}
-          className="absolute pointer-events-none z-10"
+          className="absolute pointer-events-none z-0 hidden md:block"
           initial={{ 
             top: -25, 
             left: `${77 + Math.random() * 18}%`,
@@ -484,11 +484,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
         </motion.div>
       ))}
       
-      {/* Falling Hibiscus Petals - LEFT SIDE */}
+      {/* Falling Hibiscus Petals - LEFT SIDE - Hidden on mobile */}
       {[...Array(4)].map((_, i) => (
         <motion.div
           key={`hibiscus-left-${i}`}
-          className="absolute pointer-events-none z-10"
+          className="absolute pointer-events-none z-0 hidden md:block"
           initial={{ 
             top: -35, 
             left: `${4 + Math.random() * 16}%`,
@@ -519,11 +519,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
         </motion.div>
       ))}
       
-      {/* Falling Hibiscus Petals - RIGHT SIDE */}
+      {/* Falling Hibiscus Petals - RIGHT SIDE - Hidden on mobile */}
       {[...Array(4)].map((_, i) => (
         <motion.div
           key={`hibiscus-right-${i}`}
-          className="absolute pointer-events-none z-10"
+          className="absolute pointer-events-none z-0 hidden md:block"
           initial={{ 
             top: -35, 
             left: `${80 + Math.random() * 16}%`,
