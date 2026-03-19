@@ -24,7 +24,7 @@ from database import (
     deities_collection, mantras_collection, stotras_collection, daily_schedule_collection,
     product_reviews_collection, feedback_collection, testimonials_collection,
     puja_types_collection, service_reviews_collection, audio_library_collection,
-    stream_reminders_collection, user_notifications_collection
+    stream_reminders_collection, user_notifications_collection, class_requests_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -134,7 +134,7 @@ async def upload_image(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://temple-gateway.preview.emergentagent.com"
+        backend_url = "https://vedic-hub-1.preview.emergentagent.com"
     
     # Return the URL
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -178,7 +178,7 @@ async def upload_video(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://temple-gateway.preview.emergentagent.com"
+        backend_url = "https://vedic-hub-1.preview.emergentagent.com"
     
     # Return the URL
     video_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -1412,6 +1412,8 @@ async def get_priest_classes(user: dict = Depends(require_role([UserRole.PRIEST]
             "title": cls["title"],
             "description": cls["description"],
             "class_type": cls["class_type"],
+            "location_type": cls.get("location_type", "online"),
+            "temple_name": cls.get("temple_name", ""),
             "duration_minutes": cls["duration_minutes"],
             "price": cls["price"],
             "max_students": cls["max_students"],
@@ -1447,6 +1449,8 @@ async def create_priest_class(request: Request, user: dict = Depends(require_rol
         "title": data.get("title"),
         "description": data.get("description", ""),
         "class_type": data.get("class_type", "online"),  # online / offline / both
+        "location_type": data.get("location_type", "online"),  # online, home_visit, temple
+        "temple_name": data.get("temple_name", ""),  # If location_type is temple
         "duration_minutes": data.get("duration_minutes", 60),
         "is_free": is_free,
         "price": price,
@@ -1495,7 +1499,7 @@ async def update_priest_class(class_id: str, request: Request, user: dict = Depe
         "title", "description", "class_type", "duration_minutes", 
         "is_free", "price", "max_students", "available_slots", "schedule", 
         "category", "is_active", "frequency", "schedule_day", "schedule_time",
-        "meeting_link"
+        "meeting_link", "location_type", "temple_name"
     ]}
     
     await priest_classes_collection.update_one(
@@ -2089,6 +2093,157 @@ async def get_public_live_streams(
     total = await priest_streams_collection.count_documents(query)
     return {"streams": streams, "total": total}
 
+# ===================== CLASS REQUESTS (Devotee requests for classes) =====================
+
+class ClassRequestCreate(BaseModel):
+    topic: str
+    category: Optional[str] = "General"
+    description: Optional[str] = ""
+    preferred_days: Optional[List[str]] = []  # e.g., ["Monday", "Wednesday"]
+    preferred_time: Optional[str] = ""  # e.g., "Morning", "Evening", "6:00 PM"
+    budget_min: Optional[int] = 0
+    budget_max: Optional[int] = 5000
+    language: Optional[str] = "Hindi"
+    duration_preference: Optional[str] = "1 hour"  # e.g., "30 mins", "1 hour", "2 hours"
+    meeting_type: Optional[str] = "one_on_one"  # one_on_one, group
+
+@app.post("/api/class-requests")
+async def create_class_request(request: ClassRequestCreate, user: dict = Depends(get_current_user)):
+    """Devotee submits a request for a class they want"""
+    class_request = {
+        "user_id": str(user["_id"]),
+        "user_name": user.get("name", "Anonymous"),
+        "user_email": user.get("email", ""),
+        "topic": request.topic,
+        "category": request.category,
+        "description": request.description,
+        "preferred_days": request.preferred_days,
+        "preferred_time": request.preferred_time,
+        "budget_min": request.budget_min,
+        "budget_max": request.budget_max,
+        "language": request.language,
+        "duration_preference": request.duration_preference,
+        "meeting_type": request.meeting_type,  # one_on_one or group
+        "status": "open",  # open, matched, closed
+        "responses": [],  # Priests who responded
+        "matched_class_id": None,
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc)
+    }
+    
+    result = await class_requests_collection.insert_one(class_request)
+    
+    # Notify priests about new class request (optional: filter by topic/category)
+    # This could be enhanced to only notify priests who teach this category
+    
+    return {
+        "message": "Class request submitted successfully",
+        "request_id": str(result.inserted_id)
+    }
+
+@app.get("/api/class-requests")
+async def get_my_class_requests(user: dict = Depends(get_current_user)):
+    """Get all class requests for the current devotee"""
+    cursor = class_requests_collection.find({"user_id": str(user["_id"])}).sort("created_at", -1)
+    requests = []
+    async for req in cursor:
+        requests.append({
+            "id": str(req["_id"]),
+            "topic": req["topic"],
+            "category": req.get("category", "General"),
+            "description": req.get("description", ""),
+            "preferred_days": req.get("preferred_days", []),
+            "preferred_time": req.get("preferred_time", ""),
+            "budget_min": req.get("budget_min", 0),
+            "budget_max": req.get("budget_max", 5000),
+            "language": req.get("language", "Hindi"),
+            "duration_preference": req.get("duration_preference", "1 hour"),
+            "meeting_type": req.get("meeting_type", "one_on_one"),
+            "status": req.get("status", "open"),
+            "responses_count": len(req.get("responses", [])),
+            "matched_class_id": req.get("matched_class_id"),
+            "created_at": safe_isoformat(req.get("created_at"))
+        })
+    return {"requests": requests}
+
+@app.get("/api/class-requests/all")
+async def get_all_class_requests(user: dict = Depends(get_current_user)):
+    """Get all open class requests (for priests to see)"""
+    if user.get("role") not in ["priest", "admin", "super_admin"]:
+        raise HTTPException(status_code=403, detail="Only priests can view class requests")
+    
+    cursor = class_requests_collection.find({"status": "open"}).sort("created_at", -1)
+    requests = []
+    async for req in cursor:
+        requests.append({
+            "id": str(req["_id"]),
+            "user_name": req.get("user_name", "Anonymous"),
+            "topic": req["topic"],
+            "category": req.get("category", "General"),
+            "description": req.get("description", ""),
+            "preferred_days": req.get("preferred_days", []),
+            "preferred_time": req.get("preferred_time", ""),
+            "budget_min": req.get("budget_min", 0),
+            "budget_max": req.get("budget_max", 5000),
+            "language": req.get("language", "Hindi"),
+            "duration_preference": req.get("duration_preference", "1 hour"),
+            "meeting_type": req.get("meeting_type", "one_on_one"),
+            "responses_count": len(req.get("responses", [])),
+            "created_at": safe_isoformat(req.get("created_at"))
+        })
+    return {"requests": requests}
+
+@app.post("/api/class-requests/{request_id}/respond")
+async def respond_to_class_request(request_id: str, user: dict = Depends(get_current_user)):
+    """Priest expresses interest in fulfilling a class request"""
+    if user.get("role") != "priest":
+        raise HTTPException(status_code=403, detail="Only priests can respond to class requests")
+    
+    class_request = await class_requests_collection.find_one({"_id": ObjectId(request_id)})
+    if not class_request:
+        raise HTTPException(status_code=404, detail="Class request not found")
+    
+    # Add priest to responses
+    response = {
+        "priest_id": str(user["_id"]),
+        "priest_name": user.get("name", ""),
+        "responded_at": datetime.now(timezone.utc)
+    }
+    
+    await class_requests_collection.update_one(
+        {"_id": ObjectId(request_id)},
+        {
+            "$push": {"responses": response},
+            "$set": {"updated_at": datetime.now(timezone.utc)}
+        }
+    )
+    
+    # Notify the devotee
+    await user_notifications_collection.insert_one({
+        "user_id": class_request["user_id"],
+        "type": "class_request_response",
+        "title": "Priest interested in your request!",
+        "message": f"{user.get('name', 'A priest')} is interested in teaching '{class_request['topic']}'",
+        "data": {"request_id": request_id, "priest_id": str(user["_id"])},
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    return {"message": "Response submitted successfully"}
+
+@app.delete("/api/class-requests/{request_id}")
+async def delete_class_request(request_id: str, user: dict = Depends(get_current_user)):
+    """Devotee cancels their class request"""
+    result = await class_requests_collection.delete_one({
+        "_id": ObjectId(request_id),
+        "user_id": str(user["_id"])
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Request not found or not authorized")
+    
+    return {"message": "Class request cancelled"}
+
 # Stream Reminders API
 
 @app.get("/api/stream-reminders")
@@ -2205,6 +2360,7 @@ async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]
             "service_areas": [],
             "base_price": 1100,
             "profile_photo": None,
+            "temple_affiliation": "",  # Temple name if priest works at a temple
             "is_verified": False,
             "created_at": datetime.now(timezone.utc)
         }
@@ -2220,6 +2376,7 @@ async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]
         "service_areas": priest.get("service_areas", []),
         "base_price": priest.get("base_price", 1100),
         "profile_photo": priest.get("profile_photo"),
+        "temple_affiliation": priest.get("temple_affiliation", ""),
         "is_verified": priest.get("is_verified", False),
         "address": priest.get("address", ""),
         "city": priest.get("city", ""),
@@ -2236,7 +2393,7 @@ async def update_priest_profile(request: Request, user: dict = Depends(require_r
     allowed_fields = [
         "bio", "specializations", "languages", "experience_years", 
         "work_locations", "service_areas", "base_price", "profile_photo",
-        "address", "city", "state", "pincode", "phone", "email"
+        "address", "city", "state", "pincode", "phone", "email", "temple_affiliation"
     ]
     
     for field in allowed_fields:
@@ -2375,6 +2532,8 @@ async def get_priest_services(user: dict = Depends(require_role([UserRole.PRIEST
             "duration_minutes": service.get("duration_minutes", 60),
             "price": service.get("price", 1100),
             "is_available": service.get("is_available", True),
+            "location_type": service.get("location_type", "online"),
+            "temple_name": service.get("temple_name", ""),
             "created_at": service.get("created_at").isoformat() if isinstance(service.get("created_at"), datetime) else str(service.get("created_at"))
         })
     
@@ -2396,6 +2555,8 @@ async def add_priest_service(request: Request, user: dict = Depends(require_role
         "duration_minutes": data.get("duration_minutes", 60),
         "price": data.get("price", 1100),
         "is_available": data.get("is_available", True),
+        "location_type": data.get("location_type", "online"),  # online, home_visit, temple
+        "temple_name": data.get("temple_name", ""),  # If location_type is temple
         "created_at": datetime.now(timezone.utc)
     }
     
@@ -2412,7 +2573,7 @@ async def update_priest_service(service_id: str, request: Request, user: dict = 
     if not service or service["priest_id"] != str(priest["_id"]):
         raise HTTPException(status_code=404, detail="Service not found")
     
-    update_fields = ["name", "description", "category", "duration_minutes", "price", "is_available"]
+    update_fields = ["name", "description", "category", "duration_minutes", "price", "is_available", "location_type", "temple_name"]
     update_data = {k: data[k] for k in update_fields if k in data}
     update_data["updated_at"] = datetime.now(timezone.utc)
     
@@ -4326,7 +4487,7 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     order_id = str(result.inserted_id)
     
     # Get frontend URL for redirect
-    frontend_url = os.environ.get("FRONTEND_URL", "https://temple-gateway.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://vedic-hub-1.preview.emergentagent.com")
     
     # Create Stripe checkout session
     try:

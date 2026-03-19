@@ -8,7 +8,7 @@ import {
   Save, X, AlertCircle, Shield, MapPin, Phone, Mail, Camera,
   Image, Upload, MessageSquare, ThumbsUp, Sun, Moon, Sunrise, Sunset,
   IndianRupee, Filter, Search, ChevronLeft, Award, Briefcase,
-  Menu, Send, Repeat, MessageCircle, ChevronDown
+  Menu, Send, Repeat, MessageCircle, ChevronDown, Building2
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -1136,7 +1136,8 @@ function ProfileTab({ profile, user, onRefresh }) {
     work_locations: profile?.work_locations || [],
     phone: user?.phone || '',
     email: user?.email || '',
-    profile_photo: profile?.profile_photo || ''
+    profile_photo: profile?.profile_photo || '',
+    temple_affiliation: profile?.temple_affiliation || ''
   });
   const [newLocation, setNewLocation] = useState('');
 
@@ -1448,6 +1449,30 @@ function ProfileTab({ profile, user, onRefresh }) {
         </div>
       </div>
 
+      {/* Temple Affiliation */}
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+        <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+          <Building2 className="w-5 h-5 text-saffron" />
+          Temple Affiliation
+        </h3>
+        <p className="text-xs text-gray-500 mb-3">If you work at or are affiliated with a temple, mention it here</p>
+        
+        {editing ? (
+          <input
+            type="text"
+            value={formData.temple_affiliation}
+            onChange={(e) => setFormData({ ...formData, temple_affiliation: e.target.value })}
+            placeholder="e.g., ISKCON Temple, Tirupati, Sri Venkateswara Temple"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+            data-testid="priest-temple-affiliation"
+          />
+        ) : (
+          <p className="text-gray-600 text-sm md:text-base">
+            {formData.temple_affiliation || 'No temple affiliation added'}
+          </p>
+        )}
+      </div>
+
       {/* Contact & Pricing */}
       <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
         <h3 className="font-semibold text-gray-800 mb-4">Contact & Pricing</h3>
@@ -1535,6 +1560,37 @@ function BookingsTab({ bookings, updateStatus }) {
 function ClassesTab({ classes, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
+  const [activeView, setActiveView] = useState('myClasses'); // 'myClasses' or 'requests'
+  const [classRequests, setClassRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+
+  useEffect(() => {
+    if (activeView === 'requests') {
+      fetchClassRequests();
+    }
+  }, [activeView]);
+
+  const fetchClassRequests = async () => {
+    setLoadingRequests(true);
+    try {
+      const res = await api.get('/api/class-requests/all');
+      setClassRequests(res.data.requests || []);
+    } catch (error) {
+      console.error('Error fetching class requests:', error);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const respondToRequest = async (requestId) => {
+    try {
+      await api.post(`/api/class-requests/${requestId}/respond`);
+      toast.success('Interest submitted! The devotee will be notified.');
+      fetchClassRequests();
+    } catch (error) {
+      toast.error('Failed to respond');
+    }
+  };
 
   const deleteClass = async (classId) => {
     if (!window.confirm('Delete this class?')) return;
@@ -1559,7 +1615,83 @@ function ClassesTab({ classes, onRefresh }) {
         </button>
       </div>
 
-      {classes.length === 0 ? (
+      {/* View Toggle */}
+      <div className="flex bg-gray-100 rounded-xl p-1 max-w-md">
+        <button
+          onClick={() => setActiveView('myClasses')}
+          className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all text-sm ${
+            activeView === 'myClasses' ? 'bg-white text-maroon shadow-sm' : 'text-gray-600'
+          }`}
+        >
+          My Classes ({classes.length})
+        </button>
+        <button
+          onClick={() => setActiveView('requests')}
+          className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all text-sm ${
+            activeView === 'requests' ? 'bg-white text-maroon shadow-sm' : 'text-gray-600'
+          }`}
+        >
+          Requests ({classRequests.length})
+        </button>
+      </div>
+
+      {activeView === 'requests' ? (
+        /* Class Requests from Devotees */
+        loadingRequests ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-saffron" />
+          </div>
+        ) : classRequests.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+            <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-400">No class requests from devotees yet</p>
+            <p className="text-sm text-gray-400 mt-1">Requests will appear here when devotees ask for specific topics</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {classRequests.map((req) => (
+              <div key={req.id} className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-400">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-800">{req.topic}</h3>
+                    <p className="text-sm text-gray-500">Requested by: {req.user_name}</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <span className="text-xs bg-orange-50 text-saffron px-2 py-1 rounded-full">{req.category}</span>
+                      <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full">{req.language}</span>
+                      <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">{req.preferred_time}</span>
+                      <span className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-full">
+                        ₹{req.budget_min} - ₹{req.budget_max}
+                      </span>
+                      <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full">
+                        {req.meeting_type === 'group' ? 'Group Class' : 'One-on-One'}
+                      </span>
+                    </div>
+                    {req.description && (
+                      <p className="text-sm text-gray-600 mt-2">{req.description}</p>
+                    )}
+                    {req.preferred_days?.length > 0 && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Preferred days: {req.preferred_days.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2 ml-4">
+                    <span className="text-xs text-gray-400">
+                      {req.responses_count} interested
+                    </span>
+                    <button
+                      onClick={() => respondToRequest(req.id)}
+                      className="px-3 py-1.5 bg-saffron text-white text-sm rounded-lg hover:bg-orange-600 transition-colors"
+                    >
+                      I'm Interested
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      ) : classes.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm p-8 text-center">
           <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-400">No classes yet</p>
@@ -1639,9 +1771,15 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
     title: '', description: '', class_type: 'online', duration_minutes: 60,
     is_free: false, price: 500, max_students: 20, category: 'General',
     frequency: 'weekly', schedule_day: 'Monday', schedule_time: '10:00',
-    meeting_link: ''
+    meeting_link: '', location_type: 'online', temple_name: ''
   });
   const [saving, setSaving] = useState(false);
+
+  const locationTypes = [
+    { value: 'online', label: 'Online', description: 'Via video call' },
+    { value: 'home_visit', label: 'Home Visit', description: 'At devotee\'s home' },
+    { value: 'temple', label: 'Temple', description: 'At a temple venue' }
+  ];
 
   useEffect(() => {
     if (editData) {
@@ -1651,14 +1789,16 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
         frequency: editData.frequency || 'weekly',
         schedule_day: editData.schedule_day || 'Monday',
         schedule_time: editData.schedule_time || '10:00',
-        meeting_link: editData.meeting_link || ''
+        meeting_link: editData.meeting_link || '',
+        location_type: editData.location_type || 'online',
+        temple_name: editData.temple_name || ''
       });
     } else {
       setForm({
         title: '', description: '', class_type: 'online', duration_minutes: 60,
         is_free: false, price: 500, max_students: 20, category: 'General',
         frequency: 'weekly', schedule_day: 'Monday', schedule_time: '10:00',
-        meeting_link: ''
+        meeting_link: '', location_type: 'online', temple_name: ''
       });
     }
   }, [editData, isOpen]);
@@ -1776,6 +1916,44 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
             <label className="block text-sm font-medium text-gray-700 mb-1">Meeting Link (Zoom/Google Meet)</label>
             <input type="url" value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" placeholder="https://zoom.us/j/..." />
           </div>
+          
+          {/* Location Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Class Location*</label>
+            <div className="grid grid-cols-3 gap-2">
+              {locationTypes.map(loc => (
+                <button
+                  key={loc.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, location_type: loc.value })}
+                  className={`p-3 rounded-xl border-2 text-center transition-all ${
+                    form.location_type === loc.value
+                      ? 'border-saffron bg-orange-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  data-testid={`class-location-${loc.value}`}
+                >
+                  <div className="font-medium text-sm text-gray-800">{loc.label}</div>
+                  <div className="text-xs text-gray-500">{loc.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Temple Name - only show if location_type is temple */}
+          {form.location_type === 'temple' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Temple Name*</label>
+              <input 
+                type="text" 
+                value={form.temple_name} 
+                onChange={(e) => setForm({ ...form, temple_name: e.target.value })} 
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl" 
+                placeholder="Enter temple name where class is held"
+                data-testid="class-temple-name"
+              />
+            </div>
+          )}
           
           {/* Schedule Section */}
           <div className="border-t pt-4">
@@ -1913,12 +2091,18 @@ function ServicesTab({ services, onRefresh }) {
 // Service Modal Component
 function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
   const [form, setForm] = useState({
-    name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100, puja_type_id: '', custom_puja_name: ''
+    name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100, puja_type_id: '', custom_puja_name: '', location_type: 'online', temple_name: ''
   });
   const [saving, setSaving] = useState(false);
   const [pujaTypes, setPujaTypes] = useState([]);
   const [pujaCategories, setPujaCategories] = useState({});
   const [showCustomInput, setShowCustomInput] = useState(false);
+
+  const locationTypes = [
+    { value: 'online', label: 'Online', description: 'Via video call' },
+    { value: 'home_visit', label: 'Home Visit', description: 'Priest visits devotee\'s home' },
+    { value: 'temple', label: 'Temple', description: 'At a temple venue' }
+  ];
 
   useEffect(() => {
     // Load puja types
@@ -1944,11 +2128,13 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
         duration_minutes: editData.duration_minutes || 60,
         price: editData.price || 1100,
         puja_type_id: editData.puja_type_id || '',
-        custom_puja_name: isCustom ? editData.name : ''
+        custom_puja_name: isCustom ? editData.name : '',
+        location_type: editData.location_type || 'online',
+        temple_name: editData.temple_name || ''
       });
       setShowCustomInput(isCustom && editData.name);
     } else {
-      setForm({ name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100, puja_type_id: '', custom_puja_name: '' });
+      setForm({ name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100, puja_type_id: '', custom_puja_name: '', location_type: 'online', temple_name: '' });
       setShowCustomInput(false);
     }
   }, [editData, isOpen]);
@@ -2088,6 +2274,44 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
               />
             </div>
           </div>
+
+          {/* Location Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Service Location*</label>
+            <div className="grid grid-cols-3 gap-2">
+              {locationTypes.map(loc => (
+                <button
+                  key={loc.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, location_type: loc.value })}
+                  className={`p-3 rounded-xl border-2 text-center transition-all ${
+                    form.location_type === loc.value
+                      ? 'border-saffron bg-orange-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  data-testid={`service-location-${loc.value}`}
+                >
+                  <div className="font-medium text-sm text-gray-800">{loc.label}</div>
+                  <div className="text-xs text-gray-500">{loc.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Temple Name - only show if location_type is temple */}
+          {form.location_type === 'temple' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Temple Name*</label>
+              <input 
+                type="text" 
+                value={form.temple_name} 
+                onChange={(e) => setForm({ ...form, temple_name: e.target.value })} 
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
+                placeholder="Enter temple name where service is offered"
+                data-testid="service-temple-name"
+              />
+            </div>
+          )}
         </div>
         
         <div className="p-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">

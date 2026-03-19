@@ -10,7 +10,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://temple-gateway.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://vedic-hub-1.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 DEVOTEE_EMAIL = "devotee@divineapp.com"

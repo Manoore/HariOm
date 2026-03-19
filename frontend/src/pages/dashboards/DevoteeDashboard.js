@@ -3914,14 +3914,40 @@ function ClassesTab({ isDesktop }) {
   const { user } = useAuth();
   const [classes, setClasses] = useState([]);
   const [myEnrollments, setMyEnrollments] = useState([]);
+  const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState('browse'); // 'browse' or 'enrolled'
+  const [activeView, setActiveView] = useState('browse'); // 'browse', 'enrolled', 'requests'
   const [enrolling, setEnrolling] = useState(null);
-  const [paymentModal, setPaymentModal] = useState(null); // {classId, className, price, clientSecret}
+  const [paymentModal, setPaymentModal] = useState(null);
+  const [showRequestForm, setShowRequestForm] = useState(false);
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [requestForm, setRequestForm] = useState({
+    topic: '',
+    category: 'Vedic Studies',
+    description: '',
+    preferred_days: [],
+    preferred_time: 'Morning',
+    budget_min: 500,
+    budget_max: 2000,
+    language: 'Hindi',
+    duration_preference: '1 hour',
+    meeting_type: 'one_on_one'  // one_on_one or group
+  });
+
+  const categories = ['Vedic Studies', 'Sanskrit', 'Puja Rituals', 'Astrology', 'Yoga & Meditation', 'Scriptures', 'Mantras', 'Other'];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const timeSlots = ['Early Morning (5-7 AM)', 'Morning (7-10 AM)', 'Afternoon (12-3 PM)', 'Evening (5-8 PM)', 'Night (8-10 PM)'];
+  const durations = ['30 minutes', '45 minutes', '1 hour', '1.5 hours', '2 hours'];
+  const languages = ['Hindi', 'Sanskrit', 'English', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Marathi'];
+  const meetingTypes = [
+    { value: 'one_on_one', label: 'One-on-One (Private)', description: 'Personal session with the teacher' },
+    { value: 'group', label: 'Group Class', description: 'Learn with other students' }
+  ];
 
   useEffect(() => {
     fetchClasses();
     fetchMyEnrollments();
+    fetchMyRequests();
   }, []);
 
   const fetchClasses = async () => {
@@ -3942,6 +3968,64 @@ function ClassesTab({ isDesktop }) {
     } catch (error) {
       console.error('Error fetching enrollments:', error);
     }
+  };
+
+  const fetchMyRequests = async () => {
+    try {
+      const res = await api.get('/api/class-requests');
+      setMyRequests(res.data.requests || []);
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+    }
+  };
+
+  const handleSubmitRequest = async () => {
+    if (!requestForm.topic.trim()) {
+      toast.error('Please enter a topic');
+      return;
+    }
+    setSubmittingRequest(true);
+    try {
+      await api.post('/api/class-requests', requestForm);
+      toast.success('Class request submitted! Priests will be notified.');
+      setShowRequestForm(false);
+      setRequestForm({
+        topic: '',
+        category: 'Vedic Studies',
+        description: '',
+        preferred_days: [],
+        preferred_time: 'Morning',
+        budget_min: 500,
+        budget_max: 2000,
+        language: 'Hindi',
+        duration_preference: '1 hour',
+        meeting_type: 'one_on_one'
+      });
+      fetchMyRequests();
+    } catch (error) {
+      toast.error('Failed to submit request');
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
+  const handleCancelRequest = async (requestId) => {
+    try {
+      await api.delete(`/api/class-requests/${requestId}`);
+      toast.success('Request cancelled');
+      fetchMyRequests();
+    } catch (error) {
+      toast.error('Failed to cancel request');
+    }
+  };
+
+  const toggleDay = (day) => {
+    setRequestForm(prev => ({
+      ...prev,
+      preferred_days: prev.preferred_days.includes(day)
+        ? prev.preferred_days.filter(d => d !== day)
+        : [...prev.preferred_days, day]
+    }));
   };
 
   const handleEnroll = async (cls) => {
@@ -4016,31 +4100,277 @@ function ClassesTab({ isDesktop }) {
             <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Vedic Classes</h1>
             <p className="text-gray-600 text-sm mt-1">Learn from experienced priests and scholars</p>
           </div>
+          <button
+            onClick={() => setShowRequestForm(true)}
+            className="flex items-center gap-2 bg-saffron text-white px-4 py-2 rounded-xl font-medium hover:bg-orange-600 transition-colors"
+            data-testid="request-class-btn"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="hidden sm:inline">Request Class</span>
+          </button>
         </div>
 
         {/* View Toggle */}
-        <div className="flex bg-white rounded-xl p-1 mb-6 max-w-md">
+        <div className="flex bg-white rounded-xl p-1 mb-6 overflow-x-auto">
           <button
             onClick={() => setActiveView('browse')}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all whitespace-nowrap ${
               activeView === 'browse' ? 'bg-saffron text-white' : 'text-gray-600'
             }`}
           >
-            Browse Classes
+            Browse
           </button>
           <button
             onClick={() => setActiveView('enrolled')}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all whitespace-nowrap ${
               activeView === 'enrolled' ? 'bg-saffron text-white' : 'text-gray-600'
             }`}
           >
-            My Classes ({myEnrollments.length})
+            Enrolled ({myEnrollments.length})
+          </button>
+          <button
+            onClick={() => setActiveView('requests')}
+            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all whitespace-nowrap ${
+              activeView === 'requests' ? 'bg-saffron text-white' : 'text-gray-600'
+            }`}
+          >
+            My Requests ({myRequests.length})
           </button>
         </div>
+
+        {/* Request Class Modal */}
+        {showRequestForm && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
+                <h2 className="font-cinzel text-xl font-bold text-maroon">Request a Class</h2>
+                <button onClick={() => setShowRequestForm(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                {/* Topic */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">What do you want to learn? *</label>
+                  <input
+                    type="text"
+                    value={requestForm.topic}
+                    onChange={(e) => setRequestForm({...requestForm, topic: e.target.value})}
+                    placeholder="e.g., Bhagavad Gita, Sanskrit basics, Puja vidhi"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
+                    value={requestForm.category}
+                    onChange={(e) => setRequestForm({...requestForm, category: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+                  >
+                    {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Details</label>
+                  <textarea
+                    value={requestForm.description}
+                    onChange={(e) => setRequestForm({...requestForm, description: e.target.value})}
+                    placeholder="Any specific requirements or goals..."
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+                  />
+                </div>
+
+                {/* Preferred Days */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Days</label>
+                  <div className="flex flex-wrap gap-2">
+                    {days.map(day => (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => toggleDay(day)}
+                        className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                          requestForm.preferred_days.includes(day)
+                            ? 'bg-saffron text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {day.slice(0, 3)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preferred Time */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Time</label>
+                  <select
+                    value={requestForm.preferred_time}
+                    onChange={(e) => setRequestForm({...requestForm, preferred_time: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+                  >
+                    {timeSlots.map(time => <option key={time} value={time}>{time}</option>)}
+                  </select>
+                </div>
+
+                {/* Duration */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Class Duration</label>
+                  <select
+                    value={requestForm.duration_preference}
+                    onChange={(e) => setRequestForm({...requestForm, duration_preference: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+                  >
+                    {durations.map(dur => <option key={dur} value={dur}>{dur}</option>)}
+                  </select>
+                </div>
+
+                {/* Language */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Language</label>
+                  <select
+                    value={requestForm.language}
+                    onChange={(e) => setRequestForm({...requestForm, language: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+                  >
+                    {languages.map(lang => <option key={lang} value={lang}>{lang}</option>)}
+                  </select>
+                </div>
+
+                {/* Budget Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Budget Range (per class)</label>
+                  <div className="flex gap-3 items-center">
+                    <div className="flex-1">
+                      <span className="text-xs text-gray-500">Min</span>
+                      <input
+                        type="number"
+                        value={requestForm.budget_min}
+                        onChange={(e) => setRequestForm({...requestForm, budget_min: parseInt(e.target.value) || 0})}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron"
+                      />
+                    </div>
+                    <span className="text-gray-400">to</span>
+                    <div className="flex-1">
+                      <span className="text-xs text-gray-500">Max</span>
+                      <input
+                        type="number"
+                        value={requestForm.budget_max}
+                        onChange={(e) => setRequestForm({...requestForm, budget_max: parseInt(e.target.value) || 0})}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Meeting Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Meeting Type</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {meetingTypes.map(type => (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => setRequestForm({...requestForm, meeting_type: type.value})}
+                        className={`p-3 rounded-xl border-2 text-left transition-all ${
+                          requestForm.meeting_type === type.value
+                            ? 'border-saffron bg-orange-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        data-testid={`meeting-type-${type.value}`}
+                      >
+                        <div className="font-medium text-sm text-gray-800">{type.label}</div>
+                        <div className="text-xs text-gray-500 mt-1">{type.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  onClick={handleSubmitRequest}
+                  disabled={submittingRequest || !requestForm.topic.trim()}
+                  className="w-full py-4 bg-saffron text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {submittingRequest ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Submit Request
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-saffron" />
+          </div>
+        ) : activeView === 'requests' ? (
+          /* My Requests View */
+          <div className="space-y-4">
+            {myRequests.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-2xl">
+                <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No class requests yet</p>
+                <p className="text-sm text-gray-400 mt-1">Click "Request Class" to ask for a specific topic</p>
+              </div>
+            ) : (
+              myRequests.map(req => (
+                <div key={req.id} className="bg-white rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800">{req.topic}</h3>
+                      <p className="text-sm text-gray-500">{req.category} • {req.language}</p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <span className="text-xs bg-orange-50 text-saffron px-2 py-1 rounded-full">
+                          {req.preferred_time}
+                        </span>
+                        <span className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-full">
+                          ₹{req.budget_min} - ₹{req.budget_max}
+                        </span>
+                        <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full">
+                          {req.meeting_type === 'group' ? 'Group Class' : 'One-on-One'}
+                        </span>
+                        {req.responses_count > 0 && (
+                          <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">
+                            {req.responses_count} priest(s) interested
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        req.status === 'open' ? 'bg-green-100 text-green-700' : 
+                        req.status === 'matched' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
+                      </span>
+                      {req.status === 'open' && (
+                        <button
+                          onClick={() => handleCancelRequest(req.id)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         ) : activeView === 'browse' ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -4048,7 +4378,13 @@ function ClassesTab({ isDesktop }) {
               <div className="col-span-full text-center py-12">
                 <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">No classes available at the moment</p>
-                <p className="text-sm text-gray-400 mt-1">Check back soon for new classes!</p>
+                <p className="text-sm text-gray-400 mt-1">Request a class topic you'd like to learn!</p>
+                <button
+                  onClick={() => setShowRequestForm(true)}
+                  className="mt-4 px-6 py-2 bg-saffron text-white rounded-xl font-medium hover:bg-orange-600"
+                >
+                  Request a Class
+                </button>
               </div>
             ) : (
               classes.map((cls) => (

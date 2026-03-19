@@ -34,6 +34,7 @@ post_comments_collection = db["post_comments"]
 post_likes_collection = db["post_likes"]
 class_enrollments_collection = db["class_enrollments"]
 stream_reminders_collection = db["stream_reminders"]
+class_requests_collection = db["class_requests"]
 
 # Chat Collections
 chat_rooms_collection = db["chat_rooms"]

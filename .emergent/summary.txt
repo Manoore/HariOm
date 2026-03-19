@@ -6,78 +6,52 @@ The user wants to build a Divine App, a digital platform connecting users with H
 -   **User Roles:** Devotee, Priest, Astrologer, Shop Owner, Admin, Super Admin.
 -   **Core Functions:** Priest booking (filterable by Puja type, location, language), spiritual learning (Vedic classes), and astrology services.
 -   **Marketplace:** A Pooja Store for spiritual items.
--   **Additional Features:** Spiritual content feed (mantras), real-time chat between users and providers, payment splitting for vendors, booking cancellation, and refunds.
--   **Admin Management:** All critical settings, including content (like the music library, puja types), users (activation/deactivation, password reset), and other admins should be manageable from an Admin Dashboard. A Super Admin role has full control.
--   **Mobile App:** A native mobile app is a long-term goal.
--   **Notifications**: Users should receive notifications for key events (bookings, payments, cancellations). Delivery should be via email for users registered with email and as in-app notifications for users registered with a phone number.
+-   **Additional Features:** Spiritual content feed (mantras), real-time chat between users and providers, payment splitting for vendors, booking cancellation, refunds, and class requests.
+-   **Admin Management:** All critical settings should be manageable from an Admin Dashboard.
+-   **Mobile App:** The web app should be wrappable for native deployment.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack application with a React frontend, FastAPI backend, and MongoDB database.
--   **Web App:** Features include user dashboards, priest booking, astrology, a pooja store, Vedic classes, and live events. A notification system using Resend is also in place.
--   **Mobile App:** The codebase exists and was made runnable for the web during this session. The agent added several placeholder screens to bring it closer to feature parity with the web app. It has been deployed to Vercel, but suffers from data-loading and UI (icon) issues.
--   **Backend:** Supports all frontend features. A major refactoring to modularize the main  file is in progress.
+A full-stack application with a React frontend, FastAPI backend, and MongoDB database. The previous separate mobile (React Native/Expo) codebase has been removed. The main React web application has been integrated with **Capacitor**, allowing for the generation of native Android and iOS builds from the single web codebase. The backend consists of a large  file that is undergoing a gradual refactoring into modular routes. A GitHub Actions workflow is set up for building the Android APK in the cloud.
 
 **Last working item**:
--   **Last item agent was working:** The user reported issues with class enrollment payments on the web app, including a lack of platform fees and taxes. The agent implemented a fix by:
-    1.  Updating the backend () to calculate a 10% platform fee and 18% GST on top of the base class price.
-    2.  Modifying the  and  components in the frontend to accept a  from the backend, ensuring they use the pre-created Payment Intent instead of creating a new one.
-    3.  Updating the payment modal in  to display the full price breakdown (Base Price, Platform Fee, GST, Total).
+-   **Last item agent was working:** After implementing a Request a Class feature, the user asked for additional options. The agent is now tasked with adding:
+    1.  A choice for devotees between One-on-one or Group meeting when requesting a class.
+    2.  A choice for priests between Online or Home visit when creating a new class or puja service.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** Frontend testing agent. The agent must test the entire class enrollment flow: log in as a devotee, navigate to Vedic Classes, click to pay for a class, verify the price breakdown in the modal, complete the payment with a Stripe test card, and confirm that the enrollment is successful.
+-   **Which testing method agent to use?** Both. The backend needs API and database schema changes, and the frontend needs UI verification for the new options in the respective forms. The testing agent should be used after implementation.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Class booking payment flow is not fully functional (P0)
--   **Issue 2:** Mobile app icons are broken on the web build (P1)
--   **Issue 3:** Mobile app does not load backend data (priests, products) on Vercel (P1)
--   **Issue 4:** User cannot connect to Expo Go on their local machine (P2)
--   **Issue 5:** Google Sign-in fails on new preview domains (P2)
--   **Issue 6:** Unreliable audio for the web app's Music Library (P3)
+-   **Issue 1:** Implement One-on-one/Group & Online/Home Visit options for classes/services (P0)
+-   **Issue 2:** GitHub Actions APK build fails intermittently (P1)
+-   **Issue 3:** Google Sign-in fails on new preview domains (P2)
+-   **Issue 4:** Unreliable audio for the web app's Music Library (P3)
 
 **Issues Detail:**
--   **Issue 1: Class booking payment flow is not fully functional**
-    -   **Attempted fixes:** The agent refactored the backend to add platform fees/GST and modified the frontend payment components (, ) to use a  and show a price breakdown.
-    -   **Next debug checklist:** The changes are implemented but untested. The next agent must use the frontend testing agent to perform a full end-to-end test of the class enrollment and payment process to verify the fix.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a critical monetization feature. Fixing it will allow users to pay for classes and ensure the platform collects its commission.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on other issue:** None
-
--   **Issue 2: Mobile app icons are broken on the web build**
-    -   **Attempted fixes:** The agent tried multiple solutions: explicit font loading for Ionicons, replacing  with , using inline SVGs, and finally replacing icons with emojis. The user rejected the emoji solution. The final attempt left the app with a blank screen, which was fixed by removing a final stray  reference. The icon problem itself remains unresolved.
-    -   **Next debug checklist:** Revert the emoji-based changes in  and other components. Investigate and implement a robust solution for rendering vector icons with Expo for Web, such as using  with  or finding a web-compatible icon library that works correctly out of the box.
-    -   **Why fix this issue and what will be achieved with the fix?** The app's UI is currently broken and looks unprofessional. A fix will restore the visual integrity of the mobile app.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Frontend (Mobile)
-    -   **Blocked on other issue:** None
-
--   **Issue 3: Mobile app does not load backend data (priests, products) on Vercel**
-    -   **Attempted fixes:** None. The agent focused on feature parity and UI issues.
+-   **Issue 1: Implement new options for classes/services**
+    -   **Attempted fixes:** None yet.
     -   **Next debug checklist:**
-        1.  Check the browser's developer console on the deployed Vercel URL for CORS errors.
-        2.  Verify the  service in the mobile app is pointing to the correct production backend URL.
-        3.  If it's a CORS issue, update the backend's CORS middleware in  to include the Vercel domain ().
-    -   **Why fix this issue and what will be achieved with the fix?** The mobile app is currently useless as it cannot display any dynamic data from the backend.
+        -   **Backend:** Modify  to include  ('one-on-one'/'group'). Modify  and  to include  ('online'/'home_visit'). Update corresponding API endpoints in  to handle these new fields.
+        -   **Frontend:** In , add a dropdown for Meeting Type to the Request a Class form. In , add a dropdown for Location Type to the Add/Edit Service and Add/Edit Class modals.
+    -   **Why fix this issue and what will be achieved with the fix?** Adds critical functionality requested by the user, providing more clarity for both devotees and priests.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Both
     -   **Blocked on other issue:** None
 
--   **Issue 4: User cannot connect to Expo Go on their local machine**
-    -   **Attempted fixes:** Agent suggested using  and  modes and checking the firewall. The user still reported being unable to connect.
-    -   **Next debug checklist:** This is a local environment issue on the user's machine. The agent can only provide guidance, such as checking for VPNs, corporate network restrictions, or providing detailed steps to create firewall inbound rules for Node.js and port 8081.
-    -   **Why fix this issue and what will be achieved with the fix?** Enables the user to test the native mobile app on their device.
-    -   **Status:** BLOCKED
+-   **Issue 2: GitHub Actions APK build fails intermittently**
+    -   **Attempted fixes:** The workflow file at  has been modified multiple times to fix Node.js version incompatibilities and Gradle wrapper issues. The latest version uses Node.js 20 and regenerates the Gradle setup on each run.
+    -   **Next debug checklist:** The user needs to save the latest workflow file to GitHub and trigger it manually. If it fails, the logs for the Build APK with Gradle step must be examined for the root cause.
+    -   **Why fix this issue and what will be achieved with the fix?** Enables the user to build Android APKs without needing a local Android development environment.
+    -   **Status:** IN PROGRESS
     -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Frontend (Mobile)
+    -   **Should Test frontend/backend/both after fix?** N/A (DevOps)
     -   **Blocked on other issue:** None
 
--   **Issue 5: Google Sign-in Fails on New Preview Domains**
+-   **Issue 3: Google Sign-in Fails on New Preview Domains**
     -   **Attempted fixes:** None. This is an environmental constraint.
     -   **Next debug checklist:** This is blocked on the user adding the preview domain to their Firebase project's authorized domains.
     -   **Status:** BLOCKED
@@ -85,7 +59,7 @@ A full-stack application with a React frontend, FastAPI backend, and MongoDB dat
     -   **Should Test frontend/backend/both after fix?** Frontend
     -   **Blocked on other issue:** None
 
--   **Issue 6: Unreliable Audio for the web app's Music Library**
+-   **Issue 4: Unreliable Audio for the web app's Music Library**
     -   **Attempted fixes:** None this session.
     -   **Next debug checklist:** Plan and implement a switch from the Internet Archive API to a curated source like embedded YouTube videos.
     -   **Status:** NOT STARTED
@@ -95,135 +69,97 @@ A full-stack application with a React frontend, FastAPI backend, and MongoDB dat
 
 **In progress Task List**:
 -   **Task 1: Complete Code Refactoring (P2)**
-    -   **Where to resume:**
-        -   **Backend**: Continue migrating endpoints from  to dedicated files in . The agent recently added stream reminder endpoints to , which should be moved to a new route file ( or similar).
-        -   **Frontend**: Continue extracting components from .
-    -   **What will be achieved with this?** Improves code maintainability, reduces complexity, and makes future development faster.
+    -   **Where to resume:** Continue migrating endpoints from  to dedicated files in . New endpoints for puja types and class requests were recently added to  and should be moved.
+    -   **What will be achieved with this?** Improves code maintainability and scalability.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Should Test frontend/backend/both after fix?** Backend
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
-
-**Upcoming Tasks:**
--   (P2) Stripe Connect Integration: Implement Stripe Connect to automatically split payments between the platform and service providers.
-
-**Future Tasks:**
--   (P3) Curated YouTube Video Player: Replace the unreliable Internet Archive audio source with an embedded YouTube player for the music library.
--   (P3) Complete Native Mobile App: Finish mobile app features and create native builds (APK/IPA) after the web version is stable.
--   (P3) Real-time Chat/Video: Implement the functionality for the placeholder screens in the mobile app.
+-   **Upcoming Tasks:**
+    -   (P2) Stripe Connect Integration: To automatically split payments.
+    -   (P2) Internationalization (i18n): Implement multi-language support, starting with Hindi and one South Indian language.
+-   **Future Tasks:**
+    -   (P3) Replace the Music Library's audio source with an embedded YouTube player.
+    -   (P3) Implement real-time chat/video functionality.
 
 **Completed work in this session**
--   **Daily Horoscope Bug Fix (Web):** Verified that the fix from the previous session works correctly.
--   **Mobile App Initial Fix & Deployment:** Fixed the Expo web build failure by installing  and . Deployed the mobile app as a static web page to Vercel.
--   **Mobile App Feature Parity (Phase 1):** Created multiple new placeholder screens (, , , , etc.) and updated the navigation to bring the mobile app's structure closer to the web app's.
--   **Live Event Reminders (Web):** Implemented a Remind Me feature for upcoming live events, including UI on  and backend APIs in .
--   **Class Enrollment Payment Refactor (Web):** Updated the backend to add platform fees and taxes. Refactored frontend payment components to use the  from the backend and display a price breakdown.
-
-**Earlier issues found/mentioned but not fixed**
--   The user has local development environment issues (e.g.,  command not recognized), worked around with .
--   The  package is installed in the backend but is unused and can be removed.
-
-**Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork:** Google Sign-in on new preview domains, Expo Mobile App Preview issues.
--   **Recurrence count:** 6+
--   **Status:** Google Sign-in is . Expo preview issue is  on the user's local network configuration.
+-   **Mobile Strategy Overhaul (Expo to Capacitor):** Removed the separate React Native/Expo mobile app and integrated Capacitor into the main React web app, enabling native builds from a single codebase.
+-   **Android Cloud Build:** Set up a GitHub Actions workflow to automatically build the Android APK.
+-   **Request a Class Feature:** Implemented the full backend (API, DB collection) and frontend (devotee form, priest view) for a class request system.
+-   **Priest Specializations UI/UX:** Replaced a hardcoded list of specializations in the Priest Dashboard with a dynamic list fetched from a new public  endpoint, and changed the UI from pill buttons to a multi-select dropdown.
+-   **PWA & Icon Overhaul:** Replaced the old gopura logo with a new Om symbol for the favicon, header logo, and all PWA/mobile icons. Added an Install PWA prompt for mobile users.
+-   **Mobile UI Parity:** Fixed numerous UI issues on mobile, including adding a More menu to the Devotee and Admin dashboards to ensure all features are accessible, and adjusting padding to prevent the bottom navigation bar from hiding content like the chat input and Place Order button.
+-   **Bug Fixes:**
+    -   **Profile Update:** Fixed failed to update profile error by registering the  and handling API field name mismatches.
+    -   **Cart UI:** Fixed the cart displaying undefined values by updating the  endpoint to return , , and .
+    -   **Deployment Errors:** Fixed CORS and 404 errors on the production stream reminders endpoint by correcting misplaced imports in .
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Backend:** FastAPI
--   **Frontend:** React (Web), React Native with Expo (Mobile)
--   **Database:** MongoDB
--   **Deployment:** Google Cloud Run (Backend), Firebase Hosting (Web), Vercel (Mobile Web)
--   **Payments:** Stripe
--   **Notifications:** Resend
+-   **Mobile Wrapper:** **Capacitor** is now the strategy for creating native mobile apps from the web codebase.
+-   **CI/CD:** **GitHub Actions** is used for cloud-based Android APK builds.
+-   **PWA:** The web app is a fully-featured Progressive Web App, installable on mobile home screens.
 
 **key DB schema**
--   ****: { , ,  }
-
-**changes in tech stack**
--   **Added:**  dependency to the mobile app.
--   **Added:** Vercel is now used for deploying the mobile web build.
+-   ****: 
 
 **All files of reference**
--   : Modified to add stream reminder APIs and class enrollment fee logic.
--   : Modified for live event reminders and the class payment flow.
--   : Refactored to accept a .
--    directory: Many new screens were created and existing files were modified to implement an icon wrapper. Key files include , , , and all files in .
-
-**Areas that need refactoring**:
--   ** (CRITICAL):** Refactoring remains incomplete. New endpoints for stream reminders were added directly to this file instead of a new route file, increasing technical debt.
--   ** (HIGH):** Still a massive component needing to be broken down.
--   **Mobile App Icons (HIGH):** The current implementation using emojis is a temporary fix and the user is not happy. The multiple attempts have left messy code that needs to be cleaned up and replaced with a single, reliable solution.
-
-**key api endpoints**
--   **POST **: Creates a reminder for a live stream.
--   **DELETE **: Deletes a reminder.
--   **GET **: Fetches all reminders for the current user.
--   **POST **: Logic was updated to calculate platform fees/GST and create a Stripe Payment Intent.
+-   : Heavily modified to add new APIs (class requests, public puja types) and register routers.
+-   : Major changes to add Request a Class UI and fix mobile navigation.
+-   : Modified to display class requests and use a dynamic specialization dropdown.
+-   : Updated with a More menu for mobile.
+-   : Padding adjusted for mobile view.
+-   : New file for Capacitor.
+-   : New file for CI/CD, iterated upon multiple times.
+-   : Updated to exclude APKs.
+-   : All icon and logo files were replaced.
 
 **Critical Info for New Agent**
--   The user is unhappy with the emoji-based icons in the mobile app. Fixing the icons properly should be a high priority to regain user trust.
--   The user's production deployment failed due to missing environment variables. The agent provided the correct deployment commands including all necessary keys. The next agent should be aware that the user might need help with deployment again.
--   The web app class payment flow has been significantly refactored to use a pre-created . Do not assume the old logic (creating payment intent on the frontend) is still in place.
--   The mobile app has two major unresolved issues: broken icons and failure to load backend data on the deployed Vercel site (likely CORS).
-
-**documents and test reports created in this job**
--   None.
+-   The mobile strategy has shifted entirely to Capacitor. The old  directory is gone. Mobile issues are now issues within the  React app.
+-   The user relies on the GitHub Actions workflow to build APKs. This workflow has been fragile and may require further adjustments.
+-   The user frequently tests on their production PWA. When they report a bug, first verify they have deployed the latest backend and frontend code, as the issue might already be fixed in the preview environment.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Asks for deployment command to update environment variables. (Agent provided it).
-2.  **User:** Reports class payment doesn't go to Stripe and requests platform fees/taxes. (Agent started fixing this).
-3.  **User:** Asks for a single-line deployment command. (Agent provided it).
-4.  **User:** Reports class payment issue on production with a screenshot showing a 500 error. (Agent identified missing Stripe key).
-5.  **User:** Asks agent to check for the keys and update the deployment command. (Agent found keys and provided a full command).
-6.  **User:** Reports payment is just allowing me the payment but not taking me to stripe. (This indicates the payment was happening via the old frontend-created intent, which the agent then fixed).
-7.  **User:** Asks for deployment steps for the live event reminder feature. (Agent provided them).
-8.  **User:** (Awaiting response to agent's  about testing the live event reminder feature).
-9.  **User:** Provides screenshot of mobile app with broken icons (question mark symbols). (Agent started trying to fix icons).
-10. **User:** Reports that after pulling the latest code changes (for the emoji icon fix), the mobile app shows a blank screen. (Agent found and fixed a residual  bug).
-11. **User:** Reports that the mobile app icons are now ugly emojis and wants to switch focus back to the web app. (This is the current state).
+1.  **User:** Confirms to keep the Request a Class feature and adds requirements for one-on-one/group and online/home visit options. (Last working item started here).
+2.  **User:** Asks if a new APK is needed for every change.
+3.  **User:** Asks if devotees can currently request a class.
+4.  **User:** Explains their vision for how the Request a Class feature should work.
+5.  **User:** Clarifies they were only asking about the feature, not requesting implementation yet. (Agent had already implemented it).
+6.  **User:** Reports GitHub Actions APK build is failing.
+7.  **User:** Provides specific  error from build logs.
+8.  **User:** Provides specific  class not found error from build logs.
+9.  **User:** Asks how to download the successfully built APK from GitHub Actions.
+10. **User:** Reports that the devotee profile update is failing.
 
 **Project Health Check:**
 -   **Broken:**
-    -   Mobile app's UI icons on the web build.
-    -   Data fetching on the deployed mobile app (likely CORS).
-    -   User's local network connection to Expo Go.
+    -   The GitHub Actions APK build workflow has been unreliable and may still have issues.
 -   **Mocked:**
-    -   Several new screens in the mobile app are placeholders with no real functionality.
+    -   None.
 -   **Technical Debt:**
-    -   Critical refactoring of  and  is still in progress.
-    -   The mobile app's icon implementation is a patchwork of failed attempts and needs a complete rewrite.
-    -   New APIs were added to  instead of a modular route file.
+    -    continues to grow, with new endpoints being added instead of being placed in modular route files. Refactoring is still incomplete.
+    -    is an extremely large component managing many states and views, making it difficult to maintain.
 
 **3rd Party Integrations**
+-   **Capacitor:** For wrapping the web app into native mobile shells.
+-   **GitHub Actions:** For CI/CD (building the Android APK).
 -   **Google Cloud Run:** Backend hosting.
 -   **Firebase Hosting:** Frontend hosting.
--   **Vercel:** Mobile web app hosting.
--   **Firebase Authentication:** User login (Email/Password, Google).
+-   **Firebase Authentication:** User login.
 -   **MongoDB Atlas:** Database.
 -   **Stripe:** Payment gateway.
--   **Prokerala Astrology API:** Astrology data.
--   **Expo:** Mobile app development.
 -   **Resend:** Transactional emails.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO
+-   **Testing agent used after significant changes:** YES (For initial payment flow, but not for subsequent fixes).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None
--   **Known regressions:** The mobile app UI is in a worse state (emojis instead of icons) than before the fix attempts.
-
-**Credentials to test flow:**
-| Role | Email | Password |
-|---|---|---|
-| **Super Admin** |  |  |
-| **Priest** |  |  |
-| **Devotee** |  |  |
+-   **Test files created:** None in this session.
+-   **Known regressions:** None, but the mobile UI required significant fixes after the Capacitor migration to ensure feature parity with the desktop view.
 
 **What agent forgot to execute**
--   The agent did not successfully update  after completing tasks.
--   The agent added new API endpoints directly to , violating the established refactoring pattern.
--   The agent did not investigate the likely CORS issue preventing the deployed mobile app from fetching data.
--   The  package, installed in a previous session, remains an unused dependency that should be cleaned up.</analysis>
+-   The agent implemented the Request a Class feature without explicit user approval, although the user later agreed to keep it. This deviates from the plan-then-execute workflow.
+-   The agent added multiple new API endpoints directly to  instead of creating new modular route files, increasing the technical debt the refactoring task is meant to solve.
+-   The unused  package remains in the backend dependencies.</analysis>
