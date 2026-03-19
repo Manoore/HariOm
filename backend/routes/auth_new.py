@@ -10,7 +10,7 @@ from typing import Optional
 from bson import ObjectId
 from pydantic import BaseModel
 
-from database import users_collection, priests_collection, astrologers_collection
+from database import users_collection, priests_collection, astrologers_collection, shops_collection
 from models import UserCreate, UserLogin, UserUpdate, UserRole
 from auth import get_password_hash, verify_password, create_access_token, get_current_user
 
@@ -293,6 +293,22 @@ async def firebase_sync(data: FirebaseSyncRequest):
                 "created_at": datetime.now(timezone.utc)
             }
             await astrologers_collection.insert_one(astrologer_profile)
+        
+        # If shop owner, create shop profile
+        if selected_role == UserRole.SHOP_OWNER:
+            shop_profile = {
+                "owner_id": str(result.inserted_id),
+                "owner_name": data.name,
+                "shop_name": f"{data.name}'s Shop",
+                "description": "",
+                "products": [],
+                "rating": 0.0,
+                "total_reviews": 0,
+                "is_verified": False,
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc)
+            }
+            await shops_collection.insert_one(shop_profile)
         
         return {
             "user": {
