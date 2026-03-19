@@ -16,6 +16,7 @@ class ProfileUpdateRequest(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
     dob: Optional[str] = None
+    date_of_birth: Optional[str] = None  # Accept both field names
     gotra: Optional[str] = None
     nakshatra: Optional[str] = None
     city: Optional[str] = None
@@ -35,6 +36,8 @@ async def update_profile(data: ProfileUpdateRequest, user: dict = Depends(get_cu
         update_data["phone"] = data.phone
     if data.dob is not None:
         update_data["dob"] = data.dob
+    if data.date_of_birth is not None:
+        update_data["date_of_birth"] = data.date_of_birth
     if data.gotra is not None:
         update_data["gotra"] = data.gotra
     if data.nakshatra is not None:
