@@ -717,7 +717,7 @@ export function CheckoutPage({ onBack, onComplete }) {
               </div>
               
               {/* Place Order Button */}
-              <div className="flex gap-4">
+              <div className="flex gap-4 mb-8">
                 <button
                   onClick={() => setStep(2)}
                   className="flex-1 py-4 border border-gray-200 rounded-xl font-medium hover:bg-gray-50"
@@ -743,6 +743,8 @@ export function CheckoutPage({ onBack, onComplete }) {
                   )}
                 </button>
               </div>
+              {/* Safe area for mobile bottom nav */}
+              <div className="h-20 lg:hidden"></div>
             </motion.div>
           )}
         </div>

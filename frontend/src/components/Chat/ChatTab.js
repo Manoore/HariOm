@@ -558,7 +558,7 @@ export default function ChatTab({ isDesktop }) {
       <Toaster position="top-center" richColors />
       
       {selectedRoom ? (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col">
+        <div className="fixed inset-0 bg-white z-[60] flex flex-col pb-16">
           <ChatRoom 
             room={selectedRoom} 
             onBack={() => setSelectedRoom(null)}
