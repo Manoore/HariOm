@@ -22,6 +22,7 @@ class ProfileUpdateRequest(BaseModel):
     pincode: Optional[str] = None
     address: Optional[str] = None
     profile_image: Optional[str] = None
+    profile_photo: Optional[str] = None  # Accept both field names
 
 @router.put("/profile")
 async def update_profile(data: ProfileUpdateRequest, user: dict = Depends(get_current_user)):
@@ -46,6 +47,8 @@ async def update_profile(data: ProfileUpdateRequest, user: dict = Depends(get_cu
         update_data["address"] = data.address
     if data.profile_image is not None:
         update_data["profile_image"] = data.profile_image
+    if data.profile_photo is not None:
+        update_data["profile_photo"] = data.profile_photo
     
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")

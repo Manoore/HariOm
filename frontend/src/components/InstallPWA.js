@@ -6,8 +6,18 @@ export default function InstallPWA() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Only show on mobile devices
+    const checkMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    setIsMobile(checkMobile);
+    
+    // Don't show on desktop
+    if (!checkMobile) {
+      return;
+    }
+
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
@@ -57,7 +67,7 @@ export default function InstallPWA() {
     localStorage.setItem('pwa_install_dismissed', Date.now().toString());
   };
 
-  if (isInstalled || !showPrompt) return null;
+  if (!isMobile || isInstalled || !showPrompt) return null;
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 animate-slide-up">
