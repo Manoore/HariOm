@@ -25,6 +25,9 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Clean install dependencies
         working-directory: frontend
         run: |
@@ -50,21 +53,23 @@ jobs:
         working-directory: frontend
         run: npm install @capacitor/cli @capacitor/core @capacitor/android
 
-      - name: Add Android platform
+      - name: Remove old android folder
         working-directory: frontend
-        run: npx cap add android || true
+        run: rm -rf android
+
+      - name: Add Android platform fresh
+        working-directory: frontend
+        run: npx cap add android
 
       - name: Sync Capacitor
         working-directory: frontend
         run: npx cap sync android
 
-      - name: Make gradlew executable
+      - name: Build APK with Gradle
         working-directory: frontend/android
-        run: chmod +x gradlew
-
-      - name: Build APK
-        working-directory: frontend/android
-        run: ./gradlew assembleDebug
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
