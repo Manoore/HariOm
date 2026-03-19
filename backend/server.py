@@ -5183,8 +5183,14 @@ async def websocket_chat(websocket: WebSocket, room_id: str):
 @app.get("/api/chat/rooms")
 async def get_chat_rooms(user: dict = Depends(get_current_user)):
     """Get all chat rooms for the current user"""
+    user_id = str(user["_id"])
+    
+    # Query for rooms where user is a participant (supports both old and new format)
     cursor = chat_rooms_collection.find({
-        "participants": str(user["_id"])
+        "$or": [
+            {"participants.user_id": user_id},  # New format: [{user_id, name}, ...]
+            {"participants": user_id}  # Old format: [user_id, ...]
+        ]
     }).sort("last_message_at", -1)
     
     # Chat window: 5 days after booking/order completion
@@ -5253,32 +5259,59 @@ async def get_chat_rooms(user: dict = Depends(get_current_user)):
             sort=[("created_at", -1)]
         )
         
-        # Get other participant details
-        other_id = [p for p in room["participants"] if p != str(user["_id"])][0]
-        other_details = room.get("participant_details", {}).get(other_id, {"name": "User", "role": "unknown"})
+        # Get other participant details (handle both old and new format)
+        participants = room.get("participants", [])
+        other_id = None
+        other_name = "User"
+        other_role = "unknown"
+        
+        for p in participants:
+            if isinstance(p, dict):
+                # New format: {"user_id": ..., "name": ...}
+                if p.get("user_id") != user_id:
+                    other_id = p.get("user_id")
+                    other_name = p.get("name", "User")
+                    break
+            else:
+                # Old format: just user_id string
+                if p != user_id:
+                    other_id = p
+                    other_details = room.get("participant_details", {}).get(other_id, {})
+                    other_name = other_details.get("name", "User")
+                    other_role = other_details.get("role", "unknown")
+                    break
+        
+        # Get role from user collection if not available
+        if other_id and other_role == "unknown":
+            other_user = await users_collection.find_one({"_id": ObjectId(other_id)})
+            if other_user:
+                other_role = other_user.get("role", "unknown")
+                if not other_name or other_name == "User":
+                    other_name = other_user.get("name", "User")
         
         rooms.append({
             "id": str(room["_id"]),
-            "type": room["type"],
-            "booking_id": room.get("booking_id"),
-            "order_id": room.get("order_id"),
+            "type": room.get("type", "booking"),
+            "reference_id": room.get("reference_id"),
+            "booking_id": room.get("booking_id") or room.get("reference_id") if room.get("type") == "booking" else None,
+            "order_id": room.get("order_id") or room.get("reference_id") if room.get("type") == "order" else None,
             "context": room.get("context", ""),
             "is_active": is_active,
             "chat_expired": chat_expired,
             "chat_expiry_reason": chat_expiry_reason,
             "other_participant": {
-                "id": other_id,
-                "name": other_details.get("name", "User"),
-                "role": other_details.get("role", "unknown")
+                "id": other_id or "",
+                "name": other_name,
+                "role": other_role
             },
-            "unread_count": room.get("unread_count", {}).get(str(user["_id"]), 0),
+            "unread_count": room.get("unread_count", {}).get(user_id, 0),
             "last_message": {
                 "content": last_message.get("content", "") if last_message else "",
                 "sender_id": last_message.get("sender_id", "") if last_message else "",
                 "created_at": last_message["created_at"].isoformat() if last_message else None
             } if last_message else None,
-            "created_at": room["created_at"].isoformat(),
-            "last_message_at": room.get("last_message_at", room["created_at"]).isoformat()
+            "created_at": room["created_at"].isoformat() if room.get("created_at") else None,
+            "last_message_at": room.get("last_message_at", room.get("created_at")).isoformat() if room.get("last_message_at") or room.get("created_at") else None
         })
     
     return {"rooms": rooms}
