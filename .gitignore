@@ -50,3 +50,7 @@ test_reports/
 # Misc
 *.bak
 .emergent/
+-e 
+# Environment files
+*.env
+*.env.*

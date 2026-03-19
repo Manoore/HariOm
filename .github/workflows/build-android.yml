@@ -2,10 +2,9 @@ name: Build Android APK
 
 on:
   workflow_dispatch:  # Manual trigger
-  push:
-    branches: [main]
-    paths:
-      - 'frontend/**'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -18,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -31,15 +30,30 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build web app
         working-directory: frontend
         run: npm run build
 
-      - name: Install Capacitor CLI
+      - name: Create Capacitor config
         working-directory: frontend
-        run: npm install @capacitor/cli @capacitor/core @capacitor/android
+        run: |
+          cat > capacitor.config.json << 'EOF'
+          {
+            "appId": "com.divineapp.app",
+            "appName": "Divine App",
+            "webDir": "build"
+          }
+          EOF
+
+      - name: Install Capacitor
+        working-directory: frontend
+        run: npm install @capacitor/cli @capacitor/core @capacitor/android --legacy-peer-deps
+
+      - name: Add Android platform
+        working-directory: frontend
+        run: npx cap add android || true
 
       - name: Sync Capacitor
         working-directory: frontend
@@ -51,7 +65,7 @@ jobs:
 
       - name: Build APK
         working-directory: frontend/android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
