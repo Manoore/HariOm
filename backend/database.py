@@ -63,6 +63,9 @@ testimonials_collection = db["testimonials"]
 # Puja Types Collection (Admin-managed dropdown values)
 puja_types_collection = db["puja_types"]
 
+# Math/Mutt Collection (Admin-managed dropdown values for priest affiliations)
+math_mutt_collection = db["math_mutt"]
+
 # Audio Library Collection (Admin-managed mantras and shlokas)
 audio_library_collection = db["audio_library"]
 

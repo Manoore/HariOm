@@ -4027,6 +4027,40 @@ function ClassesTab({ isDesktop }) {
     }
   };
 
+  const [viewingPriests, setViewingPriests] = useState(null);
+  const [interestedPriests, setInterestedPriests] = useState([]);
+  const [loadingPriests, setLoadingPriests] = useState(false);
+  const [acceptingPriest, setAcceptingPriest] = useState(null);
+
+  const viewInterestedPriests = async (request) => {
+    setViewingPriests(request);
+    setLoadingPriests(true);
+    try {
+      const res = await api.get(`/api/class-requests/${request.id}/interested-priests`);
+      setInterestedPriests(res.data.priests || []);
+    } catch (error) {
+      toast.error('Failed to load interested priests');
+    } finally {
+      setLoadingPriests(false);
+    }
+  };
+
+  const acceptPriest = async (requestId, priestId) => {
+    setAcceptingPriest(priestId);
+    try {
+      const res = await api.post(`/api/class-requests/${requestId}/accept/${priestId}`);
+      toast.success(res.data.message || 'Priest accepted! Class created.');
+      setViewingPriests(null);
+      setInterestedPriests([]);
+      fetchMyRequests();
+      fetchMyEnrollments();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to accept priest');
+    } finally {
+      setAcceptingPriest(null);
+    }
+  };
+
   const toggleDay = (day) => {
     setRequestForm(prev => ({
       ...prev,
@@ -4351,6 +4385,7 @@ function ClassesTab({ isDesktop }) {
           </div>
         ) : activeView === 'requests' ? (
           /* My Requests View */
+          <>
           <div className="space-y-4">
             {myRequests.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl">
@@ -4392,6 +4427,15 @@ function ClassesTab({ isDesktop }) {
                       }`}>
                         {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
                       </span>
+                      {req.status === 'open' && req.responses_count > 0 && (
+                        <button
+                          onClick={() => viewInterestedPriests(req)}
+                          className="text-xs bg-saffron text-white px-3 py-1.5 rounded-full hover:bg-orange-600 transition-colors"
+                          data-testid={`view-priests-${req.id}`}
+                        >
+                          View Priests
+                        </button>
+                      )}
                       {req.status === 'open' && (
                         <button
                           onClick={() => handleCancelRequest(req.id)}
@@ -4406,6 +4450,81 @@ function ClassesTab({ isDesktop }) {
               ))
             )}
           </div>
+
+          {/* Interested Priests Modal */}
+          {viewingPriests && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto"
+              >
+                <div className="p-4 border-b sticky top-0 bg-white flex items-center justify-between">
+                  <div>
+                    <h2 className="font-cinzel text-lg font-semibold text-maroon">Interested Priests</h2>
+                    <p className="text-sm text-gray-500">{viewingPriests.topic}</p>
+                  </div>
+                  <button onClick={() => { setViewingPriests(null); setInterestedPriests([]); }} className="p-2 hover:bg-gray-100 rounded-lg">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="p-4">
+                  {loadingPriests ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-saffron" />
+                    </div>
+                  ) : interestedPriests.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">No priests have shown interest yet</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {interestedPriests.map(priest => (
+                        <div key={priest.priest_id} className="border border-gray-200 rounded-xl p-4">
+                          <div className="flex items-start gap-4">
+                            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-saffron to-orange-400 flex items-center justify-center text-white text-xl font-semibold overflow-hidden">
+                              {priest.profile_photo ? (
+                                <img src={priest.profile_photo} alt={priest.name} className="w-full h-full object-cover" />
+                              ) : (
+                                priest.name?.charAt(0) || 'P'
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-gray-800">{priest.name}</h3>
+                              <p className="text-sm text-gray-500">{priest.experience_years} years experience</p>
+                              {priest.math_mutt && (
+                                <p className="text-xs text-purple-600 mt-1">{priest.math_mutt}</p>
+                              )}
+                              {priest.specializations?.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {priest.specializations.slice(0, 3).map((spec, i) => (
+                                    <span key={i} className="text-xs bg-orange-50 text-saffron px-2 py-0.5 rounded-full">{spec}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => acceptPriest(viewingPriests.id, priest.priest_id)}
+                              disabled={acceptingPriest === priest.priest_id}
+                              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 flex items-center gap-2 text-sm"
+                              data-testid={`accept-priest-${priest.priest_id}`}
+                            >
+                              {acceptingPriest === priest.priest_id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <CheckCircle className="w-4 h-4" />
+                              )}
+                              Accept
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+          </>
         ) : activeView === 'browse' ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {classes.length === 0 ? (

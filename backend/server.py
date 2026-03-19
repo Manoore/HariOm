@@ -24,7 +24,8 @@ from database import (
     deities_collection, mantras_collection, stotras_collection, daily_schedule_collection,
     product_reviews_collection, feedback_collection, testimonials_collection,
     puja_types_collection, service_reviews_collection, audio_library_collection,
-    stream_reminders_collection, user_notifications_collection, class_requests_collection
+    stream_reminders_collection, user_notifications_collection, class_requests_collection,
+    math_mutt_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -2235,6 +2236,132 @@ async def respond_to_class_request(request_id: str, user: dict = Depends(get_cur
     
     return {"message": "Response submitted successfully"}
 
+@app.post("/api/class-requests/{request_id}/accept/{priest_id}")
+async def accept_priest_for_class(request_id: str, priest_id: str, user: dict = Depends(get_current_user)):
+    """Devotee accepts a priest's interest - auto-creates a class"""
+    from database import priest_classes_collection
+    
+    # Get the class request
+    class_request = await class_requests_collection.find_one({"_id": ObjectId(request_id)})
+    if not class_request:
+        raise HTTPException(status_code=404, detail="Class request not found")
+    
+    # Verify the user is the one who created the request
+    if class_request["user_id"] != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Get priest info
+    priest_user = await users_collection.find_one({"_id": ObjectId(priest_id)})
+    if not priest_user:
+        raise HTTPException(status_code=404, detail="Priest not found")
+    
+    priest_profile = await priests_collection.find_one({"user_id": priest_id})
+    
+    # Create a new class automatically
+    new_class = {
+        "priest_id": str(priest_profile["_id"]) if priest_profile else priest_id,
+        "priest_name": priest_user.get("name", ""),
+        "title": class_request["topic"],
+        "description": class_request.get("description", f"Class requested by {class_request.get('user_name', 'a devotee')}"),
+        "class_type": "online",
+        "location_type": "online",
+        "temple_name": "",
+        "duration_minutes": 60 if class_request.get("duration_preference") == "1 hour" else 
+                          30 if "30" in class_request.get("duration_preference", "") else
+                          90 if "1.5" in class_request.get("duration_preference", "") else
+                          120 if "2" in class_request.get("duration_preference", "") else 60,
+        "is_free": False,
+        "price": class_request.get("budget_min", 500),
+        "max_students": 1 if class_request.get("meeting_type") == "one_on_one" else 20,
+        "available_slots": 1 if class_request.get("meeting_type") == "one_on_one" else 19,
+        "enrolled_count": 1,
+        "enrollments": [str(user["_id"])],  # Auto-enroll the devotee
+        "schedule": [],
+        "category": class_request.get("category", "General"),
+        "frequency": class_request.get("frequency", "weekly"),
+        "schedule_day": class_request.get("preferred_days", ["Monday"])[0] if class_request.get("preferred_days") else "Monday",
+        "schedule_time": "10:00",
+        "meeting_link": "",  # Priest will add this later
+        "is_active": True,
+        "created_from_request": True,
+        "original_request_id": request_id,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await priest_classes_collection.insert_one(new_class)
+    class_id = str(result.inserted_id)
+    
+    # Update the class request as matched
+    await class_requests_collection.update_one(
+        {"_id": ObjectId(request_id)},
+        {
+            "$set": {
+                "status": "matched",
+                "matched_priest_id": priest_id,
+                "matched_class_id": class_id,
+                "updated_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    # Notify the priest that they were accepted
+    await user_notifications_collection.insert_one({
+        "user_id": priest_id,
+        "type": "class_request_accepted",
+        "title": "Your interest was accepted!",
+        "message": f"{user.get('name', 'A devotee')} accepted you for '{class_request['topic']}'. A class has been created.",
+        "data": {"request_id": request_id, "class_id": class_id},
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # Notify the devotee
+    await user_notifications_collection.insert_one({
+        "user_id": str(user["_id"]),
+        "type": "class_created",
+        "title": "Class Created!",
+        "message": f"Your class '{class_request['topic']}' with {priest_user.get('name', 'the priest')} has been created. The priest will add the meeting link soon.",
+        "data": {"class_id": class_id},
+        "read": False,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    return {
+        "message": "Priest accepted! Class has been created.",
+        "class_id": class_id
+    }
+
+@app.get("/api/class-requests/{request_id}/interested-priests")
+async def get_interested_priests(request_id: str, user: dict = Depends(get_current_user)):
+    """Get list of priests who showed interest in a class request"""
+    class_request = await class_requests_collection.find_one({"_id": ObjectId(request_id)})
+    if not class_request:
+        raise HTTPException(status_code=404, detail="Class request not found")
+    
+    # Verify the user is the one who created the request
+    if class_request["user_id"] != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    responses = class_request.get("responses", [])
+    priests = []
+    
+    for resp in responses:
+        priest_user = await users_collection.find_one({"_id": ObjectId(resp["priest_id"])})
+        priest_profile = await priests_collection.find_one({"user_id": resp["priest_id"]})
+        
+        if priest_user:
+            priests.append({
+                "priest_id": resp["priest_id"],
+                "name": priest_user.get("name", ""),
+                "profile_photo": priest_profile.get("profile_photo") if priest_profile else None,
+                "experience_years": priest_profile.get("experience_years", 0) if priest_profile else 0,
+                "specializations": priest_profile.get("specializations", []) if priest_profile else [],
+                "math_mutt": priest_profile.get("math_mutt", "") if priest_profile else "",
+                "responded_at": resp.get("responded_at").isoformat() if resp.get("responded_at") else None
+            })
+    
+    return {"priests": priests}
+
 @app.delete("/api/class-requests/{request_id}")
 async def delete_class_request(request_id: str, user: dict = Depends(get_current_user)):
     """Devotee cancels their class request"""
@@ -2365,6 +2492,8 @@ async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]
             "base_price": 1100,
             "profile_photo": None,
             "temple_affiliation": "",  # Temple name if priest works at a temple
+            "math_mutt": "",  # Selected Math/Mutt from dropdown
+            "math_mutt_other": "",  # Custom Math/Mutt if "Other" selected
             "is_verified": False,
             "created_at": datetime.now(timezone.utc)
         }
@@ -2381,6 +2510,8 @@ async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]
         "base_price": priest.get("base_price", 1100),
         "profile_photo": priest.get("profile_photo"),
         "temple_affiliation": priest.get("temple_affiliation", ""),
+        "math_mutt": priest.get("math_mutt", ""),
+        "math_mutt_other": priest.get("math_mutt_other", ""),
         "is_verified": priest.get("is_verified", False),
         "address": priest.get("address", ""),
         "city": priest.get("city", ""),
@@ -2397,7 +2528,8 @@ async def update_priest_profile(request: Request, user: dict = Depends(require_r
     allowed_fields = [
         "bio", "specializations", "languages", "experience_years", 
         "work_locations", "service_areas", "base_price", "profile_photo",
-        "address", "city", "state", "pincode", "phone", "email", "temple_affiliation"
+        "address", "city", "state", "pincode", "phone", "email", "temple_affiliation",
+        "math_mutt", "math_mutt_other"
     ]
     
     for field in allowed_fields:
@@ -3851,6 +3983,122 @@ async def get_puja_types_public():
     sorted_categories = dict(sorted(categories.items()))
     
     return {"puja_types": puja_types, "categories": sorted_categories}
+
+# ===================== MATH/MUTT (PRIEST AFFILIATIONS) =====================
+DEFAULT_MATH_MUTTS = [
+    {"name": "Sringeri Sharada Peetham", "category": "Advaita"},
+    {"name": "Dwarka Sharada Peeth", "category": "Advaita"},
+    {"name": "Govardhan Math", "category": "Advaita"},
+    {"name": "Jyotir Math", "category": "Advaita"},
+    {"name": "Kanchi Kamakoti Peetham", "category": "Advaita"},
+    {"name": "Chinmaya Mission", "category": "Advaita"},
+    {"name": "Ahobila Mutt", "category": "Sri Vaishnavism"},
+    {"name": "Parakala Mutt", "category": "Sri Vaishnavism"},
+    {"name": "Srimad Andavan Ashramam", "category": "Sri Vaishnavism"},
+    {"name": "Srimad Poundarikapuram Andavan Ashramam", "category": "Sri Vaishnavism"},
+    {"name": "Vanamamalai Mutt", "category": "Sri Vaishnavism"},
+    {"name": "Yadugiri Yathiraja Mutt", "category": "Sri Vaishnavism"},
+    {"name": "Embar Jeeyar Mutt", "category": "Sri Vaishnavism"},
+    {"name": "Mantralayam Raghavendra Swamy Mutt", "category": "Dvaita"},
+    {"name": "Uttaradi Mutt", "category": "Dvaita"},
+    {"name": "Vyasaraja Mutt", "category": "Dvaita"},
+    {"name": "Pejavara Matha", "category": "Dvaita (Udupi)"},
+    {"name": "Palimaru Matha", "category": "Dvaita (Udupi)"},
+    {"name": "Admaru Matha", "category": "Dvaita (Udupi)"},
+    {"name": "Krishnapura Matha", "category": "Dvaita (Udupi)"},
+    {"name": "Puttige Matha", "category": "Dvaita (Udupi)"},
+    {"name": "Shirur Matha", "category": "Dvaita (Udupi)"},
+    {"name": "Sodhe Matha", "category": "Dvaita (Udupi)"},
+    {"name": "Kaniyoor Matha", "category": "Dvaita (Udupi)"},
+    {"name": "Udupi Sri Krishna Matha", "category": "Dvaita (Udupi)"},
+    {"name": "Gokarna Partagali Jeevottama Mutt", "category": "Dvaita"},
+    {"name": "Sripadaraja Matha", "category": "Dvaita"},
+    {"name": "Kanva Matha", "category": "Dvaita"},
+    {"name": "Baligaru Matha", "category": "Dvaita"},
+    {"name": "Kudli Matha", "category": "Dvaita"},
+    {"name": "Tambehalli Matha", "category": "Dvaita"},
+    {"name": "Kundapur Matha", "category": "Dvaita"},
+    {"name": "Sagarakatte Matha", "category": "Dvaita"},
+    {"name": "Nimbarka Peeth", "category": "Nimbarka"},
+    {"name": "Vallabhacharya Pushtimarg", "category": "Pushtimarg"},
+    {"name": "Dharmapuram Adheenam", "category": "Shaiva Siddhanta"},
+    {"name": "Thiruvaduthurai Adheenam", "category": "Shaiva Siddhanta"},
+    {"name": "Madurai Adheenam", "category": "Shaiva Siddhanta"},
+    {"name": "Thiruppanandal Adheenam", "category": "Shaiva Siddhanta"},
+    {"name": "Kashi Mutt", "category": "Smarta"},
+    {"name": "Suttur Mutt", "category": "Veerashaiva"},
+    {"name": "Siddaganga Mutt", "category": "Veerashaiva"},
+    {"name": "Gaudiya Math", "category": "Gaudiya Vaishnavism"},
+    {"name": "ISKCON", "category": "Gaudiya Vaishnavism"},
+    {"name": "Ramakrishna Math", "category": "Modern"},
+    {"name": "Art of Living Ashram", "category": "Modern"},
+    {"name": "Isha Foundation", "category": "Modern"},
+    {"name": "Mata Amritanandamayi Math", "category": "Modern"},
+    {"name": "Other", "category": "Other"}
+]
+
+@app.get("/api/math-mutt")
+async def get_math_mutt_public():
+    """Get all active Math/Mutt options (public endpoint for priest registration/profile)"""
+    # Seed default Math/Mutt if collection is empty
+    count = await math_mutt_collection.count_documents({})
+    if count == 0:
+        for mutt in DEFAULT_MATH_MUTTS:
+            mutt["is_active"] = True
+            mutt["created_at"] = datetime.now(timezone.utc)
+        await math_mutt_collection.insert_many(DEFAULT_MATH_MUTTS.copy())
+    
+    # Fetch only active entries
+    cursor = math_mutt_collection.find({"is_active": {"$ne": False}}).sort("name", 1)
+    math_mutts = []
+    categories = {}
+    
+    async for mutt in cursor:
+        mutt_item = {
+            "id": str(mutt["_id"]),
+            "name": mutt["name"],
+            "category": mutt.get("category", "Other")
+        }
+        math_mutts.append(mutt_item)
+        
+        # Group by category for dropdown
+        cat = mutt.get("category", "Other")
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(mutt_item)
+    
+    # Sort categories alphabetically
+    sorted_categories = dict(sorted(categories.items()))
+    
+    return {"math_mutts": math_mutts, "categories": sorted_categories}
+
+@app.post("/api/admin/math-mutt")
+async def add_math_mutt(request: Request, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Admin: Add a new Math/Mutt"""
+    data = await request.json()
+    mutt = {
+        "name": data.get("name"),
+        "category": data.get("category", "Other"),
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc)
+    }
+    result = await math_mutt_collection.insert_one(mutt)
+    return {"message": "Math/Mutt added", "id": str(result.inserted_id)}
+
+@app.put("/api/admin/math-mutt/{mutt_id}")
+async def update_math_mutt(mutt_id: str, request: Request, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Admin: Update a Math/Mutt"""
+    data = await request.json()
+    update_data = {k: v for k, v in data.items() if k in ["name", "category", "is_active"]}
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    await math_mutt_collection.update_one({"_id": ObjectId(mutt_id)}, {"$set": update_data})
+    return {"message": "Math/Mutt updated"}
+
+@app.delete("/api/admin/math-mutt/{mutt_id}")
+async def delete_math_mutt(mutt_id: str, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Admin: Delete a Math/Mutt"""
+    await math_mutt_collection.delete_one({"_id": ObjectId(mutt_id)})
+    return {"message": "Math/Mutt deleted"}
 
 @app.get("/api/priests/{priest_id}/reviews")
 async def get_priest_reviews_public(priest_id: str, limit: int = 20, skip: int = 0):

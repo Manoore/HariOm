@@ -1127,6 +1127,8 @@ function ProfileTab({ profile, user, onRefresh }) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
   const [specializations, setSpecializations] = useState([]);
+  const [mathMuttOptions, setMathMuttOptions] = useState([]);
+  const [mathMuttCategories, setMathMuttCategories] = useState({});
   const [formData, setFormData] = useState({
     bio: profile?.bio || '',
     experience_years: profile?.experience_years || 5,
@@ -1137,7 +1139,9 @@ function ProfileTab({ profile, user, onRefresh }) {
     phone: user?.phone || '',
     email: user?.email || '',
     profile_photo: profile?.profile_photo || '',
-    temple_affiliation: profile?.temple_affiliation || ''
+    temple_affiliation: profile?.temple_affiliation || '',
+    math_mutt: profile?.math_mutt || '',
+    math_mutt_other: profile?.math_mutt_other || ''
   });
   const [newLocation, setNewLocation] = useState('');
 
@@ -1154,6 +1158,20 @@ function ProfileTab({ profile, user, onRefresh }) {
       }
     };
     fetchSpecializations();
+  }, []);
+
+  // Fetch Math/Mutt options from API
+  useEffect(() => {
+    const fetchMathMutt = async () => {
+      try {
+        const res = await api.get('/api/math-mutt');
+        setMathMuttOptions(res.data.math_mutts || []);
+        setMathMuttCategories(res.data.categories || {});
+      } catch (error) {
+        console.error('Failed to load Math/Mutt options:', error);
+      }
+    };
+    fetchMathMutt();
   }, []);
 
   const handlePhotoUpload = async (e) => {
@@ -1469,6 +1487,52 @@ function ProfileTab({ profile, user, onRefresh }) {
         ) : (
           <p className="text-gray-600 text-sm md:text-base">
             {formData.temple_affiliation || 'No temple affiliation added'}
+          </p>
+        )}
+      </div>
+
+      {/* Math/Mutt Affiliation */}
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+        <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+          <Award className="w-5 h-5 text-saffron" />
+          Math/Mutt Affiliation
+        </h3>
+        <p className="text-xs text-gray-500 mb-3">Select the Math/Mutt you belong to (if applicable)</p>
+        
+        {editing ? (
+          <div className="space-y-3">
+            <select
+              value={formData.math_mutt}
+              onChange={(e) => setFormData({ ...formData, math_mutt: e.target.value, math_mutt_other: e.target.value === 'Other' ? formData.math_mutt_other : '' })}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+              data-testid="priest-math-mutt"
+            >
+              <option value="">-- Select Math/Mutt --</option>
+              {Object.entries(mathMuttCategories).map(([category, mutts]) => (
+                <optgroup key={category} label={category}>
+                  {mutts.map(mutt => (
+                    <option key={mutt.id} value={mutt.name}>{mutt.name}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            
+            {formData.math_mutt === 'Other' && (
+              <input
+                type="text"
+                value={formData.math_mutt_other}
+                onChange={(e) => setFormData({ ...formData, math_mutt_other: e.target.value })}
+                placeholder="Enter your Math/Mutt name"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                data-testid="priest-math-mutt-other"
+              />
+            )}
+          </div>
+        ) : (
+          <p className="text-gray-600 text-sm md:text-base">
+            {formData.math_mutt === 'Other' && formData.math_mutt_other 
+              ? formData.math_mutt_other 
+              : formData.math_mutt || 'No Math/Mutt affiliation added'}
           </p>
         )}
       </div>
