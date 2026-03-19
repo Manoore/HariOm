@@ -50,7 +50,17 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 ## Backlog / Future Tasks 📋
 
 ### Completed ✅
-1. ~~**Music Library Admin Management**~~ ✅ COMPLETED (March 17, 2026)
+1. ~~**Meeting Type & Location Type Options (P0)**~~ ✅ COMPLETED (March 19, 2026)
+   - **Devotee Class Requests**: Added "Meeting Type" option (One-on-One / Group)
+   - **Priest Services**: Added "Location Type" option (Online / Home Visit / Temple)
+   - **Priest Classes**: Added "Location Type" option (Online / Home Visit / Temple)
+   - **Temple Name**: Shows conditionally when location type is "Temple"
+   - **Priest Profile**: Added "Temple Affiliation" field for priests to specify their temple
+   - All backend APIs updated to handle new fields
+   - All frontend UI updated with nice card-style selectors
+   - 100% test pass rate (14/14 backend tests, all UI features verified)
+
+2. ~~**Music Library Admin Management**~~ ✅ COMPLETED (March 17, 2026)
    - Audio Library with Play/Preview functionality
    - Now Playing bar with playback controls
    - Admin CRUD for audio items
