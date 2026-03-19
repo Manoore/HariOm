@@ -3931,7 +3931,8 @@ function ClassesTab({ isDesktop }) {
     budget_max: 2000,
     language: 'Hindi',
     duration_preference: '1 hour',
-    meeting_type: 'one_on_one'  // one_on_one or group
+    meeting_type: 'one_on_one',  // one_on_one or group
+    frequency: 'weekly'  // once, weekly, biweekly, monthly
   });
 
   const categories = ['Vedic Studies', 'Sanskrit', 'Puja Rituals', 'Astrology', 'Yoga & Meditation', 'Scriptures', 'Mantras', 'Other'];
@@ -3942,6 +3943,12 @@ function ClassesTab({ isDesktop }) {
   const meetingTypes = [
     { value: 'one_on_one', label: 'One-on-One (Private)', description: 'Personal session with the teacher' },
     { value: 'group', label: 'Group Class', description: 'Learn with other students' }
+  ];
+  const frequencies = [
+    { value: 'once', label: 'One Time', description: 'Single session' },
+    { value: 'weekly', label: 'Weekly', description: 'Once a week' },
+    { value: 'biweekly', label: 'Biweekly', description: 'Every two weeks' },
+    { value: 'monthly', label: 'Monthly', description: 'Once a month' }
   ];
 
   useEffect(() => {
@@ -3999,7 +4006,8 @@ function ClassesTab({ isDesktop }) {
         budget_max: 2000,
         language: 'Hindi',
         duration_preference: '1 hour',
-        meeting_type: 'one_on_one'
+        meeting_type: 'one_on_one',
+        frequency: 'weekly'
       });
       fetchMyRequests();
     } catch (error) {
@@ -4291,6 +4299,29 @@ function ClassesTab({ isDesktop }) {
                   </div>
                 </div>
 
+                {/* Frequency */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Class Frequency</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {frequencies.map(freq => (
+                      <button
+                        key={freq.value}
+                        type="button"
+                        onClick={() => setRequestForm({...requestForm, frequency: freq.value})}
+                        className={`p-3 rounded-xl border-2 text-center transition-all ${
+                          requestForm.frequency === freq.value
+                            ? 'border-saffron bg-orange-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        data-testid={`frequency-${freq.value}`}
+                      >
+                        <div className="font-medium text-sm text-gray-800">{freq.label}</div>
+                        <div className="text-xs text-gray-500">{freq.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Submit Button */}
                 <button
                   onClick={handleSubmitRequest}
@@ -4343,6 +4374,9 @@ function ClassesTab({ isDesktop }) {
                         </span>
                         <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full">
                           {req.meeting_type === 'group' ? 'Group Class' : 'One-on-One'}
+                        </span>
+                        <span className="text-xs bg-cyan-50 text-cyan-600 px-2 py-1 rounded-full">
+                          {req.frequency === 'once' ? 'One Time' : req.frequency === 'biweekly' ? 'Biweekly' : req.frequency === 'monthly' ? 'Monthly' : 'Weekly'}
                         </span>
                         {req.responses_count > 0 && (
                           <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">

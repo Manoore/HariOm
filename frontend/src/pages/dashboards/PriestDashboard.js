@@ -1665,6 +1665,9 @@ function ClassesTab({ classes, onRefresh }) {
                       <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full">
                         {req.meeting_type === 'group' ? 'Group Class' : 'One-on-One'}
                       </span>
+                      <span className="text-xs bg-cyan-50 text-cyan-600 px-2 py-1 rounded-full">
+                        {req.frequency === 'once' ? 'One Time' : req.frequency === 'biweekly' ? 'Biweekly' : req.frequency === 'monthly' ? 'Monthly' : 'Weekly'}
+                      </span>
                     </div>
                     {req.description && (
                       <p className="text-sm text-gray-600 mt-2">{req.description}</p>

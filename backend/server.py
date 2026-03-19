@@ -2106,6 +2106,7 @@ class ClassRequestCreate(BaseModel):
     language: Optional[str] = "Hindi"
     duration_preference: Optional[str] = "1 hour"  # e.g., "30 mins", "1 hour", "2 hours"
     meeting_type: Optional[str] = "one_on_one"  # one_on_one, group
+    frequency: Optional[str] = "weekly"  # once, weekly, biweekly, monthly
 
 @app.post("/api/class-requests")
 async def create_class_request(request: ClassRequestCreate, user: dict = Depends(get_current_user)):
@@ -2124,6 +2125,7 @@ async def create_class_request(request: ClassRequestCreate, user: dict = Depends
         "language": request.language,
         "duration_preference": request.duration_preference,
         "meeting_type": request.meeting_type,  # one_on_one or group
+        "frequency": request.frequency,  # once, weekly, biweekly, monthly
         "status": "open",  # open, matched, closed
         "responses": [],  # Priests who responded
         "matched_class_id": None,
@@ -2159,6 +2161,7 @@ async def get_my_class_requests(user: dict = Depends(get_current_user)):
             "language": req.get("language", "Hindi"),
             "duration_preference": req.get("duration_preference", "1 hour"),
             "meeting_type": req.get("meeting_type", "one_on_one"),
+            "frequency": req.get("frequency", "weekly"),
             "status": req.get("status", "open"),
             "responses_count": len(req.get("responses", [])),
             "matched_class_id": req.get("matched_class_id"),
@@ -2188,6 +2191,7 @@ async def get_all_class_requests(user: dict = Depends(get_current_user)):
             "language": req.get("language", "Hindi"),
             "duration_preference": req.get("duration_preference", "1 hour"),
             "meeting_type": req.get("meeting_type", "one_on_one"),
+            "frequency": req.get("frequency", "weekly"),
             "responses_count": len(req.get("responses", [])),
             "created_at": safe_isoformat(req.get("created_at"))
         })
