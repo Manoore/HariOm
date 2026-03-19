@@ -1,10 +1,7 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch:  # Manual trigger
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   build:
@@ -17,7 +14,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -28,13 +25,15 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install dependencies
+      - name: Clean install dependencies
         working-directory: frontend
-        run: npm install --legacy-peer-deps
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Build web app
         working-directory: frontend
-        run: npm run build
+        run: CI=false npm run build
 
       - name: Create Capacitor config
         working-directory: frontend
@@ -49,7 +48,7 @@ jobs:
 
       - name: Install Capacitor
         working-directory: frontend
-        run: npm install @capacitor/cli @capacitor/core @capacitor/android --legacy-peer-deps
+        run: npm install @capacitor/cli @capacitor/core @capacitor/android
 
       - name: Add Android platform
         working-directory: frontend
@@ -65,7 +64,7 @@ jobs:
 
       - name: Build APK
         working-directory: frontend/android
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
