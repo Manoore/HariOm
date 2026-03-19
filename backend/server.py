@@ -4160,8 +4160,16 @@ async def get_pending_approvals(user: dict = Depends(require_role([UserRole.ADMI
         "shops": []
     }
     
+    # Query for pending OR missing approval_status (legacy records)
+    pending_query = {
+        "$or": [
+            {"approval_status": "pending"},
+            {"approval_status": {"$exists": False}, "is_verified": {"$ne": True}}
+        ]
+    }
+    
     # Get pending priests
-    cursor = priests_collection.find({"approval_status": "pending"})
+    cursor = priests_collection.find(pending_query)
     async for priest in cursor:
         priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
         pending["priests"].append({
@@ -4176,7 +4184,7 @@ async def get_pending_approvals(user: dict = Depends(require_role([UserRole.ADMI
         })
     
     # Get pending astrologers
-    cursor = astrologers_collection.find({"approval_status": "pending"})
+    cursor = astrologers_collection.find(pending_query)
     async for astro in cursor:
         astro_user = await users_collection.find_one({"_id": ObjectId(astro["user_id"])})
         pending["astrologers"].append({
@@ -4191,7 +4199,13 @@ async def get_pending_approvals(user: dict = Depends(require_role([UserRole.ADMI
         })
     
     # Get pending shops
-    cursor = shops_collection.find({"approval_status": "pending"})
+    shop_pending_query = {
+        "$or": [
+            {"approval_status": "pending"},
+            {"approval_status": {"$exists": False}, "is_verified": {"$ne": True}}
+        ]
+    }
+    cursor = shops_collection.find(shop_pending_query)
     async for shop in cursor:
         shop_user = await users_collection.find_one({"_id": ObjectId(shop["owner_id"])})
         pending["shops"].append({
@@ -4199,7 +4213,7 @@ async def get_pending_approvals(user: dict = Depends(require_role([UserRole.ADMI
             "owner_id": shop["owner_id"],
             "owner_name": shop_user.get("name", "Unknown") if shop_user else "Unknown",
             "email": shop_user.get("email", "") if shop_user else "",
-            "shop_name": shop.get("shop_name", ""),
+            "shop_name": shop.get("shop_name", "") or shop.get("name", ""),
             "created_at": shop.get("created_at").isoformat() if shop.get("created_at") else None
         })
     

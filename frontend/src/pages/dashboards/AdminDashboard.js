@@ -225,11 +225,11 @@ function OverviewTab({ stats, users, isDesktop, loading }) {
       {/* Pending Verifications */}
       {stats?.pending_verifications > 0 && (
         <div className="mb-6">
-          <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-2xl p-4 flex items-center gap-3">
-            <AlertCircle className="w-6 h-6 text-yellow-400" />
+          <div className="bg-amber-100 border-2 border-amber-400 rounded-2xl p-4 flex items-center gap-3">
+            <AlertCircle className="w-6 h-6 text-amber-600" />
             <div>
-              <p className="text-yellow-200 font-semibold">{stats.pending_verifications} pending verifications</p>
-              <p className="text-yellow-200/70 text-sm">Review priest applications</p>
+              <p className="text-amber-800 font-semibold">{stats.pending_verifications} pending verifications</p>
+              <p className="text-amber-700 text-sm">Review priest applications in the Approvals tab</p>
             </div>
           </div>
         </div>
