@@ -202,47 +202,96 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
 // Bottom Navigation Component for Mobile
 function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
   const { cartCount } = useCart();
+  const [showMore, setShowMore] = useState(false);
   
-  const tabs = [
+  const mainTabs = [
     { id: 'home', icon: Home, label: 'Home' },
-    { id: 'messages', icon: MessageSquare, label: 'Chat', badge: unreadMessages },
-    { id: 'feed', icon: Rss, label: 'Feed' },
+    { id: 'priests', icon: Star, label: 'Priests' },
     { id: 'shop', icon: ShoppingBag, label: 'Shop' },
+    { id: 'more', icon: Menu, label: 'More', isMore: true },
     { id: 'profile', icon: User, label: 'Profile' },
   ];
 
+  const moreTabs = [
+    { id: 'consultation', icon: Video, label: 'Call Astrologer' },
+    { id: 'classes', icon: BookOpen, label: 'Vedic Classes' },
+    { id: 'live', icon: Play, label: 'Live Events' },
+    { id: 'mantras', icon: Music, label: 'Mantras & Shlokas' },
+    { id: 'astrology', icon: Sun, label: 'Astrology' },
+    { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
+    { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
+    { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages },
+  ];
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-orange-100 px-2 py-2 z-50 lg:hidden">
+    <>
+      {/* More Menu Overlay */}
+      {showMore && (
+        <div className="fixed inset-0 z-40" onClick={() => setShowMore(false)}>
+          <div className="absolute bottom-20 left-4 right-4 bg-white rounded-2xl shadow-2xl border border-orange-100 p-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-cinzel font-semibold text-maroon">More Services</h3>
+              <button onClick={() => setShowMore(false)} className="p-1">
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              {moreTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setShowMore(false);
+                  }}
+                  className="flex flex-col items-center p-2 rounded-xl hover:bg-orange-50 transition-colors"
+                >
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-gradient-to-br from-saffron/10 to-gold/10 rounded-xl flex items-center justify-center mb-1">
+                      <tab.icon className="w-6 h-6 text-saffron" />
+                    </div>
+                    {tab.badge > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                        {tab.badge > 9 ? '9+' : tab.badge}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-600 text-center leading-tight">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Navigation Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-orange-100 px-2 py-2 z-50 lg:hidden">
       <div className="flex justify-around items-center">
-        {tabs.map((tab) => (
+        {mainTabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => tab.isMore ? setShowMore(!showMore) : setActiveTab(tab.id)}
             className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all ${
-              activeTab === tab.id ? 'text-saffron' : 'text-gray-400'
+              tab.isMore && showMore ? 'text-saffron' : 
+              activeTab === tab.id && !tab.isMore ? 'text-saffron' : 'text-gray-400'
             }`}
             data-testid={`nav-${tab.id}`}
           >
             <div className="relative">
-              <tab.icon className={`w-6 h-6 ${activeTab === tab.id ? 'stroke-[2.5]' : ''}`} />
+              <tab.icon className={`w-6 h-6 ${(activeTab === tab.id || (tab.isMore && showMore)) ? 'stroke-[2.5]' : ''}`} />
               {tab.id === 'shop' && cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-saffron text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
-              {tab.id === 'messages' && tab.badge > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-                  {tab.badge > 9 ? '9+' : tab.badge}
-                </span>
-              )}
             </div>
-            <span className={`text-xs mt-1 ${activeTab === tab.id ? 'font-semibold' : ''}`}>
+            <span className={`text-xs mt-1 ${(activeTab === tab.id || (tab.isMore && showMore)) ? 'font-semibold' : ''}`}>
               {tab.label}
             </span>
           </button>
         ))}
       </div>
     </div>
+    </>
   );
 }
 
