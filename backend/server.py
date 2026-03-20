@@ -473,7 +473,7 @@ async def place_details(place_id: str):
 # ===================== TRANSLATION API =====================
 @app.post("/api/translate")
 async def translate_text(request: Request):
-    """Translate text using Gemini AI for accurate Sanskrit translations"""
+    """Translate text using FREE translation APIs"""
     try:
         body = await request.json()
         text = body.get("text", "")
@@ -482,82 +482,35 @@ async def translate_text(request: Request):
         if not text:
             return {"status": "error", "message": "No text provided"}
         
-        # Language names mapping
-        lang_names = {
-            "en": "English",
-            "hi": "Hindi",
-            "te": "Telugu",
-            "kn": "Kannada",
-            "ta": "Tamil",
-            "ml": "Malayalam",
-            "mr": "Marathi",
-            "gu": "Gujarati",
-            "bn": "Bengali",
-            "sa": "Sanskrit"
-        }
-        
-        target_name = lang_names.get(target_lang, "English")
-        
-        # Try Gemini AI translation (best for Sanskrit)
-        emergent_key = os.environ.get("EMERGENT_LLM_KEY")
-        if emergent_key:
-            try:
-                from emergentintegrations.llm.chat import LlmChat, UserMessage
+        # Try Google Translate free endpoint (no API key needed)
+        try:
+            import urllib.parse
+            async with httpx.AsyncClient() as client:
+                encoded_text = urllib.parse.quote(text[:1500])
+                url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={target_lang}&dt=t&q={encoded_text}"
                 
-                chat = LlmChat(
-                    api_key=emergent_key,
-                    session_id=f"translate-{target_lang}-{hash(text[:50])}",
-                    system_message=f"""You are an expert translator specializing in Sanskrit scriptures and Hindu religious texts. 
-                    Translate the given Sanskrit/Hindi text to {target_name} accurately while preserving the spiritual meaning.
-                    Only provide the translation, no explanations or notes."""
-                ).with_model("gemini", "gemini-2.5-flash")
-                
-                user_message = UserMessage(
-                    text=f"Translate this to {target_name}:\n\n{text[:1500]}"
-                )
-                
-                translated = await chat.send_message(user_message)
-                
-                if translated:
-                    return {
-                        "status": "ok",
-                        "original": text,
-                        "translated": translated.strip(),
-                        "target_lang": target_lang,
-                        "provider": "gemini"
-                    }
-            except Exception as e:
-                print(f"Gemini translation failed: {e}")
-        
-        # Fallback to Google Translate if Gemini fails
-        if GOOGLE_PLACES_API_KEY:
-            try:
-                async with httpx.AsyncClient() as client:
-                    response = await client.post(
-                        "https://translation.googleapis.com/language/translate/v2",
-                        params={"key": GOOGLE_PLACES_API_KEY},
-                        json={
-                            "q": text,
-                            "target": target_lang,
-                            "format": "text"
-                        },
-                        timeout=10.0
-                    )
+                response = await client.get(url, timeout=10.0)
+                if response.status_code == 200:
                     data = response.json()
-                    
-                    if "data" in data and "translations" in data["data"]:
-                        translated = data["data"]["translations"][0]["translatedText"]
-                        return {
-                            "status": "ok",
-                            "original": text,
-                            "translated": translated,
-                            "target_lang": target_lang,
-                            "provider": "google"
-                        }
-            except Exception as e:
-                print(f"Google Translate failed: {e}")
+                    # Google returns nested arrays: [[["translated text","original text",...]]]
+                    if data and isinstance(data, list) and data[0]:
+                        translated_parts = []
+                        for part in data[0]:
+                            if part and part[0]:
+                                translated_parts.append(part[0])
+                        translated = "".join(translated_parts)
+                        if translated:
+                            return {
+                                "status": "ok",
+                                "original": text,
+                                "translated": translated,
+                                "target_lang": target_lang,
+                                "provider": "google-free"
+                            }
+        except Exception as e:
+            print(f"Google free translate failed: {e}")
         
-        # Last fallback to MyMemory API
+        # Fallback: MyMemory API (FREE - 5000 words/day)
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -571,20 +524,22 @@ async def translate_text(request: Request):
                 data = response.json()
                 
                 if data.get("responseStatus") == 200:
-                    translated = data.get("responseData", {}).get("translatedText", text)
-                    return {
-                        "status": "ok",
-                        "original": text,
-                        "translated": translated,
-                        "target_lang": target_lang,
-                        "provider": "mymemory"
-                    }
+                    translated = data.get("responseData", {}).get("translatedText", "")
+                    if translated:
+                        return {
+                            "status": "ok",
+                            "original": text,
+                            "translated": translated,
+                            "target_lang": target_lang,
+                            "provider": "mymemory"
+                        }
         except Exception as e:
             print(f"MyMemory translate failed: {e}")
         
-        return {"status": "error", "message": "Translation services unavailable"}
+        return {"status": "error", "message": "Translation services unavailable. Please try again."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Translation error: {str(e)}")
+        print(f"Translation error: {e}")
+        return {"status": "error", "message": "Translation failed"}
 
 # ===================== INTERNET ARCHIVE SHLOKAS/MANTRAS =====================
 
