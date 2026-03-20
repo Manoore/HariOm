@@ -3,23 +3,84 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Video, VideoOff, Mic, MicOff, Phone, PhoneOff, 
   Maximize2, Minimize2, Settings, Loader2, Wallet,
-  Clock, Star, MessageSquare, Gift, AlertTriangle
+  Clock, Star, MessageSquare, Gift, AlertTriangle,
+  Monitor, MonitorOff
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { RechargeModal, LowBalanceWarning, GracePeriodWarning } from '../Wallet/WalletComponents';
 
-// Video Call Interface
-export function VideoCallScreen({ 
-  callData, 
-  onEndCall, 
-  astrologerInfo 
-}) {
-  const { user, token } = useAuth();
+// 100ms SDK imports
+import {
+  useHMSActions,
+  useHMSStore,
+  selectIsConnectedToRoom,
+  selectLocalPeer,
+  selectPeers,
+  selectIsLocalAudioEnabled,
+  selectIsLocalVideoEnabled,
+  selectIsLocalScreenShared,
+  selectPeerScreenSharing,
+  selectVideoTrackByPeerID,
+  selectScreenShareByPeerID,
+  HMSRoomProvider,
+  useVideo,
+  useAVToggle,
+} from '@100mslive/react-sdk';
+
+// Video Tile Component for rendering peer video
+function VideoTile({ peer, isLocal = false, isScreenShare = false }) {
+  // Get both track types unconditionally (React hooks rules)
+  const videoTrack = useHMSStore(selectVideoTrackByPeerID(peer?.id));
+  const screenTrack = useHMSStore(selectScreenShareByPeerID(peer?.id));
+  
+  // Select the appropriate track based on isScreenShare prop
+  const trackId = isScreenShare ? screenTrack?.id : videoTrack?.id;
+  
+  const { videoRef } = useVideo({ trackId });
+
+  return (
+    <div className={`relative w-full h-full bg-gray-800 rounded-lg overflow-hidden ${isLocal ? 'border-2 border-blue-500' : ''}`}>
+      <video
+        ref={videoRef}
+        autoPlay
+        muted={isLocal}
+        playsInline
+        className={`w-full h-full object-cover ${!trackId ? 'hidden' : ''}`}
+      />
+      {!trackId && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
+          <div className="w-20 h-20 rounded-full bg-purple-500 flex items-center justify-center">
+            <span className="text-2xl font-bold text-white">
+              {peer?.name?.charAt(0)?.toUpperCase() || '?'}
+            </span>
+          </div>
+        </div>
+      )}
+      <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-sm">
+        {peer?.name} {isLocal ? '(You)' : ''} {isScreenShare ? '- Screen' : ''}
+      </div>
+    </div>
+  );
+}
+
+// Main Video Call Content Component (inside HMS context)
+function VideoCallContent({ callData, onEndCall, astrologerInfo }) {
+  const { user } = useAuth();
+  const token = localStorage.getItem('divine_token');
+  const hmsActions = useHMSActions();
+  const isConnected = useHMSStore(selectIsConnectedToRoom);
+  const localPeer = useHMSStore(selectLocalPeer);
+  const peers = useHMSStore(selectPeers);
+  const isLocalAudioEnabled = useHMSStore(selectIsLocalAudioEnabled);
+  const isLocalVideoEnabled = useHMSStore(selectIsLocalVideoEnabled);
+  const isLocalScreenShared = useHMSStore(selectIsLocalScreenShared);
+  const screenSharingPeer = useHMSStore(selectPeerScreenSharing);
+  
+  const { toggleAudio, toggleVideo } = useAVToggle();
+
   const [callState, setCallState] = useState({
-    isVideoOn: true,
-    isAudioOn: true,
     duration: 0,
     balance: callData.user_balance,
     freeMinutes: callData.free_minutes,
@@ -29,9 +90,8 @@ export function VideoCallScreen({
   const [showLowBalanceWarning, setShowLowBalanceWarning] = useState(false);
   const [gracePeriod, setGracePeriod] = useState(null);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [connectionError, setConnectionError] = useState(null);
   
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
   const wsRef = useRef(null);
   const timerRef = useRef(null);
 
@@ -44,6 +104,35 @@ export function VideoCallScreen({
       minutesLeft: freeMinutes + balanceMinutes
     }));
   }, [callState.balance, callState.freeMinutes, callData.rate_per_minute]);
+
+  // Join 100ms room
+  useEffect(() => {
+    const joinRoom = async () => {
+      try {
+        setIsConnecting(true);
+        setConnectionError(null);
+        
+        await hmsActions.join({
+          userName: user?.name || 'User',
+          authToken: callData.user_token,
+        });
+        
+        setIsConnecting(false);
+      } catch (error) {
+        console.error('Failed to join room:', error);
+        setConnectionError(error.message || 'Failed to connect');
+        setIsConnecting(false);
+      }
+    };
+
+    if (callData.user_token) {
+      joinRoom();
+    }
+
+    return () => {
+      hmsActions.leave();
+    };
+  }, [callData.user_token, hmsActions, user?.name]);
 
   // Setup WebSocket for billing updates
   useEffect(() => {
@@ -72,7 +161,6 @@ export function VideoCallScreen({
 
       if (data.type === 'grace_period') {
         setGracePeriod(data.seconds_remaining);
-        // Countdown
         const countdown = setInterval(() => {
           setGracePeriod(prev => {
             if (prev <= 1) {
@@ -117,14 +205,6 @@ export function VideoCallScreen({
     };
   }, []);
 
-  // Simulate connection (in real app, use 100ms SDK)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsConnecting(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -133,11 +213,21 @@ export function VideoCallScreen({
 
   const handleEndCall = async () => {
     try {
+      await hmsActions.leave();
       await api.post(`/api/consultation/${callData.call_id}/end`, { reason: 'user_ended' });
       onEndCall('user_ended');
     } catch (error) {
       console.error('Failed to end call:', error);
       onEndCall('error');
+    }
+  };
+
+  const handleToggleScreenShare = async () => {
+    try {
+      await hmsActions.setScreenShareEnabled(!isLocalScreenShared);
+    } catch (error) {
+      console.error('Screen share error:', error);
+      toast.error('Failed to share screen');
     }
   };
 
@@ -153,13 +243,34 @@ export function VideoCallScreen({
     toast.success('Balance added! Call continues.');
   };
 
+  // Get remote peer (the other participant)
+  const remotePeers = peers.filter(peer => !peer.isLocal);
+
   if (isConnecting) {
     return (
       <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center">
         <div className="text-center text-white">
           <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Connecting to {astrologerInfo?.name}...</h2>
-          <p className="text-gray-400">Please wait while we establish the connection</p>
+          <p className="text-gray-400">Please allow camera and microphone access</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (connectionError) {
+    return (
+      <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center">
+        <div className="text-center text-white max-w-md p-6">
+          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Connection Failed</h2>
+          <p className="text-gray-400 mb-4">{connectionError}</p>
+          <button
+            onClick={() => onEndCall('connection_error')}
+            className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full"
+          >
+            Go Back
+          </button>
         </div>
       </div>
     );
@@ -211,6 +322,7 @@ export function VideoCallScreen({
               <span>{astrologerInfo?.avg_rating || '4.8'}</span>
               <span>•</span>
               <span>₹{callData.rate_per_minute}/min</span>
+              {isConnected && <span className="text-green-400">• Connected</span>}
             </div>
           </div>
         </div>
@@ -253,26 +365,37 @@ export function VideoCallScreen({
       </div>
 
       {/* Video Area */}
-      <div className="flex-1 relative bg-gray-900">
-        {/* Remote Video (Astrologer) */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-full h-full max-w-4xl mx-auto bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
-            {/* Placeholder for 100ms video */}
-            <div className="text-center text-gray-500">
-              <Video className="w-16 h-16 mx-auto mb-2 opacity-50" />
-              <p>Astrologer's video will appear here</p>
-              <p className="text-sm mt-2 text-gray-600">
-                (100ms SDK integration required)
-              </p>
+      <div className="flex-1 relative bg-gray-900 p-4">
+        {/* Screen Share takes full screen if active */}
+        {screenSharingPeer ? (
+          <div className="absolute inset-4">
+            <VideoTile peer={screenSharingPeer} isScreenShare={true} />
+            {/* Remote peer in small window when screen sharing */}
+            <div className="absolute bottom-4 right-4 w-48 h-36">
+              {remotePeers[0] && <VideoTile peer={remotePeers[0]} />}
             </div>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Remote Video (Astrologer) - Full screen */}
+            <div className="absolute inset-4 bottom-52 md:bottom-4 md:right-56">
+              {remotePeers.length > 0 ? (
+                <VideoTile peer={remotePeers[0]} />
+              ) : (
+                <div className="w-full h-full bg-gray-800 rounded-lg flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <Loader2 className="w-12 h-12 mx-auto mb-2 animate-spin" />
+                    <p>Waiting for {astrologerInfo?.name || 'Astrologer'} to join...</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         {/* Local Video (User) - Picture in Picture */}
-        <div className="absolute bottom-4 right-4 w-32 h-44 md:w-48 md:h-64 bg-gray-700 rounded-lg overflow-hidden shadow-xl border-2 border-gray-600">
-          <div className="w-full h-full flex items-center justify-center text-gray-500">
-            <Video className="w-8 h-8 opacity-50" />
-          </div>
+        <div className="absolute bottom-4 right-4 w-32 h-44 md:w-48 md:h-64 shadow-xl">
+          {localPeer && <VideoTile peer={localPeer} isLocal={true} />}
         </div>
       </div>
 
@@ -281,24 +404,35 @@ export function VideoCallScreen({
         <div className="flex items-center justify-center gap-4">
           {/* Mic Toggle */}
           <button
-            onClick={() => setCallState(prev => ({ ...prev, isAudioOn: !prev.isAudioOn }))}
+            onClick={toggleAudio}
             className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
-              callState.isAudioOn ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'
+              isLocalAudioEnabled ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'
             }`}
             data-testid="toggle-mic"
           >
-            {callState.isAudioOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+            {isLocalAudioEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
           </button>
 
           {/* Video Toggle */}
           <button
-            onClick={() => setCallState(prev => ({ ...prev, isVideoOn: !prev.isVideoOn }))}
+            onClick={toggleVideo}
             className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
-              callState.isVideoOn ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'
+              isLocalVideoEnabled ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'
             }`}
             data-testid="toggle-video"
           >
-            {callState.isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+            {isLocalVideoEnabled ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+          </button>
+
+          {/* Screen Share Toggle */}
+          <button
+            onClick={handleToggleScreenShare}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+              isLocalScreenShared ? 'bg-blue-500 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'
+            }`}
+            data-testid="toggle-screen-share"
+          >
+            {isLocalScreenShared ? <MonitorOff className="w-6 h-6" /> : <Monitor className="w-6 h-6" />}
           </button>
 
           {/* End Call */}
@@ -319,6 +453,19 @@ export function VideoCallScreen({
         </div>
       </div>
     </div>
+  );
+}
+
+// Wrapped Video Call Screen with HMS Provider
+export function VideoCallScreen({ callData, onEndCall, astrologerInfo }) {
+  return (
+    <HMSRoomProvider>
+      <VideoCallContent 
+        callData={callData} 
+        onEndCall={onEndCall} 
+        astrologerInfo={astrologerInfo} 
+      />
+    </HMSRoomProvider>
   );
 }
 
@@ -496,8 +643,7 @@ export function AstrologerList({ onSelectAstrologer }) {
 
   const loadAstrologers = async () => {
     try {
-      // Use the correct endpoint
-      const res = await api.get('/api/astrologers');
+      const res = await api.get('/api/astrologers/available');
       setAstrologers(res.data.astrologers || res.data || []);
     } catch (error) {
       console.error('Error loading astrologers:', error);
