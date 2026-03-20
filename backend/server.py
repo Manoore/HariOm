@@ -3161,19 +3161,23 @@ async def get_astrologers(skip: int = 0, limit: int = 20):
     cursor = astrologers_collection.find(query).skip(skip).limit(limit)
     astrologers = []
     async for astro in cursor:
-        user = await users_collection.find_one({"_id": ObjectId(astro["user_id"])})
-        astrologers.append({
-            "id": str(astro["_id"]),
-            "user_id": astro["user_id"],
-            "user_name": user["name"] if user else "Unknown",
-            "specializations": astro["specializations"],
-            "experience_years": astro["experience_years"],
-            "languages": astro["languages"],
-            "consultation_fee": astro["consultation_fee"],
-            "bio": astro["bio"],
-            "rating": astro.get("rating", 0),
-            "is_verified": astro.get("is_verified", False)
-        })
+        try:
+            user = await users_collection.find_one({"_id": ObjectId(astro["user_id"])})
+            astrologers.append({
+                "id": str(astro["_id"]),
+                "user_id": astro["user_id"],
+                "user_name": user["name"] if user else "Unknown",
+                "specializations": astro.get("specializations", []),
+                "experience_years": astro.get("experience_years", 0),
+                "languages": astro.get("languages", []),
+                "consultation_fee": astro.get("consultation_fee", 0),
+                "bio": astro.get("bio", ""),
+                "rating": astro.get("rating", 0),
+                "is_verified": astro.get("is_verified", False)
+            })
+        except Exception as e:
+            print(f"Error processing astrologer {astro.get('_id')}: {e}")
+            continue
     return {"astrologers": astrologers}
 
 # ===================== FESTIVAL & TEMPLE ROUTES =====================
