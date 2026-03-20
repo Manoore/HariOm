@@ -83,6 +83,9 @@ daily_schedule_collection = devotional_db["daily_schedule"]
 scriptures_collection = devotional_db["scriptures"]
 scripture_verses_collection = devotional_db["scripture_verses"]
 
+# Video Library Collection (Devotional YouTube videos)
+video_library_collection = devotional_db["video_library"]
+
 async def init_db():
     """Initialize database indexes"""
     await users_collection.create_index("email", unique=True)

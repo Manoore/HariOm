@@ -26,7 +26,7 @@ from database import (
     puja_types_collection, service_reviews_collection, audio_library_collection,
     stream_reminders_collection, user_notifications_collection, class_requests_collection,
     math_mutt_collection,
-    scriptures_collection, scripture_verses_collection
+    scriptures_collection, scripture_verses_collection, video_library_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -843,6 +843,172 @@ async def get_archive_metadata(identifier: str):
     except Exception as e:
         print(f"Archive metadata error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get metadata: {str(e)}")
+
+# ===================== VIDEO LIBRARY (Devotional YouTube) =====================
+
+# Curated devotional YouTube channels and playlists
+DEVOTIONAL_VIDEO_LIBRARY = {
+    "bhajans": [
+        {"video_id": "UOafgz-cEAE", "title": "Hanuman Chalisa", "artist": "Hariharan", "duration": "9:31", "thumbnail": "https://img.youtube.com/vi/UOafgz-cEAE/mqdefault.jpg"},
+        {"video_id": "AETFvQonfV8", "title": "Shiv Tandav Stotram", "artist": "Shankar Mahadevan", "duration": "11:28", "thumbnail": "https://img.youtube.com/vi/AETFvQonfV8/mqdefault.jpg"},
+        {"video_id": "DW3RLguH2bs", "title": "Gayatri Mantra 108 Times", "artist": "Suresh Wadkar", "duration": "54:00", "thumbnail": "https://img.youtube.com/vi/DW3RLguH2bs/mqdefault.jpg"},
+        {"video_id": "abqjrKLb8Ls", "title": "Om Namah Shivaya", "artist": "Anuradha Paudwal", "duration": "1:02:11", "thumbnail": "https://img.youtube.com/vi/abqjrKLb8Ls/mqdefault.jpg"},
+        {"video_id": "pTv5CS7IZUM", "title": "Vishnu Sahasranamam", "artist": "M.S. Subbulakshmi", "duration": "29:40", "thumbnail": "https://img.youtube.com/vi/pTv5CS7IZUM/mqdefault.jpg"},
+    ],
+    "aarti": [
+        {"video_id": "UT5wNDzfw-4", "title": "Om Jai Jagdish Hare", "artist": "Anuradha Paudwal", "duration": "7:32", "thumbnail": "https://img.youtube.com/vi/UT5wNDzfw-4/mqdefault.jpg"},
+        {"video_id": "DjG2pCN_Peg", "title": "Ganesh Aarti - Jai Ganesh Deva", "artist": "Anuradha Paudwal", "duration": "5:42", "thumbnail": "https://img.youtube.com/vi/DjG2pCN_Peg/mqdefault.jpg"},
+        {"video_id": "3IA8x_EPWHM", "title": "Lakshmi Aarti - Om Jai Laxmi Mata", "artist": "Anuradha Paudwal", "duration": "6:08", "thumbnail": "https://img.youtube.com/vi/3IA8x_EPWHM/mqdefault.jpg"},
+        {"video_id": "tKXcBYQTjto", "title": "Hanuman Aarti - Aarti Keeje Hanuman", "artist": "Hariharan", "duration": "6:15", "thumbnail": "https://img.youtube.com/vi/tKXcBYQTjto/mqdefault.jpg"},
+        {"video_id": "PQES-vavDnE", "title": "Shiv Aarti - Om Jai Shiv Omkara", "artist": "Anuradha Paudwal", "duration": "8:03", "thumbnail": "https://img.youtube.com/vi/PQES-vavDnE/mqdefault.jpg"},
+    ],
+    "mantras": [
+        {"video_id": "S46i81rRFgE", "title": "Mahamrityunjaya Mantra 108 Times", "artist": "Shankar Sahney", "duration": "35:16", "thumbnail": "https://img.youtube.com/vi/S46i81rRFgE/mqdefault.jpg"},
+        {"video_id": "0AF1Qb5lBQY", "title": "Om Gan Ganpataye Namo Namah", "artist": "Suresh Wadkar", "duration": "31:10", "thumbnail": "https://img.youtube.com/vi/0AF1Qb5lBQY/mqdefault.jpg"},
+        {"video_id": "tSYkLdep9Jg", "title": "Navgraha Mantra", "artist": "Uma Mohan", "duration": "5:23", "thumbnail": "https://img.youtube.com/vi/tSYkLdep9Jg/mqdefault.jpg"},
+        {"video_id": "C_XFWU6YDjA", "title": "Durga Mantra", "artist": "Anuradha Paudwal", "duration": "1:06:48", "thumbnail": "https://img.youtube.com/vi/C_XFWU6YDjA/mqdefault.jpg"},
+        {"video_id": "1_wkCL3V_6I", "title": "Lakshmi Mantra for Wealth", "artist": "Uma Mohan", "duration": "32:15", "thumbnail": "https://img.youtube.com/vi/1_wkCL3V_6I/mqdefault.jpg"},
+    ],
+    "kirtans": [
+        {"video_id": "WN8N2lSDAdc", "title": "Hare Krishna Mahamantra", "artist": "ISKCON", "duration": "1:23:55", "thumbnail": "https://img.youtube.com/vi/WN8N2lSDAdc/mqdefault.jpg"},
+        {"video_id": "pyvkC9y8EXw", "title": "Achyutam Keshavam", "artist": "Art of Living", "duration": "8:12", "thumbnail": "https://img.youtube.com/vi/pyvkC9y8EXw/mqdefault.jpg"},
+        {"video_id": "M6iW7KmKrts", "title": "Radhe Krishna Kirtan", "artist": "Jagjit Singh", "duration": "1:07:39", "thumbnail": "https://img.youtube.com/vi/M6iW7KmKrts/mqdefault.jpg"},
+        {"video_id": "4bDyS3R9SQU", "title": "Govind Bolo Hari Gopal Bolo", "artist": "Jagjit Singh", "duration": "7:33", "thumbnail": "https://img.youtube.com/vi/4bDyS3R9SQU/mqdefault.jpg"},
+    ],
+    "spiritual_talks": [
+        {"video_id": "hYZiXHXWQV0", "title": "Bhagavad Gita Chapter 1 - Introduction", "artist": "Swami Mukundananda", "duration": "52:18", "thumbnail": "https://img.youtube.com/vi/hYZiXHXWQV0/mqdefault.jpg"},
+        {"video_id": "xlQ5hCsNSMw", "title": "Power of Meditation", "artist": "Sadhguru", "duration": "21:47", "thumbnail": "https://img.youtube.com/vi/xlQ5hCsNSMw/mqdefault.jpg"},
+        {"video_id": "LJMcP2pPiio", "title": "Art of Living Sudarshan Kriya", "artist": "Sri Sri Ravi Shankar", "duration": "26:15", "thumbnail": "https://img.youtube.com/vi/LJMcP2pPiio/mqdefault.jpg"},
+    ],
+    "chalisas": [
+        {"video_id": "AETFvQonfV8", "title": "Shiv Tandav Stotram", "artist": "Shankar Mahadevan", "duration": "11:28", "thumbnail": "https://img.youtube.com/vi/AETFvQonfV8/mqdefault.jpg"},
+        {"video_id": "qNi6T8P0F9k", "title": "Durga Chalisa", "artist": "Anuradha Paudwal", "duration": "11:33", "thumbnail": "https://img.youtube.com/vi/qNi6T8P0F9k/mqdefault.jpg"},
+        {"video_id": "YOaajC8WMIE", "title": "Ganesh Chalisa", "artist": "Anuradha Paudwal", "duration": "9:33", "thumbnail": "https://img.youtube.com/vi/YOaajC8WMIE/mqdefault.jpg"},
+        {"video_id": "QY-LGj8V9F8", "title": "Lakshmi Chalisa", "artist": "Anuradha Paudwal", "duration": "10:05", "thumbnail": "https://img.youtube.com/vi/QY-LGj8V9F8/mqdefault.jpg"},
+        {"video_id": "R6NHh5Y0aMs", "title": "Saraswati Chalisa", "artist": "Anuradha Paudwal", "duration": "9:48", "thumbnail": "https://img.youtube.com/vi/R6NHh5Y0aMs/mqdefault.jpg"},
+    ]
+}
+
+@app.get("/api/video-library")
+async def get_video_library():
+    """Get all devotional videos organized by category"""
+    try:
+        # Check if we have videos in database
+        count = await video_library_collection.count_documents({"is_active": True})
+        
+        if count == 0:
+            # Seed from default library
+            for category, videos in DEVOTIONAL_VIDEO_LIBRARY.items():
+                for video in videos:
+                    doc = {
+                        "video_id": video["video_id"],
+                        "title": video["title"],
+                        "artist": video.get("artist", "Unknown"),
+                        "duration": video.get("duration", ""),
+                        "thumbnail": video.get("thumbnail", f"https://img.youtube.com/vi/{video['video_id']}/mqdefault.jpg"),
+                        "category": category,
+                        "is_active": True,
+                        "created_at": datetime.now(timezone.utc)
+                    }
+                    # Check if already exists
+                    existing = await video_library_collection.find_one({"video_id": video["video_id"]})
+                    if not existing:
+                        await video_library_collection.insert_one(doc)
+        
+        # Fetch from database
+        cursor = video_library_collection.find({"is_active": True}).sort([("category", 1), ("title", 1)])
+        videos = await cursor.to_list(length=200)
+        
+        # Organize by category
+        library = {}
+        for video in videos:
+            category = video.get("category", "other")
+            if category not in library:
+                library[category] = []
+            library[category].append({
+                "video_id": video["video_id"],
+                "title": video["title"],
+                "artist": video.get("artist", "Unknown"),
+                "duration": video.get("duration", ""),
+                "thumbnail": video.get("thumbnail", f"https://img.youtube.com/vi/{video['video_id']}/mqdefault.jpg"),
+                "category": category
+            })
+        
+        return {"status": "ok", "data": library}
+    except Exception as e:
+        print(f"Error fetching video library: {e}")
+        # Return default library on error
+        return {"status": "ok", "data": DEVOTIONAL_VIDEO_LIBRARY}
+
+@app.get("/api/video-library/categories")
+async def get_video_categories():
+    """Get video library categories with counts"""
+    try:
+        pipeline = [
+            {"$match": {"is_active": True}},
+            {"$group": {"_id": "$category", "count": {"$sum": 1}}},
+            {"$sort": {"_id": 1}}
+        ]
+        cursor = video_library_collection.aggregate(pipeline)
+        categories = []
+        async for doc in cursor:
+            categories.append({
+                "category": doc["_id"],
+                "count": doc["count"],
+                "label": doc["_id"].replace("_", " ").title()
+            })
+        
+        if not categories:
+            # Return default categories
+            categories = [
+                {"category": "bhajans", "count": 5, "label": "Bhajans"},
+                {"category": "aarti", "count": 5, "label": "Aarti"},
+                {"category": "mantras", "count": 5, "label": "Mantras"},
+                {"category": "kirtans", "count": 4, "label": "Kirtans"},
+                {"category": "spiritual_talks", "count": 3, "label": "Spiritual Talks"},
+                {"category": "chalisas", "count": 5, "label": "Chalisas"}
+            ]
+        
+        return {"status": "ok", "data": categories}
+    except Exception as e:
+        print(f"Error fetching categories: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/video-library/add")
+async def add_video_to_library(request: Request):
+    """Admin: Add a new video to the library"""
+    try:
+        body = await request.json()
+        video_id = body.get("video_id")
+        title = body.get("title")
+        category = body.get("category", "bhajans")
+        artist = body.get("artist", "Unknown")
+        
+        if not video_id or not title:
+            raise HTTPException(status_code=400, detail="video_id and title are required")
+        
+        # Check if already exists
+        existing = await video_library_collection.find_one({"video_id": video_id})
+        if existing:
+            raise HTTPException(status_code=400, detail="Video already exists")
+        
+        doc = {
+            "video_id": video_id,
+            "title": title,
+            "artist": artist,
+            "category": category,
+            "thumbnail": f"https://img.youtube.com/vi/{video_id}/mqdefault.jpg",
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        await video_library_collection.insert_one(doc)
+        return {"status": "ok", "message": "Video added successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error adding video: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ===================== PANCHANG & FESTIVAL CALENDAR =====================
 import swisseph as swe

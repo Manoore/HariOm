@@ -6,7 +6,7 @@ import {
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
   CheckCircle, ArrowRight, ArrowLeft, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
   Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet, Edit, Globe, Check,
-  Mail, Phone, UserRoundCheck
+  Mail, Phone, UserRoundCheck, Flame, ScrollText
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -1469,6 +1469,7 @@ function MantrasTab({ isDesktop }) {
     { id: 'deities', name: 'By Deity', icon: Star },
     { id: 'all', name: 'All Mantras', icon: BookOpen },
     { id: 'audio', name: 'Audio Library', icon: Music },
+    { id: 'video', name: 'Video Library', icon: Play },
   ];
 
   if (loading) {
@@ -1768,6 +1769,10 @@ function MantrasTab({ isDesktop }) {
       {/* Audio Library Section - Internet Archive */}
       {activeSection === 'audio' && (
         <AudioLibrarySection isDesktop={isDesktop} />
+      )}
+      
+      {activeSection === 'video' && (
+        <VideoLibrarySection isDesktop={isDesktop} />
       )}
     </div>
   );
@@ -2267,6 +2272,185 @@ function AudioLibrarySection({ isDesktop }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// Video Library Section - Devotional YouTube Videos
+function VideoLibrarySection({ isDesktop }) {
+  const [library, setLibrary] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [activeCategory, setActiveCategory] = useState('bhajans');
+
+  const categoryLabels = {
+    bhajans: { name: 'Bhajans', icon: Music, color: 'from-orange-500 to-red-500' },
+    aarti: { name: 'Aarti', icon: Flame, color: 'from-yellow-500 to-orange-500' },
+    mantras: { name: 'Mantras', icon: BookOpen, color: 'from-purple-500 to-pink-500' },
+    kirtans: { name: 'Kirtans', icon: Music, color: 'from-green-500 to-teal-500' },
+    spiritual_talks: { name: 'Spiritual Talks', icon: MessageSquare, color: 'from-blue-500 to-indigo-500' },
+    chalisas: { name: 'Chalisas', icon: ScrollText, color: 'from-saffron to-gold' },
+  };
+
+  useEffect(() => {
+    fetchLibrary();
+  }, []);
+
+  const fetchLibrary = async () => {
+    try {
+      const res = await api.get('/api/video-library');
+      setLibrary(res.data.data || {});
+      // Set first available category as active
+      const categories = Object.keys(res.data.data || {});
+      if (categories.length > 0 && !categories.includes(activeCategory)) {
+        setActiveCategory(categories[0]);
+      }
+    } catch (error) {
+      console.error('Failed to load video library:', error);
+      toast.error('Failed to load video library');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const categories = Object.keys(library);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Loader2 className="w-8 h-8 text-saffron animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl flex items-center justify-center">
+          <Play className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h2 className="font-cinzel font-semibold text-lg text-maroon">Devotional Videos</h2>
+          <p className="text-xs text-gray-500">Curated bhajans, aartis & spiritual content</p>
+        </div>
+      </div>
+
+      {/* Category Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        {categories.map((cat) => {
+          const catInfo = categoryLabels[cat] || { name: cat, icon: Play, color: 'from-gray-500 to-gray-600' };
+          const IconComponent = catInfo.icon;
+          return (
+            <button
+              key={cat}
+              onClick={() => {
+                setActiveCategory(cat);
+                setSelectedVideo(null);
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                activeCategory === cat
+                  ? `bg-gradient-to-r ${catInfo.color} text-white`
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              data-testid={`video-cat-${cat}`}
+            >
+              <IconComponent className="w-4 h-4" />
+              <span className="text-sm font-medium">{catInfo.name}</span>
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                activeCategory === cat ? 'bg-white/20' : 'bg-gray-200'
+              }`}>
+                {library[cat]?.length || 0}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Video Player */}
+      {selectedVideo && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-black rounded-xl overflow-hidden"
+        >
+          <div className="relative pt-[56.25%]">
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src={`https://www.youtube.com/embed/${selectedVideo.video_id}?autoplay=1&rel=0`}
+              title={selectedVideo.title}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+          <div className="p-4 bg-gradient-to-r from-gray-900 to-gray-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-white">{selectedVideo.title}</h3>
+                <p className="text-sm text-gray-400">{selectedVideo.artist}</p>
+              </div>
+              <button
+                onClick={() => setSelectedVideo(null)}
+                className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-all"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Video Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {library[activeCategory]?.map((video) => (
+          <motion.button
+            key={video.video_id}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setSelectedVideo(video)}
+            className={`bg-white rounded-xl overflow-hidden shadow-sm border transition-all text-left ${
+              selectedVideo?.video_id === video.video_id
+                ? 'border-saffron ring-2 ring-saffron/20'
+                : 'border-gray-100 hover:border-saffron/50'
+            }`}
+            data-testid={`video-${video.video_id}`}
+          >
+            {/* Thumbnail */}
+            <div className="relative">
+              <img
+                src={video.thumbnail || `https://img.youtube.com/vi/${video.video_id}/mqdefault.jpg`}
+                alt={video.title}
+                className="w-full aspect-video object-cover"
+              />
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center">
+                  <Play className="w-6 h-6 text-white ml-1" fill="white" />
+                </div>
+              </div>
+              {video.duration && (
+                <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-0.5 rounded">
+                  {video.duration}
+                </span>
+              )}
+            </div>
+            
+            {/* Info */}
+            <div className="p-3">
+              <h4 className="font-medium text-gray-800 text-sm line-clamp-2">{video.title}</h4>
+              <p className="text-xs text-gray-500 mt-1">{video.artist}</p>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {(!library[activeCategory] || library[activeCategory].length === 0) && (
+        <div className="text-center py-10">
+          <Play className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500">No videos in this category yet</p>
+        </div>
+      )}
     </div>
   );
 }
