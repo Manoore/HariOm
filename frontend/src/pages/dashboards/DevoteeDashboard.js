@@ -2034,18 +2034,6 @@ function AllMantrasSection({ isDesktop, selectedLanguage, languages, translation
                     )}
                   </div>
                 )}
-                
-                {mantra.source_url && (
-                  <a 
-                    href={mantra.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs text-saffron hover:underline mt-2 inline-block"
-                  >
-                    View source on GitHub
-                  </a>
-                )}
               </motion.div>
             )}
             
