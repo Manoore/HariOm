@@ -44,7 +44,8 @@ export function AuthProvider({ children }) {
         const result = await checkGoogleRedirectResult();
         if (result && result.user) {
           console.log('Google redirect sign-in detected:', result.user.email);
-          // The onAuthStateChanged will handle the rest
+          // Reset the flag to allow processing the redirect user
+          hasProcessedInitialState.current = false;
         }
       } catch (error) {
         console.error('Error checking redirect result:', error);
@@ -56,9 +57,9 @@ export function AuthProvider({ children }) {
     const unsubscribe = onFirebaseAuthStateChanged(async (fbUser) => {
       if (!isMounted || !authListenerActive.current) return;
       
-      // Only process the first auth state change
-      if (hasProcessedInitialState.current) {
-        console.log('Already processed initial state, ignoring subsequent changes');
+      // Skip if already processed AND no firebase user change
+      if (hasProcessedInitialState.current && !fbUser) {
+        console.log('Already processed initial state, ignoring null state');
         return;
       }
       
