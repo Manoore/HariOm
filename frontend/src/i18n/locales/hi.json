@@ -395,6 +395,9 @@
     "loadMore": "और श्लोक लोड करें",
     "endOfSection": "खंड समाप्त",
     "verseOfDay": "आज का श्लोक",
-    "refresh": "रिफ्रेश"
+    "refresh": "रिफ्रेश",
+    "translate": "अनुवाद करें",
+    "translating": "अनुवाद हो रहा है...",
+    "translateNow": "अनुवाद करें"
   }
 }

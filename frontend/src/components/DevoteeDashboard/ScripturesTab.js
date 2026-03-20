@@ -2,10 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, ChevronRight, ChevronLeft, Search, Loader2, 
-  Sparkles, ArrowLeft, BookMarked, ScrollText, Flame, Crown, Sword
+  Sparkles, ArrowLeft, BookMarked, ScrollText, Flame, Crown, Sword,
+  Languages, Globe
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useTranslation } from 'react-i18next';
+
+// Language options for translation
+const LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'hi', name: 'Hindi' },
+  { code: 'ta', name: 'Tamil' },
+  { code: 'te', name: 'Telugu' },
+  { code: 'kn', name: 'Kannada' },
+  { code: 'ml', name: 'Malayalam' },
+  { code: 'mr', name: 'Marathi' },
+  { code: 'gu', name: 'Gujarati' },
+  { code: 'bn', name: 'Bengali' },
+];
 
 // Scripture Icon Mapping
 const scriptureIcons = {
@@ -28,6 +42,156 @@ const scriptureColors = {
   'yajurveda': 'from-yellow-500 to-amber-600',
   'ramcharitmanas': 'from-sky-500 to-blue-600'
 };
+
+// Verse Card with Translation
+function VerseCard({ verse, index, t }) {
+  const [showTranslate, setShowTranslate] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translation, setTranslation] = useState(null);
+  const [selectedLang, setSelectedLang] = useState('en');
+
+  const handleTranslate = async () => {
+    if (!verse.text || translating) return;
+    
+    try {
+      setTranslating(true);
+      const response = await api.post('/api/translate', {
+        text: verse.text.substring(0, 2000), // Limit text length
+        target_language: selectedLang
+      });
+      
+      if (response.data.translated_text) {
+        setTranslation(response.data.translated_text);
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+      setTranslation('Translation failed. Please try again.');
+    } finally {
+      setTranslating(false);
+    }
+  };
+
+  return (
+    <motion.div
+      key={`${verse.verse_num}-${index}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.02 }}
+      className="bg-white rounded-xl p-5 shadow-sm border border-orange-100"
+    >
+      {/* Verse Number */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-white bg-saffron px-2 py-1 rounded-full">
+            {verse.sarga_num && `Sarga ${verse.sarga_num}, `}
+            {verse.chapter_num && `Ch ${verse.chapter_num}, `}
+            {verse.sukta_num && `Sukta ${verse.sukta_num}`}
+            {verse.verse_num > 0 && (verse.sarga_num || verse.chapter_num ? ` Verse ${verse.verse_num}` : `Verse ${verse.verse_num}`)}
+          </span>
+          {verse.verse_type && (
+            <span className="text-xs text-gray-500">{verse.verse_type}</span>
+          )}
+        </div>
+        
+        {/* Translate Button */}
+        <button
+          onClick={() => setShowTranslate(!showTranslate)}
+          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
+          data-testid={`translate-btn-${index}`}
+        >
+          <Languages className="w-4 h-4" />
+          {t('scriptures.translate', 'Translate')}
+        </button>
+      </div>
+
+      {/* Sanskrit Text */}
+      <div className="text-gray-800 text-lg leading-relaxed whitespace-pre-wrap font-sanskrit">
+        {verse.text}
+      </div>
+
+      {/* Translation Panel */}
+      {showTranslate && (
+        <motion.div 
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <Globe className="w-4 h-4 text-blue-600" />
+            <select
+              value={selectedLang}
+              onChange={(e) => {
+                setSelectedLang(e.target.value);
+                setTranslation(null);
+              }}
+              className="text-sm border border-blue-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              data-testid={`lang-select-${index}`}
+            >
+              {LANGUAGES.map(lang => (
+                <option key={lang.code} value={lang.code}>{lang.name}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleTranslate}
+              disabled={translating}
+              className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              data-testid={`translate-action-${index}`}
+            >
+              {translating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('scriptures.translating', 'Translating...')}
+                </>
+              ) : (
+                t('scriptures.translateNow', 'Translate')
+              )}
+            </button>
+          </div>
+          
+          {translation && (
+            <div className="mt-3 p-3 bg-white rounded-lg border border-blue-100">
+              <p className="text-sm text-gray-700 leading-relaxed">{translation}</p>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Commentaries (if available - for Gita) */}
+      {verse.commentaries && Object.keys(verse.commentaries).length > 0 && (
+        <details className="mt-4">
+          <summary className="text-sm text-saffron cursor-pointer hover:text-saffron/80 font-medium">
+            {t('scriptures.viewCommentary', 'View Commentary')} ({Object.keys(verse.commentaries).length})
+          </summary>
+          <div className="mt-3 space-y-3 pl-4 border-l-2 border-orange-100">
+            {Object.entries(verse.commentaries).slice(0, 2).map(([author, commentary]) => (
+              <div key={author} className="text-sm">
+                <p className="font-medium text-gray-700 mb-1">{author}:</p>
+                <p className="text-gray-600 leading-relaxed line-clamp-4">{commentary}</p>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+
+      {/* Translations (if available - for Gita) */}
+      {verse.translations && Object.keys(verse.translations).length > 0 && (
+        <details className="mt-3">
+          <summary className="text-sm text-blue-600 cursor-pointer hover:text-blue-500 font-medium">
+            {t('scriptures.viewTranslation', 'View Translation')} ({Object.keys(verse.translations).length})
+          </summary>
+          <div className="mt-3 space-y-3 pl-4 border-l-2 border-blue-100">
+            {Object.entries(verse.translations).slice(0, 2).map(([lang, translationText]) => (
+              <div key={lang} className="text-sm">
+                <p className="font-medium text-gray-700 mb-1">{lang}:</p>
+                <p className="text-gray-600 leading-relaxed line-clamp-4">{translationText}</p>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </motion.div>
+  );
+}
 
 // Scripture Card Component
 function ScriptureCard({ scripture, onClick }) {
@@ -286,65 +450,7 @@ function VerseReader({ scripture, section, onBack }) {
       <div className="space-y-4">
         <AnimatePresence>
           {verses.map((verse, index) => (
-            <motion.div
-              key={`${verse.verse_num}-${index}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.02 }}
-              className="bg-white rounded-xl p-5 shadow-sm border border-orange-100"
-            >
-              {/* Verse Number */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-medium text-white bg-saffron px-2 py-1 rounded-full">
-                  {verse.sarga_num && `Sarga ${verse.sarga_num}, `}
-                  {verse.chapter_num && `Ch ${verse.chapter_num}, `}
-                  {verse.sukta_num && `Sukta ${verse.sukta_num}`}
-                  {verse.verse_num > 0 && (verse.sarga_num || verse.chapter_num ? ` Verse ${verse.verse_num}` : `Verse ${verse.verse_num}`)}
-                </span>
-                {verse.verse_type && (
-                  <span className="text-xs text-gray-500">{verse.verse_type}</span>
-                )}
-              </div>
-
-              {/* Sanskrit Text */}
-              <div className="text-gray-800 text-lg leading-relaxed whitespace-pre-wrap font-sanskrit">
-                {verse.text}
-              </div>
-
-              {/* Commentaries (if available - for Gita) */}
-              {verse.commentaries && Object.keys(verse.commentaries).length > 0 && (
-                <details className="mt-4">
-                  <summary className="text-sm text-saffron cursor-pointer hover:text-saffron/80 font-medium">
-                    {t('scriptures.viewCommentary', 'View Commentary')} ({Object.keys(verse.commentaries).length})
-                  </summary>
-                  <div className="mt-3 space-y-3 pl-4 border-l-2 border-orange-100">
-                    {Object.entries(verse.commentaries).slice(0, 2).map(([author, commentary]) => (
-                      <div key={author} className="text-sm">
-                        <p className="font-medium text-gray-700 mb-1">{author}:</p>
-                        <p className="text-gray-600 leading-relaxed line-clamp-4">{commentary}</p>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
-
-              {/* Translations (if available - for Gita) */}
-              {verse.translations && Object.keys(verse.translations).length > 0 && (
-                <details className="mt-3">
-                  <summary className="text-sm text-blue-600 cursor-pointer hover:text-blue-500 font-medium">
-                    {t('scriptures.viewTranslation', 'View Translation')} ({Object.keys(verse.translations).length})
-                  </summary>
-                  <div className="mt-3 space-y-3 pl-4 border-l-2 border-blue-100">
-                    {Object.entries(verse.translations).slice(0, 2).map(([lang, translation]) => (
-                      <div key={lang} className="text-sm">
-                        <p className="font-medium text-gray-700 mb-1">{lang}:</p>
-                        <p className="text-gray-600 leading-relaxed line-clamp-4">{translation}</p>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
-            </motion.div>
+            <VerseCard key={`${verse.verse_num}-${index}`} verse={verse} index={index} t={t} />
           ))}
         </AnimatePresence>
       </div>

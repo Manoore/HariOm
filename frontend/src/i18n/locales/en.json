@@ -395,6 +395,9 @@
     "loadMore": "Load More Verses",
     "endOfSection": "End of section",
     "verseOfDay": "Verse of the Day",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "translate": "Translate",
+    "translating": "Translating...",
+    "translateNow": "Translate"
   }
 }
