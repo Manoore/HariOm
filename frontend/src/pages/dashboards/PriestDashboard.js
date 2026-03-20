@@ -1312,7 +1312,21 @@ function ProfileTab({ profile, user, onRefresh }) {
           </div>
           <div className="text-center sm:text-left">
             <h3 className="font-cinzel text-lg md:text-xl font-bold text-maroon">{user?.name}</h3>
-            <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
+            <div className="flex flex-col gap-1 mt-1">
+              {user?.email && (
+                <div className="flex items-center justify-center sm:justify-start gap-2 text-gray-500 text-sm">
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>{user.email}</span>
+                </div>
+              )}
+              {user?.phone && (
+                <div className="flex items-center justify-center sm:justify-start gap-2 text-gray-500 text-sm">
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>{user.phone}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-center sm:justify-start gap-2 mt-2">
               <Star className="w-4 h-4 text-gold fill-gold" />
               <span className="text-sm text-gray-600">4.8 rating</span>
               <span className="text-gray-400">•</span>

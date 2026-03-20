@@ -5,7 +5,8 @@ import {
   Bell, BellRing, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
   CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
-  Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet, Edit, Globe, Check
+  Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet, Edit, Globe, Check,
+  Mail, Phone
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -3550,9 +3551,22 @@ function ProfileTab({ isDesktop }) {
             </div>
             <div>
               <h1 className="font-cinzel text-xl lg:text-2xl font-bold text-maroon">{user?.name}</h1>
-              <p className="text-gray-500 text-sm">{user?.email}</p>
-              <span className="text-xs bg-orange-100 text-saffron-dark px-2 py-0.5 rounded-full">
-                {user?.role}
+              <div className="flex flex-col gap-1 mt-1">
+                {user?.email && (
+                  <div className="flex items-center gap-2 text-gray-500 text-sm">
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>{user.email}</span>
+                  </div>
+                )}
+                {user?.phone && (
+                  <div className="flex items-center gap-2 text-gray-500 text-sm">
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>{user.phone}</span>
+                  </div>
+                )}
+              </div>
+              <span className="inline-block mt-2 text-xs bg-orange-100 text-saffron-dark px-2 py-0.5 rounded-full capitalize">
+                {user?.role?.replace('_', ' ')}
               </span>
             </div>
           </div>
