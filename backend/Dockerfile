@@ -55,8 +55,8 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Health check with longer start period for slow imports
-HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
-    CMD curl -f http://localhost:8080/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=30s --start-period=120s --retries=5 \
+    CMD curl -f http://localhost:${PORT}/api/health || exit 1
 
 # Run the startup script for better error diagnostics
 CMD ["python", "-u", "start.py"]
