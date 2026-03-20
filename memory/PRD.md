@@ -14,7 +14,7 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 ## User Choices
 - **Authentication**: Firebase (FULLY INTEGRATED)
 - **Payments**: Stripe (real keys configured) + Razorpay (placeholder) - IP-based selection
-- **Video Meetings**: 100ms Integration (IMPLEMENTED)
+- **Video Meetings**: 100ms Integration (FULLY TESTED - March 20, 2026)
 - **Horoscope**: Local calculation service
 - **Design Theme**: Traditional warm (saffron, gold, maroon)
 - **MVP Scope**: All core features together
@@ -148,6 +148,36 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
      - `scriptures` - Scripture metadata
      - `scripture_verses` - Verse content
    - **100% Test Pass Rate**: 16/16 backend API tests passed
+
+9. ~~**100ms Video Consultation Integration**~~ ✅ FULLY TESTED (March 20, 2026)
+   - **Components**: VideoCallScreen, PreCallCheck, AstrologerList, VideoTile
+   - **Features**:
+     - Real-time video and voice calling with 100ms WebRTC SDK
+     - Screen sharing support
+     - Per-minute billing with wallet system
+     - Free minutes for new users (5 minutes welcome bonus)
+     - Low balance warnings and grace period before call ends
+     - Call duration timer and balance display
+     - Add Money during call option
+   - **Backend APIs**:
+     - `GET /api/astrologers/available` - List available astrologers
+     - `GET /api/consultation/settings` - Public consultation settings
+     - `POST /api/consultation/start` - Start video call (creates 100ms room, generates tokens)
+     - `POST /api/consultation/{call_id}/process-minute` - Per-minute billing
+     - `POST /api/consultation/{call_id}/end` - End call
+     - `GET /api/wallet` - User wallet balance
+     - `WS /ws/consultation/{call_id}` - Real-time billing updates
+   - **Frontend UI**:
+     - Video Consultation tab in Devotee Dashboard
+     - Wallet card showing balance and free minutes
+     - Astrologer cards with rating, experience, specializations, rate
+     - Pre-call check modal with balance verification
+     - Full-screen video call UI with controls (mic, video, screen share, end call)
+   - **Bug Fixes**:
+     - Fixed React hooks violation in VideoTile (conditional useHMSStore)
+     - Fixed astrologer API endpoint (/api/astrologers → /api/astrologers/available)
+     - Fixed WebSocket token from useAuth (changed to localStorage)
+   - **Test Results**: 100% backend (26/26 tests), 100% frontend verified
 
 5. ~~**Class Enrollment Payments (P0)**~~ ✅ COMPLETED (March 17, 2026)
    - Integrated SmartPayment component for Stripe payments
