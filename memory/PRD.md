@@ -107,6 +107,18 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
      - Festival names
      - Dashboard elements
      - Common UI elements (buttons, labels, errors)
+   - **Horoscope API Translations** (March 20, 2026):
+     - Backend fallback horoscope predictions now translated in all 7 languages
+     - Lucky color names translated (Red→ఎరుపు, Green→హరా, etc.)
+     - Zodiac sign names translated in all languages
+     - API accepts `lang` query parameter: `/api/horoscope/daily/{sign}?lang=te`
+
+7. ~~**Kundali Location Search Fix**~~ ✅ COMPLETED (March 20, 2026)
+   - **Bug**: Location search dropdown wasn't appearing, Generate Kundali button stayed disabled
+   - **Root Cause**: Frontend was parsing API response as `data.lat` instead of `data.data.latitude`
+   - **Fix**: Updated `getPlaceDetails` function in AstrologyTab.js (lines 92-131)
+   - **UX Improvement**: Added `locationSelected` state to prevent dropdown from reappearing after selection
+   - Location coordinates now properly populate form, enabling the Generate Kundali button
 
 5. ~~**Class Enrollment Payments (P0)**~~ ✅ COMPLETED (March 17, 2026)
    - Integrated SmartPayment component for Stripe payments
