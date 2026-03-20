@@ -6,7 +6,7 @@ import {
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
   CheckCircle, ArrowRight, ArrowLeft, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
   Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet, Edit, Globe, Check,
-  Mail, Phone
+  Mail, Phone, UserRoundCheck
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -138,7 +138,7 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
     { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
     { id: 'mantras', icon: Music, label: 'Mantras & Shlokas' },
     { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
-    { id: 'priests', icon: Star, label: 'Book Priests' },
+    { id: 'priests', icon: UserRoundCheck, label: 'Book Priests' },
     { id: 'astrology', icon: Sun, label: 'Astrology' },
     { id: 'shop', icon: ShoppingBag, label: 'Pooja Store' },
     { id: 'profile', icon: User, label: 'My Account' },
@@ -230,7 +230,7 @@ function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
   
   const mainTabs = [
     { id: 'home', icon: Home, label: 'Home' },
-    { id: 'priests', icon: Star, label: 'Priests' },
+    { id: 'priests', icon: UserRoundCheck, label: 'Priests' },
     { id: 'shop', icon: ShoppingBag, label: 'Shop' },
     { id: 'more', icon: Menu, label: 'More', isMore: true },
     { id: 'profile', icon: User, label: 'Profile' },
