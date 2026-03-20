@@ -12,7 +12,8 @@ from bson import ObjectId
 from database import (
     users_collection, priests_collection, astrologers_collection,
     products_collection, bookings_collection, orders_collection,
-    puja_types_collection, audio_library_collection
+    puja_types_collection, audio_library_collection, shops_collection,
+    user_notifications_collection
 )
 from models import UserRole
 from auth import require_role, get_password_hash, verify_password
@@ -601,3 +602,153 @@ async def delete_audio_item(item_id: str, user: dict = Depends(require_role([Use
         raise HTTPException(status_code=404, detail="Audio item not found")
     
     return {"message": "Audio item deleted"}
+
+
+# ===================== PROVIDER APPROVAL MANAGEMENT =====================
+
+@router.get("/pending-approvals")
+async def get_pending_approvals(user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Get all pending provider approvals"""
+    pending = {
+        "priests": [],
+        "astrologers": [],
+        "shops": []
+    }
+    
+    # Query for pending OR missing approval_status (legacy records)
+    pending_query = {
+        "$or": [
+            {"approval_status": "pending"},
+            {"approval_status": {"$exists": False}, "is_verified": {"$ne": True}}
+        ]
+    }
+    
+    # Get pending priests
+    cursor = priests_collection.find(pending_query)
+    async for priest in cursor:
+        priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
+        pending["priests"].append({
+            "id": str(priest["_id"]),
+            "user_id": priest["user_id"],
+            "name": priest_user.get("name", "Unknown") if priest_user else "Unknown",
+            "email": priest_user.get("email", "") if priest_user else "",
+            "phone": priest_user.get("phone", "") if priest_user else "",
+            "specializations": priest.get("specializations", []),
+            "experience_years": priest.get("experience_years", 0),
+            "created_at": priest.get("created_at").isoformat() if priest.get("created_at") else None
+        })
+    
+    # Get pending astrologers
+    cursor = astrologers_collection.find(pending_query)
+    async for astro in cursor:
+        astro_user = await users_collection.find_one({"_id": ObjectId(astro["user_id"])})
+        pending["astrologers"].append({
+            "id": str(astro["_id"]),
+            "user_id": astro["user_id"],
+            "name": astro_user.get("name", "Unknown") if astro_user else "Unknown",
+            "email": astro_user.get("email", "") if astro_user else "",
+            "phone": astro_user.get("phone", "") if astro_user else "",
+            "specializations": astro.get("specializations", []),
+            "experience_years": astro.get("experience_years", 0),
+            "created_at": astro.get("created_at").isoformat() if astro.get("created_at") else None
+        })
+    
+    # Get pending shops
+    shop_pending_query = {
+        "$or": [
+            {"approval_status": "pending"},
+            {"approval_status": {"$exists": False}, "is_verified": {"$ne": True}}
+        ]
+    }
+    cursor = shops_collection.find(shop_pending_query)
+    async for shop in cursor:
+        shop_user = await users_collection.find_one({"_id": ObjectId(shop["owner_id"])})
+        pending["shops"].append({
+            "id": str(shop["_id"]),
+            "owner_id": shop["owner_id"],
+            "owner_name": shop_user.get("name", "Unknown") if shop_user else "Unknown",
+            "email": shop_user.get("email", "") if shop_user else "",
+            "shop_name": shop.get("shop_name", "") or shop.get("name", ""),
+            "created_at": shop.get("created_at").isoformat() if shop.get("created_at") else None
+        })
+    
+    return pending
+
+
+@router.put("/approve/{provider_type}/{provider_id}")
+async def approve_provider(provider_type: str, provider_id: str, user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Approve a provider (priest, astrologer, or shop)"""
+    collection_map = {
+        "priest": priests_collection,
+        "astrologer": astrologers_collection,
+        "shop": shops_collection
+    }
+    
+    if provider_type not in collection_map:
+        raise HTTPException(status_code=400, detail="Invalid provider type")
+    
+    collection = collection_map[provider_type]
+    result = await collection.update_one(
+        {"_id": ObjectId(provider_id)},
+        {"$set": {"approval_status": "approved", "is_verified": True, "approved_at": datetime.now(timezone.utc)}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    
+    # Get provider and notify them
+    provider = await collection.find_one({"_id": ObjectId(provider_id)})
+    user_id = provider.get("user_id") or provider.get("owner_id")
+    
+    if user_id:
+        await user_notifications_collection.insert_one({
+            "user_id": user_id,
+            "type": "approval_status",
+            "title": "Profile Approved!",
+            "message": f"Congratulations! Your {provider_type} profile has been approved. You are now visible to devotees.",
+            "read": False,
+            "created_at": datetime.now(timezone.utc)
+        })
+    
+    return {"message": f"{provider_type.capitalize()} approved successfully"}
+
+
+@router.put("/reject/{provider_type}/{provider_id}")
+async def reject_provider(provider_type: str, provider_id: str, request: Request, user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Reject a provider (priest, astrologer, or shop)"""
+    data = await request.json()
+    reason = data.get("reason", "Your profile does not meet our requirements")
+    
+    collection_map = {
+        "priest": priests_collection,
+        "astrologer": astrologers_collection,
+        "shop": shops_collection
+    }
+    
+    if provider_type not in collection_map:
+        raise HTTPException(status_code=400, detail="Invalid provider type")
+    
+    collection = collection_map[provider_type]
+    result = await collection.update_one(
+        {"_id": ObjectId(provider_id)},
+        {"$set": {"approval_status": "rejected", "rejection_reason": reason, "rejected_at": datetime.now(timezone.utc)}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    
+    # Get provider and notify them
+    provider = await collection.find_one({"_id": ObjectId(provider_id)})
+    user_id = provider.get("user_id") or provider.get("owner_id")
+    
+    if user_id:
+        await user_notifications_collection.insert_one({
+            "user_id": user_id,
+            "type": "approval_status",
+            "title": "Profile Update Required",
+            "message": f"Your {provider_type} profile needs some updates: {reason}. Please update your profile and it will be reviewed again.",
+            "read": False,
+            "created_at": datetime.now(timezone.utc)
+        })
+    
+    return {"message": f"{provider_type.capitalize()} rejected"}

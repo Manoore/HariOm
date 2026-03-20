@@ -75,12 +75,23 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
    - Extracted `AstrologyTab` component (510 lines)
    - DevoteeDashboard.js reduced from 5,411 to 4,318 lines
 
-4. ~~**Code Refactoring - Backend**~~ ✅ COMPLETED (March 17, 2026)
-   - Created `routes/admin_new.py` (530 lines)
+4. ~~**Code Refactoring - Backend**~~ ✅ COMPLETED (March 20, 2026)
+   - Created `routes/admin_new.py` (750+ lines) - Added admin approval endpoints
    - Created `routes/auth_new.py` (316 lines)
-   - Created `routes/priests_new.py` (204 lines)
+   - Created `routes/priests_new.py` (221 lines)
    - Created `routes/bookings_new.py` (353 lines)
-   - server.py reduced from 6,676 to 5,271 lines (-21%)
+   - Created `routes/priest_dashboard.py` (620+ lines) - NEW: Priest dashboard routes
+   - server.py reduced from 6,182 to 5,614 lines (-9%)
+   - Admin approval endpoints moved to routes/admin_new.py
+   - Priest dashboard endpoints moved to routes/priest_dashboard.py
+
+5. ~~**Admin Approval Workflow**~~ ✅ COMPLETED (March 20, 2026)
+   - New providers (Priests, Astrologers, Shops) are "pending" until admin approves
+   - Hidden from public listings until approved
+   - Admin Dashboard has "Approvals" tab with role-based filtering
+   - In-app notifications sent to admins when new provider registers
+   - In-app notifications sent to providers when approved/rejected
+   - All 23 backend tests pass (100% success rate)
 
 5. ~~**Class Enrollment Payments (P0)**~~ ✅ COMPLETED (March 17, 2026)
    - Integrated SmartPayment component for Stripe payments
@@ -125,17 +136,21 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
    - Extract Shop/Marketplace routes
    - Extract Payment (Stripe) routes
    - Extract Astrology routes
-   - Extract Priest Dashboard routes
+   - Further extract remaining Priest routes from server.py
 
 3. **Continue Frontend Refactoring (P2)**
    - Extract remaining tabs from DevoteeDashboard.js
    - Refactor PriestDashboard.js
+   - Break down AdminDashboard.js into smaller components
 
-4. **YouTube Embedded Player (P3)**
-   - Embed YouTube videos for mantras
-   - Curated playlists for each category
+4. **Music Library Audio Fix (P3)**
+   - Replace unreliable Internet Archive with YouTube embedded videos
+   - Awaiting user confirmation on approach
 
-5. **Mobile App (Expo) (P3)**
+5. **Temple Section Clarification (P3)**
+   - Awaiting user decision on functionality (informational / priest affiliation / search)
+
+6. **Mobile App (Expo) (P3)**
    - Fix Expo loading issue
    - Complete native app for App Store/Play Store
 
