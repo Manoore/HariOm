@@ -60,8 +60,12 @@ function VerseCard({ verse, index, t }) {
         target_language: selectedLang
       });
       
-      if (response.data.translated_text) {
+      if (response.data.translated) {
+        setTranslation(response.data.translated);
+      } else if (response.data.translated_text) {
         setTranslation(response.data.translated_text);
+      } else {
+        setTranslation('Translation not available.');
       }
     } catch (error) {
       console.error('Translation error:', error);
