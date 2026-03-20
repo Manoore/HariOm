@@ -10,11 +10,26 @@ from typing import Optional
 from bson import ObjectId
 from pydantic import BaseModel
 
-from database import users_collection, priests_collection, astrologers_collection, shops_collection
+from database import users_collection, priests_collection, astrologers_collection, shops_collection, user_notifications_collection
 from models import UserCreate, UserLogin, UserUpdate, UserRole
 from auth import get_password_hash, verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+
+async def notify_admins_new_provider(provider_type: str, provider_name: str, provider_email: str):
+    """Send notification to all admins about new provider registration"""
+    # Find all admins
+    admins_cursor = users_collection.find({"role": {"$in": ["admin", "super_admin"]}})
+    async for admin in admins_cursor:
+        await user_notifications_collection.insert_one({
+            "user_id": str(admin["_id"]),
+            "type": "new_provider_registration",
+            "title": f"New {provider_type.capitalize()} Registration",
+            "message": f"{provider_name} ({provider_email}) has registered as a {provider_type} and is awaiting approval.",
+            "data": {"provider_type": provider_type},
+            "read": False,
+            "created_at": datetime.now(timezone.utc)
+        })
 
 # ===================== BASIC AUTH =====================
 
@@ -312,6 +327,11 @@ async def firebase_sync(data: FirebaseSyncRequest):
                 "created_at": datetime.now(timezone.utc)
             }
             await shops_collection.insert_one(shop_profile)
+        
+        # Notify admins about new provider registration
+        if selected_role in [UserRole.PRIEST, UserRole.ASTROLOGER, UserRole.SHOP_OWNER]:
+            provider_type = "priest" if selected_role == UserRole.PRIEST else "astrologer" if selected_role == UserRole.ASTROLOGER else "shop owner"
+            await notify_admins_new_provider(provider_type, data.name, data.email or "")
         
         return {
             "user": {

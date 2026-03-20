@@ -13,153 +13,182 @@ The user wants to build a Divine App, a digital platform connecting users with H
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack application with a React frontend, FastAPI backend, and MongoDB database. The previous separate mobile (React Native/Expo) codebase has been removed. The main React web application has been integrated with **Capacitor**, allowing for the generation of native Android and iOS builds from the single web codebase. The backend consists of a large  file that is undergoing a gradual refactoring into modular routes. A GitHub Actions workflow is set up for building the Android APK in the cloud.
+A full-stack application with a React frontend, FastAPI backend, and MongoDB. The application has been significantly enhanced with a comprehensive admin approval workflow for new service providers (Priests, Astrologers, Shop Owners), ensuring they are vetted before appearing on public listings. Numerous features and bug fixes have been implemented, including more detailed class/service options (meeting type, location, frequency), a Forgot Password mechanism, fixes for mobile sign-in and Stripe test payments, and various UI/UX improvements like replacing logos and hiding distracting animations on mobile. However, the backend's main  file has continued to grow, increasing technical debt, and the planned refactoring into modular routes remains incomplete.
 
 **Last working item**:
--   **Last item agent was working:** After implementing a Request a Class feature, the user asked for additional options. The agent is now tasked with adding:
-    1.  A choice for devotees between One-on-one or Group meeting when requesting a class.
-    2.  A choice for priests between Online or Home visit when creating a new class or puja service.
+-   **Last item agent was working:** The user requested an admin approval system for new providers. The agent implemented this, and then added enhancements based on user feedback: role-based filtering in the admin UI and in-app notifications for both admins (new provider registered) and providers (profile approved/rejected).
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** Both. The backend needs API and database schema changes, and the frontend needs UI verification for the new options in the respective forms. The testing agent should be used after implementation.
+-   **Which testing method agent to use?** Both. The backend changes for the notification system and database queries, along with the new frontend UI in the Admin Dashboard, require comprehensive testing. Use the .
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Implement One-on-one/Group & Online/Home Visit options for classes/services (P0)
--   **Issue 2:** GitHub Actions APK build fails intermittently (P1)
--   **Issue 3:** Google Sign-in fails on new preview domains (P2)
--   **Issue 4:** Unreliable audio for the web app's Music Library (P3)
+-   Issue 1: GitHub Actions APK build fails intermittently (P1)
+-   Issue 2: Google Sign-in Fails on New Preview Domains (P2)
+-   Issue 3: Unreliable Audio for the web app's Music Library (P3)
+-   Issue 4: User requires clarification on the purpose of the Temple section (P3)
 
 **Issues Detail:**
--   **Issue 1: Implement new options for classes/services**
-    -   **Attempted fixes:** None yet.
-    -   **Next debug checklist:**
-        -   **Backend:** Modify  to include  ('one-on-one'/'group'). Modify  and  to include  ('online'/'home_visit'). Update corresponding API endpoints in  to handle these new fields.
-        -   **Frontend:** In , add a dropdown for Meeting Type to the Request a Class form. In , add a dropdown for Location Type to the Add/Edit Service and Add/Edit Class modals.
-    -   **Why fix this issue and what will be achieved with the fix?** Adds critical functionality requested by the user, providing more clarity for both devotees and priests.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on other issue:** None
-
--   **Issue 2: GitHub Actions APK build fails intermittently**
-    -   **Attempted fixes:** The workflow file at  has been modified multiple times to fix Node.js version incompatibilities and Gradle wrapper issues. The latest version uses Node.js 20 and regenerates the Gradle setup on each run.
-    -   **Next debug checklist:** The user needs to save the latest workflow file to GitHub and trigger it manually. If it fails, the logs for the Build APK with Gradle step must be examined for the root cause.
-    -   **Why fix this issue and what will be achieved with the fix?** Enables the user to build Android APKs without needing a local Android development environment.
+-   **Issue 1: GitHub Actions APK build fails intermittently**
+    -   **Attempted fixes:** None in this session. The previous agent adjusted Node.js versions.
+    -   **Next debug checklist:** The user needs to save the latest workflow file to their GitHub repository and trigger a build. If it fails, the agent must examine the Build APK with Gradle step's logs for the root cause.
+    -   **Why fix this issue and what will be achieved with the fix?** Enables the user to build Android APKs without a local development environment.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** N/A (DevOps)
     -   **Blocked on other issue:** None
 
--   **Issue 3: Google Sign-in Fails on New Preview Domains**
+-   **Issue 2: Google Sign-in Fails on New Preview Domains**
     -   **Attempted fixes:** None. This is an environmental constraint.
-    -   **Next debug checklist:** This is blocked on the user adding the preview domain to their Firebase project's authorized domains.
+    -   **Next debug checklist:** This is blocked until the user adds the new preview domain to their Firebase project's list of authorized domains.
     -   **Status:** BLOCKED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Frontend
     -   **Blocked on other issue:** None
 
--   **Issue 4: Unreliable Audio for the web app's Music Library**
-    -   **Attempted fixes:** None this session.
-    -   **Next debug checklist:** Plan and implement a switch from the Internet Archive API to a curated source like embedded YouTube videos.
-    -   **Status:** NOT STARTED
+-   **Issue 3: Unreliable Audio for the web app's Music Library**
+    -   **Attempted fixes:** None. The agent identified the root cause as the unreliable Internet Archive API.
+    -   **Next debug checklist:** The agent proposed replacing the audio source with embedded YouTube videos. Await user confirmation on this approach before implementing the change.
+    -   **Why fix this issue and what will be achieved with the fix?** Will provide a stable and reliable audio experience for users on all devices, especially mobile.
+    -   **Status:** USER VERIFICATION PENDING
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Blocked on other issue:** None
+
+-   **Issue 4: User requires clarification on the purpose of the Temple section**
+    -   **Attempted fixes:** N/A.
+    -   **Next debug checklist:** The agent has asked the user for the desired functionality (e.g., informational only, priest affiliation, search). Await user decision to proceed.
+    -   **Why fix this issue and what will be achieved with the fix?** Will define the scope and utility of the Temple Directory feature.
+    -   **Status:** USER VERIFICATION PENDING
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Both
     -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1: Complete Code Refactoring (P2)**
-    -   **Where to resume:** Continue migrating endpoints from  to dedicated files in . New endpoints for puja types and class requests were recently added to  and should be moved.
-    -   **What will be achieved with this?** Improves code maintainability and scalability.
+-   **Task 1: Complete Code Refactoring (P1)**
+    -   **Where to resume:** The agent added several new, complex endpoints (admin approvals, Math/Mutt management) directly into , worsening the existing technical debt. The highest priority for backend work should be moving these new endpoints and existing ones into modular files under .
+    -   **What will be achieved with this?** Drastically improves code maintainability, readability, and scalability.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Backend
+    -   **Should Test frontend/backend/both after fix?** Backend (Regression)
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   (P2) Stripe Connect Integration: To automatically split payments.
-    -   (P2) Internationalization (i18n): Implement multi-language support, starting with Hindi and one South Indian language.
+    -   (P2) Stripe Connect Integration: To automatically split payments between vendors.
+    -   (P2) Internationalization (i18n): Implement multi-language support (Hindi, etc.).
 -   **Future Tasks:**
-    -   (P3) Replace the Music Library's audio source with an embedded YouTube player.
-    -   (P3) Implement real-time chat/video functionality.
+    -   (P3) Implement real-time chat/video functionality (e.g., using 100ms).
 
 **Completed work in this session**
--   **Mobile Strategy Overhaul (Expo to Capacitor):** Removed the separate React Native/Expo mobile app and integrated Capacitor into the main React web app, enabling native builds from a single codebase.
--   **Android Cloud Build:** Set up a GitHub Actions workflow to automatically build the Android APK.
--   **Request a Class Feature:** Implemented the full backend (API, DB collection) and frontend (devotee form, priest view) for a class request system.
--   **Priest Specializations UI/UX:** Replaced a hardcoded list of specializations in the Priest Dashboard with a dynamic list fetched from a new public  endpoint, and changed the UI from pill buttons to a multi-select dropdown.
--   **PWA & Icon Overhaul:** Replaced the old gopura logo with a new Om symbol for the favicon, header logo, and all PWA/mobile icons. Added an Install PWA prompt for mobile users.
--   **Mobile UI Parity:** Fixed numerous UI issues on mobile, including adding a More menu to the Devotee and Admin dashboards to ensure all features are accessible, and adjusting padding to prevent the bottom navigation bar from hiding content like the chat input and Place Order button.
+-   **Feature: Admin Approval Workflow:** Implemented a system where new providers (Priests, Astrologers, Shops) are pending until approved by an admin. They are not visible on public listings until approved. The admin dashboard now has an Approvals tab with role-based filtering, and in-app notifications are sent for new registrations and status changes.
+-   **Feature: Enhanced Class/Service Options:** Added Meeting Type (One-on-one/Group), Location Type (Online/Home/Temple), and Frequency (Weekly, etc.) to class requests and priest services.
+-   **Feature: Priest Profile Additions:** Added a Temple Affiliation field and an admin-manageable Math/Mutt dropdown with over 50 options.
+-   **Feature: Auto-Create Class Flow:** When a devotee accepts a priest's interest in a class request, a new class is automatically created and the devotee is enrolled.
+-   **Feature: Forgot Password:** Implemented a Forgot Password link on the login screen that uses Firebase to send a password reset email.
 -   **Bug Fixes:**
-    -   **Profile Update:** Fixed failed to update profile error by registering the  and handling API field name mismatches.
-    -   **Cart UI:** Fixed the cart displaying undefined values by updating the  endpoint to return , , and .
-    -   **Deployment Errors:** Fixed CORS and 404 errors on the production stream reminders endpoint by correcting misplaced imports in .
+    -   **Stripe Payment Error:** Fixed payments in test mode by converting test card numbers to Stripe's official test tokens ().
+    -   **Chat Not Appearing:** Fixed a bug where chat rooms weren't appearing after booking confirmation due to a database query mismatch.
+    -   **Mobile Google Sign-In:** Switched from  to  to fix login failures on mobile browsers.
+    -   **Shop Owner Registration:** Ensured shop owners have a profile automatically created upon registration.
+-   **UI/UX Fixes:**
+    -   **Landing Page Logo:** Replaced the Padmanabhaswamy Temple image with a generic Om symbol.
+    -   **Mobile Login Screen:** Hid the falling flower animations on mobile to prevent them from obscuring input fields.
+    -   **Profile Clarity:** Added email and phone icons with user credentials to profile headers.
+    -   **Admin Banner:** Fixed the color of the Pending Verifications banner to improve readability.
+
+**Earlier issues found/mentioned but not fixed**
+-   None. All other issues mentioned by the user during the session (build errors, git conflicts) were resolved.
+
+**Known issue recurrence from previous fork**
+-   **Issue recurrence in previous fork:** GitHub Actions APK build failures, Google Sign-in on new domains, and the need for  refactoring are all recurring from the previous session.
+-   **Recurrence count:** 3
+-   **Status:** All three are still IN PROGRESS or BLOCKED.
 
 **Code Architecture**
-
+math_mutt_collection
 
 **Key Technical Concepts**
--   **Mobile Wrapper:** **Capacitor** is now the strategy for creating native mobile apps from the web codebase.
--   **CI/CD:** **GitHub Actions** is used for cloud-based Android APK builds.
--   **PWA:** The web app is a fully-featured Progressive Web App, installable on mobile home screens.
+-   **Mobile Wrapper:** Capacitor
+-   **CI/CD:** GitHub Actions for Android builds.
+-   **PWA:** The web app is an installable Progressive Web App.
+-   **Authentication:** Firebase (Email/Password, Google, Phone OTP), now with Password Reset and mobile-friendly redirect flow.
+-   **Backend Architecture:** Monolithic  with some modular routes (refactoring in progress).
+-   **Admin Workflow:** A state machine (, , ) for provider verification.
 
 **key DB schema**
--   ****: 
+-   **, , **: Added  (, , ), .
+-   ****: Added , .
+-   **, **: Added .
+-   ** (NEW)**: .
+-   ****:  field is now an array of objects .
+
+**changes in tech stack**
+-   None.
 
 **All files of reference**
--   : Heavily modified to add new APIs (class requests, public puja types) and register routers.
--   : Major changes to add Request a Class UI and fix mobile navigation.
--   : Modified to display class requests and use a dynamic specialization dropdown.
--   : Updated with a More menu for mobile.
--   : Padding adjusted for mobile view.
--   : New file for Capacitor.
--   : New file for CI/CD, iterated upon multiple times.
--   : Updated to exclude APKs.
--   : All icon and logo files were replaced.
+-   
+-   
+-   
+-   
+-   
+-   
+-   
+-   
+-   
+
+**Areas that need refactoring**:
+-   **CRITICAL:** The  file. Numerous complex endpoints were added instead of being modularized, making it extremely difficult to maintain. The next agent's first backend task should be to move logic from  into new files in .
+-   The primary dashboard components (, , ) and  have become very large and could be broken down into smaller, reusable components.
+
+**key api endpoints**
+-   , : Modified to set  for providers and send an in-app notification to admins.
+-   , , : Now filter to show only providers/shops with .
+-   : Now uses test tokens for test card numbers.
+-   : Query fixed to find rooms where the user is a participant.
+-   **NEW:** : Fetches all providers with a pending or missing approval status.
+-   **NEW:** : Sets provider status to approved and sends notification.
+-   **NEW:** : Sets provider status to rejected and sends notification with a reason.
+-   **NEW:** : Full CRUD for managing Math/Mutt options.
 
 **Critical Info for New Agent**
--   The mobile strategy has shifted entirely to Capacitor. The old  directory is gone. Mobile issues are now issues within the  React app.
--   The user relies on the GitHub Actions workflow to build APKs. This workflow has been fragile and may require further adjustments.
--   The user frequently tests on their production PWA. When they report a bug, first verify they have deployed the latest backend and frontend code, as the issue might already be fixed in the preview environment.
+-   **Local Deployment:** The user deploys the app themselves from their local machine using  and . You must provide these commands.
+-   **Git Workflow:** The user needs to be reminded to **(1)** Use the Save to GitHub button in the Emergent UI to push your changes, then **(2)** run  on their local machine before building and deploying.
+-   **Git Conflicts:** The user frequently has local conflicts in the  directory. Remind them to delete this folder ( on Windows) before pulling.
+-   **Refactoring Priority:** Do not add more endpoints to . Prioritize moving existing and new logic into the  directory to manage the high technical debt.
+-   **Admin Approval:** The new admin approval workflow is a core feature. All new Priests, Astrologers, and Shop Owners are hidden from public view until an admin approves them.
+
+**documents and test reports created in this job**
+-   
+-    (updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Confirms to keep the Request a Class feature and adds requirements for one-on-one/group and online/home visit options. (Last working item started here).
-2.  **User:** Asks if a new APK is needed for every change.
-3.  **User:** Asks if devotees can currently request a class.
-4.  **User:** Explains their vision for how the Request a Class feature should work.
-5.  **User:** Clarifies they were only asking about the feature, not requesting implementation yet. (Agent had already implemented it).
-6.  **User:** Reports GitHub Actions APK build is failing.
-7.  **User:** Provides specific  error from build logs.
-8.  **User:** Provides specific  class not found error from build logs.
-9.  **User:** Asks how to download the successfully built APK from GitHub Actions.
-10. **User:** Reports that the devotee profile update is failing.
+1.  **User:** Requested an admin approval system for new providers. (Implemented)
+2.  **User:** Reported the admin approval banner was too light and the approval list was empty. (Fixed)
+3.  **User:** Asked to display the login email/phone in user profiles. (Implemented)
+4.  **User:** Re-reported that the admin banner text was still too light. (Fix enhanced)
+5.  **User:** Requested role-based filtering and notifications for the admin approval system. (Implemented)
+6.  **User:** Reported a Stripe payment error with a screenshot. (Fixed)
+7.  **User:** Reported a  conflict. (Guidance provided)
+8.  **User:** Requested to hide flower animations on the mobile login screen. (Implemented)
+9.  **User:** Requested to replace the landing page logo, fix mobile sign-in, and add a Forgot Password feature. (All implemented)
+10. **User:** Reported  was failing. (Fixed)
 
 **Project Health Check:**
 -   **Broken:**
-    -   The GitHub Actions APK build workflow has been unreliable and may still have issues.
+    -   The GitHub Actions APK build workflow is unreliable.
+    -   The Music Library audio is not functional on mobile devices.
 -   **Mocked:**
     -   None.
 -   **Technical Debt:**
-    -    continues to grow, with new endpoints being added instead of being placed in modular route files. Refactoring is still incomplete.
-    -    is an extremely large component managing many states and views, making it difficult to maintain.
+    -    is critically oversized and needs immediate refactoring.
+    -   Several large frontend components in the  directory are complex and hard to maintain.
 
 **3rd Party Integrations**
 -   **Capacitor:** For wrapping the web app into native mobile shells.
 -   **GitHub Actions:** For CI/CD (building the Android APK).
 -   **Google Cloud Run:** Backend hosting.
 -   **Firebase Hosting:** Frontend hosting.
--   **Firebase Authentication:** User login.
+-   **Firebase Authentication:** User login (including Google Sign-in and Phone OTP).
 -   **MongoDB Atlas:** Database.
 -   **Stripe:** Payment gateway.
--   **Resend:** Transactional emails.
-
-**Testing status**
--   **Testing agent used after significant changes:** YES (For initial payment flow, but not for subsequent fixes).
--   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None in this session.
--   **Known regressions:** None, but the mobile UI required significant fixes after the Capacitor migration to ensure feature parity with the desktop view.
-
-**What agent forgot to execute**
--   The agent implemented the Request a Class feature without explicit user approval, although the user later agreed to keep it. This deviates from the plan-then-execute workflow.
--   The agent added multiple new API endpoints directly to  instead of creating new modular route files, increasing the technical debt the refactoring task is meant to solve.
--   The unused  package remains in the backend dependencies.</analysis>
+-   </analysis>

@@ -751,7 +751,7 @@ Icons: Custom 3D animated SVGs
 - [x] **Backend fix in**: `/app/backend/server.py` - get_chat_rooms endpoint
 
 ## Preview URLs
-- **Web App**: https://vedic-hub-1.preview.emergentagent.com
+- **Web App**: https://pooja-staging.preview.emergentagent.com
 - **Mobile App**: Run `npx expo start` from `/app/mobile/` and scan QR with Expo Go app
 
 ## Mobile App Structure (`/app/mobile/`)

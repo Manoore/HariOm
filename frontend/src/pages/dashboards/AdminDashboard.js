@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Users, Star, ShoppingBag, Calendar, Settings, LogOut,
   ChevronRight, CheckCircle, AlertCircle, Loader2, TrendingUp,
-  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2, Search, User, Shield, Music, Play, Pause, Volume2, Menu, FileText
+  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2, Search, User, Shield, Music, Play, Pause, Volume2, Menu, FileText, RefreshCw
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -603,6 +603,7 @@ function ApprovalsTab({ isDesktop }) {
   const [processingId, setProcessingId] = useState(null);
   const [showRejectModal, setShowRejectModal] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all'); // all, priests, astrologers, shops
 
   const fetchPendingApprovals = async () => {
     setLoading(true);
@@ -652,11 +653,27 @@ function ApprovalsTab({ isDesktop }) {
 
   const totalPending = pendingApprovals.priests.length + pendingApprovals.astrologers.length + pendingApprovals.shops.length;
 
+  const filterTabs = [
+    { id: 'all', label: 'All', count: totalPending },
+    { id: 'priests', label: 'Priests', count: pendingApprovals.priests.length, icon: UserCheck },
+    { id: 'astrologers', label: 'Astrologers', count: pendingApprovals.astrologers.length, icon: Star },
+    { id: 'shops', label: 'Shops', count: pendingApprovals.shops.length, icon: ShoppingBag },
+  ];
+
   const ProviderCard = ({ provider, type }) => (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       <div className="flex items-start justify-between">
-        <div>
-          <h3 className="font-semibold text-gray-800">{provider.name || provider.owner_name}</h3>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-gray-800">{provider.name || provider.owner_name}</h3>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${
+              type === 'priest' ? 'bg-orange-100 text-orange-700' :
+              type === 'astrologer' ? 'bg-purple-100 text-purple-700' :
+              'bg-blue-100 text-blue-700'
+            }`}>
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </span>
+          </div>
           <p className="text-sm text-gray-500">{provider.email}</p>
           {provider.phone && <p className="text-xs text-gray-400">{provider.phone}</p>}
           {type === 'shop' && provider.shop_name && (
@@ -678,6 +695,7 @@ function ApprovalsTab({ isDesktop }) {
             onClick={() => handleApprove(type, provider.id)}
             disabled={processingId === provider.id}
             className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
+            title="Approve"
             data-testid={`approve-${type}-${provider.id}`}
           >
             {processingId === provider.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
@@ -686,6 +704,7 @@ function ApprovalsTab({ isDesktop }) {
             onClick={() => setShowRejectModal({ type, id: provider.id, name: provider.name || provider.owner_name })}
             disabled={processingId === provider.id}
             className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+            title="Reject"
             data-testid={`reject-${type}-${provider.id}`}
           >
             <X className="w-4 h-4" />
@@ -707,60 +726,97 @@ function ApprovalsTab({ isDesktop }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-cinzel font-bold text-maroon">Pending Approvals</h2>
-        <span className="bg-orange-100 text-saffron px-3 py-1 rounded-full text-sm font-medium">
-          {totalPending} pending
-        </span>
+        <button onClick={fetchPendingApprovals} className="text-saffron hover:text-orange-600">
+          <RefreshCw className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {filterTabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveFilter(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              activeFilter === tab.id
+                ? 'bg-saffron text-white'
+                : 'bg-white text-gray-600 hover:bg-orange-50 border border-gray-200'
+            }`}
+          >
+            {tab.icon && <tab.icon className="w-4 h-4" />}
+            {tab.label}
+            {tab.count > 0 && (
+              <span className={`px-2 py-0.5 rounded-full text-xs ${
+                activeFilter === tab.id ? 'bg-white/20 text-white' : 'bg-orange-100 text-saffron'
+              }`}>
+                {tab.count}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {totalPending === 0 ? (
         <div className="bg-white rounded-xl p-8 text-center">
           <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-          <p className="text-gray-500">No pending approvals</p>
+          <p className="text-gray-600 font-medium">No pending approvals</p>
+          <p className="text-gray-400 text-sm mt-1">All provider applications have been processed</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Priests */}
-          {pendingApprovals.priests.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <UserCheck className="w-5 h-5 text-saffron" />
-                Priests ({pendingApprovals.priests.length})
-              </h3>
-              <div className="grid gap-3">
-                {pendingApprovals.priests.map(priest => (
-                  <ProviderCard key={priest.id} provider={priest} type="priest" />
-                ))}
-              </div>
+          {(activeFilter === 'all' || activeFilter === 'priests') && pendingApprovals.priests.length > 0 && (
+            <div className="space-y-3">
+              {activeFilter === 'all' && (
+                <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-orange-500" />
+                  Priests ({pendingApprovals.priests.length})
+                </h3>
+              )}
+              {pendingApprovals.priests.map(priest => (
+                <ProviderCard key={priest.id} provider={priest} type="priest" />
+              ))}
             </div>
           )}
 
           {/* Astrologers */}
-          {pendingApprovals.astrologers.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <Star className="w-5 h-5 text-saffron" />
-                Astrologers ({pendingApprovals.astrologers.length})
-              </h3>
-              <div className="grid gap-3">
-                {pendingApprovals.astrologers.map(astro => (
-                  <ProviderCard key={astro.id} provider={astro} type="astrologer" />
-                ))}
-              </div>
+          {(activeFilter === 'all' || activeFilter === 'astrologers') && pendingApprovals.astrologers.length > 0 && (
+            <div className="space-y-3">
+              {activeFilter === 'all' && (
+                <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                  <Star className="w-5 h-5 text-purple-500" />
+                  Astrologers ({pendingApprovals.astrologers.length})
+                </h3>
+              )}
+              {pendingApprovals.astrologers.map(astro => (
+                <ProviderCard key={astro.id} provider={astro} type="astrologer" />
+              ))}
             </div>
           )}
 
           {/* Shops */}
-          {pendingApprovals.shops.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-saffron" />
-                Shops ({pendingApprovals.shops.length})
-              </h3>
-              <div className="grid gap-3">
-                {pendingApprovals.shops.map(shop => (
-                  <ProviderCard key={shop.id} provider={shop} type="shop" />
-                ))}
-              </div>
+          {(activeFilter === 'all' || activeFilter === 'shops') && pendingApprovals.shops.length > 0 && (
+            <div className="space-y-3">
+              {activeFilter === 'all' && (
+                <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-blue-500" />
+                  Shops ({pendingApprovals.shops.length})
+                </h3>
+              )}
+              {pendingApprovals.shops.map(shop => (
+                <ProviderCard key={shop.id} provider={shop} type="shop" />
+              ))}
+            </div>
+          )}
+
+          {/* Show empty state for specific filter */}
+          {activeFilter !== 'all' && (
+            (activeFilter === 'priests' && pendingApprovals.priests.length === 0) ||
+            (activeFilter === 'astrologers' && pendingApprovals.astrologers.length === 0) ||
+            (activeFilter === 'shops' && pendingApprovals.shops.length === 0)
+          ) && (
+            <div className="bg-white rounded-xl p-6 text-center">
+              <p className="text-gray-500">No pending {activeFilter} to approve</p>
             </div>
           )}
         </div>
