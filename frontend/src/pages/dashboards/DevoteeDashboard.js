@@ -4,7 +4,7 @@ import {
   Home, Star, Sun, ShoppingBag, User, Calendar, MapPin,
   Bell, BellRing, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
-  CheckCircle, ArrowRight, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
+  CheckCircle, ArrowRight, ArrowLeft, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
   Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet, Edit, Globe, Check,
   Mail, Phone
 } from 'lucide-react';
@@ -102,6 +102,27 @@ const useIsDesktop = () => {
   }, []);
   return isDesktop;
 };
+
+// Mobile Header with Back Button
+function MobileHeader({ title, onBack, rightElement }) {
+  return (
+    <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center justify-between md:hidden">
+      <button 
+        onClick={onBack}
+        className="flex items-center gap-2 text-gray-700 hover:text-saffron transition-colors"
+        data-testid="mobile-back-btn"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="text-sm font-medium">Back</span>
+      </button>
+      <h2 className="font-cinzel text-lg font-semibold text-maroon absolute left-1/2 -translate-x-1/2">
+        {title}
+      </h2>
+      {rightElement && <div>{rightElement}</div>}
+      {!rightElement && <div className="w-16" />} {/* Spacer for centering */}
+    </div>
+  );
+}
 
 // Sidebar Navigation for Desktop
 function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
@@ -5090,19 +5111,72 @@ export default function DevoteeDashboard() {
         {activeTab === 'home' && (
           <HomeTab setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} isDesktop={isDesktop} />
         )}
-        {activeTab === 'messages' && <ChatTab isDesktop={isDesktop} />}
-        {activeTab === 'consultation' && <ConsultationTab isDesktop={isDesktop} />}
-        {activeTab === 'classes' && <ClassesTab isDesktop={isDesktop} />}
-        {activeTab === 'live' && <LiveEventsTab isDesktop={isDesktop} />}
-        {activeTab === 'feed' && <FeedTab isDesktop={isDesktop} />}
-        {activeTab === 'mantras' && <MantrasTab isDesktop={isDesktop} />}
-        {activeTab === 'calendar' && <CalendarTab isDesktop={isDesktop} />}
-        {activeTab === 'priests' && (
-          <PriestsTab setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} isDesktop={isDesktop} />
+        {activeTab === 'messages' && (
+          <>
+            {!isDesktop && <MobileHeader title="Messages" onBack={() => setActiveTab('home')} />}
+            <ChatTab isDesktop={isDesktop} />
+          </>
         )}
-        {activeTab === 'astrology' && <AstrologyTab isDesktop={isDesktop} />}
-        {activeTab === 'shop' && <ShopTab isDesktop={isDesktop} />}
-        {activeTab === 'profile' && <ProfileTab isDesktop={isDesktop} />}
+        {activeTab === 'consultation' && (
+          <>
+            {!isDesktop && <MobileHeader title="Call Astrologer" onBack={() => setActiveTab('home')} />}
+            <ConsultationTab isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'classes' && (
+          <>
+            {!isDesktop && <MobileHeader title="Vedic Classes" onBack={() => setActiveTab('home')} />}
+            <ClassesTab isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'live' && (
+          <>
+            {!isDesktop && <MobileHeader title="Live Events" onBack={() => setActiveTab('home')} />}
+            <LiveEventsTab isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'feed' && (
+          <>
+            {!isDesktop && <MobileHeader title="Spiritual Feed" onBack={() => setActiveTab('home')} />}
+            <FeedTab isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'mantras' && (
+          <>
+            {!isDesktop && <MobileHeader title="Mantras & Music" onBack={() => setActiveTab('home')} />}
+            <MantrasTab isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'calendar' && (
+          <>
+            {!isDesktop && <MobileHeader title="Panchang Calendar" onBack={() => setActiveTab('home')} />}
+            <CalendarTab isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'priests' && (
+          <>
+            {!isDesktop && <MobileHeader title="Find Priests" onBack={() => setActiveTab('home')} />}
+            <PriestsTab setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'astrology' && (
+          <>
+            {!isDesktop && <MobileHeader title="Astrology" onBack={() => setActiveTab('home')} />}
+            <AstrologyTab isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'shop' && (
+          <>
+            {!isDesktop && <MobileHeader title="Pooja Store" onBack={() => setActiveTab('home')} />}
+            <ShopTab isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'profile' && (
+          <>
+            {!isDesktop && <MobileHeader title="My Profile" onBack={() => setActiveTab('home')} />}
+            <ProfileTab isDesktop={isDesktop} />
+          </>
+        )}
       </div>
       
       {!isDesktop && <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} unreadMessages={unreadMessages} />}
