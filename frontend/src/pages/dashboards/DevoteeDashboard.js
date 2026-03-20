@@ -1303,6 +1303,26 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
 
 // Mantras & Shlokas Tab Content
 function MantrasTab({ isDesktop }) {
+  const { i18n } = useTranslation();
+  
+  // Map i18n language codes to our language codes
+  const langCodeMap = {
+    'en': 'english',
+    'hi': 'hindi',
+    'te': 'telugu',
+    'ta': 'tamil',
+    'kn': 'kannada',
+    'ml': 'malayalam',
+    'sa': 'sa'
+  };
+  
+  // Sync with global language
+  useEffect(() => {
+    const i18nLang = i18n.language || 'en';
+    const mappedLang = langCodeMap[i18nLang] || 'english';
+    setSelectedLanguage(mappedLang);
+  }, [i18n.language]);
+
   const [deities, setDeities] = useState([]);
   const [selectedDeity, setSelectedDeity] = useState(null);
   const [mantras, setMantras] = useState([]);
@@ -1760,6 +1780,8 @@ function AllMantrasSection({ isDesktop, selectedLanguage, languages, translation
   const [selectedMantra, setSelectedMantra] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [skip, setSkip] = useState(0);
+  const [mantraTranslations, setMantraTranslations] = useState({});
+  const [translatingMantra, setTranslatingMantra] = useState(null);
   const limit = 20;
 
   useEffect(() => {
@@ -1819,6 +1841,55 @@ function AllMantrasSection({ isDesktop, selectedLanguage, languages, translation
   const loadMore = () => {
     setSkip(prev => prev + limit);
     fetchAllMantras(false);
+  };
+
+  // Translate a mantra's verses
+  const translateMantraVerses = async (mantra) => {
+    const cacheKey = `${mantra.title}_${selectedLanguage}`;
+    
+    // Check if already translated
+    if (mantraTranslations[cacheKey]) {
+      return;
+    }
+    
+    // Don't translate if already in selected language
+    if (selectedLanguage === 'english' || selectedLanguage === 'sa') {
+      return;
+    }
+    
+    setTranslatingMantra(mantra.title);
+    
+    try {
+      // Translate the verses
+      const res = await api.post('/api/translate', {
+        text: mantra.verses,
+        target_lang: selectedLanguage
+      });
+      
+      if (res.data.status === 'ok') {
+        setMantraTranslations(prev => ({
+          ...prev,
+          [cacheKey]: res.data.translated
+        }));
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+      toast.error('Translation failed. Please try again.');
+    } finally {
+      setTranslatingMantra(null);
+    }
+  };
+
+  // Get translated text for a mantra
+  const getTranslatedVerses = (mantra) => {
+    const cacheKey = `${mantra.title}_${selectedLanguage}`;
+    return mantraTranslations[cacheKey];
+  };
+
+  // Get language display name
+  const getLanguageName = () => {
+    const lang = languages?.find(l => l.code === selectedLanguage);
+    return lang?.native || lang?.name || selectedLanguage;
   };
 
   if (loading && mantras.length === 0) {
@@ -1907,16 +1978,69 @@ function AllMantrasSection({ isDesktop, selectedLanguage, languages, translation
                 animate={{ opacity: 1, height: 'auto' }}
                 className="mt-3 pt-3 border-t border-saffron/20"
               >
-                <div className="bg-white rounded-lg p-3 max-h-64 overflow-y-auto">
-                  <pre className="text-maroon text-sm whitespace-pre-wrap font-sanskrit leading-relaxed">
-                    {mantra.verses}
-                  </pre>
+                {/* Original Sanskrit */}
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-medium text-gray-600">Original (Sanskrit)</p>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 max-h-48 overflow-y-auto">
+                    <pre className="text-maroon text-sm whitespace-pre-wrap font-sanskrit leading-relaxed">
+                      {mantra.verses}
+                    </pre>
+                  </div>
                 </div>
+                
+                {/* Translation Section */}
+                {selectedLanguage !== 'english' && selectedLanguage !== 'sa' && (
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-medium text-gray-600">
+                        Translation ({getLanguageName()})
+                      </p>
+                      {!getTranslatedVerses(mantra) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            translateMantraVerses(mantra);
+                          }}
+                          disabled={translatingMantra === mantra.title}
+                          className="flex items-center gap-1 text-xs px-3 py-1 bg-saffron text-white rounded-full hover:bg-saffron/90 disabled:opacity-50"
+                        >
+                          {translatingMantra === mantra.title ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              Translating...
+                            </>
+                          ) : (
+                            <>
+                              <Globe className="w-3 h-3" />
+                              Translate
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    
+                    {getTranslatedVerses(mantra) ? (
+                      <div className="bg-saffron/5 rounded-lg p-3 max-h-48 overflow-y-auto">
+                        <pre className="text-maroon text-sm whitespace-pre-wrap leading-relaxed">
+                          {getTranslatedVerses(mantra)}
+                        </pre>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">
+                        Click "Translate" to see this mantra in {getLanguageName()}
+                      </p>
+                    )}
+                  </div>
+                )}
+                
                 {mantra.source_url && (
                   <a 
                     href={mantra.source_url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="text-xs text-saffron hover:underline mt-2 inline-block"
                   >
                     View source on GitHub
