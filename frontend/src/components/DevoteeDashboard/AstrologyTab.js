@@ -4,23 +4,25 @@ import { Star, Sun, Search, Loader2, ChevronRight, MapPin, Calendar } from 'luci
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 function AstrologyTab({ isDesktop }) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState('horoscope');
   const [signs] = useState([
-    { name: 'Aries', symbol: '♈', dates: 'Mar 21 - Apr 19' },
-    { name: 'Taurus', symbol: '♉', dates: 'Apr 20 - May 20' },
-    { name: 'Gemini', symbol: '♊', dates: 'May 21 - Jun 20' },
-    { name: 'Cancer', symbol: '♋', dates: 'Jun 21 - Jul 22' },
-    { name: 'Leo', symbol: '♌', dates: 'Jul 23 - Aug 22' },
-    { name: 'Virgo', symbol: '♍', dates: 'Aug 23 - Sep 22' },
-    { name: 'Libra', symbol: '♎', dates: 'Sep 23 - Oct 22' },
-    { name: 'Scorpio', symbol: '♏', dates: 'Oct 23 - Nov 21' },
-    { name: 'Sagittarius', symbol: '♐', dates: 'Nov 22 - Dec 21' },
-    { name: 'Capricorn', symbol: '♑', dates: 'Dec 22 - Jan 19' },
-    { name: 'Aquarius', symbol: '♒', dates: 'Jan 20 - Feb 18' },
-    { name: 'Pisces', symbol: '♓', dates: 'Feb 19 - Mar 20' },
+    { name: 'Aries', nameKey: 'aries', symbol: '♈', dates: 'Mar 21 - Apr 19' },
+    { name: 'Taurus', nameKey: 'taurus', symbol: '♉', dates: 'Apr 20 - May 20' },
+    { name: 'Gemini', nameKey: 'gemini', symbol: '♊', dates: 'May 21 - Jun 20' },
+    { name: 'Cancer', nameKey: 'cancer', symbol: '♋', dates: 'Jun 21 - Jul 22' },
+    { name: 'Leo', nameKey: 'leo', symbol: '♌', dates: 'Jul 23 - Aug 22' },
+    { name: 'Virgo', nameKey: 'virgo', symbol: '♍', dates: 'Aug 23 - Sep 22' },
+    { name: 'Libra', nameKey: 'libra', symbol: '♎', dates: 'Sep 23 - Oct 22' },
+    { name: 'Scorpio', nameKey: 'scorpio', symbol: '♏', dates: 'Oct 23 - Nov 21' },
+    { name: 'Sagittarius', nameKey: 'sagittarius', symbol: '♐', dates: 'Nov 22 - Dec 21' },
+    { name: 'Capricorn', nameKey: 'capricorn', symbol: '♑', dates: 'Dec 22 - Jan 19' },
+    { name: 'Aquarius', nameKey: 'aquarius', symbol: '♒', dates: 'Jan 20 - Feb 18' },
+    { name: 'Pisces', nameKey: 'pisces', symbol: '♓', dates: 'Feb 19 - Mar 20' },
   ]);
   const [selectedSign, setSelectedSign] = useState(null);
   const [horoscope, setHoroscope] = useState(null);
@@ -59,8 +61,8 @@ function AstrologyTab({ isDesktop }) {
   const [matchingResult, setMatchingResult] = useState(null);
 
   const sections = [
-    { id: 'horoscope', label: 'Daily Horoscope', icon: Sun },
-    { id: 'kundali', label: 'Birth Chart', icon: Star },
+    { id: 'horoscope', label: t('astrology.horoscope.title'), icon: Sun },
+    { id: 'kundali', label: t('astrology.kundali.title'), icon: Star },
     { id: 'matching', label: 'Kundali Matching', icon: Calendar }
   ];
 
@@ -235,8 +237,8 @@ function AstrologyTab({ isDesktop }) {
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : ''}`}>
       {/* Header */}
       <div className="px-4 pt-4 pb-2">
-        <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Astrology</h1>
-        <p className="text-gray-500 text-sm mt-1">Explore your cosmic journey</p>
+        <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">{t('astrology.title')}</h1>
+        <p className="text-gray-500 text-sm mt-1">{t('astrology.kundali.subtitle')}</p>
       </div>
 
       {/* Section Tabs */}
@@ -327,10 +329,10 @@ function AstrologyTab({ isDesktop }) {
       {activeSection === 'kundali' && (
         <div className="px-4">
           <div className="bg-white rounded-2xl p-6 border border-orange-100 mb-6">
-            <h3 className="font-cinzel text-lg font-semibold text-maroon mb-4">Generate Birth Chart</h3>
+            <h3 className="font-cinzel text-lg font-semibold text-maroon mb-4">{t('astrology.kundali.result.birthChart')}</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date & Time of Birth</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('astrology.kundali.form.dob')} & {t('astrology.kundali.form.tob')}</label>
                 <input
                   type="datetime-local"
                   value={kundaliForm.datetime}
@@ -340,14 +342,14 @@ function AstrologyTab({ isDesktop }) {
               </div>
               
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Birth Place</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('astrology.kundali.form.pob')}</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
                     value={locationSearch}
                     onChange={(e) => setLocationSearch(e.target.value)}
-                    placeholder="Search city..."
+                    placeholder={t('common.search') + '...'}
                     className="w-full border border-orange-200 rounded-xl pl-10 pr-4 py-3 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none"
                   />
                   {searchingLocation && (
@@ -374,7 +376,7 @@ function AstrologyTab({ isDesktop }) {
                 disabled={loading || !kundaliForm.datetime || !kundaliForm.latitude}
                 className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Generate Birth Chart'}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('astrology.kundali.form.generate')}
               </button>
             </div>
           </div>
@@ -385,16 +387,16 @@ function AstrologyTab({ isDesktop }) {
               animate={{ opacity: 1, y: 0 }}
               className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6"
             >
-              <h3 className="font-cinzel text-xl font-bold text-purple-900 mb-4">Your Birth Chart</h3>
+              <h3 className="font-cinzel text-xl font-bold text-purple-900 mb-4">{t('astrology.kundali.result.birthChart')}</h3>
               
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-white/70 rounded-xl p-3">
-                  <span className="text-xs text-gray-500">Moon Sign</span>
+                  <span className="text-xs text-gray-500">{t('astrology.panchang.nakshatra')}</span>
                   <p className="font-semibold text-purple-900">{kundaliResult.moon_sign || 'N/A'}</p>
                 </div>
                 <div className="bg-white/70 rounded-xl p-3">
-                  <span className="text-xs text-gray-500">Nakshatra</span>
+                  <span className="text-xs text-gray-500">{t('astrology.panchang.nakshatra')}</span>
                   <p className="font-semibold text-purple-900">{kundaliResult.nakshatra || 'N/A'}</p>
                 </div>
                 <div className="bg-white/70 rounded-xl p-3">

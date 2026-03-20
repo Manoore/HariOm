@@ -2066,6 +2066,7 @@ function AudioLibrarySection({ isDesktop }) {
 
 // Calendar Tab - Panchang & Festival Calendar
 function CalendarTab({ isDesktop }) {
+  const { t } = useTranslation();
   const [panchang, setPanchang] = useState(null);
   const [upcomingFestivals, setUpcomingFestivals] = useState([]);
   const [monthPanchang, setMonthPanchang] = useState(null);
@@ -2129,8 +2130,8 @@ function CalendarTab({ isDesktop }) {
         <div className="flex items-center gap-3">
           <Calendar className="w-8 h-8" />
           <div>
-            <h2 className="font-cinzel text-xl font-bold">Panchang & Festival Calendar</h2>
-            <p className="text-white/80 text-sm">Hindu calendar, tithis, nakshatras & festivals</p>
+            <h2 className="font-cinzel text-xl font-bold">{t('panchang.title')}</h2>
+            <p className="text-white/80 text-sm">{t('panchang.subtitle')}</p>
           </div>
         </div>
       </div>
@@ -2138,9 +2139,9 @@ function CalendarTab({ isDesktop }) {
       {/* View Tabs */}
       <div className="flex gap-2 flex-wrap">
         {[
-          { id: 'today', label: "Today's Panchang" },
-          { id: 'festivals', label: 'Upcoming Festivals' },
-          { id: 'calendar', label: 'Monthly Calendar' },
+          { id: 'today', label: t('astrology.panchang.today') },
+          { id: 'festivals', label: t('festivals.upcoming') },
+          { id: 'calendar', label: t('festivals.calendar') },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -2174,38 +2175,38 @@ function CalendarTab({ isDesktop }) {
           <div className={`grid ${isDesktop ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-4`}>
             {/* Tithi */}
             <div className="bg-white rounded-xl p-4 border border-saffron/10">
-              <p className="text-xs text-gray-500 uppercase mb-1">Tithi</p>
+              <p className="text-xs text-gray-500 uppercase mb-1">{t('panchang.tithi')}</p>
               <p className="font-semibold text-maroon">{panchang.tithi?.name}</p>
-              <p className="text-sm text-gray-600">{panchang.tithi?.paksha} Paksha</p>
+              <p className="text-sm text-gray-600">{panchang.tithi?.paksha} {t('panchang.paksha')}</p>
             </div>
 
             {/* Nakshatra */}
             <div className="bg-white rounded-xl p-4 border border-saffron/10">
-              <p className="text-xs text-gray-500 uppercase mb-1">Nakshatra</p>
+              <p className="text-xs text-gray-500 uppercase mb-1">{t('panchang.nakshatra')}</p>
               <p className="font-semibold text-maroon">{panchang.nakshatra?.name}</p>
             </div>
 
             {/* Yoga */}
             <div className="bg-white rounded-xl p-4 border border-saffron/10">
-              <p className="text-xs text-gray-500 uppercase mb-1">Yoga</p>
+              <p className="text-xs text-gray-500 uppercase mb-1">{t('panchang.yoga')}</p>
               <p className="font-semibold text-maroon">{panchang.yoga?.name}</p>
             </div>
 
             {/* Karana */}
             <div className="bg-white rounded-xl p-4 border border-saffron/10">
-              <p className="text-xs text-gray-500 uppercase mb-1">Karana</p>
+              <p className="text-xs text-gray-500 uppercase mb-1">{t('panchang.karana')}</p>
               <p className="font-semibold text-maroon">{panchang.karana?.name}</p>
             </div>
 
             {/* Sunrise */}
             <div className="bg-white rounded-xl p-4 border border-saffron/10">
-              <p className="text-xs text-gray-500 uppercase mb-1">Sunrise</p>
+              <p className="text-xs text-gray-500 uppercase mb-1">{t('astrology.panchang.sunrise')}</p>
               <p className="font-semibold text-maroon">{panchang.sunrise}</p>
             </div>
 
             {/* Sunset */}
             <div className="bg-white rounded-xl p-4 border border-saffron/10">
-              <p className="text-xs text-gray-500 uppercase mb-1">Sunset</p>
+              <p className="text-xs text-gray-500 uppercase mb-1">{t('astrology.panchang.sunset')}</p>
               <p className="font-semibold text-maroon">{panchang.sunset}</p>
             </div>
           </div>
