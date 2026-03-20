@@ -18,6 +18,7 @@ import { WalletCard, RechargeModal, TransactionHistory } from '../../components/
 import { AstrologerList, PreCallCheck, VideoCallScreen } from '../../components/VideoConsultation/VideoConsultation';
 import AddressAutocomplete from '../../components/AddressAutocomplete';
 import { PriestDetailView, AstrologyTab } from '../../components/DevoteeDashboard';
+import ScripturesTab from '../../components/DevoteeDashboard/ScripturesTab';
 import SmartPayment from '../../components/PaymentComponents';
 import NotificationBell from '../../components/NotificationBell';
 import LanguageSelector from '../../components/LanguageSelector';
@@ -137,6 +138,7 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
     { id: 'live', icon: Play, label: 'Live Events' },
     { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
     { id: 'mantras', icon: Music, label: 'Mantras & Shlokas' },
+    { id: 'scriptures', icon: BookOpen, label: 'Sacred Scriptures' },
     { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
     { id: 'priests', icon: UserRoundCheck, label: 'Book Priests' },
     { id: 'astrology', icon: Sun, label: 'Astrology' },
@@ -241,6 +243,7 @@ function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
     { id: 'classes', icon: BookOpen, label: 'Vedic Classes' },
     { id: 'live', icon: Play, label: 'Live Events' },
     { id: 'mantras', icon: Music, label: 'Mantras & Shlokas' },
+    { id: 'scriptures', icon: BookOpen, label: 'Scriptures' },
     { id: 'astrology', icon: Sun, label: 'Astrology' },
     { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
     { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
@@ -5333,6 +5336,12 @@ export default function DevoteeDashboard() {
           <>
             {!isDesktop && <MobileHeader title="Panchang Calendar" onBack={() => setActiveTab('home')} />}
             <CalendarTab isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'scriptures' && (
+          <>
+            {!isDesktop && <MobileHeader title="Sacred Scriptures" onBack={() => setActiveTab('home')} />}
+            <ScripturesTab isDesktop={isDesktop} />
           </>
         )}
         {activeTab === 'priests' && (

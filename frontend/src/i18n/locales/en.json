@@ -380,5 +380,21 @@
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "copyright": "© 2026 Divine App. All rights reserved."
+  },
+  "scriptures": {
+    "title": "Sacred Scriptures",
+    "subtitle": "Explore the timeless wisdom of Hindu scriptures",
+    "searchPlaceholder": "Search scriptures...",
+    "all": "All",
+    "vedas": "Vedas",
+    "itihasa": "Itihasas",
+    "noResults": "No scriptures found",
+    "verses": "verses",
+    "viewCommentary": "View Commentary",
+    "viewTranslation": "View Translation",
+    "loadMore": "Load More Verses",
+    "endOfSection": "End of section",
+    "verseOfDay": "Verse of the Day",
+    "refresh": "Refresh"
   }
 }

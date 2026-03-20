@@ -380,5 +380,21 @@
     "privacy": "गोपनीयता नीति",
     "terms": "सेवा की शर्तें",
     "copyright": "© 2026 दिव्य ऐप। सर्वाधिकार सुरक्षित।"
+  },
+  "scriptures": {
+    "title": "पवित्र ग्रंथ",
+    "subtitle": "हिंदू धर्मग्रंथों की कालजयी बुद्धिमत्ता का अन्वेषण करें",
+    "searchPlaceholder": "ग्रंथ खोजें...",
+    "all": "सभी",
+    "vedas": "वेद",
+    "itihasa": "इतिहास",
+    "noResults": "कोई ग्रंथ नहीं मिला",
+    "verses": "श्लोक",
+    "viewCommentary": "टीका देखें",
+    "viewTranslation": "अनुवाद देखें",
+    "loadMore": "और श्लोक लोड करें",
+    "endOfSection": "खंड समाप्त",
+    "verseOfDay": "आज का श्लोक",
+    "refresh": "रिफ्रेश"
   }
 }

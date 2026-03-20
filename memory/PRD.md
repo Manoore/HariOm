@@ -798,7 +798,7 @@ Icons: Custom 3D animated SVGs
 - [x] **Backend fix in**: `/app/backend/server.py` - get_chat_rooms endpoint
 
 ## Preview URLs
-- **Web App**: https://divine-spiritual-2.preview.emergentagent.com
+- **Web App**: https://mantra-hub-6.preview.emergentagent.com
 - **Mobile App**: Run `npx expo start` from `/app/mobile/` and scan QR with Expo Go app
 
 ## Mobile App Structure (`/app/mobile/`)

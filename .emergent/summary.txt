@@ -4,7 +4,7 @@ The user wants to build a Divine App, a digital platform connecting users with H
 **PRODUCT REQUIREMENTS:**
 -   **Core Idea:** A digital platform for Hindu spiritual services.
 -   **User Roles:** Devotee, Priest, Astrologer, Shop Owner, Admin, Super Admin.
--   **Core Functions:** Priest booking, spiritual learning (Vedic classes), and astrology services (Kundali, Panchang).
+-   **Core Functions:** Priest booking, spiritual learning (Vedic classes), astrology services (Kundali, Panchang), and a rich library of spiritual texts.
 -   **Marketplace:** A Pooja Store for spiritual items.
 -   **Additional Features:** Spiritual content feed, real-time chat, payment splitting, booking management.
 -   **Internationalization (i18n):** The application UI and content should be translatable into multiple languages, starting with Hindi, Sanskrit, and South Indian languages.
@@ -12,202 +12,169 @@ The user wants to build a Divine App, a digital platform connecting users with H
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack application with a React frontend, FastAPI backend, and MongoDB. The application features include an admin approval workflow for service providers, detailed service options, and user authentication via Firebase.
+A full-stack application with a React frontend, FastAPI backend, and MongoDB. The application features include an admin approval workflow, detailed service options, user authentication via Firebase, and an internationalization (i18n) framework with a language selector.
 
-Significant work has been done on two major tasks:
-1.  **Backend Refactoring:** Key functionalities like the Admin Approval system and the Priest Dashboard routes have been successfully extracted from the monolithic  into modular route files, reducing technical debt.
-2.  **Internationalization (i18n):** A complete i18n framework using  has been set up on the frontend. This includes a language selector in the header and translation files for 7 languages (English, Hindi, Sanskrit, Tamil, Telugu, Kannada, Malayalam). Key UI sections like the Astrology and Panchang tabs have been partially translated.
+In this session, two critical bugs in the Astrology section were fixed: the daily horoscope text is now translated based on the selected language, and the Generate Kundali button is now correctly enabled after fixing the location search UI.
 
-Multiple bugs related to deployment, authentication (Google Sign-in on mobile), and API failures (Astrologer list, Kundali generation) have been fixed. A critical fallback mechanism for Kundali generation using the  library has been implemented in the backend to ensure functionality even when the external Prokerala API fails.
+Additionally, the agent implemented several new features and bug fixes based on user requests:
+-   Imported 268 mantras from the  GitHub repo into the database, with new backend APIs and a frontend UI to display them by category.
+-   Added an AI-powered translation feature for the newly imported mantras.
+-   Added a Back button to all mobile tab screens for improved navigation.
+-   Fixed an issue with Resend OTP on mobile by improving the Firebase reCAPTCHA handling.
+-   Updated the Priest icon for better visual clarity.
+-   Removed a View source on GitHub link from the mantra display.
 
 **Last working item**:
--   **Last item agent was working:** The user reported two issues in the Astrology section after selecting a language:
-    1.  The Generate Kundali button was disabled because the location search dropdown did not appear, preventing the user from selecting a Place of Birth.
-    2.  The daily horoscope prediction text remained in English, even when another language was selected.
+-   **Last item agent was working:** The agent began integrating data from the  GitHub repository. The user requested this data be added under a new Dharmic Data tab, categorized for display. The agent successfully cloned the repository and was in the initial phase of exploring its contents.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** Both. The backend needs changes to provide translated horoscope text. The frontend requires fixes to the location search UI. A full test using the  is recommended to verify the E2E flow in different languages.
+-   **Which testing method agent to use?** Both. A backend script will be needed to parse and import the JSON data. The frontend will require a new tab, new components, and API calls.  is recommended to verify the new feature end-to-end after implementation.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   Issue 1: Horoscope text from the API is not translated (P0)
--   Issue 2: Generate Kundali button is disabled due to a broken location search UI (P0)
--   Issue 3: GitHub Actions APK build fails intermittently (P1)
--   Issue 4: Unreliable Audio for the web app's Music Library (P3)
--   Issue 5: The purpose of the Temple section needs clarification from the user (P3)
+-   Issue 1: GitHub Actions APK build fails intermittently (P1)
+-   Issue 2: Unreliable Audio for the web app's Music Library (P3)
+-   Issue 3: The purpose of the Temple section needs clarification from the user (P3)
 
 **Issues Detail:**
--   **Issue 1: Horoscope text from the API is not translated**
-    -   **Attempted fixes:** The backend API for daily horoscopes was updated to accept a language parameter. However, only the labels were translated on the frontend; the actual prediction text from the backend's fallback data is still only in English.
-    -   **Next debug checklist:**
-        1.  Edit : In the  function's fallback data, add translated prediction strings for each supported language (e.g., , ).
-        2.  Ensure the  endpoint in  correctly retrieves and returns the prediction text based on the  query parameter.
-        3.  Verify the  component on the frontend correctly displays the translated prediction received from the API.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a core requirement for the i18n feature, ensuring that dynamic content, not just static UI labels, is translated.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on other issue:** none
-
--   **Issue 2: Generate Kundali button is disabled due to a broken location search UI**
-    -   **Attempted fixes:** The agent fixed the backend API endpoint and the frontend's parsing of the API response. However, the UI component responsible for displaying the location search results dropdown is not rendering, which prevents the user from selecting a location and enabling the button.
-    -   **Next debug checklist:**
-        1.  Inspect .
-        2.  Verify that the  state is being updated correctly by the  function.
-        3.  Check the JSX to ensure the dropdown list is being rendered when  has items.
-        4.  Confirm that the  handler for a search result () correctly populates the form's latitude/longitude and clears the search results.
-    -   **Why fix this issue and what will be achieved with the fix?** The Kundali generation feature is a core part of the app and is currently unusable.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Frontend
-    -   **Blocked on other issue:** none
-
--   **Issue 3: GitHub Actions APK build fails intermittently**
+-   **Issue 1: GitHub Actions APK build fails intermittently**
     -   **Attempted fixes:** None in this session.
-    -   **Next debug checklist:** The user needs to save the latest workflow file to GitHub and trigger a build. The agent must then examine the logs for the Build APK with Gradle step to find the root cause.
+    -   **Next debug checklist:** User needs to save the latest workflow file to GitHub and trigger a build. The agent must then examine the logs for the Build APK with Gradle step to find the root cause.
+    -   **Why fix this issue and what will be achieved with the fix?** To enable reliable mobile app builds for testing and release.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** N/A (DevOps)
-    -   **Blocked on other issue:** none
+    -   **Blocked on other issue:** None
 
--   **Issue 4: Unreliable Audio for the web app's Music Library**
-    -   **Attempted fixes:** Identified the root cause as an unreliable external API.
+-   **Issue 2: Unreliable Audio for the web app's Music Library**
+    -   **Attempted fixes:** Identified the root cause as an unreliable external API in a previous session.
     -   **Next debug checklist:** Awaiting user confirmation to replace the audio source with embedded YouTube videos.
+    -   **Why fix this issue and what will be achieved with the fix?** To provide a stable and reliable music listening experience.
     -   **Status:** USER VERIFICATION PENDING
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Frontend
-    -   **Blocked on other issue:** none
+    -   **Blocked on other issue:** None
 
--   **Issue 5: The purpose of the Temple section needs clarification from the user**
+-   **Issue 3: The purpose of the Temple section needs clarification from the user**
     -   **Attempted fixes:** N/A.
     -   **Next debug checklist:** Awaiting user input on the desired functionality (e.g., informational directory, priest affiliation, search).
+    -   **Why fix this issue and what will be achieved with the fix?** To build out a core, but currently undefined, feature of the app.
     -   **Status:** USER VERIFICATION PENDING
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on other issue:** none
+    -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1: Complete Internationalization (i18n) Implementation (P1)**
-    -   **Where to resume:** The framework is set up, but API-driven content is not fully translated. The immediate priority is fixing the horoscope text translation (Issue #1). After that, other dynamic content areas should be reviewed and updated.
-    -   **What will be achieved with this?** A fully translated user experience for both UI and dynamic content.
+-   **Task 1: Integrate  repository (P0)**
+    -   **Where to resume:** The repo is cloned at . The next step is to create a Python script in  to parse the JSON files (Gita, Ramayana, Vedas, etc.), create a new MongoDB collection for them, and import the data.
+    -   **What will be achieved with this?** A massive library of core Hindu scriptures will be available within the app.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on something:** Issue #1 and #2.
-
--   **Task 2: Continue Backend Refactoring (P2)**
-    -   **Where to resume:** Admin and Priest Dashboard routes have been moved out of . The next logical groups to extract are Shop/Marketplace, Payments, and general Astrology routes. The  file remains over 5,000 lines long.
-    -   **What will be achieved with this?** A more maintainable, scalable, and readable backend codebase.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Backend (Regression)
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   (P2) Stripe Connect Integration: To automatically split payments between the platform and vendors.
+    -   (P1) Create a new Dharmic Data tab on the frontend to display the imported scriptures, with navigation by category (book, chapter, etc.).
+    -   (P2) Implement Stripe Connect Integration for automatic payment splitting between the platform and vendors.
+    -   (P2) Continue Backend Refactoring: Extract Shop/Marketplace, Payments, and general Astrology routes from .
+    -   (P3) Address the Temple section functionality once user feedback is received.
+    -   (P3) Fix the unreliable audio in the Music Library (switch to YouTube).
+
 -   **Future Tasks:**
-    -   (P3) Frontend Refactoring: Break down large dashboard components into smaller, reusable ones.
+    -   (P3) Frontend Refactoring: Break down large dashboard components, especially .
     -   (P3) Real-time Chat/Video Functionality (e.g., 100ms integration).
-    -   (P3) Provider Onboarding Guide: To help new providers get approved faster.
+    -   (P3) Provider Onboarding Guide.
 
 **Completed work in this session**
--   **Feature: Admin Approval System Testing:** The entire workflow was validated using the testing agent, and a minor UI bug was fixed.
--   **Feature: Backend Refactoring:** Moved Admin Approval and Priest Dashboard routes from  into dedicated files (, ), reducing  by over 500 lines.
--   **Feature: Internationalization (i18n) Setup:** Installed and configured  with 7 languages, added a language selector component to the UI, and translated static elements in the Astrology and Panchang sections.
--   **Feature: Kundali Fallback System:** Implemented a robust fallback in the backend using the  library to generate Kundali charts locally when the external Prokerala API fails.
--   **Bug Fix: Cloud Run Deployment:** Resolved persistent deployment failures by guiding the user to use the correct service name, increase timeouts/resources, and fix port configurations.
--   **Bug Fix: Local Environment:** Provided solutions for npm <command>
-
-Usage:
-
-npm install        install all the dependencies in your project
-npm install <foo>  add the <foo> dependency to your project
-npm test           run this project's tests
-npm run <foo>      run the script named <foo>
-npm <command> -h   quick help on <command>
-npm -l             display usage info for all commands
-npm help <term>    search for help on <term>
-npm help npm       more involved overview
-
-All commands:
-
-    access, adduser, audit, bugs, cache, ci, completion,
-    config, dedupe, deprecate, diff, dist-tag, docs, doctor,
-    edit, exec, explain, explore, find-dupes, fund, get, help,
-    help-search, hook, init, install, install-ci-test,
-    install-test, link, ll, login, logout, ls, org, outdated,
-    owner, pack, ping, pkg, prefix, profile, prune, publish,
-    query, rebuild, repo, restart, root, run-script, sbom,
-    search, set, shrinkwrap, star, stars, start, stop, team,
-    test, token, uninstall, unpublish, unstar, update, version,
-    view, whoami
-
-Specify configs in the ini-formatted file:
-    /root/.npmrc
-or on the command line via: npm <command> --key=value
-
-More configuration info: npm help config
-Configuration fields: npm help 7 config
-
-npm@10.8.2 /usr/lib/node_modules/npm dependency conflicts () and missing CLI tools ().
--   **Bug Fix: Authentication:** Fixed a critical bug in  that caused Google Sign-in to fail on mobile devices.
--   **Bug Fix: API & UI:** Fixed errors in the Astrologer list, Kundali generation, and location search APIs and their corresponding UI components.
+-   **Bug Fix (i18n):** Fixed the horoscope translation issue. The backend now provides translated predictions for all supported languages.
+-   **Bug Fix (UI):** Fixed the Kundali location search. The search dropdown now appears, selection populates the location, and the Generate Kundali button is correctly enabled.
+-   **Bug Fix (Auth):** Addressed Resend OTP failures on mobile by improving Firebase reCAPTCHA handling logic in  and .
+-   **Feature (UI/UX):** Added a Back button to all mobile tab screens within the devotee dashboard for improved navigation.
+-   **Feature (Data Import):** Imported 268 mantras from the  GitHub repo. Created a backend script, new API endpoints, and updated the frontend  to display them by category.
+-   **Feature (i18n):** Added an AI-powered translation feature for the newly imported mantras.
+-   **Enhancement (UI):** Changed the Priest icon from a star to a user icon for better clarity in the navigation.
+-   **Enhancement (UI):** Removed the View source on GitHub link from the mantra display as requested.
+-   **Support:** Provided detailed, context-aware deployment steps for backend (Google Cloud Run) and frontend (Firebase Hosting).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Internationalization (i18n):** Using  and  for multi-language support in React.
--   **Backend Refactoring:** Strategically moving endpoints from a monolithic  into modular  files.
--   **Cloud Deployment:** Deploying to Google Cloud Run and Firebase Hosting, including troubleshooting common issues like port configuration, timeouts, and environment variables.
--   **API Fallback:** Designing a resilient system by implementing a local fallback ( library) for a critical external API ().
+-   **Data Ingestion:** Cloning external Git repositories and parsing their content (LaTeX, JSON) using Python scripts to populate a MongoDB database.
+-   **API Development:** Creating new FastAPI endpoints for categorized data retrieval () and paginated content ().
+-   **Frontend State Management:** Debugging and fixing complex state interactions in React, particularly with asynchronous operations, debouncing, and UI updates (e.g., location search dropdown).
+-   **Firebase Phone Auth:** Debugging and fixing re-authentication flows involving the reCAPTCHA verifier.
+-   **Responsive UI:** Implementing UI components () that appear conditionally based on screen size ( state) to improve mobile UX.
+-   **Internationalization (i18n):** Integrating an external translation API to provide on-demand translations for dynamic content (mantras).
 
 **key DB schema**
--   No database schema changes were made in this session.
+-   **mantras (in  db):** A new schema was effectively created for the 268 imported mantras.
+    -   
 
 **All files of reference**
--   
--   
--   
--   
--   
--   
--   
--   
--   
--   
+-    (Heavily modified for multiple features)
+-    (Modified for new APIs)
+-    (New file for data import)
+-    (Fixed location search)
+-    (Fixed OTP resend)
+-    (Fixed OTP resend)
+-    (Fixed horoscope translation)
 
 **Areas that need refactoring**:
--   **CRITICAL:** The  file still contains many unrelated endpoints (Payments, Astrology, Shop, etc.) and requires further modularization.
--   The  component is over 5,000 lines and is difficult to maintain. It should be broken down into smaller, more focused child components.
+-   **CRITICAL:** The  file has grown to over 5,300 lines and contains the logic for almost every tab. It is becoming unmanageable and should be the highest refactoring priority. Breaking out each tab (, , , etc.) into its own file is essential.
+-   The  file remains over 5,000 lines and requires further modularization. The Shop, Payments, and remaining Astrology endpoints should be extracted into their own router files.
 
 **key api endpoints**
--   **Refactored:**
-    -   All  approval endpoints were moved to .
-    -   All authenticated  endpoints were moved to .
--   **Modified:**
-    -   : Now accepts a  query parameter.
-    -   : Now includes a local  fallback.
-    -   : Added safe  calls to prevent crashes from incomplete data.
--   **Fixed:**
-    -   Frontend call to  was fixed to parse the correct response field.
-    -   Frontend call was corrected from  to the proper .
+-   **NEW:**
+    -   : Retrieves all unique mantra categories and their respective counts.
+    -   : Retrieves mantras with filtering (by category/search) and pagination.
+-   **MODIFIED:**
+    -   : Now correctly passes the  parameter to the fallback function, enabling translated horoscope predictions.
+-   **REFERENCED/FIXED:**
+    -   : Frontend was fixed to correctly parse the  and  from this endpoint's response.
+    -   : This existing endpoint was leveraged to power the new mantra translation feature.
 
 **Critical Info for New Agent**
--   **User-Managed Deployment:** The user deploys from their local machine. You must provide clear and correct  and  commands. The backend service is . Be prepared to guide the user through local environment issues like dependency conflicts () and build folder cleanup.
--   **i18n In Progress:** The frontend i18n framework is set up, but dynamic content from the backend is not fully translated. The immediate next task is to fix horoscope translations in the backend.
--   **Kundali Fallback is Essential:** The  module uses  as a local fallback for Kundali generation because the external API keys seem to be invalid. Do not remove this fallback logic.
--   **Prioritize Refactoring:** Continue breaking down  to manage technical debt and improve maintainability.
+-   The user deploys the application themselves from a local Windows machine (). You must provide clear, copy-paste-friendly commands for  and  and be prepared to troubleshoot local environment issues (e.g.,  CLI not in PATH,  requirement).
+-   The immediate task is to continue the  import. This involves creating a new backend script to parse JSON files, designing a new DB schema, creating new APIs, and then building a new Dharmic Data tab on the frontend.
+-   The  file is extremely large and fragile. When adding the Dharmic Data tab, strongly consider creating it as a separate component file and importing it, rather than adding more code to the monolithic file. Proposing this refactor as part of the task is recommended.
 
 **documents and test reports created in this job**
--   /app/test_reports/iteration_17.json
--   /app/memory/PRD.md (updated with refactoring and i18n progress)
+-   
+-    (Updated with recent fixes)
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Reports mobile Google Sign-in fails. (Fixed  redirect logic).
-2.  **User:** Reports astrologer list fails to load and password reset email not received. (Fixed astrologer API; explained Firebase handles emails).
-3.  **User:** Reports Astrology section is not translated. (Added translations for UI elements).
-4.  **User:** Provides screenshots showing horoscope (zodiac signs) are not translated to Telugu. (Added translations for zodiac signs and horoscope UI labels).
-5.  **User:** Provides screenshots showing API content (horoscope text) is not translated and Kundali generation/location search is broken. (Fixed location search and Kundali API calls; implemented Kundali fallback).
-6.  **User:** Asks what the Kundali fallback is. (Explained the Swiss Ephemeris local calculation).
-7.  **User:** Provides screenshots showing the Generate Kundali button is disabled and horoscope text is still in English. **This is the current issue to be resolved.**
-8.  **User:** Asks for translation of API data and reports location</analysis>
+1.  **Request:** Import data from  GitHub repo and display it in a new Dharmic Data tab. **Status: IN PROGRESS.**
+2.  **Request:** Remove the View source on GitHub link from the mantra display. **Status: COMPLETED.**
+3.  **Request:** Provide deployment steps. **Status: COMPLETED.**
+4.  **Request:** Add translation functionality to the imported mantras. **Status: COMPLETED.**
+5.  **Request:** Import all mantras from the  GitHub repo. **Status: COMPLETED.**
+6.  **Question:** Does the user need to pull from Git before deploying again? **Status: ANSWERED.** Agent confirmed yes.
+7.  **Report:**  command is not recognized. **Status: RESOLVED.** Agent provided installation/troubleshooting steps.
+8.  **Question:** Why is  needed? **Status: ANSWERED.** Agent explained peer dependency conflicts.
+9.  **Request:** Provide deployment steps using the project path from memory. **Status: COMPLETED.**
+10. **Report:** resend otp is not working. **Status: COMPLETED** (Fix implemented).
+
+**Project Health Check:**
+-   **Running:** All core functionalities are working. Recently fixed bugs have been verified.
+-   **Mocked:** No mocked components. The Kundali generation has a functional local fallback (), which is a resilience feature, not a mock.
+
+**3rd Party Integrations**
+-   **Firebase:** Authentication (Email, Google, Phone OTP). User-managed keys.
+-   **Google Cloud Run:** Backend hosting. User-managed.
+-   **Firebase Hosting:** Frontend hosting. User-managed.
+-   **Prokerala API:** Used for astrology services.
+-   **Google Translate API:** Used for on-demand text translation.
+
+**Testing status**
+-   **Testing agent used after significant changes:** YES ( was used to validate the initial two bug fixes).
+-   **Troubleshoot agent used after agent stuck in loop:** NO.
+-   **Test files created:** []
+-   **Known regressions:** None identified in this session.
+
+**Credentials to test flow:**
+A test user  was created during the session. A new user can be registered through the UI or created via a backend script for testing purposes if login fails.
+
+**What agent forgot to execute**
+The agent discussed a future agenda with the user (Temples audio, payment split, refactor) but then rightly prioritized subsequent, more urgent user requests. These items were not forgotten but deferred and are captured in the Upcoming and Future Tasks section.</analysis>

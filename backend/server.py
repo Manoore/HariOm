@@ -25,7 +25,8 @@ from database import (
     product_reviews_collection, feedback_collection, testimonials_collection,
     puja_types_collection, service_reviews_collection, audio_library_collection,
     stream_reminders_collection, user_notifications_collection, class_requests_collection,
-    math_mutt_collection
+    math_mutt_collection,
+    scriptures_collection, scripture_verses_collection
 )
 from models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, UserRole,
@@ -137,7 +138,7 @@ async def upload_image(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://divine-spiritual-2.preview.emergentagent.com"
+        backend_url = "https://mantra-hub-6.preview.emergentagent.com"
     
     # Return the URL
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -181,7 +182,7 @@ async def upload_video(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://divine-spiritual-2.preview.emergentagent.com"
+        backend_url = "https://mantra-hub-6.preview.emergentagent.com"
     
     # Return the URL
     video_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -1485,6 +1486,202 @@ async def get_today_devotional():
             "mantras": mantras
         }
     }
+
+# ===================== SCRIPTURES / DHARMIC DATA API =====================
+
+@app.get("/api/scriptures")
+async def get_all_scriptures():
+    """Get all available scriptures with their metadata"""
+    try:
+        cursor = scriptures_collection.find({"is_active": True}, {"_id": 0})
+        scriptures = await cursor.to_list(length=20)
+        return {"status": "ok", "data": scriptures, "count": len(scriptures)}
+    except Exception as e:
+        print(f"ERROR fetching scriptures: {e}")
+        return {"status": "error", "message": str(e), "data": []}
+
+@app.get("/api/scriptures/{scripture_id}")
+async def get_scripture_details(scripture_id: str):
+    """Get detailed info about a specific scripture including sections"""
+    try:
+        # Get scripture metadata
+        scripture = await scriptures_collection.find_one(
+            {"scripture_id": scripture_id, "is_active": True}, 
+            {"_id": 0}
+        )
+        if not scripture:
+            raise HTTPException(status_code=404, detail="Scripture not found")
+        
+        # Get unique sections for this scripture
+        pipeline = [
+            {"$match": {"scripture_id": scripture_id}},
+            {"$group": {
+                "_id": "$section_num",
+                "section_name": {"$first": "$section_name"},
+                "section_name_hindi": {"$first": "$section_name_hindi"},
+                "section_type": {"$first": "$section_type"},
+                "verse_count": {"$sum": 1}
+            }},
+            {"$sort": {"_id": 1}}
+        ]
+        
+        cursor = scripture_verses_collection.aggregate(pipeline)
+        sections = []
+        async for section in cursor:
+            sections.append({
+                "section_num": section["_id"],
+                "section_name": section.get("section_name", f"Section {section['_id']}"),
+                "section_name_hindi": section.get("section_name_hindi", ""),
+                "section_type": section.get("section_type", "section"),
+                "verse_count": section["verse_count"]
+            })
+        
+        scripture["sections"] = sections
+        return {"status": "ok", "data": scripture}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"ERROR fetching scripture details: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/scriptures/{scripture_id}/sections/{section_num}")
+async def get_scripture_section(
+    scripture_id: str, 
+    section_num: int,
+    skip: int = 0,
+    limit: int = 50
+):
+    """Get verses from a specific section of a scripture"""
+    try:
+        # Verify scripture exists
+        scripture = await scriptures_collection.find_one(
+            {"scripture_id": scripture_id, "is_active": True}
+        )
+        if not scripture:
+            raise HTTPException(status_code=404, detail="Scripture not found")
+        
+        # Get verses from this section
+        query = {"scripture_id": scripture_id, "section_num": section_num}
+        total = await scripture_verses_collection.count_documents(query)
+        
+        # Build sort order based on scripture type
+        sort_fields = [("verse_num", 1)]
+        if scripture_id in ["valmiki_ramayana"]:
+            sort_fields = [("sarga_num", 1), ("verse_num", 1)]
+        elif scripture_id == "mahabharata":
+            sort_fields = [("chapter_num", 1), ("verse_num", 1)]
+        
+        cursor = scripture_verses_collection.find(
+            query, 
+            {"_id": 0}
+        ).sort(sort_fields).skip(skip).limit(limit)
+        
+        verses = await cursor.to_list(length=limit)
+        
+        # Get section info
+        section_info = None
+        if verses:
+            section_info = {
+                "section_num": verses[0].get("section_num"),
+                "section_name": verses[0].get("section_name"),
+                "section_name_hindi": verses[0].get("section_name_hindi", ""),
+                "section_type": verses[0].get("section_type")
+            }
+        
+        return {
+            "status": "ok",
+            "data": {
+                "scripture_id": scripture_id,
+                "scripture_name": scripture.get("name"),
+                "section": section_info,
+                "verses": verses,
+                "total": total,
+                "skip": skip,
+                "limit": limit,
+                "has_more": skip + len(verses) < total
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"ERROR fetching section: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/scriptures/{scripture_id}/search")
+async def search_scripture(
+    scripture_id: str,
+    q: str = Query(..., min_length=2, description="Search query"),
+    limit: int = 50
+):
+    """Search within a specific scripture"""
+    try:
+        # Verify scripture exists
+        scripture = await scriptures_collection.find_one(
+            {"scripture_id": scripture_id, "is_active": True}
+        )
+        if not scripture:
+            raise HTTPException(status_code=404, detail="Scripture not found")
+        
+        # Search in text field
+        query = {
+            "scripture_id": scripture_id,
+            "text": {"$regex": q, "$options": "i"}
+        }
+        
+        cursor = scripture_verses_collection.find(query, {"_id": 0}).limit(limit)
+        results = await cursor.to_list(length=limit)
+        
+        return {
+            "status": "ok",
+            "data": {
+                "scripture_id": scripture_id,
+                "query": q,
+                "results": results,
+                "count": len(results)
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"ERROR searching scripture: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/scriptures/verse/random")
+async def get_random_verse(scripture_id: Optional[str] = None):
+    """Get a random verse, optionally from a specific scripture"""
+    try:
+        match_stage = {}
+        if scripture_id:
+            match_stage["scripture_id"] = scripture_id
+        
+        pipeline = [
+            {"$match": match_stage} if match_stage else {"$match": {}},
+            {"$sample": {"size": 1}},
+            {"$project": {"_id": 0}}
+        ]
+        
+        cursor = scripture_verses_collection.aggregate(pipeline)
+        results = await cursor.to_list(length=1)
+        
+        if not results:
+            return {"status": "ok", "data": None}
+        
+        verse = results[0]
+        
+        # Get scripture name
+        scripture = await scriptures_collection.find_one(
+            {"scripture_id": verse.get("scripture_id")},
+            {"_id": 0, "name": 1, "name_hindi": 1}
+        )
+        
+        if scripture:
+            verse["scripture_name"] = scripture.get("name")
+            verse["scripture_name_hindi"] = scripture.get("name_hindi")
+        
+        return {"status": "ok", "data": verse}
+    except Exception as e:
+        print(f"ERROR getting random verse: {e}")
+        return {"status": "error", "message": str(e)}
 
 # Auth, Priest, and Booking routes moved to routes/auth_new.py, routes/priests_new.py, routes/bookings_new.py
 # Priest Dashboard routes (classes, availability, analytics, content, streams) moved to routes/priest_dashboard.py
@@ -4469,7 +4666,7 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     order_id = str(result.inserted_id)
     
     # Get frontend URL for redirect
-    frontend_url = os.environ.get("FRONTEND_URL", "https://divine-spiritual-2.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://mantra-hub-6.preview.emergentagent.com")
     
     # Create Stripe checkout session
     try:

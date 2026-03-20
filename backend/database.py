@@ -79,6 +79,10 @@ mantras_collection = devotional_db["mantras"]
 stotras_collection = devotional_db["stotras"]
 daily_schedule_collection = devotional_db["daily_schedule"]
 
+# Dharmic Data Collections (Scriptures from bhavykhatri/DharmicData)
+scriptures_collection = devotional_db["scriptures"]
+scripture_verses_collection = devotional_db["scripture_verses"]
+
 async def init_db():
     """Initialize database indexes"""
     await users_collection.create_index("email", unique=True)
@@ -120,3 +124,9 @@ async def init_db():
     # Notification logs index
     await notification_logs_collection.create_index([("user_id", 1), ("created_at", -1)])
     await notification_logs_collection.create_index([("notification_type", 1), ("created_at", -1)])
+    # Scripture indexes (Dharmic Data)
+    await scriptures_collection.create_index("scripture_id", unique=True)
+    await scriptures_collection.create_index("category")
+    await scripture_verses_collection.create_index([("scripture_id", 1), ("section_num", 1), ("verse_num", 1)])
+    await scripture_verses_collection.create_index([("scripture_id", 1)])
+    await scripture_verses_collection.create_index("scripture_id")
