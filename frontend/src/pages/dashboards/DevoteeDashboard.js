@@ -1753,48 +1753,62 @@ function MantrasTab({ isDesktop }) {
 // All Mantras Sub-component
 function AllMantrasSection({ isDesktop, selectedLanguage, languages, translations, translateText }) {
   const [mantras, setMantras] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [translating, setTranslating] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [selectedMantra, setSelectedMantra] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [skip, setSkip] = useState(0);
+  const limit = 20;
 
   useEffect(() => {
-    fetchAllMantras();
+    fetchCategories();
   }, []);
-  
-  // Translate mantras when language changes
+
   useEffect(() => {
-    if (selectedLanguage !== 'english' && mantras.length > 0) {
-      translateAllMantras();
+    setSkip(0);
+    fetchAllMantras(true);
+  }, [categoryFilter, filter]);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/api/devotional/mantras/categories');
+      setCategories(res.data.data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
-  }, [selectedLanguage, mantras]);
-  
-  const translateAllMantras = async () => {
-    setTranslating(true);
-    for (const mantra of mantras.slice(0, 10)) { // Translate first 10 visible
-      if (mantra.meaning_english && translateText) {
-        await translateText(mantra.meaning_english, mantra.name);
-      }
-    }
-    setTranslating(false);
-  };
-  
-  // Get translation for a mantra
-  const getTranslation = (mantra) => {
-    if (selectedLanguage === 'english') {
-      return mantra.meaning_english;
-    }
-    if (selectedLanguage === 'hindi' && mantra.meaning_hindi) {
-      return mantra.meaning_hindi;
-    }
-    const cacheKey = `${mantra.name}_${selectedLanguage}`;
-    return translations?.[cacheKey] || mantra.meaning_english;
   };
 
-  const fetchAllMantras = async () => {
+  const fetchAllMantras = async (reset = false) => {
     try {
-      const res = await api.get('/api/devotional/mantras');
-      setMantras(res.data.data || []);
+      setLoading(true);
+      const currentSkip = reset ? 0 : skip;
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        skip: currentSkip.toString(),
+      });
+      
+      if (categoryFilter !== 'all') {
+        params.append('category', categoryFilter);
+      }
+      if (filter) {
+        params.append('search', filter);
+      }
+      
+      const res = await api.get(`/api/devotional/mantras/all?${params}`);
+      const newMantras = res.data.data || [];
+      
+      if (reset) {
+        setMantras(newMantras);
+      } else {
+        setMantras(prev => [...prev, ...newMantras]);
+      }
+      
+      setHasMore(res.data.has_more);
+      if (!reset) {
+        setSkip(currentSkip + limit);
+      }
     } catch (error) {
       console.error('Error fetching mantras:', error);
     } finally {
@@ -1802,17 +1816,12 @@ function AllMantrasSection({ isDesktop, selectedLanguage, languages, translation
     }
   };
 
-  const mantraTypes = [...new Set(mantras.map(m => m.type))].filter(Boolean);
-  
-  const filteredMantras = mantras.filter(m => {
-    const matchesSearch = m.name.toLowerCase().includes(filter.toLowerCase()) ||
-                         m.sanskrit?.includes(filter) ||
-                         m.deity_id?.toLowerCase().includes(filter.toLowerCase());
-    const matchesType = !typeFilter || m.type === typeFilter;
-    return matchesSearch && matchesType;
-  });
+  const loadMore = () => {
+    setSkip(prev => prev + limit);
+    fetchAllMantras(false);
+  };
 
-  if (loading) {
+  if (loading && mantras.length === 0) {
     return (
       <div className="flex justify-center py-10">
         <Loader2 className="w-6 h-6 text-saffron animate-spin" />
@@ -1822,8 +1831,35 @@ function AllMantrasSection({ isDesktop, selectedLanguage, languages, translation
 
   return (
     <div>
-      {/* Search and Filter */}
-      <div className="flex gap-3 mb-6">
+      {/* Category Pills */}
+      <div className="flex flex-wrap gap-2 mb-4 pb-2 overflow-x-auto">
+        <button
+          onClick={() => setCategoryFilter('all')}
+          className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
+            categoryFilter === 'all'
+              ? 'bg-saffron text-white'
+              : 'bg-cream text-maroon hover:bg-saffron/20'
+          }`}
+        >
+          All ({categories.reduce((sum, c) => sum + c.count, 0)})
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setCategoryFilter(cat.id)}
+            className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
+              categoryFilter === cat.id
+                ? 'bg-saffron text-white'
+                : 'bg-cream text-maroon hover:bg-saffron/20'
+            }`}
+          >
+            {cat.name} ({cat.count})
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="flex gap-3 mb-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -1834,57 +1870,91 @@ function AllMantrasSection({ isDesktop, selectedLanguage, languages, translation
             className="w-full pl-10 pr-4 py-2 bg-cream rounded-xl text-maroon focus:ring-2 focus:ring-saffron outline-none"
           />
         </div>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="bg-cream px-4 py-2 rounded-xl text-maroon focus:ring-2 focus:ring-saffron outline-none"
-        >
-          <option value="">All Types</option>
-          {mantraTypes.map(type => (
-            <option key={type} value={type}>{type?.replace('_', ' ')}</option>
-          ))}
-        </select>
       </div>
 
-      <p className="text-sm text-gray-500 mb-4">{filteredMantras.length} mantras found</p>
+      <p className="text-sm text-gray-500 mb-4">{mantras.length} mantras loaded</p>
 
       {/* Mantras Grid */}
       <div className={`grid ${isDesktop ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
-        {filteredMantras.map((mantra, idx) => (
+        {mantras.map((mantra, idx) => (
           <motion.div
-            key={idx}
+            key={`${mantra.title}-${idx}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            className="bg-cream rounded-xl p-4 border border-saffron/10"
+            transition={{ delay: Math.min(idx * 0.03, 0.3) }}
+            className="bg-cream rounded-xl p-4 border border-saffron/10 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setSelectedMantra(selectedMantra?.title === mantra.title ? null : mantra)}
           >
             <div className="flex justify-between items-start mb-2">
               <div>
-                <p className="font-semibold text-maroon">{mantra.name}</p>
-                <p className="text-xs text-gray-500 capitalize">{mantra.deity_id} • {mantra.type?.replace('_', ' ')}</p>
+                <p className="font-semibold text-maroon">{mantra.title}</p>
+                <p className="text-xs text-gray-500">{mantra.title_english}</p>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                mantra.tier === 'free' ? 'bg-green-100 text-green-700' : 'bg-gold/20 text-gold'
-              }`}>
-                {mantra.tier}
+              <span className="text-xs px-2 py-0.5 rounded-full bg-saffron/20 text-saffron">
+                {mantra.deity || mantra.category}
               </span>
             </div>
-            <div className="bg-white rounded-lg p-3 my-2">
-              <p className="text-maroon text-center text-sm">{mantra.sanskrit}</p>
-            </div>
-            <p className="text-xs text-gray-600 italic mb-2">{mantra.transliteration}</p>
             
-            {/* Translation */}
-            <div className="bg-saffron/5 rounded-lg p-2">
-              <p className="text-xs text-gray-500 mb-1">
-                Translation ({languages?.find(l => l.code === selectedLanguage)?.native || 'English'}):
-                {translating && <span className="ml-1 text-saffron">(translating...)</span>}
-              </p>
-              <p className="text-xs text-gray-700 line-clamp-3">{getTranslation(mantra)}</p>
-            </div>
+            {/* Show deity in Hindi if available */}
+            {mantra.deity_hindi && (
+              <p className="text-xs text-maroon/70 mb-2">{mantra.deity_hindi}</p>
+            )}
+            
+            {/* Expanded view with verses */}
+            {selectedMantra?.title === mantra.title && mantra.verses && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mt-3 pt-3 border-t border-saffron/20"
+              >
+                <div className="bg-white rounded-lg p-3 max-h-64 overflow-y-auto">
+                  <pre className="text-maroon text-sm whitespace-pre-wrap font-sanskrit leading-relaxed">
+                    {mantra.verses}
+                  </pre>
+                </div>
+                {mantra.source_url && (
+                  <a 
+                    href={mantra.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-saffron hover:underline mt-2 inline-block"
+                  >
+                    View source on GitHub
+                  </a>
+                )}
+              </motion.div>
+            )}
+            
+            {selectedMantra?.title !== mantra.title && (
+              <p className="text-xs text-gray-500 mt-2">Tap to view full text</p>
+            )}
           </motion.div>
         ))}
       </div>
+
+      {/* Load More Button */}
+      {hasMore && (
+        <div className="text-center mt-6">
+          <button
+            onClick={loadMore}
+            disabled={loading}
+            className="px-6 py-2 bg-saffron text-white rounded-full hover:bg-saffron/90 transition-colors disabled:opacity-50"
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin inline" />
+            ) : (
+              'Load More Mantras'
+            )}
+          </button>
+        </div>
+      )}
+
+      {mantras.length === 0 && !loading && (
+        <div className="text-center py-10 text-gray-500">
+          <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+          <p>No mantras found</p>
+        </div>
+      )}
     </div>
   );
 }

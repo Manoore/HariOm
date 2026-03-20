@@ -1318,7 +1318,7 @@ async def get_deity(deity_id: str):
     }
 
 @app.get("/api/devotional/mantras")
-async def get_mantras(deity_id: Optional[str] = None, type: Optional[str] = None, tier: Optional[str] = None):
+async def get_mantras(deity_id: Optional[str] = None, type: Optional[str] = None, tier: Optional[str] = None, category: Optional[str] = None):
     """Get mantras with optional filters"""
     query = {"is_active": True}
     if deity_id:
@@ -1327,10 +1327,100 @@ async def get_mantras(deity_id: Optional[str] = None, type: Optional[str] = None
         query["type"] = type
     if tier:
         query["tier"] = tier
+    if category:
+        query["category"] = category
     
     cursor = mantras_collection.find(query, {"_id": 0})
     mantras = await cursor.to_list(length=100)
     return {"status": "ok", "data": mantras, "count": len(mantras)}
+
+@app.get("/api/devotional/mantras/all")
+async def get_all_mantras(category: Optional[str] = None, search: Optional[str] = None, limit: int = 50, skip: int = 0):
+    """Get all mantras from stotra-sangrahah collection with pagination and search"""
+    # Only get mantras from stotra-sangrahah source (the new imported ones)
+    query = {"is_active": True, "source": "stotra-sangrahah"}
+    
+    if category and category != "all":
+        query["category"] = category
+    
+    if search:
+        query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"title_english": {"$regex": search, "$options": "i"}},
+            {"deity": {"$regex": search, "$options": "i"}}
+        ]
+    
+    # Get total count
+    total = await mantras_collection.count_documents(query)
+    
+    # Get paginated mantras
+    cursor = mantras_collection.find(query, {"_id": 0}).skip(skip).limit(limit).sort("title", 1)
+    mantras = await cursor.to_list(length=limit)
+    
+    return {
+        "status": "ok", 
+        "data": mantras, 
+        "total": total,
+        "limit": limit,
+        "skip": skip,
+        "has_more": skip + len(mantras) < total
+    }
+
+@app.get("/api/devotional/mantras/debug")
+async def debug_mantras():
+    """Debug endpoint to check mantras collection"""
+    try:
+        # Count all
+        total = await mantras_collection.count_documents({})
+        active = await mantras_collection.count_documents({"is_active": True})
+        with_category = await mantras_collection.count_documents({"category": {"$exists": True}})
+        
+        # Get a sample
+        sample = await mantras_collection.find_one({"source": "stotra-sangrahah"}, {"_id": 0, "title": 1, "category": 1, "deity": 1})
+        
+        return {
+            "total": total,
+            "active": active,
+            "with_category": with_category,
+            "sample": sample
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/devotional/mantras/categories")
+async def get_mantra_categories():
+    """Get all unique mantra categories with counts"""
+    try:
+        pipeline = [
+            {"$match": {"is_active": True}},
+            {"$group": {
+                "_id": "$category", 
+                "count": {"$sum": 1}, 
+                "deity": {"$first": "$deity"}, 
+                "deity_hindi": {"$first": "$deity_hindi"}
+            }},
+            {"$sort": {"count": -1}}
+        ]
+        
+        categories = []
+        cursor = mantras_collection.aggregate(pipeline)
+        results = await cursor.to_list(length=50)
+        
+        print(f"DEBUG: Found {len(results)} category groups")
+        
+        for item in results:
+            if item["_id"]:  # Skip null categories
+                categories.append({
+                    "id": item["_id"],
+                    "name": item.get("deity") or item["_id"],
+                    "name_hindi": item.get("deity_hindi") or "",
+                    "count": item["count"]
+                })
+        
+        return {"status": "ok", "data": categories}
+    except Exception as e:
+        print(f"ERROR in categories: {e}")
+        return {"status": "error", "message": str(e), "data": []}
 
 @app.get("/api/devotional/mantras/{deity_id}/{mantra_type}")
 async def get_specific_mantra(deity_id: str, mantra_type: str):
