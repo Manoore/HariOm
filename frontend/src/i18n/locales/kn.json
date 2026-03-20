@@ -1,0 +1,364 @@
+{
+  "common": {
+    "appName": "ದಿವ್ಯ ಆ್ಯಪ್",
+    "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+    "error": "ದೋಷ",
+    "success": "ಯಶಸ್ಸು",
+    "cancel": "ರದ್ದುಮಾಡಿ",
+    "save": "ಉಳಿಸಿ",
+    "delete": "ಅಳಿಸಿ",
+    "edit": "ಸಂಪಾದಿಸಿ",
+    "submit": "ಸಲ್ಲಿಸಿ",
+    "back": "ಹಿಂದೆ",
+    "next": "ಮುಂದೆ",
+    "search": "ಹುಡುಕಿ",
+    "filter": "ಫಿಲ್ಟರ್",
+    "all": "ಎಲ್ಲಾ",
+    "none": "ಯಾವುದೂ ಇಲ್ಲ",
+    "yes": "ಹೌದು",
+    "no": "ಇಲ್ಲ",
+    "ok": "ಸರಿ",
+    "close": "ಮುಚ್ಚಿ",
+    "view": "ನೋಡಿ",
+    "viewAll": "ಎಲ್ಲಾ ನೋಡಿ",
+    "readMore": "ಮತ್ತಷ್ಟು ಓದಿ",
+    "showLess": "ಕಡಿಮೆ ತೋರಿಸಿ",
+    "noResults": "ಫಲಿತಾಂಶಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
+    "tryAgain": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
+  },
+  "nav": {
+    "home": "ಮುಖಪುಟ",
+    "priests": "ಪುರೋಹಿತರು",
+    "astrology": "ಜ್ಯೋತಿಷ್ಯ",
+    "store": "ಪೂಜಾ ಅಂಗಡಿ",
+    "classes": "ವೇದ ತರಗತಿಗಳು",
+    "temples": "ದೇವಾಲಯಗಳು",
+    "festivals": "ಹಬ್ಬಗಳು",
+    "panchang": "ಪಂಚಾಂಗ",
+    "kundali": "ಕುಂಡಲಿ",
+    "profile": "ಪ್ರೊಫೈಲ್",
+    "settings": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+    "logout": "ಲಾಗ್‌ಔಟ್",
+    "login": "ಲಾಗಿನ್",
+    "register": "ನೋಂದಣಿ",
+    "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+    "bookings": "ನನ್ನ ಬುಕಿಂಗ್‌ಗಳು",
+    "orders": "ನನ್ನ ಆರ್ಡರ್‌ಗಳು",
+    "wallet": "ವಾಲೆಟ್",
+    "notifications": "ಅಧಿಸೂಚನೆಗಳು",
+    "help": "ಸಹಾಯ",
+    "about": "ನಮ್ಮ ಬಗ್ಗೆ"
+  },
+  "auth": {
+    "login": "ಲಾಗಿನ್",
+    "register": "ನೋಂದಣಿ",
+    "email": "ಇಮೇಲ್",
+    "password": "ಪಾಸ್‌ವರ್ಡ್",
+    "confirmPassword": "ಪಾಸ್‌ವರ್ಡ್ ದೃಢೀಕರಿಸಿ",
+    "forgotPassword": "ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರಾ?",
+    "resetPassword": "ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಿ",
+    "phone": "ಫೋನ್ ನಂಬರ್",
+    "otp": "OTP ನಮೂದಿಸಿ",
+    "sendOtp": "OTP ಕಳುಹಿಸಿ",
+    "verifyOtp": "OTP ಪರಿಶೀಲಿಸಿ",
+    "loginWithGoogle": "Google ನಿಂದ ಲಾಗಿನ್",
+    "loginWithPhone": "ಫೋನ್ ಮೂಲಕ ಲಾಗಿನ್",
+    "noAccount": "ಖಾತೆ ಇಲ್ಲವೇ?",
+    "haveAccount": "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?",
+    "selectRole": "ನಿಮ್ಮ ಪಾತ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    "devotee": "ಭಕ್ತ",
+    "priest": "ಪುರೋಹಿತ",
+    "astrologer": "ಜ್ಯೋತಿಷಿ",
+    "shopOwner": "ಅಂಗಡಿ ಮಾಲೀಕ"
+  },
+  "landing": {
+    "hero": {
+      "title": "ನಿಮ್ಮ ಆಧ್ಯಾತ್ಮಿಕ ಪ್ರಯಾಣ ಇಲ್ಲಿ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ",
+      "subtitle": "ಪರಿಶೀಲಿಸಲಾದ ಪುರೋಹಿತರೊಂದಿಗೆ ಸಂಪರ್ಕಿಸಿ, ಜ್ಯೋತಿಷ್ಯವನ್ನು ಅನ್ವೇಷಿಸಿ ಮತ್ತು ಪವಿತ್ರ ವಸ್ತುಗಳನ್ನು ಕಂಡುಹಿಡಿಯಿರಿ",
+      "cta": "ಪ್ರಾರಂಭಿಸಿ"
+    },
+    "features": {
+      "priests": {
+        "title": "ಪುರೋಹಿತರನ್ನು ಬುಕ್ ಮಾಡಿ",
+        "desc": "ಪೂಜೆಗಳು ಮತ್ತು ಕಾರ್ಯಕ್ರಮಗಳಿಗಾಗಿ ಪರಿಶೀಲಿಸಲಾದ ಪುರೋಹಿತರನ್ನು ಹುಡುಕಿ ಮತ್ತು ಬುಕ್ ಮಾಡಿ"
+      },
+      "astrology": {
+        "title": "ಜ್ಯೋತಿಷ್ಯ ಸೇವೆಗಳು",
+        "desc": "ವೈಯಕ್ತಿಕ ಜಾತಕ ಓದುವಿಕೆ ಮತ್ತು ಸಲಹೆಗಳನ್ನು ಪಡೆಯಿರಿ"
+      },
+      "store": {
+        "title": "ಪೂಜಾ ಅಂಗಡಿ",
+        "desc": "ಅಸಲಿ ಪೂಜಾ ಸಾಮಗ್ರಿಗಳು ಮತ್ತು ಆಧ್ಯಾತ್ಮಿಕ ಉತ್ಪನ್ನಗಳನ್ನು ಖರೀದಿಸಿ"
+      },
+      "classes": {
+        "title": "ವೇದ ತರಗತಿಗಳು",
+        "desc": "ಮಂತ್ರಗಳು, ಶ್ಲೋಕಗಳು ಮತ್ತು ವೇದ ಸಂಪ್ರದಾಯಗಳನ್ನು ಕಲಿಯಿರಿ"
+      }
+    }
+  },
+  "priest": {
+    "title": "ಪುರೋಹಿತರನ್ನು ಹುಡುಕಿ",
+    "searchPlaceholder": "ಹೆಸರು, ವಿಶೇಷತೆಯಿಂದ ಹುಡುಕಿ...",
+    "filters": {
+      "specialization": "ವಿಶೇಷತೆ",
+      "language": "ಭಾಷೆ",
+      "location": "ಸ್ಥಳ",
+      "rating": "ರೇಟಿಂಗ್",
+      "price": "ಬೆಲೆ ಶ್ರೇಣಿ",
+      "availability": "ಲಭ್ಯತೆ"
+    },
+    "card": {
+      "experience": "{{years}} ವರ್ಷಗಳ ಅನುಭವ",
+      "rating": "{{rating}} ({{count}} ವಿಮರ್ಶೆಗಳು)",
+      "bookNow": "ಈಗ ಬುಕ್ ಮಾಡಿ",
+      "viewProfile": "ಪ್ರೊಫೈಲ್ ನೋಡಿ",
+      "verified": "ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+      "online": "ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ಲಭ್ಯವಿದೆ",
+      "offline": "ವೈಯಕ್ತಿಕವಾಗಿ"
+    },
+    "profile": {
+      "about": "ಕುರಿತು",
+      "services": "ಸೇವೆಗಳು",
+      "reviews": "ವಿಮರ್ಶೆಗಳು",
+      "portfolio": "ಪೋರ್ಟ್‌ಫೋಲಿಯೋ",
+      "availability": "ಲಭ್ಯತೆ"
+    },
+    "booking": {
+      "selectService": "ಸೇವೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+      "selectDate": "ದಿನಾಂಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+      "selectTime": "ಸಮಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+      "bookingDetails": "ಬುಕಿಂಗ್ ವಿವರಗಳು",
+      "confirmBooking": "ಬುಕಿಂಗ್ ದೃಢೀಕರಿಸಿ",
+      "totalAmount": "ಒಟ್ಟು ಮೊತ್ತ"
+    }
+  },
+  "astrology": {
+    "title": "ಜ್ಯೋತಿಷ್ಯ ಸೇವೆಗಳು",
+    "kundali": {
+      "title": "ಕುಂಡಲಿ / ಜನ್ಮ ಪತ್ರಿಕೆ",
+      "subtitle": "ನಿಮ್ಮ ವಿವರವಾದ ಜನ್ಮ ಪತ್ರಿಕೆಯನ್ನು ರಚಿಸಿ",
+      "form": {
+        "name": "ಪೂರ್ಣ ಹೆಸರು",
+        "dob": "ಹುಟ್ಟಿದ ದಿನಾಂಕ",
+        "tob": "ಹುಟ್ಟಿದ ಸಮಯ",
+        "pob": "ಹುಟ್ಟಿದ ಸ್ಥಳ",
+        "gender": "ಲಿಂಗ",
+        "male": "ಪುರುಷ",
+        "female": "ಮಹಿಳೆ",
+        "generate": "ಕುಂಡಲಿ ರಚಿಸಿ"
+      },
+      "result": {
+        "birthChart": "ಜನ್ಮ ಪತ್ರಿಕೆ",
+        "planets": "ಗ್ರಹ ಸ್ಥಾನಗಳು",
+        "houses": "ಭಾವ ವಿಶ್ಲೇಷಣೆ",
+        "dasha": "ದಶಾ ಅವಧಿಗಳು",
+        "yogas": "ಯೋಗಗಳು",
+        "doshas": "ದೋಷಗಳು"
+      }
+    },
+    "panchang": {
+      "title": "ದೈನಂದಿನ ಪಂಚಾಂಗ",
+      "subtitle": "ಹಿಂದೂ ಕ್ಯಾಲೆಂಡರ್ & ಶುಭ ಸಮಯಗಳು",
+      "today": "ಇಂದು",
+      "selectDate": "ದಿನಾಂಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+      "tithi": "ತಿಥಿ",
+      "nakshatra": "ನಕ್ಷತ್ರ",
+      "yoga": "ಯೋಗ",
+      "karana": "ಕರಣ",
+      "rahu": "ರಾಹು ಕಾಲ",
+      "sunrise": "ಸೂರ್ಯೋದಯ",
+      "sunset": "ಸೂರ್ಯಾಸ್ತ",
+      "moonrise": "ಚಂದ್ರೋದಯ",
+      "moonset": "ಚಂದ್ರಾಸ್ತ",
+      "shubhMuhurat": "ಶುಭ ಮುಹೂರ್ತ",
+      "ashubhMuhurat": "ಅಶುಭ ಸಮಯ"
+    },
+    "horoscope": {
+      "title": "ದೈನಂದಿನ ರಾಶಿಫಲ",
+      "selectSign": "ನಿಮ್ಮ ರಾಶಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+      "today": "ಇಂದು",
+      "weekly": "ವಾರದ",
+      "monthly": "ಮಾಸಿಕ",
+      "yearly": "ವಾರ್ಷಿಕ"
+    },
+    "consultation": {
+      "title": "ಜ್ಯೋತಿಷಿಯನ್ನು ಸಂಪರ್ಕಿಸಿ",
+      "bookNow": "ಸಲಹೆ ಬುಕ್ ಮಾಡಿ",
+      "chat": "ಚಾಟ್",
+      "call": "ಕಾಲ್",
+      "video": "ವೀಡಿಯೋ ಕಾಲ್"
+    }
+  },
+  "panchang": {
+    "title": "ಪಂಚಾಂಗ",
+    "subtitle": "ಹಿಂದೂ ವೇದ ಕ್ಯಾಲೆಂಡರ್",
+    "date": "ದಿನಾಂಕ",
+    "day": "ದಿನ",
+    "tithi": "ತಿಥಿ",
+    "nakshatra": "ನಕ್ಷತ್ರ",
+    "yoga": "ಯೋಗ",
+    "karana": "ಕರಣ",
+    "paksha": "ಪಕ್ಷ",
+    "masa": "ಮಾಸ",
+    "ritu": "ಋತು",
+    "samvat": "ಸಂವತ್",
+    "rahuKaal": "ರಾಹು ಕಾಲ",
+    "yamaGanda": "ಯಮಗಂಡ",
+    "gulika": "ಗುಳಿಕ ಕಾಲ",
+    "abhijit": "ಅಭಿಜಿತ್ ಮುಹೂರ್ತ",
+    "shubh": "ಶುಭ",
+    "ashubh": "ಅಶುಭ",
+    "days": {
+      "sunday": "ಭಾನುವಾರ",
+      "monday": "ಸೋಮವಾರ",
+      "tuesday": "ಮಂಗಳವಾರ",
+      "wednesday": "ಬುಧವಾರ",
+      "thursday": "ಗುರುವಾರ",
+      "friday": "ಶುಕ್ರವಾರ",
+      "saturday": "ಶನಿವಾರ"
+    },
+    "months": {
+      "chaitra": "ಚೈತ್ರ",
+      "vaishakha": "ವೈಶಾಖ",
+      "jyeshtha": "ಜ್ಯೇಷ್ಠ",
+      "ashadha": "ಆಷಾಢ",
+      "shravana": "ಶ್ರಾವಣ",
+      "bhadrapada": "ಭಾದ್ರಪದ",
+      "ashwin": "ಆಶ್ವಿಜ",
+      "kartik": "ಕಾರ್ತಿಕ",
+      "margashirsha": "ಮಾರ್ಗಶಿರ",
+      "pausha": "ಪುಷ್ಯ",
+      "magha": "ಮಾಘ",
+      "phalguna": "ಫಾಲ್ಗುಣ"
+    }
+  },
+  "festivals": {
+    "title": "ಹಿಂದೂ ಹಬ್ಬಗಳು",
+    "subtitle": "ಮುಂಬರುವ ಹಬ್ಬಗಳು ಮತ್ತು ಶುಭ ದಿನಗಳು",
+    "upcoming": "ಮುಂಬರುವ ಹಬ್ಬಗಳು",
+    "today": "ಇಂದಿನ ಹಬ್ಬ",
+    "thisMonth": "ಈ ತಿಂಗಳು",
+    "calendar": "ಹಬ್ಬ ಕ್ಯಾಲೆಂಡರ್",
+    "details": "ಹಬ್ಬ ವಿವರಗಳು",
+    "significance": "ಮಹತ್ವ",
+    "rituals": "ಆಚರಣೆಗಳು",
+    "date": "ದಿನಾಂಕ"
+  },
+  "store": {
+    "title": "ಪೂಜಾ ಅಂಗಡಿ",
+    "subtitle": "ಅಸಲಿ ಆಧ್ಯಾತ್ಮಿಕ ಉತ್ಪನ್ನಗಳು",
+    "categories": "ವರ್ಗಗಳು",
+    "products": "ಉತ್ಪನ್ನಗಳು",
+    "addToCart": "ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಿ",
+    "buyNow": "ಈಗ ಖರೀದಿಸಿ",
+    "cart": "ಕಾರ್ಟ್",
+    "checkout": "ಚೆಕ್ಔಟ್",
+    "emptyCart": "ನಿಮ್ಮ ಕಾರ್ಟ್ ಖಾಲಿಯಾಗಿದೆ",
+    "total": "ಒಟ್ಟು",
+    "subtotal": "ಉಪಮೊತ್ತ",
+    "shipping": "ಶಿಪ್ಪಿಂಗ್",
+    "tax": "ತೆರಿಗೆ",
+    "placeOrder": "ಆರ್ಡರ್ ಮಾಡಿ",
+    "continueShopping": "ಶಾಪಿಂಗ್ ಮುಂದುವರಿಸಿ"
+  },
+  "classes": {
+    "title": "ವೇದ ತರಗತಿಗಳು",
+    "subtitle": "ಅನುಭವಿ ಶಿಕ್ಷಕರಿಂದ ಕಲಿಯಿರಿ",
+    "browse": "ತರಗತಿಗಳನ್ನು ನೋಡಿ",
+    "myClasses": "ನನ್ನ ತರಗತಿಗಳು",
+    "enrolled": "ನೋಂದಾಯಿಸಲಾಗಿದೆ",
+    "upcoming": "ಮುಂಬರುವ",
+    "completed": "ಪೂರ್ಣಗೊಂಡಿದೆ",
+    "enroll": "ಈಗ ನೋಂದಾಯಿಸಿ",
+    "free": "ಉಚಿತ",
+    "price": "₹{{amount}}",
+    "duration": "{{minutes}} ನಿಮಿಷಗಳು",
+    "students": "{{count}} ವಿದ್ಯಾರ್ಥಿಗಳು",
+    "schedule": "ವೇಳಾಪಟ್ಟಿ",
+    "instructor": "ಬೋಧಕ",
+    "category": "ವರ್ಗ",
+    "meetingType": {
+      "title": "ಸಭೆ ಪ್ರಕಾರ",
+      "oneOnOne": "ಒಬ್ಬರಿಗೊಬ್ಬರು",
+      "group": "ಗುಂಪು"
+    },
+    "locationType": {
+      "title": "ಸ್ಥಳ ಪ್ರಕಾರ",
+      "online": "ಆನ್‌ಲೈನ್",
+      "homeVisit": "ಮನೆಯಲ್ಲಿ",
+      "temple": "ದೇವಾಲಯದಲ್ಲಿ"
+    }
+  },
+  "booking": {
+    "title": "ನನ್ನ ಬುಕಿಂಗ್‌ಗಳು",
+    "status": {
+      "pending": "ಬಾಕಿ",
+      "confirmed": "ದೃಢೀಕರಿಸಲಾಗಿದೆ",
+      "completed": "ಪೂರ್ಣಗೊಂಡಿದೆ",
+      "cancelled": "ರದ್ದುಮಾಡಲಾಗಿದೆ"
+    },
+    "actions": {
+      "cancel": "ಬುಕಿಂಗ್ ರದ್ದುಮಾಡಿ",
+      "reschedule": "ಮರುಯೋಜಿಸಿ",
+      "review": "ವಿಮರ್ಶೆ ಬರೆಯಿರಿ",
+      "chat": "ಪುರೋಹಿತರೊಂದಿಗೆ ಚಾಟ್"
+    },
+    "details": {
+      "service": "ಸೇವೆ",
+      "date": "ದಿನಾಂಕ",
+      "time": "ಸಮಯ",
+      "location": "ಸ್ಥಳ",
+      "amount": "ಮೊತ್ತ",
+      "priest": "ಪುರೋಹಿತ"
+    }
+  },
+  "dashboard": {
+    "welcome": "ಸ್ವಾಗತ, {{name}}",
+    "overview": "ಅವಲೋಕನ",
+    "quickActions": "ತ್ವರಿತ ಕ್ರಿಯೆಗಳು",
+    "recentActivity": "ಇತ್ತೀಚಿನ ಚಟುವಟಿಕೆ",
+    "stats": {
+      "bookings": "ಒಟ್ಟು ಬುಕಿಂಗ್‌ಗಳು",
+      "earnings": "ಒಟ್ಟು ಗಳಿಕೆ",
+      "reviews": "ವಿಮರ್ಶೆಗಳು",
+      "classes": "ತರಗತಿಗಳು",
+      "students": "ವಿದ್ಯಾರ್ಥಿಗಳು"
+    }
+  },
+  "profile": {
+    "title": "ನನ್ನ ಪ್ರೊಫೈಲ್",
+    "edit": "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ",
+    "personalInfo": "ವೈಯಕ್ತಿಕ ಮಾಹಿತಿ",
+    "name": "ಹೆಸರು",
+    "email": "ಇಮೇಲ್",
+    "phone": "ಫೋನ್",
+    "address": "ವಿಳಾಸ",
+    "changePassword": "ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಿ",
+    "deleteAccount": "ಖಾತೆಯನ್ನು ಅಳಿಸಿ"
+  },
+  "notifications": {
+    "title": "ಅಧಿಸೂಚನೆಗಳು",
+    "markAllRead": "ಎಲ್ಲವನ್ನೂ ಓದಿದಂತೆ ಗುರುತಿಸಿ",
+    "empty": "ಅಧಿಸೂಚನೆಗಳಿಲ್ಲ",
+    "types": {
+      "booking": "ಬುಕಿಂಗ್ ಅಪ್‌ಡೇಟ್",
+      "payment": "ಪಾವತಿ",
+      "promotion": "ಪ್ರಚಾರ",
+      "system": "ಸಿಸ್ಟಮ್"
+    }
+  },
+  "errors": {
+    "generic": "ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    "network": "ನೆಟ್‌ವರ್ಕ್ ದೋಷ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ.",
+    "notFound": "ಪುಟ ಕಂಡುಬಂದಿಲ್ಲ",
+    "unauthorized": "ಮುಂದುವರಿಯಲು ದಯವಿಟ್ಟು ಲಾಗಿನ್ ಆಗಿ",
+    "forbidden": "ಇದನ್ನು ಪ್ರವೇಶಿಸಲು ನಿಮಗೆ ಅನುಮತಿ ಇಲ್ಲ"
+  },
+  "footer": {
+    "about": "ನಮ್ಮ ಬಗ್ಗೆ",
+    "contact": "ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ",
+    "privacy": "ಗೌಪ್ಯತಾ ನೀತಿ",
+    "terms": "ಸೇವಾ ನಿಯಮಗಳು",
+    "copyright": "© 2026 ದಿವ್ಯ ಆ್ಯಪ್. ಎಲ್ಲಾ ಹಕ್ಕುಗಳನ್ನು ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ."
+  }
+}

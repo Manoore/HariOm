@@ -12,6 +12,7 @@ import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { Toaster, toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import ChatTab from '../../components/Chat/ChatTab';
 import { WalletCard, RechargeModal, TransactionHistory } from '../../components/Wallet/WalletComponents';
 import { AstrologerList, PreCallCheck, VideoCallScreen } from '../../components/VideoConsultation/VideoConsultation';
@@ -19,6 +20,7 @@ import AddressAutocomplete from '../../components/AddressAutocomplete';
 import { PriestDetailView, AstrologyTab } from '../../components/DevoteeDashboard';
 import SmartPayment from '../../components/PaymentComponents';
 import NotificationBell from '../../components/NotificationBell';
+import LanguageSelector from '../../components/LanguageSelector';
 
 // 3D Animated Devotional SVG Icons
 const BellIcon3D = ({ size = "w-8 h-8" }) => (
@@ -869,6 +871,7 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
           </button>
         </div>
         <NotificationBell />
+        <LanguageSelector className="text-gray-700 ml-2" />
       </div>
 
       {/* Personalized Daily Horoscope */}

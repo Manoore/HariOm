@@ -1,0 +1,364 @@
+{
+  "common": {
+    "appName": "Divine App",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "close": "Close",
+    "view": "View",
+    "viewAll": "View All",
+    "readMore": "Read More",
+    "showLess": "Show Less",
+    "noResults": "No results found",
+    "tryAgain": "Try Again"
+  },
+  "nav": {
+    "home": "Home",
+    "priests": "Priests",
+    "astrology": "Astrology",
+    "store": "Pooja Store",
+    "classes": "Vedic Classes",
+    "temples": "Temples",
+    "festivals": "Festivals",
+    "panchang": "Panchang",
+    "kundali": "Kundali",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "dashboard": "Dashboard",
+    "bookings": "My Bookings",
+    "orders": "My Orders",
+    "wallet": "Wallet",
+    "notifications": "Notifications",
+    "help": "Help",
+    "about": "About"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "phone": "Phone Number",
+    "otp": "Enter OTP",
+    "sendOtp": "Send OTP",
+    "verifyOtp": "Verify OTP",
+    "loginWithGoogle": "Sign in with Google",
+    "loginWithPhone": "Sign in with Phone",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "selectRole": "Select Your Role",
+    "devotee": "Devotee",
+    "priest": "Priest",
+    "astrologer": "Astrologer",
+    "shopOwner": "Shop Owner"
+  },
+  "landing": {
+    "hero": {
+      "title": "Your Spiritual Journey Begins Here",
+      "subtitle": "Connect with verified priests, explore astrology, and discover sacred items",
+      "cta": "Get Started"
+    },
+    "features": {
+      "priests": {
+        "title": "Book Priests",
+        "desc": "Find and book verified priests for pujas and ceremonies"
+      },
+      "astrology": {
+        "title": "Astrology Services",
+        "desc": "Get personalized horoscope readings and consultations"
+      },
+      "store": {
+        "title": "Pooja Store",
+        "desc": "Shop for authentic pooja items and spiritual products"
+      },
+      "classes": {
+        "title": "Vedic Classes",
+        "desc": "Learn mantras, shlokas, and Vedic traditions"
+      }
+    }
+  },
+  "priest": {
+    "title": "Find a Priest",
+    "searchPlaceholder": "Search by name, specialization...",
+    "filters": {
+      "specialization": "Specialization",
+      "language": "Language",
+      "location": "Location",
+      "rating": "Rating",
+      "price": "Price Range",
+      "availability": "Availability"
+    },
+    "card": {
+      "experience": "{{years}} years experience",
+      "rating": "{{rating}} ({{count}} reviews)",
+      "bookNow": "Book Now",
+      "viewProfile": "View Profile",
+      "verified": "Verified",
+      "online": "Available Online",
+      "offline": "In-Person"
+    },
+    "profile": {
+      "about": "About",
+      "services": "Services",
+      "reviews": "Reviews",
+      "portfolio": "Portfolio",
+      "availability": "Availability"
+    },
+    "booking": {
+      "selectService": "Select Service",
+      "selectDate": "Select Date",
+      "selectTime": "Select Time",
+      "bookingDetails": "Booking Details",
+      "confirmBooking": "Confirm Booking",
+      "totalAmount": "Total Amount"
+    }
+  },
+  "astrology": {
+    "title": "Astrology Services",
+    "kundali": {
+      "title": "Kundali / Birth Chart",
+      "subtitle": "Generate your detailed birth chart",
+      "form": {
+        "name": "Full Name",
+        "dob": "Date of Birth",
+        "tob": "Time of Birth",
+        "pob": "Place of Birth",
+        "gender": "Gender",
+        "male": "Male",
+        "female": "Female",
+        "generate": "Generate Kundali"
+      },
+      "result": {
+        "birthChart": "Birth Chart",
+        "planets": "Planetary Positions",
+        "houses": "House Analysis",
+        "dasha": "Dasha Periods",
+        "yogas": "Yogas",
+        "doshas": "Doshas"
+      }
+    },
+    "panchang": {
+      "title": "Daily Panchang",
+      "subtitle": "Hindu Calendar & Auspicious Timings",
+      "today": "Today",
+      "selectDate": "Select Date",
+      "tithi": "Tithi",
+      "nakshatra": "Nakshatra",
+      "yoga": "Yoga",
+      "karana": "Karana",
+      "rahu": "Rahu Kaal",
+      "sunrise": "Sunrise",
+      "sunset": "Sunset",
+      "moonrise": "Moonrise",
+      "moonset": "Moonset",
+      "shubhMuhurat": "Auspicious Time",
+      "ashubhMuhurat": "Inauspicious Time"
+    },
+    "horoscope": {
+      "title": "Daily Horoscope",
+      "selectSign": "Select Your Sign",
+      "today": "Today",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    },
+    "consultation": {
+      "title": "Consult an Astrologer",
+      "bookNow": "Book Consultation",
+      "chat": "Chat",
+      "call": "Call",
+      "video": "Video Call"
+    }
+  },
+  "panchang": {
+    "title": "Panchang",
+    "subtitle": "Hindu Vedic Calendar",
+    "date": "Date",
+    "day": "Day",
+    "tithi": "Tithi",
+    "nakshatra": "Nakshatra",
+    "yoga": "Yoga",
+    "karana": "Karana",
+    "paksha": "Paksha",
+    "masa": "Month (Masa)",
+    "ritu": "Season (Ritu)",
+    "samvat": "Samvat",
+    "rahuKaal": "Rahu Kaal",
+    "yamaGanda": "Yama Ganda",
+    "gulika": "Gulika Kaal",
+    "abhijit": "Abhijit Muhurat",
+    "shubh": "Auspicious",
+    "ashubh": "Inauspicious",
+    "days": {
+      "sunday": "Sunday (Ravivaar)",
+      "monday": "Monday (Somvaar)",
+      "tuesday": "Tuesday (Mangalvaar)",
+      "wednesday": "Wednesday (Budhvaar)",
+      "thursday": "Thursday (Guruvaar)",
+      "friday": "Friday (Shukravaar)",
+      "saturday": "Saturday (Shanivaar)"
+    },
+    "months": {
+      "chaitra": "Chaitra",
+      "vaishakha": "Vaishakha",
+      "jyeshtha": "Jyeshtha",
+      "ashadha": "Ashadha",
+      "shravana": "Shravana",
+      "bhadrapada": "Bhadrapada",
+      "ashwin": "Ashwin",
+      "kartik": "Kartik",
+      "margashirsha": "Margashirsha",
+      "pausha": "Pausha",
+      "magha": "Magha",
+      "phalguna": "Phalguna"
+    }
+  },
+  "festivals": {
+    "title": "Hindu Festivals",
+    "subtitle": "Upcoming festivals and auspicious days",
+    "upcoming": "Upcoming Festivals",
+    "today": "Today's Festival",
+    "thisMonth": "This Month",
+    "calendar": "Festival Calendar",
+    "details": "Festival Details",
+    "significance": "Significance",
+    "rituals": "Rituals",
+    "date": "Date"
+  },
+  "store": {
+    "title": "Pooja Store",
+    "subtitle": "Authentic spiritual products",
+    "categories": "Categories",
+    "products": "Products",
+    "addToCart": "Add to Cart",
+    "buyNow": "Buy Now",
+    "cart": "Cart",
+    "checkout": "Checkout",
+    "emptyCart": "Your cart is empty",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "tax": "Tax",
+    "placeOrder": "Place Order",
+    "continueShopping": "Continue Shopping"
+  },
+  "classes": {
+    "title": "Vedic Classes",
+    "subtitle": "Learn from experienced teachers",
+    "browse": "Browse Classes",
+    "myClasses": "My Classes",
+    "enrolled": "Enrolled",
+    "upcoming": "Upcoming",
+    "completed": "Completed",
+    "enroll": "Enroll Now",
+    "free": "Free",
+    "price": "{{amount}}",
+    "duration": "{{minutes}} mins",
+    "students": "{{count}} students",
+    "schedule": "Schedule",
+    "instructor": "Instructor",
+    "category": "Category",
+    "meetingType": {
+      "title": "Meeting Type",
+      "oneOnOne": "One-on-One",
+      "group": "Group"
+    },
+    "locationType": {
+      "title": "Location Type",
+      "online": "Online",
+      "homeVisit": "Home Visit",
+      "temple": "At Temple"
+    }
+  },
+  "booking": {
+    "title": "My Bookings",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "actions": {
+      "cancel": "Cancel Booking",
+      "reschedule": "Reschedule",
+      "review": "Write Review",
+      "chat": "Chat with Priest"
+    },
+    "details": {
+      "service": "Service",
+      "date": "Date",
+      "time": "Time",
+      "location": "Location",
+      "amount": "Amount",
+      "priest": "Priest"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome, {{name}}",
+    "overview": "Overview",
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity",
+    "stats": {
+      "bookings": "Total Bookings",
+      "earnings": "Total Earnings",
+      "reviews": "Reviews",
+      "classes": "Classes",
+      "students": "Students"
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "edit": "Edit Profile",
+    "personalInfo": "Personal Information",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "changePassword": "Change Password",
+    "deleteAccount": "Delete Account"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark All as Read",
+    "empty": "No notifications",
+    "types": {
+      "booking": "Booking Update",
+      "payment": "Payment",
+      "promotion": "Promotion",
+      "system": "System"
+    }
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "notFound": "Page not found",
+    "unauthorized": "Please login to continue",
+    "forbidden": "You don't have permission to access this"
+  },
+  "footer": {
+    "about": "About Us",
+    "contact": "Contact Us",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "copyright": "© 2026 Divine App. All rights reserved."
+  }
+}

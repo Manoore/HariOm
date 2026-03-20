@@ -93,6 +93,21 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
    - In-app notifications sent to providers when approved/rejected
    - All 23 backend tests pass (100% success rate)
 
+6. ~~**Internationalization (i18n) Setup**~~ ✅ COMPLETED (March 20, 2026)
+   - Languages supported: English, Hindi, Sanskrit, Tamil, Telugu, Kannada, Malayalam
+   - Language selector in navbar (visible on desktop and mobile)
+   - User language preference saved in localStorage
+   - UI elements translated (buttons, labels, navigation, forms)
+   - Translation files: `/app/frontend/src/i18n/locales/*.json`
+   - Key features translated:
+     - Navigation menus
+     - Authentication forms  
+     - Panchang terms (Tithi, Nakshatra, Yoga, Karana, etc.)
+     - Kundali/horoscope terminology
+     - Festival names
+     - Dashboard elements
+     - Common UI elements (buttons, labels, errors)
+
 5. ~~**Class Enrollment Payments (P0)**~~ ✅ COMPLETED (March 17, 2026)
    - Integrated SmartPayment component for Stripe payments
    - Full payment flow for Vedic class enrollment
@@ -143,14 +158,19 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
    - Refactor PriestDashboard.js
    - Break down AdminDashboard.js into smaller components
 
-4. **Music Library Audio Fix (P3)**
+4. **Extend i18n Coverage (P2)**
+   - Apply translations to more page content (hero sections, descriptions)
+   - Add admin management for languages (enable/disable)
+   - Consider adding RTL support for future languages
+
+5. **Music Library Audio Fix (P3)**
    - Replace unreliable Internet Archive with YouTube embedded videos
    - Awaiting user confirmation on approach
 
-5. **Temple Section Clarification (P3)**
+6. **Temple Section Clarification (P3)**
    - Awaiting user decision on functionality (informational / priest affiliation / search)
 
-6. **Mobile App (Expo) (P3)**
+7. **Mobile App (Expo) (P3)**
    - Fix Expo loading issue
    - Complete native app for App Store/Play Store
 

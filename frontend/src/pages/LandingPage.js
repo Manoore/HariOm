@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '../components/LanguageSelector';
 
 // Scroll to top function
 const scrollToTop = () => {
@@ -512,6 +514,7 @@ const fadeInUp = {
 };
 
 export default function LandingPage({ onGetStarted }) {
+  const { t } = useTranslation();
   const [priests, setPriests] = useState([]);
   const [products, setProducts] = useState([]);
   const [festivals, setFestivals] = useState([]);
@@ -605,11 +608,12 @@ export default function LandingPage({ onGetStarted }) {
 
             {/* CTA Buttons */}
             <div className="hidden lg:flex items-center gap-4">
+              <LanguageSelector className="text-gray-700" />
               <button onClick={() => onGetStarted('login')} className="text-maroon font-medium hover:text-saffron transition-colors">
-                Login
+                {t('auth.login')}
               </button>
               <button onClick={() => onGetStarted('register')} className="bg-saffron hover:bg-saffron-dark text-white px-6 py-2.5 rounded-full font-medium transition-colors">
-                Get Started
+                {t('landing.hero.cta')}
               </button>
             </div>
 
@@ -628,16 +632,19 @@ export default function LandingPage({ onGetStarted }) {
             className="lg:hidden bg-white border-t border-orange-100 px-4 py-6"
           >
             <div className="space-y-4">
-              <a href="#features" className="block text-gray-700 font-medium">Features</a>
-              <a href="#services" className="block text-gray-700 font-medium">Services</a>
-              <a href="#priests" className="block text-gray-700 font-medium">Priests</a>
-              <a href="#marketplace" className="block text-gray-700 font-medium">Marketplace</a>
-              <div className="pt-4 space-y-3">
+              <a href="#features" className="block text-gray-700 font-medium">{t('nav.home')}</a>
+              <a href="#services" className="block text-gray-700 font-medium">{t('priest.profile.services')}</a>
+              <a href="#priests" className="block text-gray-700 font-medium">{t('nav.priests')}</a>
+              <a href="#marketplace" className="block text-gray-700 font-medium">{t('nav.store')}</a>
+              <div className="py-3 border-t border-gray-100">
+                <LanguageSelector className="text-gray-700 w-full" />
+              </div>
+              <div className="pt-2 space-y-3">
                 <button onClick={() => onGetStarted('login')} className="w-full border-2 border-maroon text-maroon py-3 rounded-full font-medium">
-                  Login
+                  {t('auth.login')}
                 </button>
                 <button onClick={() => onGetStarted('register')} className="w-full bg-saffron text-white py-3 rounded-full font-medium">
-                  Get Started
+                  {t('landing.hero.cta')}
                 </button>
               </div>
             </div>

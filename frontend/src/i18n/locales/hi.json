@@ -1,0 +1,364 @@
+{
+  "common": {
+    "appName": "दिव्य ऐप",
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफल",
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "submit": "जमा करें",
+    "back": "वापस",
+    "next": "अगला",
+    "search": "खोजें",
+    "filter": "फ़िल्टर",
+    "all": "सभी",
+    "none": "कोई नहीं",
+    "yes": "हाँ",
+    "no": "नहीं",
+    "ok": "ठीक है",
+    "close": "बंद करें",
+    "view": "देखें",
+    "viewAll": "सभी देखें",
+    "readMore": "और पढ़ें",
+    "showLess": "कम दिखाएं",
+    "noResults": "कोई परिणाम नहीं मिला",
+    "tryAgain": "पुनः प्रयास करें"
+  },
+  "nav": {
+    "home": "होम",
+    "priests": "पंडित",
+    "astrology": "ज्योतिष",
+    "store": "पूजा स्टोर",
+    "classes": "वैदिक कक्षाएं",
+    "temples": "मंदिर",
+    "festivals": "त्योहार",
+    "panchang": "पंचांग",
+    "kundali": "कुंडली",
+    "profile": "प्रोफ़ाइल",
+    "settings": "सेटिंग्स",
+    "logout": "लॉगआउट",
+    "login": "लॉगिन",
+    "register": "पंजीकरण",
+    "dashboard": "डैशबोर्ड",
+    "bookings": "मेरी बुकिंग",
+    "orders": "मेरे ऑर्डर",
+    "wallet": "वॉलेट",
+    "notifications": "सूचनाएं",
+    "help": "सहायता",
+    "about": "हमारे बारे में"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "register": "पंजीकरण",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "resetPassword": "पासवर्ड रीसेट करें",
+    "phone": "फ़ोन नंबर",
+    "otp": "OTP दर्ज करें",
+    "sendOtp": "OTP भेजें",
+    "verifyOtp": "OTP सत्यापित करें",
+    "loginWithGoogle": "Google से लॉगिन करें",
+    "loginWithPhone": "फ़ोन से लॉगिन करें",
+    "noAccount": "खाता नहीं है?",
+    "haveAccount": "पहले से खाता है?",
+    "selectRole": "अपनी भूमिका चुनें",
+    "devotee": "भक्त",
+    "priest": "पंडित",
+    "astrologer": "ज्योतिषी",
+    "shopOwner": "दुकान मालिक"
+  },
+  "landing": {
+    "hero": {
+      "title": "आपकी आध्यात्मिक यात्रा यहाँ शुरू होती है",
+      "subtitle": "सत्यापित पंडितों से जुड़ें, ज्योतिष का अन्वेषण करें और पवित्र वस्तुएं खोजें",
+      "cta": "शुरू करें"
+    },
+    "features": {
+      "priests": {
+        "title": "पंडित बुक करें",
+        "desc": "पूजा और अनुष्ठानों के लिए सत्यापित पंडितों को खोजें और बुक करें"
+      },
+      "astrology": {
+        "title": "ज्योतिष सेवाएं",
+        "desc": "व्यक्तिगत कुंडली पढ़ने और परामर्श प्राप्त करें"
+      },
+      "store": {
+        "title": "पूजा स्टोर",
+        "desc": "प्रामाणिक पूजा सामग्री और आध्यात्मिक उत्पादों की खरीदारी करें"
+      },
+      "classes": {
+        "title": "वैदिक कक्षाएं",
+        "desc": "मंत्र, श्लोक और वैदिक परंपराएं सीखें"
+      }
+    }
+  },
+  "priest": {
+    "title": "पंडित खोजें",
+    "searchPlaceholder": "नाम, विशेषज्ञता से खोजें...",
+    "filters": {
+      "specialization": "विशेषज्ञता",
+      "language": "भाषा",
+      "location": "स्थान",
+      "rating": "रेटिंग",
+      "price": "मूल्य सीमा",
+      "availability": "उपलब्धता"
+    },
+    "card": {
+      "experience": "{{years}} वर्ष का अनुभव",
+      "rating": "{{rating}} ({{count}} समीक्षाएं)",
+      "bookNow": "अभी बुक करें",
+      "viewProfile": "प्रोफ़ाइल देखें",
+      "verified": "सत्यापित",
+      "online": "ऑनलाइन उपलब्ध",
+      "offline": "व्यक्तिगत रूप से"
+    },
+    "profile": {
+      "about": "परिचय",
+      "services": "सेवाएं",
+      "reviews": "समीक्षाएं",
+      "portfolio": "पोर्टफोलियो",
+      "availability": "उपलब्धता"
+    },
+    "booking": {
+      "selectService": "सेवा चुनें",
+      "selectDate": "तिथि चुनें",
+      "selectTime": "समय चुनें",
+      "bookingDetails": "बुकिंग विवरण",
+      "confirmBooking": "बुकिंग की पुष्टि करें",
+      "totalAmount": "कुल राशि"
+    }
+  },
+  "astrology": {
+    "title": "ज्योतिष सेवाएं",
+    "kundali": {
+      "title": "कुंडली / जन्म पत्रिका",
+      "subtitle": "अपनी विस्तृत जन्म कुंडली बनाएं",
+      "form": {
+        "name": "पूरा नाम",
+        "dob": "जन्म तिथि",
+        "tob": "जन्म समय",
+        "pob": "जन्म स्थान",
+        "gender": "लिंग",
+        "male": "पुरुष",
+        "female": "महिला",
+        "generate": "कुंडली बनाएं"
+      },
+      "result": {
+        "birthChart": "जन्म कुंडली",
+        "planets": "ग्रह स्थिति",
+        "houses": "भाव विश्लेषण",
+        "dasha": "दशा काल",
+        "yogas": "योग",
+        "doshas": "दोष"
+      }
+    },
+    "panchang": {
+      "title": "दैनिक पंचांग",
+      "subtitle": "हिंदू कैलेंडर और शुभ मुहूर्त",
+      "today": "आज",
+      "selectDate": "तिथि चुनें",
+      "tithi": "तिथि",
+      "nakshatra": "नक्षत्र",
+      "yoga": "योग",
+      "karana": "करण",
+      "rahu": "राहु काल",
+      "sunrise": "सूर्योदय",
+      "sunset": "सूर्यास्त",
+      "moonrise": "चंद्रोदय",
+      "moonset": "चंद्रास्त",
+      "shubhMuhurat": "शुभ मुहूर्त",
+      "ashubhMuhurat": "अशुभ समय"
+    },
+    "horoscope": {
+      "title": "दैनिक राशिफल",
+      "selectSign": "अपनी राशि चुनें",
+      "today": "आज",
+      "weekly": "साप्ताहिक",
+      "monthly": "मासिक",
+      "yearly": "वार्षिक"
+    },
+    "consultation": {
+      "title": "ज्योतिषी से परामर्श",
+      "bookNow": "परामर्श बुक करें",
+      "chat": "चैट",
+      "call": "कॉल",
+      "video": "वीडियो कॉल"
+    }
+  },
+  "panchang": {
+    "title": "पंचांग",
+    "subtitle": "हिंदू वैदिक कैलेंडर",
+    "date": "तारीख",
+    "day": "दिन",
+    "tithi": "तिथि",
+    "nakshatra": "नक्षत्र",
+    "yoga": "योग",
+    "karana": "करण",
+    "paksha": "पक्ष",
+    "masa": "मास",
+    "ritu": "ऋतु",
+    "samvat": "संवत",
+    "rahuKaal": "राहु काल",
+    "yamaGanda": "यम गंड",
+    "gulika": "गुलिक काल",
+    "abhijit": "अभिजित मुहूर्त",
+    "shubh": "शुभ",
+    "ashubh": "अशुभ",
+    "days": {
+      "sunday": "रविवार",
+      "monday": "सोमवार",
+      "tuesday": "मंगलवार",
+      "wednesday": "बुधवार",
+      "thursday": "गुरुवार",
+      "friday": "शुक्रवार",
+      "saturday": "शनिवार"
+    },
+    "months": {
+      "chaitra": "चैत्र",
+      "vaishakha": "वैशाख",
+      "jyeshtha": "ज्येष्ठ",
+      "ashadha": "आषाढ़",
+      "shravana": "श्रावण",
+      "bhadrapada": "भाद्रपद",
+      "ashwin": "आश्विन",
+      "kartik": "कार्तिक",
+      "margashirsha": "मार्गशीर्ष",
+      "pausha": "पौष",
+      "magha": "माघ",
+      "phalguna": "फाल्गुन"
+    }
+  },
+  "festivals": {
+    "title": "हिंदू त्योहार",
+    "subtitle": "आगामी त्योहार और शुभ दिन",
+    "upcoming": "आगामी त्योहार",
+    "today": "आज का त्योहार",
+    "thisMonth": "इस महीने",
+    "calendar": "त्योहार कैलेंडर",
+    "details": "त्योहार विवरण",
+    "significance": "महत्व",
+    "rituals": "अनुष्ठान",
+    "date": "तिथि"
+  },
+  "store": {
+    "title": "पूजा स्टोर",
+    "subtitle": "प्रामाणिक आध्यात्मिक उत्पाद",
+    "categories": "श्रेणियां",
+    "products": "उत्पाद",
+    "addToCart": "कार्ट में डालें",
+    "buyNow": "अभी खरीदें",
+    "cart": "कार्ट",
+    "checkout": "चेकआउट",
+    "emptyCart": "आपका कार्ट खाली है",
+    "total": "कुल",
+    "subtotal": "उप-योग",
+    "shipping": "शिपिंग",
+    "tax": "कर",
+    "placeOrder": "ऑर्डर दें",
+    "continueShopping": "खरीदारी जारी रखें"
+  },
+  "classes": {
+    "title": "वैदिक कक्षाएं",
+    "subtitle": "अनुभवी शिक्षकों से सीखें",
+    "browse": "कक्षाएं देखें",
+    "myClasses": "मेरी कक्षाएं",
+    "enrolled": "नामांकित",
+    "upcoming": "आगामी",
+    "completed": "पूर्ण",
+    "enroll": "अभी नामांकन करें",
+    "free": "मुफ़्त",
+    "price": "₹{{amount}}",
+    "duration": "{{minutes}} मिनट",
+    "students": "{{count}} छात्र",
+    "schedule": "समय सारणी",
+    "instructor": "प्रशिक्षक",
+    "category": "श्रेणी",
+    "meetingType": {
+      "title": "बैठक प्रकार",
+      "oneOnOne": "एक-से-एक",
+      "group": "समूह"
+    },
+    "locationType": {
+      "title": "स्थान प्रकार",
+      "online": "ऑनलाइन",
+      "homeVisit": "घर पर",
+      "temple": "मंदिर में"
+    }
+  },
+  "booking": {
+    "title": "मेरी बुकिंग",
+    "status": {
+      "pending": "लंबित",
+      "confirmed": "पुष्टि",
+      "completed": "पूर्ण",
+      "cancelled": "रद्द"
+    },
+    "actions": {
+      "cancel": "बुकिंग रद्द करें",
+      "reschedule": "पुनर्निर्धारित करें",
+      "review": "समीक्षा लिखें",
+      "chat": "पंडित से चैट करें"
+    },
+    "details": {
+      "service": "सेवा",
+      "date": "तिथि",
+      "time": "समय",
+      "location": "स्थान",
+      "amount": "राशि",
+      "priest": "पंडित"
+    }
+  },
+  "dashboard": {
+    "welcome": "स्वागत है, {{name}}",
+    "overview": "अवलोकन",
+    "quickActions": "त्वरित कार्य",
+    "recentActivity": "हाल की गतिविधि",
+    "stats": {
+      "bookings": "कुल बुकिंग",
+      "earnings": "कुल आय",
+      "reviews": "समीक्षाएं",
+      "classes": "कक्षाएं",
+      "students": "छात्र"
+    }
+  },
+  "profile": {
+    "title": "मेरी प्रोफ़ाइल",
+    "edit": "प्रोफ़ाइल संपादित करें",
+    "personalInfo": "व्यक्तिगत जानकारी",
+    "name": "नाम",
+    "email": "ईमेल",
+    "phone": "फ़ोन",
+    "address": "पता",
+    "changePassword": "पासवर्ड बदलें",
+    "deleteAccount": "खाता हटाएं"
+  },
+  "notifications": {
+    "title": "सूचनाएं",
+    "markAllRead": "सभी पढ़ा हुआ चिह्नित करें",
+    "empty": "कोई सूचना नहीं",
+    "types": {
+      "booking": "बुकिंग अपडेट",
+      "payment": "भुगतान",
+      "promotion": "प्रोमोशन",
+      "system": "सिस्टम"
+    }
+  },
+  "errors": {
+    "generic": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।",
+    "network": "नेटवर्क त्रुटि। कृपया अपना कनेक्शन जांचें।",
+    "notFound": "पेज नहीं मिला",
+    "unauthorized": "जारी रखने के लिए कृपया लॉगिन करें",
+    "forbidden": "आपके पास इस तक पहुंच की अनुमति नहीं है"
+  },
+  "footer": {
+    "about": "हमारे बारे में",
+    "contact": "संपर्क करें",
+    "privacy": "गोपनीयता नीति",
+    "terms": "सेवा की शर्तें",
+    "copyright": "© 2026 दिव्य ऐप। सर्वाधिकार सुरक्षित।"
+  }
+}

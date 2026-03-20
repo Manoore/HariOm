@@ -1,0 +1,364 @@
+{
+  "common": {
+    "appName": "दिव्य अनुप्रयोगः",
+    "loading": "आवर्तते...",
+    "error": "दोषः",
+    "success": "सफलता",
+    "cancel": "निरस्तं कुरु",
+    "save": "रक्ष",
+    "delete": "विलोपय",
+    "edit": "सम्पादय",
+    "submit": "प्रेषय",
+    "back": "पृष्ठतः",
+    "next": "अग्रे",
+    "search": "अन्वेषय",
+    "filter": "शोधनम्",
+    "all": "सर्वे",
+    "none": "न किमपि",
+    "yes": "आम्",
+    "no": "न",
+    "ok": "अस्तु",
+    "close": "पिधत्स्व",
+    "view": "पश्य",
+    "viewAll": "सर्वं पश्य",
+    "readMore": "अधिकं पठ",
+    "showLess": "न्यूनं दर्शय",
+    "noResults": "फलानि न प्राप्तानि",
+    "tryAgain": "पुनः प्रयत्नं कुरु"
+  },
+  "nav": {
+    "home": "गृहम्",
+    "priests": "पुरोहिताः",
+    "astrology": "ज्योतिषम्",
+    "store": "पूजा विपणिः",
+    "classes": "वैदिक कक्षाः",
+    "temples": "मन्दिराणि",
+    "festivals": "उत्सवाः",
+    "panchang": "पञ्चाङ्गम्",
+    "kundali": "कुण्डली",
+    "profile": "परिचयः",
+    "settings": "विन्यासाः",
+    "logout": "निर्गमनम्",
+    "login": "प्रवेशः",
+    "register": "पञ्जीकरणम्",
+    "dashboard": "नियन्त्रणफलकम्",
+    "bookings": "मम आरक्षणानि",
+    "orders": "मम आदेशाः",
+    "wallet": "मुद्रास्थानम्",
+    "notifications": "सूचनाः",
+    "help": "सहायता",
+    "about": "विषये"
+  },
+  "auth": {
+    "login": "प्रवेशः",
+    "register": "पञ्जीकरणम्",
+    "email": "विद्युत्पत्रम्",
+    "password": "गुप्तशब्दः",
+    "confirmPassword": "गुप्तशब्दं पुष्टीकुरु",
+    "forgotPassword": "गुप्तशब्दं विस्मृतः?",
+    "resetPassword": "गुप्तशब्दं पुनःस्थापय",
+    "phone": "दूरभाषसंख्या",
+    "otp": "OTP प्रविश",
+    "sendOtp": "OTP प्रेषय",
+    "verifyOtp": "OTP सत्यापय",
+    "loginWithGoogle": "गूगल द्वारा प्रविश",
+    "loginWithPhone": "दूरभाषेण प्रविश",
+    "noAccount": "खाता नास्ति?",
+    "haveAccount": "खाता अस्ति?",
+    "selectRole": "स्वभूमिकां चिनु",
+    "devotee": "भक्तः",
+    "priest": "पुरोहितः",
+    "astrologer": "ज्योतिषी",
+    "shopOwner": "आपणस्वामी"
+  },
+  "landing": {
+    "hero": {
+      "title": "तव आध्यात्मिकयात्रा अत्र आरभते",
+      "subtitle": "प्रमाणितपुरोहितैः सह संयुज्यस्व, ज्योतिषम् अन्वेषय, पवित्रवस्तूनि च लभस्व",
+      "cta": "आरभस्व"
+    },
+    "features": {
+      "priests": {
+        "title": "पुरोहितान् आरक्षय",
+        "desc": "पूजानुष्ठानेभ्यः प्रमाणितपुरोहितान् प्राप्नुहि आरक्षय च"
+      },
+      "astrology": {
+        "title": "ज्योतिषसेवाः",
+        "desc": "वैयक्तिकं कुण्डलीपठनं परामर्शं च प्राप्नुहि"
+      },
+      "store": {
+        "title": "पूजा विपणिः",
+        "desc": "प्रामाणिकपूजासामग्रीम् आध्यात्मिकोत्पादान् च क्रीणीहि"
+      },
+      "classes": {
+        "title": "वैदिककक्षाः",
+        "desc": "मन्त्रान् श्लोकान् वैदिकपरम्पराश्च अधीहि"
+      }
+    }
+  },
+  "priest": {
+    "title": "पुरोहितम् अन्वेषय",
+    "searchPlaceholder": "नाम्ना विशेषज्ञतया अन्वेषय...",
+    "filters": {
+      "specialization": "विशेषज्ञता",
+      "language": "भाषा",
+      "location": "स्थानम्",
+      "rating": "मूल्याङ्कनम्",
+      "price": "मूल्यसीमा",
+      "availability": "उपलब्धता"
+    },
+    "card": {
+      "experience": "{{years}} वर्षाणि अनुभवः",
+      "rating": "{{rating}} ({{count}} समीक्षाः)",
+      "bookNow": "इदानीम् आरक्षय",
+      "viewProfile": "परिचयं पश्य",
+      "verified": "प्रमाणितः",
+      "online": "अन्तर्जाले उपलब्धः",
+      "offline": "प्रत्यक्षम्"
+    },
+    "profile": {
+      "about": "परिचयः",
+      "services": "सेवाः",
+      "reviews": "समीक्षाः",
+      "portfolio": "कार्यसञ्चयः",
+      "availability": "उपलब्धता"
+    },
+    "booking": {
+      "selectService": "सेवां चिनु",
+      "selectDate": "तिथिं चिनु",
+      "selectTime": "समयं चिनु",
+      "bookingDetails": "आरक्षणविवरणम्",
+      "confirmBooking": "आरक्षणं पुष्टीकुरु",
+      "totalAmount": "समग्रराशिः"
+    }
+  },
+  "astrology": {
+    "title": "ज्योतिषसेवाः",
+    "kundali": {
+      "title": "कुण्डली / जन्मपत्रिका",
+      "subtitle": "स्व विस्तृतां जन्मकुण्डलीं रचय",
+      "form": {
+        "name": "पूर्णनाम",
+        "dob": "जन्मतिथिः",
+        "tob": "जन्मसमयः",
+        "pob": "जन्मस्थानम्",
+        "gender": "लिङ्गम्",
+        "male": "पुरुषः",
+        "female": "स्त्री",
+        "generate": "कुण्डलीं रचय"
+      },
+      "result": {
+        "birthChart": "जन्मकुण्डली",
+        "planets": "ग्रहस्थितिः",
+        "houses": "भावविश्लेषणम्",
+        "dasha": "दशाकालः",
+        "yogas": "योगाः",
+        "doshas": "दोषाः"
+      }
+    },
+    "panchang": {
+      "title": "दैनिकपञ्चाङ्गम्",
+      "subtitle": "हिन्दुपञ्चाङ्गं शुभमुहूर्ताश्च",
+      "today": "अद्य",
+      "selectDate": "तिथिं चिनु",
+      "tithi": "तिथिः",
+      "nakshatra": "नक्षत्रम्",
+      "yoga": "योगः",
+      "karana": "करणम्",
+      "rahu": "राहुकालः",
+      "sunrise": "सूर्योदयः",
+      "sunset": "सूर्यास्तः",
+      "moonrise": "चन्द्रोदयः",
+      "moonset": "चन्द्रास्तः",
+      "shubhMuhurat": "शुभमुहूर्तः",
+      "ashubhMuhurat": "अशुभसमयः"
+    },
+    "horoscope": {
+      "title": "दैनिकराशिफलम्",
+      "selectSign": "स्वराशिं चिनु",
+      "today": "अद्य",
+      "weekly": "साप्ताहिकम्",
+      "monthly": "मासिकम्",
+      "yearly": "वार्षिकम्"
+    },
+    "consultation": {
+      "title": "ज्योतिषिणा परामृश",
+      "bookNow": "परामर्शम् आरक्षय",
+      "chat": "सम्भाषणम्",
+      "call": "आह्वानम्",
+      "video": "दृश्यसम्भाषणम्"
+    }
+  },
+  "panchang": {
+    "title": "पञ्चाङ्गम्",
+    "subtitle": "हिन्दुवैदिकपञ्चाङ्गम्",
+    "date": "दिनाङ्कः",
+    "day": "वासरः",
+    "tithi": "तिथिः",
+    "nakshatra": "नक्षत्रम्",
+    "yoga": "योगः",
+    "karana": "करणम्",
+    "paksha": "पक्षः",
+    "masa": "मासः",
+    "ritu": "ऋतुः",
+    "samvat": "सम्वत्",
+    "rahuKaal": "राहुकालः",
+    "yamaGanda": "यमगण्डः",
+    "gulika": "गुलिककालः",
+    "abhijit": "अभिजिन्मुहूर्तः",
+    "shubh": "शुभम्",
+    "ashubh": "अशुभम्",
+    "days": {
+      "sunday": "रविवासरः",
+      "monday": "सोमवासरः",
+      "tuesday": "मङ्गलवासरः",
+      "wednesday": "बुधवासरः",
+      "thursday": "गुरुवासरः",
+      "friday": "शुक्रवासरः",
+      "saturday": "शनिवासरः"
+    },
+    "months": {
+      "chaitra": "चैत्रः",
+      "vaishakha": "वैशाखः",
+      "jyeshtha": "ज्येष्ठः",
+      "ashadha": "आषाढः",
+      "shravana": "श्रावणः",
+      "bhadrapada": "भाद्रपदः",
+      "ashwin": "आश्विनः",
+      "kartik": "कार्तिकः",
+      "margashirsha": "मार्गशीर्षः",
+      "pausha": "पौषः",
+      "magha": "माघः",
+      "phalguna": "फाल्गुनः"
+    }
+  },
+  "festivals": {
+    "title": "हिन्दूत्सवाः",
+    "subtitle": "आगामिनः उत्सवाः शुभदिनानि च",
+    "upcoming": "आगामिनः उत्सवाः",
+    "today": "अद्यतनः उत्सवः",
+    "thisMonth": "अस्मिन् मासे",
+    "calendar": "उत्सवपञ्चाङ्गम्",
+    "details": "उत्सवविवरणम्",
+    "significance": "महत्त्वम्",
+    "rituals": "अनुष्ठानानि",
+    "date": "तिथिः"
+  },
+  "store": {
+    "title": "पूजा विपणिः",
+    "subtitle": "प्रामाणिकाध्यात्मिकोत्पादाः",
+    "categories": "वर्गाः",
+    "products": "उत्पादाः",
+    "addToCart": "शकटे योजय",
+    "buyNow": "इदानीं क्रीणीहि",
+    "cart": "शकटम्",
+    "checkout": "क्रयसमापनम्",
+    "emptyCart": "तव शकटं रिक्तम्",
+    "total": "समग्रम्",
+    "subtotal": "उपयोगः",
+    "shipping": "प्रेषणम्",
+    "tax": "करः",
+    "placeOrder": "आदेशं देहि",
+    "continueShopping": "क्रयणं जारी रख"
+  },
+  "classes": {
+    "title": "वैदिककक्षाः",
+    "subtitle": "अनुभविभ्यः आचार्येभ्यः अधीहि",
+    "browse": "कक्षाः पश्य",
+    "myClasses": "मम कक्षाः",
+    "enrolled": "पञ्जीकृतः",
+    "upcoming": "आगामिनः",
+    "completed": "समाप्ताः",
+    "enroll": "इदानीं पञ्जीकुरु",
+    "free": "निःशुल्कम्",
+    "price": "₹{{amount}}",
+    "duration": "{{minutes}} निमेषाः",
+    "students": "{{count}} छात्राः",
+    "schedule": "समयसारणी",
+    "instructor": "आचार्यः",
+    "category": "वर्गः",
+    "meetingType": {
+      "title": "सभाप्रकारः",
+      "oneOnOne": "एकैकशः",
+      "group": "समूहः"
+    },
+    "locationType": {
+      "title": "स्थानप्रकारः",
+      "online": "अन्तर्जाले",
+      "homeVisit": "गृहे",
+      "temple": "मन्दिरे"
+    }
+  },
+  "booking": {
+    "title": "मम आरक्षणानि",
+    "status": {
+      "pending": "प्रतीक्षायाम्",
+      "confirmed": "पुष्टम्",
+      "completed": "समाप्तम्",
+      "cancelled": "निरस्तम्"
+    },
+    "actions": {
+      "cancel": "आरक्षणं निरस्तं कुरु",
+      "reschedule": "पुनर्निर्धारय",
+      "review": "समीक्षां लिख",
+      "chat": "पुरोहितेन सम्भाष"
+    },
+    "details": {
+      "service": "सेवा",
+      "date": "तिथिः",
+      "time": "समयः",
+      "location": "स्थानम्",
+      "amount": "राशिः",
+      "priest": "पुरोहितः"
+    }
+  },
+  "dashboard": {
+    "welcome": "स्वागतम्, {{name}}",
+    "overview": "अवलोकनम्",
+    "quickActions": "त्वरितक्रियाः",
+    "recentActivity": "सद्यःक्रियाः",
+    "stats": {
+      "bookings": "समग्राणि आरक्षणानि",
+      "earnings": "समग्राः आयाः",
+      "reviews": "समीक्षाः",
+      "classes": "कक्षाः",
+      "students": "छात्राः"
+    }
+  },
+  "profile": {
+    "title": "मम परिचयः",
+    "edit": "परिचयं सम्पादय",
+    "personalInfo": "वैयक्तिकसूचना",
+    "name": "नाम",
+    "email": "विद्युत्पत्रम्",
+    "phone": "दूरभाषः",
+    "address": "सङ्केतः",
+    "changePassword": "गुप्तशब्दं परिवर्तय",
+    "deleteAccount": "खातं विलोपय"
+  },
+  "notifications": {
+    "title": "सूचनाः",
+    "markAllRead": "सर्वाः पठिताः इति चिह्नय",
+    "empty": "सूचनाः न सन्ति",
+    "types": {
+      "booking": "आरक्षणसूचना",
+      "payment": "भुगतानम्",
+      "promotion": "प्रचारः",
+      "system": "प्रणाली"
+    }
+  },
+  "errors": {
+    "generic": "किमपि दोषः जातः। पुनः प्रयत्नं कुरु।",
+    "network": "जालदोषः। स्वसम्बन्धं परीक्षस्व।",
+    "notFound": "पृष्ठं न प्राप्तम्",
+    "unauthorized": "कृपया प्रवेशं कुरु",
+    "forbidden": "अत्र प्रवेष्टुं अनुमतिः नास्ति"
+  },
+  "footer": {
+    "about": "अस्माकं विषये",
+    "contact": "सम्पर्कं कुरु",
+    "privacy": "गोपनीयतानीतिः",
+    "terms": "सेवाशर्ताः",
+    "copyright": "© 2026 दिव्य अनुप्रयोगः। सर्वाधिकाराः सुरक्षिताः।"
+  }
+}

@@ -8,6 +8,9 @@ import api from './lib/api';
 import { toast, Toaster } from 'sonner';
 import './App.css';
 
+// Initialize i18n
+import './i18n';
+
 // Payment redirect handler component
 function PaymentHandler({ children }) {
   const hasHandledPayment = useRef(false);
