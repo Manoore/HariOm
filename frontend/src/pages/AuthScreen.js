@@ -209,9 +209,15 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
       if (error.code === 'auth/invalid-phone-number') {
         errorMessage = 'Invalid phone number. Please check and try again.';
       } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Too many attempts. Please try again later.';
+        errorMessage = 'Too many attempts. Please wait a few minutes before trying again.';
       } else if (error.code === 'auth/quota-exceeded') {
         errorMessage = 'SMS quota exceeded. Please try again later.';
+      } else if (error.code === 'auth/captcha-check-failed') {
+        errorMessage = 'reCAPTCHA verification failed. Please refresh the page and try again.';
+      } else if (error.code === 'auth/missing-phone-number') {
+        errorMessage = 'Please enter a valid phone number.';
+      } else if (error.message && error.message.includes('reCAPTCHA')) {
+        errorMessage = 'reCAPTCHA error. Please refresh the page and try again.';
       }
       
       toast.error(errorMessage);

@@ -186,6 +186,9 @@ export const sendPhoneOTP = async (phoneNumber) => {
     
     console.log('Sending OTP to:', formattedPhone);
     
+    // Clear any existing confirmation result for resend
+    window.confirmationResult = null;
+    
     // Always create a fresh reCAPTCHA verifier for each OTP request
     if (window.recaptchaVerifier) {
       try {
@@ -202,6 +205,15 @@ export const sendPhoneOTP = async (phoneNumber) => {
       container.innerHTML = '';
     }
     
+    // Small delay to ensure DOM is ready after clearing
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Check if container still exists (might have been removed during navigation)
+    const freshContainer = document.getElementById('recaptcha-container');
+    if (!freshContainer) {
+      throw new Error('reCAPTCHA container not found. Please refresh the page.');
+    }
+    
     // Create new reCAPTCHA verifier
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       size: 'invisible',
@@ -210,8 +222,18 @@ export const sendPhoneOTP = async (phoneNumber) => {
       },
       'expired-callback': () => {
         console.log('reCAPTCHA expired');
+        // Clear the verifier on expiry so next attempt creates a fresh one
+        if (window.recaptchaVerifier) {
+          try {
+            window.recaptchaVerifier.clear();
+          } catch (e) {}
+          window.recaptchaVerifier = null;
+        }
       }
     });
+    
+    // Render the reCAPTCHA widget
+    await window.recaptchaVerifier.render();
     
     const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
     
@@ -227,11 +249,14 @@ export const sendPhoneOTP = async (phoneNumber) => {
     if (window.recaptchaVerifier) {
       try {
         window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
       } catch (e) {
         console.log('Could not clear verifier');
       }
+      window.recaptchaVerifier = null;
     }
+    
+    // Clear confirmation result on error
+    window.confirmationResult = null;
     
     throw error;
   }
