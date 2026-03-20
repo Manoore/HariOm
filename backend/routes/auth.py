@@ -5,17 +5,15 @@ Handles user registration, login, and Firebase sync
 from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime, timezone
 from bson import ObjectId
-from passlib.context import CryptContext
+import bcrypt
 import jwt
 import os
 
 from database import users_collection
 from models import UserCreate, UserLogin, UserRole
-from auth import get_current_user, create_access_token
+from auth import get_current_user, create_access_token, verify_password, get_password_hash
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @router.post("/register")
 async def register(user_data: UserCreate):
@@ -24,7 +22,7 @@ async def register(user_data: UserCreate):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    hashed_password = pwd_context.hash(user_data.password)
+    hashed_password = get_password_hash(user_data.password)
     
     user_dict = {
         "email": user_data.email,
@@ -57,7 +55,8 @@ async def login(credentials: UserLogin):
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    if not pwd_context.verify(credentials.password, user["password"]):
+    password_field = user.get("password_hash") or user.get("password")
+    if not password_field or not verify_password(credentials.password, password_field):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_access_token({"sub": str(user["_id"])})
