@@ -154,7 +154,8 @@
         "dasha": "Dasha Periods",
         "yogas": "Yogas",
         "doshas": "Doshas"
-      }
+      },
+      "matching": "Kundali Matching"
     },
     "panchang": {
       "title": "Daily Panchang",
@@ -179,7 +180,11 @@
       "today": "Today",
       "weekly": "Weekly",
       "monthly": "Monthly",
-      "yearly": "Yearly"
+      "yearly": "Yearly",
+      "todaysHoroscope": "Today's Horoscope",
+      "luckyNumber": "Lucky Number",
+      "luckyColor": "Lucky Color",
+      "viewFull": "View full horoscope"
     },
     "consultation": {
       "title": "Consult an Astrologer",
@@ -187,6 +192,20 @@
       "chat": "Chat",
       "call": "Call",
       "video": "Video Call"
+    },
+    "signs": {
+      "aries": "Aries",
+      "taurus": "Taurus",
+      "gemini": "Gemini",
+      "cancer": "Cancer",
+      "leo": "Leo",
+      "virgo": "Virgo",
+      "libra": "Libra",
+      "scorpio": "Scorpio",
+      "sagittarius": "Sagittarius",
+      "capricorn": "Capricorn",
+      "aquarius": "Aquarius",
+      "pisces": "Pisces"
     }
   },
   "panchang": {
@@ -314,6 +333,7 @@
   },
   "dashboard": {
     "welcome": "Welcome, {{name}}",
+    "namaste": "Namaste",
     "overview": "Overview",
     "quickActions": "Quick Actions",
     "recentActivity": "Recent Activity",

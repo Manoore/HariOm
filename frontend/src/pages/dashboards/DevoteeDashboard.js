@@ -767,6 +767,7 @@ function ConsultationTab({ isDesktop }) {
 // Home Tab Content
 function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [priests, setPriests] = useState([]);
   const [festivals, setFestivals] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -859,7 +860,7 @@ function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       {/* Header - Name is clickable */}
       <div className="pt-4 pb-6 flex items-start justify-between">
         <div>
-          <p className="text-gray-500 text-sm">Namaste,</p>
+          <p className="text-gray-500 text-sm">{t('dashboard.namaste')},</p>
           <button 
             onClick={() => setActiveTab('profile')}
             className="text-left hover:opacity-80 transition-opacity"

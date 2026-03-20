@@ -63,7 +63,7 @@ function AstrologyTab({ isDesktop }) {
   const sections = [
     { id: 'horoscope', label: t('astrology.horoscope.title'), icon: Sun },
     { id: 'kundali', label: t('astrology.kundali.title'), icon: Star },
-    { id: 'matching', label: 'Kundali Matching', icon: Calendar }
+    { id: 'matching', label: t('astrology.kundali.matching'), icon: Calendar }
   ];
 
   // Location search function
@@ -278,7 +278,7 @@ function AstrologyTab({ isDesktop }) {
                 }`}
               >
                 <span className="text-3xl block mb-1">{sign.symbol}</span>
-                <span className="text-sm font-medium">{sign.name}</span>
+                <span className="text-sm font-medium">{t(`astrology.signs.${sign.nameKey}`)}</span>
                 <span className={`text-xs block ${selectedSign?.name === sign.name ? 'text-white/70' : 'text-gray-400'}`}>
                   {sign.dates}
                 </span>
@@ -301,20 +301,20 @@ function AstrologyTab({ isDesktop }) {
               <div className="flex items-center gap-3 mb-4">
                 <span className="text-4xl">{selectedSign?.symbol}</span>
                 <div>
-                  <h3 className="font-cinzel text-xl font-bold text-maroon">{selectedSign?.name}</h3>
-                  <p className="text-gray-500 text-sm">Today's Horoscope</p>
+                  <h3 className="font-cinzel text-xl font-bold text-maroon">{t(`astrology.signs.${selectedSign?.nameKey}`)}</h3>
+                  <p className="text-gray-500 text-sm">{t('astrology.horoscope.todaysHoroscope')}</p>
                 </div>
               </div>
               <p className="text-gray-700 leading-relaxed">{horoscope.horoscope}</p>
               {horoscope.lucky_number && (
                 <div className="mt-4 flex gap-4">
                   <div className="bg-white rounded-xl px-4 py-2">
-                    <span className="text-xs text-gray-500">Lucky Number</span>
+                    <span className="text-xs text-gray-500">{t('astrology.horoscope.luckyNumber')}</span>
                     <p className="font-bold text-saffron">{horoscope.lucky_number}</p>
                   </div>
                   {horoscope.lucky_color && (
                     <div className="bg-white rounded-xl px-4 py-2">
-                      <span className="text-xs text-gray-500">Lucky Color</span>
+                      <span className="text-xs text-gray-500">{t('astrology.horoscope.luckyColor')}</span>
                       <p className="font-bold text-saffron">{horoscope.lucky_color}</p>
                     </div>
                   )}

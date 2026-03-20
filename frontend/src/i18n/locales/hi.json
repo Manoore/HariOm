@@ -154,7 +154,8 @@
         "dasha": "दशा काल",
         "yogas": "योग",
         "doshas": "दोष"
-      }
+      },
+      "matching": "कुंडली मिलान"
     },
     "panchang": {
       "title": "दैनिक पंचांग",
@@ -179,7 +180,11 @@
       "today": "आज",
       "weekly": "साप्ताहिक",
       "monthly": "मासिक",
-      "yearly": "वार्षिक"
+      "yearly": "वार्षिक",
+      "todaysHoroscope": "आज का राशिफल",
+      "luckyNumber": "भाग्यशाली अंक",
+      "luckyColor": "भाग्यशाली रंग",
+      "viewFull": "पूरा राशिफल देखें"
     },
     "consultation": {
       "title": "ज्योतिषी से परामर्श",
@@ -187,6 +192,20 @@
       "chat": "चैट",
       "call": "कॉल",
       "video": "वीडियो कॉल"
+    },
+    "signs": {
+      "aries": "मेष",
+      "taurus": "वृषभ",
+      "gemini": "मिथुन",
+      "cancer": "कर्क",
+      "leo": "सिंह",
+      "virgo": "कन्या",
+      "libra": "तुला",
+      "scorpio": "वृश्चिक",
+      "sagittarius": "धनु",
+      "capricorn": "मकर",
+      "aquarius": "कुंभ",
+      "pisces": "मीन"
     }
   },
   "panchang": {
@@ -314,6 +333,7 @@
   },
   "dashboard": {
     "welcome": "स्वागत है, {{name}}",
+    "namaste": "नमस्ते",
     "overview": "अवलोकन",
     "quickActions": "त्वरित कार्य",
     "recentActivity": "हाल की गतिविधि",

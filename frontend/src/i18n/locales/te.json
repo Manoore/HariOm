@@ -154,7 +154,8 @@
         "dasha": "దశా కాలాలు",
         "yogas": "యోగాలు",
         "doshas": "దోషాలు"
-      }
+      },
+      "matching": "కుండలి మ్యాచింగ్"
     },
     "panchang": {
       "title": "రోజువారీ పంచాంగం",
@@ -179,7 +180,11 @@
       "today": "ఈరోజు",
       "weekly": "వారపు",
       "monthly": "నెలవారీ",
-      "yearly": "సంవత్సర"
+      "yearly": "సంవత్సర",
+      "todaysHoroscope": "నేటి రాశిఫలం",
+      "luckyNumber": "అదృష్ట సంఖ్య",
+      "luckyColor": "అదృష్ట రంగు",
+      "viewFull": "పూర్తి రాశిఫలం చూడండి"
     },
     "consultation": {
       "title": "జ్యోతిష్కుడిని సంప్రదించండి",
@@ -187,6 +192,20 @@
       "chat": "చాట్",
       "call": "కాల్",
       "video": "వీడియో కాల్"
+    },
+    "signs": {
+      "aries": "మేషం",
+      "taurus": "వృషభం",
+      "gemini": "మిథునం",
+      "cancer": "కర్కాటకం",
+      "leo": "సింహం",
+      "virgo": "కన్య",
+      "libra": "తుల",
+      "scorpio": "వృశ్చికం",
+      "sagittarius": "ధనస్సు",
+      "capricorn": "మకరం",
+      "aquarius": "కుంభం",
+      "pisces": "మీనం"
     }
   },
   "panchang": {
@@ -314,6 +333,7 @@
   },
   "dashboard": {
     "welcome": "స్వాగతం, {{name}}",
+    "namaste": "నమస్తే",
     "overview": "అవలోకనం",
     "quickActions": "త్వరిత చర్యలు",
     "recentActivity": "ఇటీవలి కార్యకలాపం",
