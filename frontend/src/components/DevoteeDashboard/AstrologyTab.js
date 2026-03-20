@@ -5,6 +5,7 @@ import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 function AstrologyTab({ isDesktop }) {
   const { user } = useAuth();
@@ -75,9 +76,11 @@ function AstrologyTab({ isDesktop }) {
     setSearching(true);
     try {
       const res = await api.get(`/api/places/autocomplete?query=${encodeURIComponent(query)}`);
-      setResults(res.data.predictions || []);
+      // Backend returns 'results' not 'predictions'
+      setResults(res.data.results || []);
     } catch (error) {
       console.error('Location search failed:', error);
+      setResults([]);
     } finally {
       setSearching(false);
     }
@@ -149,21 +152,24 @@ function AstrologyTab({ isDesktop }) {
   const fetchHoroscope = async (sign) => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/horoscope/daily/${sign.name.toLowerCase()}`);
+      // Pass the current language to the API
+      const currentLang = i18n.language || 'en';
+      const res = await api.get(`/api/horoscope/daily/${sign.name.toLowerCase()}?lang=${currentLang}`);
       // Handle nested data structure from API
       const data = res.data;
       const prediction = data?.data?.daily_prediction || data;
       setHoroscope({
-        horoscope: prediction?.prediction || prediction?.horoscope || "Your cosmic energy is aligned today. Focus on your goals and embrace new opportunities.",
+        horoscope: prediction?.prediction || prediction?.horoscope || t('astrology.horoscope.defaultPrediction', 'Your cosmic energy is aligned today. Focus on your goals and embrace new opportunities.'),
         lucky_number: prediction?.lucky_number,
         lucky_color: prediction?.lucky_color,
         sign_name: data?.sign_name || sign.name,
+        sign_name_localized: data?.sign_name_localized || t(`astrology.signs.${sign.nameKey}`),
         sign_name_hindi: data?.sign_name_hindi
       });
       setSelectedSign(sign);
     } catch (error) {
       console.error('Horoscope error:', error);
-      toast.error('Failed to fetch horoscope');
+      toast.error(t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -171,24 +177,23 @@ function AstrologyTab({ isDesktop }) {
 
   const fetchKundali = async () => {
     if (!kundaliForm.datetime || !kundaliForm.latitude) {
-      toast.error('Please fill all fields');
+      toast.error(t('errors.generic'));
       return;
     }
     setLoading(true);
     try {
       const dt = new Date(kundaliForm.datetime);
-      const res = await api.post('/api/kundali', {
-        year: dt.getFullYear(),
-        month: dt.getMonth() + 1,
-        day: dt.getDate(),
-        hour: dt.getHours(),
-        minute: dt.getMinutes(),
+      // Format datetime as ISO string for the API
+      const datetimeStr = dt.toISOString();
+      const res = await api.post('/api/astrology/birth-kundali', {
+        datetime: datetimeStr,
         latitude: kundaliForm.latitude,
         longitude: kundaliForm.longitude
       });
       setKundaliResult(res.data);
     } catch (error) {
-      toast.error('Failed to generate birth chart');
+      console.error('Kundali error:', error);
+      toast.error(t('errors.generic'));
     } finally {
       setLoading(false);
     }

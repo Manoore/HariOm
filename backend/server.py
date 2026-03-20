@@ -2957,14 +2957,20 @@ async def get_user_orders(user: dict = Depends(get_current_user)):
 
 # ===================== HOROSCOPE ROUTES =====================
 @app.get("/api/horoscope/daily/{zodiac_sign}")
-async def get_daily_horoscope_api(zodiac_sign: str):
+async def get_daily_horoscope_api(zodiac_sign: str, lang: str = "en"):
     """Get daily horoscope for a zodiac sign using Prokerala API"""
     try:
         horoscope = await prokerala.get_daily_horoscope(zodiac_sign.lower())
+        # Add localized sign name
+        rashi_info = prokerala.RASHI_NAMES.get(zodiac_sign.lower(), {})
+        horoscope["sign_name_localized"] = rashi_info.get(lang, rashi_info.get("en", zodiac_sign.title()))
         return horoscope
     except Exception as e:
         print(f"Prokerala API error, using fallback: {e}")
-        return prokerala.get_fallback_horoscope(zodiac_sign.lower())
+        fallback = prokerala.get_fallback_horoscope(zodiac_sign.lower())
+        rashi_info = prokerala.RASHI_NAMES.get(zodiac_sign.lower(), {})
+        fallback["sign_name_localized"] = rashi_info.get(lang, rashi_info.get("en", zodiac_sign.title()))
+        return fallback
 
 @app.get("/api/horoscope/personalized")
 async def get_personalized_horoscope(user: dict = Depends(get_current_user)):

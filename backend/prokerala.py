@@ -88,18 +88,24 @@ NAKSHATRA_TO_RASHI = {
 
 # Rashi names in different languages
 RASHI_NAMES = {
-    "aries": {"en": "Aries", "hi": "Mesh"},
-    "taurus": {"en": "Taurus", "hi": "Vrishabh"},
-    "gemini": {"en": "Gemini", "hi": "Mithun"},
-    "cancer": {"en": "Cancer", "hi": "Karka"},
-    "leo": {"en": "Leo", "hi": "Simha"},
-    "virgo": {"en": "Virgo", "hi": "Kanya"},
-    "libra": {"en": "Libra", "hi": "Tula"},
-    "scorpio": {"en": "Scorpio", "hi": "Vrishchik"},
-    "sagittarius": {"en": "Sagittarius", "hi": "Dhanu"},
-    "capricorn": {"en": "Capricorn", "hi": "Makar"},
-    "aquarius": {"en": "Aquarius", "hi": "Kumbh"},
-    "pisces": {"en": "Pisces", "hi": "Meen"}
+    "aries": {"en": "Aries", "hi": "मेष", "te": "మేషం", "ta": "மேஷம்", "kn": "ಮೇಷ", "ml": "മേടം", "sa": "मेषः"},
+    "taurus": {"en": "Taurus", "hi": "वृषभ", "te": "వృషభం", "ta": "ரிஷபம்", "kn": "ವೃಷಭ", "ml": "ഇടവം", "sa": "वृषभः"},
+    "gemini": {"en": "Gemini", "hi": "मिथुन", "te": "మిథునం", "ta": "மிதுனம்", "kn": "ಮಿಥುನ", "ml": "മിഥുനം", "sa": "मिथुनम्"},
+    "cancer": {"en": "Cancer", "hi": "कर्क", "te": "కర్కాటకం", "ta": "கர்கடகம்", "kn": "ಕರ್ಕಾಟಕ", "ml": "കർക്കിടകം", "sa": "कर्कटः"},
+    "leo": {"en": "Leo", "hi": "सिंह", "te": "సింహం", "ta": "சிம்மம்", "kn": "ಸಿಂಹ", "ml": "ചിങ്ങം", "sa": "सिंहः"},
+    "virgo": {"en": "Virgo", "hi": "कन्या", "te": "కన్య", "ta": "கன்னி", "kn": "ಕನ್ಯಾ", "ml": "കന്നി", "sa": "कन्या"},
+    "libra": {"en": "Libra", "hi": "तुला", "te": "తుల", "ta": "துலாம்", "kn": "ತುಲಾ", "ml": "തുലാം", "sa": "तुला"},
+    "scorpio": {"en": "Scorpio", "hi": "वृश्चिक", "te": "వృశ్చికం", "ta": "விருச்சிகம்", "kn": "ವೃಶ್ಚಿಕ", "ml": "വൃശ്ചികം", "sa": "वृश्चिकः"},
+    "sagittarius": {"en": "Sagittarius", "hi": "धनु", "te": "ధనస్సు", "ta": "தனுசு", "kn": "ಧನು", "ml": "ധനു", "sa": "धनुः"},
+    "capricorn": {"en": "Capricorn", "hi": "मकर", "te": "మకరం", "ta": "மகரம்", "kn": "ಮಕರ", "ml": "മകരം", "sa": "मकरः"},
+    "aquarius": {"en": "Aquarius", "hi": "कुंभ", "te": "కుంభం", "ta": "கும்பம்", "kn": "ಕುಂಭ", "ml": "കുംഭം", "sa": "कुम्भः"},
+    "pisces": {"en": "Pisces", "hi": "मीन", "te": "మీనం", "ta": "மீனம்", "kn": "ಮೀನ", "ml": "മീനം", "sa": "मीनम्"}
+}
+
+# Horoscope translations for common phrases
+HOROSCOPE_PHRASES = {
+    "lucky_number": {"en": "Lucky Number", "hi": "भाग्यशाली अंक", "te": "అదృష్ట సంఖ్య", "ta": "அதிர்ஷ்ட எண்", "kn": "ಅದೃಷ್ಟ ಸಂಖ್ಯೆ", "ml": "ഭാഗ്യ നമ്പർ", "sa": "भाग्याङ्कः"},
+    "lucky_color": {"en": "Lucky Color", "hi": "भाग्यशाली रंग", "te": "అదృష్ట రంగు", "ta": "அதிர்ஷ்ட நிறம்", "kn": "ಅದೃಷ್ಟ ಬಣ್ಣ", "ml": "ഭാഗ്യ നിറം", "sa": "भाग्यवर्णः"}
 }
 
 def get_rashi_from_nakshatra(nakshatra: str) -> Optional[str]:
@@ -258,7 +264,79 @@ async def get_birth_kundali(
         return result
     except Exception as e:
         print(f"Error getting birth kundali: {e}")
-        return {"error": str(e)}
+        # Return fallback using local calculations
+        return get_fallback_kundali(datetime_str, latitude, longitude)
+
+def get_fallback_kundali(datetime_str: str, latitude: float, longitude: float) -> Dict:
+    """Generate fallback kundali using Swiss Ephemeris"""
+    import swisseph as swe
+    from datetime import datetime
+    
+    try:
+        # Parse datetime
+        dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+        
+        # Calculate Julian day
+        jd = swe.julday(dt.year, dt.month, dt.day, dt.hour + dt.minute/60.0)
+        
+        # Set ayanamsa (Lahiri)
+        swe.set_sid_mode(swe.SIDM_LAHIRI)
+        ayanamsa_value = swe.get_ayanamsa(jd)
+        
+        # Calculate planetary positions
+        planets = {}
+        planet_ids = {
+            'Sun': swe.SUN, 'Moon': swe.MOON, 'Mars': swe.MARS,
+            'Mercury': swe.MERCURY, 'Jupiter': swe.JUPITER, 'Venus': swe.VENUS,
+            'Saturn': swe.SATURN, 'Rahu': swe.MEAN_NODE, 'Ketu': swe.MEAN_NODE
+        }
+        
+        rashis = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 
+                  'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
+        
+        for name, planet_id in planet_ids.items():
+            pos, _ = swe.calc_ut(jd, planet_id)
+            sidereal_pos = (pos[0] - ayanamsa_value) % 360
+            if name == 'Ketu':
+                sidereal_pos = (sidereal_pos + 180) % 360
+            rashi_idx = int(sidereal_pos / 30)
+            degree_in_rashi = sidereal_pos % 30
+            planets[name] = {
+                'longitude': round(sidereal_pos, 2),
+                'rashi': rashis[rashi_idx],
+                'degree': round(degree_in_rashi, 2)
+            }
+        
+        # Calculate Lagna (Ascendant)
+        houses, ascmc = swe.houses(jd, latitude, longitude, b'P')
+        lagna_sidereal = (ascmc[0] - ayanamsa_value) % 360
+        lagna_rashi_idx = int(lagna_sidereal / 30)
+        
+        # Calculate Nakshatra for Moon
+        moon_pos = planets['Moon']['longitude']
+        nakshatra_idx = int(moon_pos / (360/27))
+        nakshatras = ['Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra',
+                      'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni',
+                      'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha',
+                      'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishtha', 'Shatabhisha',
+                      'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati']
+        
+        return {
+            "success": True,
+            "ascendant": rashis[lagna_rashi_idx],
+            "ascendant_degree": round(lagna_sidereal % 30, 2),
+            "moon_sign": planets['Moon']['rashi'],
+            "nakshatra": nakshatras[nakshatra_idx],
+            "planets": planets,
+            "ayanamsa": round(ayanamsa_value, 4),
+            "generated_locally": True
+        }
+    except Exception as e:
+        print(f"Fallback kundali error: {e}")
+        return {
+            "error": f"Could not generate kundali: {str(e)}",
+            "success": False
+        }
 
 async def get_kundali_matching(
     bride_datetime: str,
