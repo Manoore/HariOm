@@ -120,6 +120,35 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
    - **UX Improvement**: Added `locationSelected` state to prevent dropdown from reappearing after selection
    - Location coordinates now properly populate form, enabling the Generate Kundali button
 
+8. ~~**Dharmic Data Integration (Sacred Scriptures)**~~ ✅ COMPLETED (March 20, 2026)
+   - **Source**: Integrated data from `bhavykhatri/DharmicData` GitHub repository
+   - **Scriptures Added**:
+     - Bhagavad Gita: 701 verses across 18 chapters (with commentaries by Swami Ramsukhdas)
+     - Valmiki Ramayana: 22,742 shlokas across 7 kandas
+     - Mahabharata: 73,821 shlokas across 18 parvas
+     - Rigveda: 1,027+ suktas across 10 mandalas
+     - Atharvaveda: 736+ suktas across 20 kandas
+     - Yajurveda: 78+ mantras (Vajasneyi Samhitas)
+     - Ramcharitmanas: 2,247 verses across 7 kandas
+   - **Total**: 101,352 verses imported into MongoDB
+   - **Backend APIs**:
+     - `GET /api/scriptures` - List all scriptures with metadata
+     - `GET /api/scriptures/{scripture_id}` - Scripture details with sections
+     - `GET /api/scriptures/{scripture_id}/sections/{section_num}` - Verses from section
+     - `GET /api/scriptures/{scripture_id}/search` - Search within scripture
+     - `GET /api/scriptures/verse/random` - Random verse widget
+   - **Frontend**:
+     - New `ScripturesTab` component (`/app/frontend/src/components/DevoteeDashboard/ScripturesTab.js`)
+     - Three-level navigation: Scriptures List → Section/Chapter List → Verse Reader
+     - Filter by Veda/Itihasa category
+     - Search functionality
+     - "Verse of the Day" random verse widget
+     - Hindi translation support in UI labels
+   - **Database**: Two new collections in `devotional_content` database:
+     - `scriptures` - Scripture metadata
+     - `scripture_verses` - Verse content
+   - **100% Test Pass Rate**: 16/16 backend API tests passed
+
 5. ~~**Class Enrollment Payments (P0)**~~ ✅ COMPLETED (March 17, 2026)
    - Integrated SmartPayment component for Stripe payments
    - Full payment flow for Vedic class enrollment
