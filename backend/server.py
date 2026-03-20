@@ -137,7 +137,7 @@ async def upload_image(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://pooja-staging.preview.emergentagent.com"
+        backend_url = "https://divine-spiritual-2.preview.emergentagent.com"
     
     # Return the URL
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -181,7 +181,7 @@ async def upload_video(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://pooja-staging.preview.emergentagent.com"
+        backend_url = "https://divine-spiritual-2.preview.emergentagent.com"
     
     # Return the URL
     video_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -2960,16 +2960,16 @@ async def get_user_orders(user: dict = Depends(get_current_user)):
 async def get_daily_horoscope_api(zodiac_sign: str, lang: str = "en"):
     """Get daily horoscope for a zodiac sign using Prokerala API"""
     try:
-        horoscope = await prokerala.get_daily_horoscope(zodiac_sign.lower())
+        # Try the Prokerala API first
+        horoscope = await prokerala.get_daily_horoscope(zodiac_sign.lower(), lang)
         # Add localized sign name
         rashi_info = prokerala.RASHI_NAMES.get(zodiac_sign.lower(), {})
         horoscope["sign_name_localized"] = rashi_info.get(lang, rashi_info.get("en", zodiac_sign.title()))
         return horoscope
     except Exception as e:
         print(f"Prokerala API error, using fallback: {e}")
-        fallback = prokerala.get_fallback_horoscope(zodiac_sign.lower())
-        rashi_info = prokerala.RASHI_NAMES.get(zodiac_sign.lower(), {})
-        fallback["sign_name_localized"] = rashi_info.get(lang, rashi_info.get("en", zodiac_sign.title()))
+        # Pass the language parameter to get translated fallback content
+        fallback = prokerala.get_fallback_horoscope(zodiac_sign.lower(), lang)
         return fallback
 
 @app.get("/api/horoscope/personalized")
@@ -4379,7 +4379,7 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     order_id = str(result.inserted_id)
     
     # Get frontend URL for redirect
-    frontend_url = os.environ.get("FRONTEND_URL", "https://pooja-staging.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://divine-spiritual-2.preview.emergentagent.com")
     
     # Create Stripe checkout session
     try:

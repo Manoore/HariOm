@@ -34,10 +34,13 @@ function AstrologyTab({ isDesktop }) {
   const [locationSearch, setLocationSearch] = useState('');
   const [locationResults, setLocationResults] = useState([]);
   const [searchingLocation, setSearchingLocation] = useState(false);
+  const [locationSelected, setLocationSelected] = useState(false); // Track if location was just selected
   const [brideLocationSearch, setBrideLocationSearch] = useState('');
   const [brideLocationResults, setBrideLocationResults] = useState([]);
+  const [brideLocationSelected, setBrideLocationSelected] = useState(false);
   const [groomLocationSearch, setGroomLocationSearch] = useState('');
   const [groomLocationResults, setGroomLocationResults] = useState([]);
+  const [groomLocationSelected, setGroomLocationSelected] = useState(false);
   
   // Kundali states
   const [kundaliForm, setKundaliForm] = useState({
@@ -90,7 +93,11 @@ function AstrologyTab({ isDesktop }) {
   const getPlaceDetails = async (placeId, setForm, formKey) => {
     try {
       const res = await api.get(`/api/places/details/${placeId}`);
-      const { lat, lng, formatted_address } = res.data;
+      // Backend returns { status, data: { latitude, longitude, formatted_address, ... } }
+      const placeData = res.data.data || res.data;
+      const lat = placeData.latitude || placeData.lat;
+      const lng = placeData.longitude || placeData.lng;
+      const formatted_address = placeData.formatted_address;
       
       if (formKey === 'kundali') {
         setKundaliForm(prev => ({
@@ -99,6 +106,7 @@ function AstrologyTab({ isDesktop }) {
           longitude: lng,
           location: formatted_address
         }));
+        setLocationSelected(true);  // Mark that location was selected
         setLocationSearch(formatted_address);
         setLocationResults([]);
       } else if (formKey === 'bride') {
@@ -108,6 +116,7 @@ function AstrologyTab({ isDesktop }) {
           bride_longitude: lng,
           bride_location: formatted_address
         }));
+        setBrideLocationSelected(true);
         setBrideLocationSearch(formatted_address);
         setBrideLocationResults([]);
       } else if (formKey === 'groom') {
@@ -117,37 +126,62 @@ function AstrologyTab({ isDesktop }) {
           groom_longitude: lng,
           groom_location: formatted_address
         }));
+        setGroomLocationSelected(true);
         setGroomLocationSearch(formatted_address);
         setGroomLocationResults([]);
       }
     } catch (error) {
+      console.error('Place details error:', error);
       toast.error('Failed to get location details');
     }
   };
 
   // Debounced search effect for main location
   useEffect(() => {
+    // Skip search if location was just selected programmatically
+    if (locationSelected) {
+      setLocationSelected(false);
+      return;
+    }
+    // Skip search if the value matches the already selected location
+    if (kundaliForm.latitude && locationSearch === kundaliForm.location) {
+      return;
+    }
     const timer = setTimeout(() => {
       searchLocation(locationSearch, setLocationResults, setSearchingLocation);
     }, 300);
     return () => clearTimeout(timer);
-  }, [locationSearch]);
+  }, [locationSearch, locationSelected, kundaliForm.latitude, kundaliForm.location]);
 
   // Debounced search for bride location
   useEffect(() => {
+    if (brideLocationSelected) {
+      setBrideLocationSelected(false);
+      return;
+    }
+    if (matchingForm.bride_latitude && brideLocationSearch === matchingForm.bride_location) {
+      return;
+    }
     const timer = setTimeout(() => {
       searchLocation(brideLocationSearch, setBrideLocationResults, () => {});
     }, 300);
     return () => clearTimeout(timer);
-  }, [brideLocationSearch]);
+  }, [brideLocationSearch, brideLocationSelected, matchingForm.bride_latitude, matchingForm.bride_location]);
 
   // Debounced search for groom location
   useEffect(() => {
+    if (groomLocationSelected) {
+      setGroomLocationSelected(false);
+      return;
+    }
+    if (matchingForm.groom_latitude && groomLocationSearch === matchingForm.groom_location) {
+      return;
+    }
     const timer = setTimeout(() => {
       searchLocation(groomLocationSearch, setGroomLocationResults, () => {});
     }, 300);
     return () => clearTimeout(timer);
-  }, [groomLocationSearch]);
+  }, [groomLocationSearch, groomLocationSelected, matchingForm.groom_latitude, matchingForm.groom_location]);
 
   const fetchHoroscope = async (sign) => {
     setLoading(true);
@@ -352,8 +386,15 @@ function AstrologyTab({ isDesktop }) {
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
+                    data-testid="kundali-location-input"
                     value={locationSearch}
-                    onChange={(e) => setLocationSearch(e.target.value)}
+                    onChange={(e) => {
+                      setLocationSearch(e.target.value);
+                      // Clear coordinates when user manually edits the location
+                      if (kundaliForm.latitude) {
+                        setKundaliForm(prev => ({ ...prev, latitude: null, longitude: null }));
+                      }
+                    }}
                     placeholder={t('common.search') + '...'}
                     className="w-full border border-orange-200 rounded-xl pl-10 pr-4 py-3 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none"
                   />
@@ -362,10 +403,11 @@ function AstrologyTab({ isDesktop }) {
                   )}
                 </div>
                 {locationResults.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-orange-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                  <div data-testid="kundali-location-dropdown" className="absolute z-10 w-full mt-1 bg-white border border-orange-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                     {locationResults.map((place) => (
                       <button
                         key={place.place_id}
+                        data-testid={`location-option-${place.place_id}`}
                         onClick={() => getPlaceDetails(place.place_id, setKundaliForm, 'kundali')}
                         className="w-full px-4 py-2 text-left hover:bg-orange-50 text-sm"
                       >
