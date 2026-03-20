@@ -473,28 +473,63 @@ async def place_details(place_id: str):
 # ===================== TRANSLATION API =====================
 @app.post("/api/translate")
 async def translate_text(request: Request):
-    """Translate text using Google Translate API or fallback to MyMemory"""
+    """Translate text using Gemini AI for accurate Sanskrit translations"""
     try:
         body = await request.json()
         text = body.get("text", "")
-        target_lang = body.get("target_lang", "hi")  # Default to Hindi
+        target_lang = body.get("target_lang") or body.get("target_language", "en")
         
         if not text:
             return {"status": "error", "message": "No text provided"}
         
-        # Language codes mapping
-        lang_codes = {
-            "hindi": "hi",
-            "telugu": "te",
-            "kannada": "kn",
-            "tamil": "ta",
-            "malayalam": "ml",
-            "english": "en"
+        # Language names mapping
+        lang_names = {
+            "en": "English",
+            "hi": "Hindi",
+            "te": "Telugu",
+            "kn": "Kannada",
+            "ta": "Tamil",
+            "ml": "Malayalam",
+            "mr": "Marathi",
+            "gu": "Gujarati",
+            "bn": "Bengali",
+            "sa": "Sanskrit"
         }
         
-        target = lang_codes.get(target_lang.lower(), target_lang)
+        target_name = lang_names.get(target_lang, "English")
         
-        # Try Google Translate first if API key available
+        # Try Gemini AI translation (best for Sanskrit)
+        emergent_key = os.environ.get("EMERGENT_LLM_KEY")
+        if emergent_key:
+            try:
+                from emergentintegrations.llm.chat import LlmChat, UserMessage
+                
+                chat = LlmChat(
+                    api_key=emergent_key,
+                    session_id=f"translate-{target_lang}-{hash(text[:50])}",
+                    system_message=f"""You are an expert translator specializing in Sanskrit scriptures and Hindu religious texts. 
+                    Translate the given Sanskrit/Hindi text to {target_name} accurately while preserving the spiritual meaning.
+                    Only provide the translation, no explanations or notes."""
+                ).with_model("gemini", "gemini-2.5-flash")
+                
+                user_message = UserMessage(
+                    text=f"Translate this to {target_name}:\n\n{text[:1500]}"
+                )
+                
+                translated = await chat.send_message(user_message)
+                
+                if translated:
+                    return {
+                        "status": "ok",
+                        "original": text,
+                        "translated": translated.strip(),
+                        "target_lang": target_lang,
+                        "provider": "gemini"
+                    }
+            except Exception as e:
+                print(f"Gemini translation failed: {e}")
+        
+        # Fallback to Google Translate if Gemini fails
         if GOOGLE_PLACES_API_KEY:
             try:
                 async with httpx.AsyncClient() as client:
@@ -503,7 +538,7 @@ async def translate_text(request: Request):
                         params={"key": GOOGLE_PLACES_API_KEY},
                         json={
                             "q": text,
-                            "target": target,
+                            "target": target_lang,
                             "format": "text"
                         },
                         timeout=10.0
@@ -516,20 +551,20 @@ async def translate_text(request: Request):
                             "status": "ok",
                             "original": text,
                             "translated": translated,
-                            "target_lang": target,
+                            "target_lang": target_lang,
                             "provider": "google"
                         }
             except Exception as e:
                 print(f"Google Translate failed: {e}")
         
-        # Fallback to MyMemory API (free, no API key needed)
+        # Last fallback to MyMemory API
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     "https://api.mymemory.translated.net/get",
                     params={
-                        "q": text[:500],  # MyMemory has 500 char limit
-                        "langpair": f"en|{target}"
+                        "q": text[:500],
+                        "langpair": f"hi|{target_lang}"
                     },
                     timeout=10.0
                 )
@@ -541,7 +576,7 @@ async def translate_text(request: Request):
                         "status": "ok",
                         "original": text,
                         "translated": translated,
-                        "target_lang": target,
+                        "target_lang": target_lang,
                         "provider": "mymemory"
                     }
         except Exception as e:
