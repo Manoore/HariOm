@@ -228,7 +228,7 @@ function VerseReader({ scripture, section, onBack }) {
     try {
       setLoading(true);
       const response = await api.get(
-        `/scriptures/${scripture.scripture_id}/sections/${section.section_num}?skip=${skip}&limit=${limit}`
+        `/api/scriptures/${scripture.scripture_id}/sections/${section.section_num}?skip=${skip}&limit=${limit}`
       );
       
       if (response.data.status === 'ok') {
@@ -384,7 +384,7 @@ function RandomVerseWidget() {
   const fetchRandomVerse = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/scriptures/verse/random');
+      const response = await api.get('/api/scriptures/verse/random');
       if (response.data.status === 'ok') {
         setVerse(response.data.data);
       }
@@ -453,7 +453,7 @@ export default function ScripturesTab({ isDesktop }) {
   const fetchScriptures = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/scriptures');
+      const response = await api.get('/api/scriptures');
       if (response.data.status === 'ok') {
         setScriptures(response.data.data);
       }
@@ -467,7 +467,7 @@ export default function ScripturesTab({ isDesktop }) {
   const fetchScriptureDetails = async (scripture) => {
     try {
       setDetailsLoading(true);
-      const response = await api.get(`/scriptures/${scripture.scripture_id}`);
+      const response = await api.get(`/api/scriptures/${scripture.scripture_id}`);
       if (response.data.status === 'ok') {
         setScriptureDetails(response.data.data);
         setSelectedScripture(scripture);
