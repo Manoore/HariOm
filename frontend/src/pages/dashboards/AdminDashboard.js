@@ -22,17 +22,14 @@ const useIsDesktop = () => {
   return isDesktop;
 };
 
-// Custom Om Icon component (matches landing page style)
+// Custom Om Icon component (uses temple logo)
 const OmIcon = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className}>
-    <defs>
-      <linearGradient id="omGradientAdmin" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#FF9933" />
-        <stop offset="100%" stopColor="#722F37" />
-      </linearGradient>
-    </defs>
-    <text x="50" y="70" textAnchor="middle" fontSize="60" fill="url(#omGradientAdmin)" fontFamily="serif" fontWeight="bold">ॐ</text>
-  </svg>
+  <img 
+    src="/temple-logo.png" 
+    alt="Om" 
+    className={`${className} object-contain`}
+    style={{ filter: 'drop-shadow(0 0 2px rgba(255,153,51,0.5))' }}
+  />
 );
 
 // Sidebar Navigation for Desktop
