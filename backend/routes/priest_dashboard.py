@@ -467,6 +467,17 @@ async def get_priest_profile_data(user: dict = Depends(require_role([UserRole.PR
     if not priest:
         raise HTTPException(status_code=404, detail="Priest profile not found")
     
+    # Determine approval status - handle legacy records and data inconsistencies
+    approval_status = priest.get("approval_status")
+    is_verified = priest.get("is_verified", False)
+    
+    # Fix: If priest is verified, they should always show as approved
+    # This handles both legacy records (no approval_status) and data inconsistencies
+    if is_verified:
+        approval_status = "approved"
+    elif not approval_status:
+        approval_status = "pending"
+    
     return {
         "id": str(priest["_id"]),
         "user_id": priest["user_id"],
@@ -479,8 +490,8 @@ async def get_priest_profile_data(user: dict = Depends(require_role([UserRole.PR
         "bio": priest.get("bio", ""),
         "rating": priest.get("rating", 0),
         "total_reviews": priest.get("total_reviews", 0),
-        "is_verified": priest.get("is_verified", False),
-        "approval_status": priest.get("approval_status", "pending"),
+        "is_verified": is_verified,
+        "approval_status": approval_status,
         "rejection_reason": priest.get("rejection_reason", ""),
         "available_online": priest.get("available_online", True),
         "base_price": priest.get("base_price", 1100),

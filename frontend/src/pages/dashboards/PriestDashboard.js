@@ -1663,6 +1663,8 @@ function ClassesTab({ classes, onRefresh }) {
   const [activeView, setActiveView] = useState('myClasses'); // 'myClasses' or 'requests'
   const [classRequests, setClassRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
+  const [creatingRoom, setCreatingRoom] = useState(null);
+  const [joiningClass, setJoiningClass] = useState(null);
 
   useEffect(() => {
     if (activeView === 'requests') {
@@ -1700,6 +1702,44 @@ function ClassesTab({ classes, onRefresh }) {
       onRefresh();
     } catch (error) {
       toast.error('Failed to delete');
+    }
+  };
+
+  // Create 100ms room for class
+  const createRoomForClass = async (classId) => {
+    setCreatingRoom(classId);
+    try {
+      await api.post(`/api/priest/classes/${classId}/create-room`);
+      toast.success('Room created! Students will be notified.');
+      onRefresh();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to create room');
+    } finally {
+      setCreatingRoom(null);
+    }
+  };
+
+  // Join class as host
+  const joinClassAsHost = async (classId) => {
+    setJoiningClass(classId);
+    try {
+      const res = await api.get(`/api/priest/classes/${classId}/host-token`);
+      // Open video room - for now, store in localStorage and redirect
+      // In future, this could be an in-app component
+      toast.success('Joining class...');
+      // Store class info for the video room
+      localStorage.setItem('divine_class_room', JSON.stringify({
+        classId,
+        roomId: res.data.room_id,
+        token: res.data.token,
+        title: res.data.class_title,
+        isHost: true
+      }));
+      window.location.href = '/class-room';
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to join class');
+    } finally {
+      setJoiningClass(null);
     }
   };
 
@@ -1802,16 +1842,21 @@ function ClassesTab({ classes, onRefresh }) {
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {classes.map((cls) => (
-            <div key={cls.id} className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-saffron">
+            <div key={cls.id} className={`bg-white rounded-xl shadow-sm p-4 border-l-4 ${cls.room_id ? 'border-green-500' : 'border-saffron'}`}>
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <h3 className="font-semibold text-gray-800">{cls.title}</h3>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{cls.category}</span>
                     {cls.is_free || cls.price === 0 ? (
                       <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">FREE</span>
                     ) : (
                       <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">₹{cls.price}</span>
+                    )}
+                    {cls.room_id && (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Video className="w-3 h-3" /> Room Ready
+                      </span>
                     )}
                   </div>
                 </div>
@@ -1851,6 +1896,39 @@ function ClassesTab({ classes, onRefresh }) {
                   {cls.frequency === 'weekly' && `Every ${cls.schedule_day || 'week'}`}
                   {cls.frequency === 'biweekly' && 'Bi-weekly'}
                   {cls.frequency === 'monthly' && 'Monthly'}
+                </div>
+              )}
+
+              {/* Room Actions */}
+              {(cls.enrolled_count || 0) > 0 && (
+                <div className="mt-3 pt-3 border-t flex gap-2">
+                  {!cls.room_id ? (
+                    <button
+                      onClick={() => createRoomForClass(cls.id)}
+                      disabled={creatingRoom === cls.id}
+                      className="flex-1 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {creatingRoom === cls.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Video className="w-4 h-4" />
+                      )}
+                      Create Room
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => joinClassAsHost(cls.id)}
+                      disabled={joiningClass === cls.id}
+                      className="flex-1 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {joiningClass === cls.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                      Start Teaching
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -2834,8 +2912,15 @@ function StreamsTab({ streams, onRefresh }) {
               <div key={s.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl">
                 <div>
                   <p className="font-medium">{s.title}</p>
-                  <p className="text-xs text-gray-400">{new Date(s.scheduled_at).toLocaleString()}</p>
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{s.stream_type}</span>
+                  <p className="text-xs text-gray-400">{new Date(s.scheduled_time).toLocaleString()}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{s.stream_type}</span>
+                    {s.youtube_url && (
+                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Play className="w-3 h-3" /> YouTube
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => handleEditStream(s)} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -2884,7 +2969,7 @@ function StreamsTab({ streams, onRefresh }) {
 // Stream Modal Component
 function StreamModal({ isOpen, onClose, editData, onSuccess }) {
   const [form, setForm] = useState({
-    title: '', description: '', stream_type: 'puja', scheduled_at: ''
+    title: '', description: '', stream_type: 'puja', scheduled_time: '', youtube_url: ''
   });
   const [saving, setSaving] = useState(false);
 
@@ -2892,12 +2977,13 @@ function StreamModal({ isOpen, onClose, editData, onSuccess }) {
     if (isOpen) {
       if (editData) {
         // Editing existing stream
-        const scheduledTime = editData.scheduled_at ? new Date(editData.scheduled_at).toISOString().slice(0, 16) : '';
+        const scheduledTime = editData.scheduled_time ? new Date(editData.scheduled_time).toISOString().slice(0, 16) : '';
         setForm({
           title: editData.title || '',
           description: editData.description || '',
           stream_type: editData.stream_type || 'puja',
-          scheduled_at: scheduledTime
+          scheduled_time: scheduledTime,
+          youtube_url: editData.youtube_url || ''
         });
       } else {
         // Set default scheduled time to 1 hour from now
@@ -2907,7 +2993,8 @@ function StreamModal({ isOpen, onClose, editData, onSuccess }) {
           title: '',
           description: '',
           stream_type: 'puja',
-          scheduled_at: defaultTime.toISOString().slice(0, 16)
+          scheduled_time: defaultTime.toISOString().slice(0, 16),
+          youtube_url: ''
         });
       }
     }
@@ -2915,13 +3002,13 @@ function StreamModal({ isOpen, onClose, editData, onSuccess }) {
 
   const handleSubmit = async () => {
     if (!form.title) { toast.error('Enter stream title'); return; }
-    if (!form.scheduled_at) { toast.error('Select schedule time'); return; }
+    if (!form.scheduled_time) { toast.error('Select schedule time'); return; }
     
     setSaving(true);
     try {
       const payload = {
         ...form,
-        scheduled_at: new Date(form.scheduled_at).toISOString()
+        scheduled_time: new Date(form.scheduled_time).toISOString()
       };
       
       if (editData) {
@@ -2947,9 +3034,9 @@ function StreamModal({ isOpen, onClose, editData, onSuccess }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl max-w-lg w-full"
+        className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
       >
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white">
           <h2 className="font-cinzel text-lg font-semibold text-maroon">Schedule Live Stream</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
         </div>
@@ -2976,6 +3063,24 @@ function StreamModal({ isOpen, onClose, editData, onSuccess }) {
               placeholder="What will you stream?"
             />
           </div>
+
+          {/* YouTube Live URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              YouTube Live URL
+              <span className="text-gray-400 font-normal ml-1">(optional)</span>
+            </label>
+            <input 
+              type="url" 
+              value={form.youtube_url} 
+              onChange={(e) => setForm({ ...form, youtube_url: e.target.value })} 
+              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
+              placeholder="https://youtube.com/live/..." 
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Paste your YouTube Live stream URL. Devotees can watch directly in the app.
+            </p>
+          </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -2996,15 +3101,15 @@ function StreamModal({ isOpen, onClose, editData, onSuccess }) {
               <label className="block text-sm font-medium text-gray-700 mb-1">Schedule Time*</label>
               <input 
                 type="datetime-local" 
-                value={form.scheduled_at} 
-                onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} 
+                value={form.scheduled_time} 
+                onChange={(e) => setForm({ ...form, scheduled_time: e.target.value })} 
                 className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
               />
             </div>
           </div>
         </div>
         
-        <div className="p-4 border-t flex justify-end gap-3">
+        <div className="p-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
           <button onClick={onClose} className="px-4 py-2 text-gray-600">Cancel</button>
           <button 
             onClick={handleSubmit} 
@@ -3012,7 +3117,7 @@ function StreamModal({ isOpen, onClose, editData, onSuccess }) {
             className="px-6 py-2 bg-saffron text-white rounded-xl disabled:opacity-50 flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
-            Schedule Stream
+            {editData ? 'Update' : 'Schedule'} Stream
           </button>
         </div>
       </motion.div>

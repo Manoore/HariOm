@@ -2095,6 +2095,17 @@ async def get_public_live_streams(
         if priest:
             priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
         
+        # Extract YouTube video ID for embedding
+        youtube_url = stream.get("youtube_url", "")
+        youtube_video_id = None
+        if youtube_url:
+            if "youtu.be/" in youtube_url:
+                youtube_video_id = youtube_url.split("youtu.be/")[1].split("?")[0]
+            elif "youtube.com/watch?v=" in youtube_url:
+                youtube_video_id = youtube_url.split("v=")[1].split("&")[0]
+            elif "youtube.com/live/" in youtube_url:
+                youtube_video_id = youtube_url.split("/live/")[1].split("?")[0]
+        
         streams.append({
             "id": str(stream["_id"]),
             "priest_id": stream.get("priest_id", ""),
@@ -2105,8 +2116,9 @@ async def get_public_live_streams(
             "scheduled_time": safe_isoformat(stream.get("scheduled_time")),
             "status": stream.get("status", "scheduled"),
             "viewer_count": stream.get("viewer_count", 0),
-            "stream_url": stream.get("stream_url", "") if stream.get("status") == "live" else None,
-            "thumbnail": stream.get("thumbnail", ""),
+            "youtube_url": youtube_url,
+            "youtube_video_id": youtube_video_id,
+            "thumbnail": stream.get("thumbnail") or (f"https://img.youtube.com/vi/{youtube_video_id}/maxresdefault.jpg" if youtube_video_id else ""),
             "created_at": safe_isoformat(stream.get("created_at"))
         })
     
@@ -2469,11 +2481,120 @@ async def remove_stream_reminder(
         raise HTTPException(status_code=404, detail="Reminder not found")
     return {"message": "Reminder removed successfully"}
 
+# ===================== CLASS ROOM MANAGEMENT (100ms) =====================
+from class_rooms import generate_class_room, get_student_token, start_scheduler
+
+@app.get("/api/classes/{class_id}/join")
+async def join_class_room(class_id: str, user: dict = Depends(get_current_user)):
+    """Get 100ms token to join a class - verifies enrollment and payment"""
+    try:
+        result = await get_student_token(class_id, str(user["_id"]))
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=403, detail=str(e))
+
+@app.get("/api/classes/{class_id}/room-status")
+async def get_class_room_status(class_id: str, user: dict = Depends(get_current_user)):
+    """Check if class room is ready to join"""
+    cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
+    if not cls:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    # Check if user is enrolled
+    enrollments = cls.get("enrollments", [])
+    is_enrolled = str(user["_id"]) in enrollments
+    
+    # Check if user is the priest
+    is_priest = cls.get("priest_id") == str(user["_id"]) or (
+        await priests_collection.find_one({"user_id": str(user["_id"]), "_id": ObjectId(cls.get("priest_id", "000000000000000000000000"))})
+    ) is not None
+    
+    room_ready = bool(cls.get("room_id"))
+    schedule_time = cls.get("schedule_time")
+    
+    # Calculate time until class
+    now = datetime.now(timezone.utc)
+    if schedule_time:
+        if schedule_time.tzinfo is None:
+            schedule_time = schedule_time.replace(tzinfo=timezone.utc)
+        time_until = (schedule_time - now).total_seconds() / 60  # minutes
+    else:
+        time_until = None
+    
+    return {
+        "class_id": class_id,
+        "room_ready": room_ready,
+        "is_enrolled": is_enrolled,
+        "is_priest": is_priest,
+        "minutes_until_class": round(time_until, 1) if time_until else None,
+        "can_join": room_ready and (is_enrolled or is_priest)
+    }
+
+@app.post("/api/priest/classes/{class_id}/create-room")
+async def priest_create_class_room(class_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Priest can manually create room for their class"""
+    cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
+    if not cls:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    # Verify priest owns this class
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest or str(priest["_id"]) != cls.get("priest_id"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        result = await generate_class_room(class_id)
+        
+        # Notify enrolled students
+        from class_rooms import notify_students_class_starting
+        await notify_students_class_starting(class_id)
+        
+        return {
+            "message": "Room created successfully",
+            "room_id": result["room_id"],
+            "priest_token": result.get("priest_token")
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/priest/classes/{class_id}/host-token")
+async def get_priest_host_token(class_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get host token for priest to join their class"""
+    cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
+    if not cls:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    # Verify priest owns this class
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest or str(priest["_id"]) != cls.get("priest_id"):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    room_id = cls.get("room_id")
+    if not room_id:
+        raise HTTPException(status_code=400, detail="Room not created yet")
+    
+    # Generate fresh host token
+    from video_consultation import generate_100ms_token
+    token = await generate_100ms_token(room_id, str(user["_id"]), "host")
+    
+    return {
+        "room_id": room_id,
+        "token": token,
+        "class_title": cls.get("title", "")
+    }
+
+@app.on_event("startup")
+async def startup_class_scheduler():
+    """Start the background scheduler for class rooms"""
+    start_scheduler()
+
 @app.get("/api/my-enrollments")
 async def get_my_enrollments(user: dict = Depends(get_current_user)):
     """Get classes the current user is enrolled in"""
     cursor = priest_classes_collection.find({"enrollments": str(user["_id"])}).sort("schedule_time", 1)
     classes = []
+    
+    now = datetime.now(timezone.utc)
     
     async for cls in cursor:
         priest = await priests_collection.find_one({"_id": ObjectId(cls["priest_id"])}) if cls.get("priest_id") else None
@@ -2481,13 +2602,28 @@ async def get_my_enrollments(user: dict = Depends(get_current_user)):
         if priest:
             priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
         
+        # Check room status
+        room_ready = bool(cls.get("room_id"))
+        schedule_time = cls.get("schedule_time")
+        
+        # Calculate if class is starting soon (within 15 mins)
+        is_starting_soon = False
+        if schedule_time:
+            if schedule_time.tzinfo is None:
+                schedule_time = schedule_time.replace(tzinfo=timezone.utc)
+            time_diff = (schedule_time - now).total_seconds() / 60
+            is_starting_soon = -30 <= time_diff <= 15  # 15 mins before to 30 mins after
+        
         classes.append({
             "id": str(cls["_id"]),
             "priest_name": priest_user["name"] if priest_user else "Unknown Priest",
             "title": cls.get("title", ""),
             "schedule_time": safe_isoformat(cls.get("schedule_time")),
             "duration_minutes": cls.get("duration_minutes", 60),
-            "meeting_link": cls.get("meeting_link", "")
+            "meeting_link": cls.get("meeting_link", ""),
+            "room_ready": room_ready,
+            "is_starting_soon": is_starting_soon,
+            "can_join": room_ready and is_starting_soon
         })
     
     return {"enrollments": classes}
@@ -2518,11 +2654,16 @@ async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]
         }
         await priests_collection.insert_one(priest)
     
-    # Determine approval status - handle legacy records
+    # Determine approval status - handle legacy records and data inconsistencies
     approval_status = priest.get("approval_status")
-    if not approval_status:
-        # Legacy support: if is_verified is True, consider approved
-        approval_status = "approved" if priest.get("is_verified", False) else "pending"
+    is_verified = priest.get("is_verified", False)
+    
+    # Fix: If priest is verified, they should always show as approved
+    # This handles both legacy records (no approval_status) and data inconsistencies
+    if is_verified:
+        approval_status = "approved"
+    elif not approval_status:
+        approval_status = "pending"
     
     return {
         "id": str(priest.get("_id", "")),
@@ -3071,10 +3212,15 @@ async def get_public_priest_content(priest_id: str, skip: int = 0, limit: int = 
         })
     return {"content": content_list}
 
-@app.get("/api/streams/live")
-async def get_live_streams():
-    """Get all currently live streams (public)"""
-    cursor = priest_streams_collection.find({"status": "live"})
+# ===================== PRIEST LIVE STREAMS MANAGEMENT =====================
+@app.get("/api/priest/streams")
+async def get_priest_streams(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get priest's live streams"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    cursor = priest_streams_collection.find({"priest_id": str(priest["_id"])}).sort("created_at", -1)
     streams = []
     async for stream in cursor:
         streams.append({
@@ -3082,10 +3228,169 @@ async def get_live_streams():
             "title": stream["title"],
             "description": stream.get("description", ""),
             "stream_type": stream.get("stream_type", "puja"),
+            "status": stream.get("status", "scheduled"),
+            "youtube_url": stream.get("youtube_url", ""),  # YouTube Live URL
+            "scheduled_time": safe_isoformat(stream.get("scheduled_time")),
+            "started_at": safe_isoformat(stream.get("started_at")),
+            "ended_at": safe_isoformat(stream.get("ended_at")),
+            "viewer_count": stream.get("viewer_count", 0),
+            "created_at": safe_isoformat(stream.get("created_at"))
+        })
+    return {"streams": streams}
+
+@app.post("/api/priest/streams")
+async def create_priest_stream(request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Schedule a live stream with optional YouTube Live URL"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    data = await request.json()
+    
+    # Parse scheduled time
+    scheduled_time = None
+    if data.get("scheduled_time"):
+        try:
+            scheduled_time = datetime.fromisoformat(data["scheduled_time"].replace("Z", "+00:00"))
+        except:
+            scheduled_time = datetime.now(timezone.utc)
+    else:
+        scheduled_time = datetime.now(timezone.utc)
+    
+    stream_dict = {
+        "priest_id": str(priest["_id"]),
+        "priest_name": user.get("name", "Priest"),
+        "title": data.get("title", "Live Stream"),
+        "description": data.get("description", ""),
+        "stream_type": data.get("stream_type", "puja"),
+        "youtube_url": data.get("youtube_url", ""),  # Optional YouTube Live URL
+        "status": "scheduled",
+        "scheduled_time": scheduled_time,
+        "viewer_count": 0,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await priest_streams_collection.insert_one(stream_dict)
+    return {"message": "Stream scheduled", "stream_id": str(result.inserted_id)}
+
+@app.put("/api/priest/streams/{stream_id}")
+async def update_priest_stream(stream_id: str, request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Update stream details including YouTube URL"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    stream = await priest_streams_collection.find_one({"_id": ObjectId(stream_id)})
+    
+    if not stream or stream["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Stream not found")
+    
+    data = await request.json()
+    update_fields = {}
+    
+    if "title" in data:
+        update_fields["title"] = data["title"]
+    if "description" in data:
+        update_fields["description"] = data["description"]
+    if "youtube_url" in data:
+        update_fields["youtube_url"] = data["youtube_url"]
+    if "scheduled_time" in data:
+        try:
+            update_fields["scheduled_time"] = datetime.fromisoformat(data["scheduled_time"].replace("Z", "+00:00"))
+        except:
+            pass
+    
+    if update_fields:
+        await priest_streams_collection.update_one(
+            {"_id": ObjectId(stream_id)},
+            {"$set": update_fields}
+        )
+    
+    return {"message": "Stream updated"}
+
+@app.put("/api/priest/streams/{stream_id}/start")
+async def start_priest_stream(stream_id: str, request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Start a live stream - optionally add YouTube URL at start time"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    stream = await priest_streams_collection.find_one({"_id": ObjectId(stream_id)})
+    
+    if not stream or stream["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Stream not found")
+    
+    # Allow setting YouTube URL when starting
+    data = {}
+    try:
+        data = await request.json()
+    except:
+        pass
+    
+    update_data = {
+        "status": "live",
+        "started_at": datetime.now(timezone.utc)
+    }
+    
+    if data.get("youtube_url"):
+        update_data["youtube_url"] = data["youtube_url"]
+    
+    await priest_streams_collection.update_one(
+        {"_id": ObjectId(stream_id)},
+        {"$set": update_data}
+    )
+    return {"message": "Stream started", "status": "live"}
+
+@app.put("/api/priest/streams/{stream_id}/end")
+async def end_priest_stream(stream_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """End a live stream"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    stream = await priest_streams_collection.find_one({"_id": ObjectId(stream_id)})
+    
+    if not stream or stream["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Stream not found")
+    
+    await priest_streams_collection.update_one(
+        {"_id": ObjectId(stream_id)},
+        {"$set": {"status": "ended", "ended_at": datetime.now(timezone.utc)}}
+    )
+    return {"message": "Stream ended", "status": "ended"}
+
+@app.delete("/api/priest/streams/{stream_id}")
+async def delete_priest_stream(stream_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Delete a scheduled stream"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    stream = await priest_streams_collection.find_one({"_id": ObjectId(stream_id)})
+    
+    if not stream or stream["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Stream not found")
+    
+    await priest_streams_collection.delete_one({"_id": ObjectId(stream_id)})
+    return {"message": "Stream deleted"}
+
+@app.get("/api/streams/live")
+async def get_live_streams():
+    """Get all currently live streams (public)"""
+    cursor = priest_streams_collection.find({"status": "live"})
+    streams = []
+    async for stream in cursor:
+        # Extract YouTube video ID for embedding
+        youtube_url = stream.get("youtube_url", "")
+        youtube_video_id = None
+        if youtube_url:
+            # Parse YouTube URL to get video ID
+            if "youtu.be/" in youtube_url:
+                youtube_video_id = youtube_url.split("youtu.be/")[1].split("?")[0]
+            elif "youtube.com/watch?v=" in youtube_url:
+                youtube_video_id = youtube_url.split("v=")[1].split("&")[0]
+            elif "youtube.com/live/" in youtube_url:
+                youtube_video_id = youtube_url.split("/live/")[1].split("?")[0]
+        
+        streams.append({
+            "id": str(stream["_id"]),
+            "title": stream["title"],
+            "description": stream.get("description", ""),
+            "stream_type": stream.get("stream_type", "puja"),
             "priest_name": stream.get("priest_name", ""),
             "priest_id": stream["priest_id"],
+            "youtube_url": youtube_url,
+            "youtube_video_id": youtube_video_id,
             "viewer_count": stream.get("viewer_count", 0),
-            "started_at": stream.get("started_at").isoformat() if isinstance(stream.get("started_at"), datetime) else stream.get("started_at")
+            "started_at": safe_isoformat(stream.get("started_at"))
         })
     return {"streams": streams}
 

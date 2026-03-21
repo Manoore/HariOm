@@ -6,7 +6,7 @@ import {
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
   CheckCircle, ArrowRight, ArrowLeft, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
   Camera, MessageCircle, Send, Image as ImageIcon, Rss, MessageSquare, Video, Wallet, Edit, Globe, Check,
-  Mail, Phone, UserRoundCheck, Flame, ScrollText
+  Mail, Phone, UserRoundCheck, Flame, ScrollText, Mic, MicOff, VideoOff, PhoneOff, Users, AlertCircle
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -22,6 +22,22 @@ import ScripturesTab from '../../components/DevoteeDashboard/ScripturesTab';
 import SmartPayment from '../../components/PaymentComponents';
 import NotificationBell from '../../components/NotificationBell';
 import LanguageSelector from '../../components/LanguageSelector';
+// 100ms SDK imports for Class Video Room
+import {
+  useHMSActions,
+  useHMSStore,
+  selectIsConnectedToRoom,
+  selectLocalPeer,
+  selectPeers,
+  selectIsLocalAudioEnabled,
+  selectIsLocalVideoEnabled,
+  selectPeerScreenSharing,
+  selectVideoTrackByPeerID,
+  selectScreenShareByPeerID,
+  useVideo,
+  useAVToggle,
+  HMSRoomProvider
+} from '@100mslive/react-sdk';
 
 // 3D Animated Devotional SVG Icons
 const BellIcon3D = ({ size = "w-8 h-8" }) => (
@@ -4318,6 +4334,191 @@ function TestimonialSection() {
   );
 }
 
+// Class Video Room Component - 100ms powered video classroom
+function ClassVideoRoom({ roomId, token, classTitle, priestName, onLeave }) {
+  const hmsActions = useHMSActions();
+  const isConnected = useHMSStore(selectIsConnectedToRoom);
+  const localPeer = useHMSStore(selectLocalPeer);
+  const peers = useHMSStore(selectPeers);
+  const isLocalAudioEnabled = useHMSStore(selectIsLocalAudioEnabled);
+  const isLocalVideoEnabled = useHMSStore(selectIsLocalVideoEnabled);
+  const screenSharingPeer = useHMSStore(selectPeerScreenSharing);
+  
+  const { toggleAudio, toggleVideo } = useAVToggle();
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const joinRoom = async () => {
+      try {
+        setIsConnecting(true);
+        await hmsActions.join({
+          userName: 'Student',
+          authToken: token,
+        });
+        setIsConnecting(false);
+      } catch (err) {
+        console.error('Failed to join class:', err);
+        setError(err.message || 'Failed to connect');
+        setIsConnecting(false);
+      }
+    };
+
+    if (token) {
+      joinRoom();
+    }
+
+    return () => {
+      hmsActions.leave();
+    };
+  }, [token, hmsActions]);
+
+  const handleLeave = async () => {
+    await hmsActions.leave();
+    onLeave();
+  };
+
+  if (isConnecting) {
+    return (
+      <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center">
+        <div className="text-center text-white">
+          <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Joining {classTitle}...</h2>
+          <p className="text-gray-400">Please allow camera and microphone access</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center">
+        <div className="text-center text-white max-w-md p-6">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Connection Failed</h2>
+          <p className="text-gray-400 mb-4">{error}</p>
+          <button
+            onClick={onLeave}
+            className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const remotePeers = peers.filter(peer => !peer.isLocal);
+  const hostPeer = remotePeers.find(p => p.roleName === 'host') || remotePeers[0];
+
+  return (
+    <HMSRoomProvider>
+      <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col">
+        {/* Header */}
+        <div className="bg-gray-800/80 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
+          <div>
+            <h3 className="text-white font-semibold">{classTitle}</h3>
+            <p className="text-gray-400 text-sm">Teacher: {priestName}</p>
+          </div>
+          <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <Users className="w-4 h-4" />
+            <span>{peers.length} in class</span>
+            {isConnected && <span className="text-green-400 ml-2">● Connected</span>}
+          </div>
+        </div>
+
+        {/* Video Area */}
+        <div className="flex-1 relative bg-gray-900 p-4">
+          {/* Main view - Teacher/Screen share */}
+          <div className="absolute inset-4 bottom-32">
+            {screenSharingPeer ? (
+              <VideoTileClass peer={screenSharingPeer} isScreenShare={true} />
+            ) : hostPeer ? (
+              <VideoTileClass peer={hostPeer} label="Teacher" />
+            ) : (
+              <div className="w-full h-full bg-gray-800 rounded-lg flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <Loader2 className="w-12 h-12 mx-auto mb-2 animate-spin" />
+                  <p>Waiting for teacher to join...</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Self view - bottom right */}
+          {localPeer && (
+            <div className="absolute bottom-4 right-4 w-32 h-24 md:w-48 md:h-36 shadow-xl">
+              <VideoTileClass peer={localPeer} isLocal={true} label="You" />
+            </div>
+          )}
+        </div>
+
+        {/* Controls */}
+        <div className="bg-gray-800/80 backdrop-blur-sm px-4 py-4">
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={toggleAudio}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+                isLocalAudioEnabled ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'
+              }`}
+            >
+              {isLocalAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+            </button>
+
+            <button
+              onClick={toggleVideo}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+                isLocalVideoEnabled ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'
+              }`}
+            >
+              {isLocalVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+            </button>
+
+            <button
+              onClick={handleLeave}
+              className="w-14 h-14 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-colors"
+            >
+              <PhoneOff className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </HMSRoomProvider>
+  );
+}
+
+// Video Tile for Class Room
+function VideoTileClass({ peer, isLocal = false, isScreenShare = false, label }) {
+  const videoTrack = useHMSStore(selectVideoTrackByPeerID(peer?.id));
+  const screenTrack = useHMSStore(selectScreenShareByPeerID(peer?.id));
+  const trackId = isScreenShare ? screenTrack?.id : videoTrack?.id;
+  const { videoRef } = useVideo({ trackId });
+
+  return (
+    <div className={`relative w-full h-full bg-gray-800 rounded-lg overflow-hidden ${isLocal ? 'border-2 border-blue-500' : ''}`}>
+      <video
+        ref={videoRef}
+        autoPlay
+        muted={isLocal}
+        playsInline
+        className={`w-full h-full object-cover ${!trackId ? 'hidden' : ''}`}
+      />
+      {!trackId && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
+          <div className="w-16 h-16 rounded-full bg-purple-500 flex items-center justify-center">
+            <span className="text-xl font-bold text-white">
+              {peer?.name?.charAt(0)?.toUpperCase() || '?'}
+            </span>
+          </div>
+        </div>
+      )}
+      <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-sm">
+        {label || peer?.name} {isScreenShare ? '- Screen' : ''}
+      </div>
+    </div>
+  );
+}
+
 // Classes Tab - Browse and enroll in Vedic classes
 function ClassesTab({ isDesktop }) {
   const { user } = useAuth();
@@ -4360,11 +4561,52 @@ function ClassesTab({ isDesktop }) {
     { value: 'monthly', label: 'Monthly', description: 'Once a month' }
   ];
 
+  // State for video class room
+  const [classRoom, setClassRoom] = useState(null);
+  
+  // These hooks need to be at the top before any early return
+  const [viewingPriests, setViewingPriests] = useState(null);
+  const [interestedPriests, setInterestedPriests] = useState([]);
+  const [loadingPriests, setLoadingPriests] = useState(false);
+  const [acceptingPriest, setAcceptingPriest] = useState(null);
+
   useEffect(() => {
     fetchClasses();
     fetchMyEnrollments();
     fetchMyRequests();
   }, []);
+
+  // Handler to join class video room
+  const handleJoinClass = async (classId) => {
+    try {
+      const res = await api.get(`/api/classes/${classId}/join`);
+      setClassRoom({
+        classId,
+        roomId: res.data.room_id,
+        token: res.data.token,
+        classTitle: res.data.class_title,
+        priestName: res.data.priest_name
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to join class');
+    }
+  };
+
+  // If in a class room, show the video component
+  if (classRoom) {
+    return (
+      <ClassVideoRoom
+        roomId={classRoom.roomId}
+        token={classRoom.token}
+        classTitle={classRoom.classTitle}
+        priestName={classRoom.priestName}
+        onLeave={() => {
+          setClassRoom(null);
+          fetchMyEnrollments();
+        }}
+      />
+    );
+  }
 
   const fetchClasses = async () => {
     try {
@@ -4435,11 +4677,6 @@ function ClassesTab({ isDesktop }) {
       toast.error('Failed to cancel request');
     }
   };
-
-  const [viewingPriests, setViewingPriests] = useState(null);
-  const [interestedPriests, setInterestedPriests] = useState([]);
-  const [loadingPriests, setLoadingPriests] = useState(false);
-  const [acceptingPriest, setAcceptingPriest] = useState(null);
 
   const viewInterestedPriests = async (request) => {
     setViewingPriests(request);
@@ -5046,10 +5283,17 @@ function ClassesTab({ isDesktop }) {
                   key={cls.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="bg-white rounded-xl p-4 shadow-sm border border-orange-100 flex items-center justify-between"
+                  className={`bg-white rounded-xl p-4 shadow-sm border ${cls.is_starting_soon ? 'border-green-300 bg-green-50' : 'border-orange-100'} flex items-center justify-between`}
                 >
                   <div>
-                    <h3 className="font-semibold text-gray-800">{cls.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-800">{cls.title}</h3>
+                      {cls.is_starting_soon && (
+                        <span className="px-2 py-0.5 bg-green-500 text-white text-xs rounded-full animate-pulse">
+                          Starting Soon!
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-500">{cls.priest_name}</p>
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
                       <span className="flex items-center gap-1">
@@ -5062,16 +5306,29 @@ function ClassesTab({ isDesktop }) {
                       </span>
                     </div>
                   </div>
-                  {cls.meeting_link && (
+                  {/* Show Join Class button if room is ready */}
+                  {cls.can_join ? (
+                    <button
+                      onClick={() => handleJoinClass(cls.id)}
+                      className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-medium hover:bg-green-600 transition-colors flex items-center gap-2 animate-pulse"
+                      data-testid={`join-class-${cls.id}`}
+                    >
+                      <Video className="w-4 h-4" /> Join Class
+                    </button>
+                  ) : cls.meeting_link ? (
                     <a
                       href={cls.meeting_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-medium hover:bg-green-600 transition-colors flex items-center gap-2"
+                      className="px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors flex items-center gap-2"
                     >
-                      <Play className="w-4 h-4" /> Join
+                      <Play className="w-4 h-4" /> External Link
                     </a>
-                  )}
+                  ) : cls.is_starting_soon ? (
+                    <span className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-xl text-sm font-medium">
+                      Room preparing...
+                    </span>
+                  ) : null}
                 </motion.div>
               ))
             )}
@@ -5161,6 +5418,7 @@ function LiveEventsTab({ isDesktop }) {
   const [activeView, setActiveView] = useState('live'); // 'live' or 'upcoming'
   const [remindedStreams, setRemindedStreams] = useState(new Set());
   const [settingReminder, setSettingReminder] = useState(null);
+  const [watchingStream, setWatchingStream] = useState(null); // For YouTube embed modal
 
   useEffect(() => {
     fetchStreams();
@@ -5189,6 +5447,16 @@ function LiveEventsTab({ isDesktop }) {
       setRemindedStreams(reminderIds);
     } catch (error) {
       // Silently fail - reminders feature might not exist yet
+    }
+  };
+
+  const handleWatchStream = (stream) => {
+    if (stream.youtube_video_id) {
+      setWatchingStream(stream);
+    } else if (stream.youtube_url) {
+      window.open(stream.youtube_url, '_blank');
+    } else {
+      toast.info('Stream URL not available yet');
     }
   };
 
@@ -5318,6 +5586,12 @@ function LiveEventsTab({ isDesktop }) {
                     <div className="aspect-video bg-gradient-to-br from-maroon to-red-900 flex items-center justify-center">
                       {stream.thumbnail ? (
                         <img src={stream.thumbnail} alt={stream.title} className="w-full h-full object-cover" />
+                      ) : stream.youtube_video_id ? (
+                        <img 
+                          src={`https://img.youtube.com/vi/${stream.youtube_video_id}/maxresdefault.jpg`} 
+                          alt={stream.title} 
+                          className="w-full h-full object-cover" 
+                        />
                       ) : (
                         <Video className="w-16 h-16 text-white/50" />
                       )}
@@ -5327,7 +5601,7 @@ function LiveEventsTab({ isDesktop }) {
                       <span className="text-xs text-white font-medium">LIVE</span>
                     </div>
                     <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/60 rounded-lg">
-                      <span className="text-xs text-white">{stream.viewer_count} watching</span>
+                      <span className="text-xs text-white">{stream.viewer_count || 0} watching</span>
                     </div>
                   </div>
                   <div className="p-4">
@@ -5338,16 +5612,13 @@ function LiveEventsTab({ isDesktop }) {
                       <span className="text-sm text-gray-600">{stream.priest_name}</span>
                     </div>
                     <h3 className="font-semibold text-gray-800 mb-3">{stream.title}</h3>
-                    {stream.stream_url && (
-                      <a
-                        href={stream.stream_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-2 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Play className="w-4 h-4" /> Watch Now
-                      </a>
-                    )}
+                    <button
+                      onClick={() => handleWatchStream(stream)}
+                      className="w-full py-2 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                      data-testid={`watch-stream-${stream.id}`}
+                    >
+                      <Play className="w-4 h-4" /> Watch Now
+                    </button>
                   </div>
                 </motion.div>
               ))
@@ -5426,6 +5697,69 @@ function LiveEventsTab({ isDesktop }) {
           </div>
         )}
       </div>
+
+      {/* YouTube Live Stream Modal */}
+      <AnimatePresence>
+        {watchingStream && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setWatchingStream(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-5xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-white">
+                  <h3 className="font-semibold text-xl">{watchingStream.title}</h3>
+                  <p className="text-gray-400 text-sm">{watchingStream.priest_name}</p>
+                </div>
+                <button
+                  onClick={() => setWatchingStream(null)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+              </div>
+
+              {/* YouTube Embed */}
+              {watchingStream.youtube_video_id ? (
+                <div className="relative pb-[56.25%] h-0 rounded-xl overflow-hidden">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${watchingStream.youtube_video_id}?autoplay=1&rel=0`}
+                    title={watchingStream.title}
+                    className="absolute top-0 left-0 w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              ) : (
+                <div className="aspect-video bg-gray-800 rounded-xl flex items-center justify-center">
+                  <div className="text-center text-gray-400">
+                    <Video className="w-16 h-16 mx-auto mb-4" />
+                    <p>Stream not available</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Stream Info */}
+              {watchingStream.description && (
+                <div className="mt-4 bg-white/10 rounded-xl p-4">
+                  <p className="text-gray-300 text-sm">{watchingStream.description}</p>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
