@@ -20,27 +20,32 @@ const CAROUSEL_IMAGES = [
   {
     url: '/bg-puri-jagannath.jpg',
     title: 'Puri Jagannath Temple',
-    subtitle: 'The sacred abode of Lord Jagannath'
+    subtitle: 'The sacred abode of Lord Jagannath',
+    position: 'top'
   },
   {
     url: '/bg-padmanabha.avif',
     title: 'Sri Padmanabhaswamy Temple',
-    subtitle: 'Divine blessing of Lord Vishnu'
+    subtitle: 'Divine blessing of Lord Vishnu',
+    position: 'center'
   },
   {
     url: '/bg-jagannath.webp',
     title: 'Jagannath Puri Dham',
-    subtitle: 'One of the four sacred Char Dham'
+    subtitle: 'One of the four sacred Char Dham',
+    position: 'top'
   },
   {
     url: '/bg-shankaracharya.jpg',
     title: 'Adi Shankaracharya',
-    subtitle: 'The great Advaita philosopher and his disciples'
+    subtitle: 'The great Advaita philosopher and his disciples',
+    position: '50% 5%'
   },
   {
     url: '/bg-madhvacharya.jpg',
     title: 'Sri Madhvacharya',
-    subtitle: 'The founder of Dvaita Vedanta philosophy'
+    subtitle: 'The founder of Dvaita Vedanta philosophy',
+    position: '50% 0%'
   }
 ];
 
@@ -115,9 +120,10 @@ const ImageCarousel = () => {
       {/* Current image - always visible */}
       <div className="absolute inset-0">
         <div 
-          className="absolute inset-0 bg-cover bg-top transition-opacity duration-1000"
+          className="absolute inset-0 bg-cover transition-opacity duration-1000"
           style={{ 
             backgroundImage: `url(${CAROUSEL_IMAGES[currentIndex].url})`,
+            backgroundPosition: CAROUSEL_IMAGES[currentIndex].position || 'top',
             opacity: isTransitioning ? 0 : 1
           }}
         />
@@ -130,8 +136,11 @@ const ImageCarousel = () => {
         style={{ opacity: isTransitioning ? 1 : 0 }}
       >
         <div 
-          className="absolute inset-0 bg-cover bg-top"
-          style={{ backgroundImage: `url(${CAROUSEL_IMAGES[nextIndex].url})` }}
+          className="absolute inset-0 bg-cover"
+          style={{ 
+            backgroundImage: `url(${CAROUSEL_IMAGES[nextIndex].url})`,
+            backgroundPosition: CAROUSEL_IMAGES[nextIndex].position || 'top'
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-maroon/90 via-maroon/70 to-maroon/50" />
       </div>
