@@ -883,9 +883,10 @@ DEVOTIONAL_VIDEO_LIBRARY = {
     "chalisas": [
         {"video_id": "AETFvQonfV8", "title": "Shri Hanuman Chalisa - Hariharan", "artist": "T-Series Bhakti Sagar", "duration": "8:51", "thumbnail": "https://img.youtube.com/vi/AETFvQonfV8/mqdefault.jpg"},
         {"video_id": "HiLmUZaJw0w", "title": "Shiv Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "10:55", "thumbnail": "https://img.youtube.com/vi/HiLmUZaJw0w/mqdefault.jpg"},
-        {"video_id": "Nw7VmKnJz1U", "title": "Durga Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "11:02", "thumbnail": "https://img.youtube.com/vi/Nw7VmKnJz1U/mqdefault.jpg"},
-        {"video_id": "l4z0VPgqMnw", "title": "Ganesh Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "11:48", "thumbnail": "https://img.youtube.com/vi/l4z0VPgqMnw/mqdefault.jpg"},
-        {"video_id": "2XVqiAHCNjA", "title": "Lakshmi Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "10:12", "thumbnail": "https://img.youtube.com/vi/2XVqiAHCNjA/mqdefault.jpg"},
+        {"video_id": "uGgYxIKB03g", "title": "Durga Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "8:37", "thumbnail": "https://img.youtube.com/vi/uGgYxIKB03g/mqdefault.jpg"},
+        {"video_id": "WyHFSjN0miU", "title": "Ganesh Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "9:08", "thumbnail": "https://img.youtube.com/vi/WyHFSjN0miU/mqdefault.jpg"},
+        {"video_id": "otWnO-2pwuM", "title": "Lakshmi Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "9:51", "thumbnail": "https://img.youtube.com/vi/otWnO-2pwuM/mqdefault.jpg"},
+        {"video_id": "-8JHyhZTwvY", "title": "Saraswati Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "9:36", "thumbnail": "https://img.youtube.com/vi/-8JHyhZTwvY/mqdefault.jpg"},
     ]
 }
 
