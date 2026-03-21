@@ -15,6 +15,8 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
 - **Authentication**: Firebase (FULLY INTEGRATED)
 - **Payments**: Stripe (real keys configured) + Razorpay (placeholder) - IP-based selection
 - **Video Meetings**: 100ms Integration (FULLY TESTED - March 20, 2026)
+- **Live Streaming**: YouTube Live embed + future 100ms HLS support
+- **Class Video Rooms**: 100ms auto-generated rooms 10 min before class
 - **Horoscope**: Local calculation service
 - **Design Theme**: Traditional warm (saffron, gold, maroon)
 - **MVP Scope**: All core features together
@@ -178,6 +180,37 @@ Build a cross-platform app (iOS, Android, Web) for Hindu spiritual services incl
      - Fixed astrologer API endpoint (/api/astrologers → /api/astrologers/available)
      - Fixed WebSocket token from useAuth (changed to localStorage)
    - **Test Results**: 100% backend (26/26 tests), 100% frontend verified
+
+10. ~~**Class Room Auto-Generation & YouTube Live Streaming**~~ ✅ COMPLETED (March 21, 2026)
+    - **Class Video Rooms (100ms Integration)**:
+      - Background scheduler creates 100ms rooms 10 minutes before class starts
+      - Payment verification before students can join
+      - In-app notifications sent to enrolled students when room is ready
+      - Priest can manually create room early via "Create Room" button
+      - Students see "Join Class" button when room is ready
+      - `ClassVideoRoom` component with full-screen video UI
+    - **Backend APIs**:
+      - `GET /api/classes/{id}/room-status` - Check room status
+      - `GET /api/classes/{id}/join` - Get student token (payment verified)
+      - `POST /api/priest/classes/{id}/create-room` - Manually create room
+      - `GET /api/priest/classes/{id}/host-token` - Get host token for priest
+      - `GET /api/my-enrollments` - Returns `room_ready`, `is_starting_soon`, `can_join` flags
+    - **YouTube Live Streaming**:
+      - Priests can add YouTube Live URL when scheduling streams
+      - YouTube video ID extracted for embed
+      - Full-screen modal with YouTube iframe embed
+      - Thumbnail auto-generated from YouTube
+    - **Priest Stream CRUD APIs**:
+      - `GET /api/priest/streams` - List priest's streams
+      - `POST /api/priest/streams` - Create stream (with youtube_url)
+      - `PUT /api/priest/streams/{id}` - Update stream
+      - `PUT /api/priest/streams/{id}/start` - Go live
+      - `PUT /api/priest/streams/{id}/end` - End stream
+      - `DELETE /api/priest/streams/{id}` - Delete stream
+    - **Bug Fixes**:
+      - Fixed admin pending verifications count mismatch
+      - Fixed priest approval_status showing "pending" when verified
+    - **Test Results**: 100% backend (22/22 tests), 100% frontend verified
 
 5. ~~**Class Enrollment Payments (P0)**~~ ✅ COMPLETED (March 17, 2026)
    - Integrated SmartPayment component for Stripe payments
