@@ -25,6 +25,19 @@ router = APIRouter(prefix="/api/admin", tags=["Admin"])
 @router.get("/stats")
 async def get_admin_stats(user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
     """Get admin dashboard statistics"""
+    # Query for pending providers (priests, astrologers, shops)
+    pending_query = {
+        "$or": [
+            {"approval_status": "pending"},
+            {"approval_status": {"$exists": False}, "is_verified": {"$ne": True}}
+        ]
+    }
+    
+    # Count ALL pending providers (not just priests)
+    pending_priests = await priests_collection.count_documents(pending_query)
+    pending_astrologers = await astrologers_collection.count_documents(pending_query)
+    pending_shops = await shops_collection.count_documents(pending_query)
+    
     stats = {
         "total_users": await users_collection.count_documents({}),
         "total_priests": await priests_collection.count_documents({}),
@@ -32,12 +45,7 @@ async def get_admin_stats(user: dict = Depends(require_role([UserRole.ADMIN, Use
         "total_products": await products_collection.count_documents({}),
         "total_bookings": await bookings_collection.count_documents({}),
         "total_orders": await orders_collection.count_documents({}),
-        "pending_verifications": await priests_collection.count_documents({
-            "$or": [
-                {"approval_status": "pending"},
-                {"approval_status": {"$exists": False}, "is_verified": {"$ne": True}}
-            ]
-        })
+        "pending_verifications": pending_priests + pending_astrologers + pending_shops
     }
     return stats
 
