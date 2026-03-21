@@ -308,7 +308,19 @@ export default function PriestDashboard() {
       <div className="hidden lg:flex">
         {/* Sidebar */}
         <aside className="w-64 min-h-screen bg-white border-r border-orange-100 fixed left-0 top-0 bottom-0 z-20">
-          {/* Sidebar Header */}
+          {/* Company Logo */}
+          <div className="p-4 border-b border-orange-100">
+            <div className="flex items-center gap-3">
+              <img 
+                src="/temple-logo.png" 
+                alt="Divine Logo" 
+                className="w-10 h-10 rounded-lg object-cover"
+              />
+              <span className="font-cinzel text-xl font-bold text-maroon">DIVINE</span>
+            </div>
+          </div>
+          
+          {/* Sidebar Header - User Info */}
           <div className="bg-gradient-to-r from-maroon to-maroon-light p-4">
             <button 
               onClick={() => handleTabChange('profile')}
@@ -332,7 +344,7 @@ export default function PriestDashboard() {
           </div>
 
           {/* Navigation Menu */}
-          <nav className="p-3 space-y-1 overflow-y-auto" style={{ height: 'calc(100vh - 120px)' }}>
+          <nav className="p-3 space-y-1 overflow-y-auto" style={{ height: 'calc(100vh - 180px)' }}>
             <p className="text-xs font-semibold text-gray-400 uppercase px-3 pt-2 pb-1">Main</p>
             {mainTabs.map((tab) => (
               <button

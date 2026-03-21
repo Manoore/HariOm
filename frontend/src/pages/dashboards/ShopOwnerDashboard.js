@@ -48,13 +48,15 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
 
   return (
     <div className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-orange-100 flex flex-col z-40">
-      {/* Logo */}
+      {/* Company Logo */}
       <div className="p-6 border-b border-orange-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-gold to-saffron rounded-xl flex items-center justify-center">
-            <Store className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-cinzel text-xl font-bold text-maroon">Shop Owner</span>
+          <img 
+            src="/temple-logo.png" 
+            alt="Divine Logo" 
+            className="w-10 h-10 rounded-lg object-cover"
+          />
+          <span className="font-cinzel text-xl font-bold text-maroon">DIVINE</span>
         </div>
       </div>
 
