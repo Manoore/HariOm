@@ -15,37 +15,25 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// Divine/Spiritual images for carousel - Sacred temples and Jagannath idols
+// Divine/Spiritual images for carousel - Sacred temple gopurams only
 const CAROUSEL_IMAGES = [
   {
-    url: '/bg-puri-jagannath.jpg',
-    title: 'Puri Jagannath Temple',
-    subtitle: 'The sacred abode of Lord Jagannath',
+    url: '/bg-tirupati-gopuram.jpg',
+    title: 'Tirupati Balaji Temple',
+    subtitle: 'The sacred abode of Lord Venkateswara',
     position: 'center top'
-  },
-  {
-    url: '/bg-jagannath-idol.jpeg',
-    title: 'Lord Jagannath',
-    subtitle: 'The divine deity of Puri',
-    position: 'center'
-  },
-  {
-    url: '/bg-jagannath.webp',
-    title: 'Jagannath Puri Dham',
-    subtitle: 'One of the four sacred Char Dham',
-    position: 'center top'
-  },
-  {
-    url: '/bg-jagannath-trinity.jpeg',
-    title: 'Jagannath, Balabhadra & Subhadra',
-    subtitle: 'The sacred trinity of Puri',
-    position: 'center'
   },
   {
     url: '/bg-padmanabha.avif',
     title: 'Sri Padmanabhaswamy Temple',
-    subtitle: 'Divine blessing of Lord Vishnu',
+    subtitle: 'Divine blessing of Lord Anantha Padmanabha',
     position: 'center'
+  },
+  {
+    url: '/bg-puri-jagannath.jpg',
+    title: 'Jagannath Puri Temple',
+    subtitle: 'The sacred abode of Lord Jagannath',
+    position: 'center top'
   }
 ];
 
