@@ -15,32 +15,32 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// Divine/Spiritual images for carousel
+// Divine/Spiritual images for carousel - Sacred temples and Acharyas
 const CAROUSEL_IMAGES = [
   {
-    url: 'https://images.unsplash.com/photo-1750405704388-1416715c359c?w=1920&q=80',
-    title: 'Sacred Temple Shrine',
-    subtitle: 'Experience divine blessings'
+    url: '/bg-puri-jagannath.jpg',
+    title: 'Puri Jagannath Temple',
+    subtitle: 'The sacred abode of Lord Jagannath'
   },
   {
-    url: 'https://images.unsplash.com/photo-1765873042338-5276f5eb54d0?w=1920&q=80',
-    title: 'Traditional Puja Ceremony',
-    subtitle: 'Connect with ancient rituals'
+    url: '/bg-padmanabha.avif',
+    title: 'Sri Padmanabhaswamy Temple',
+    subtitle: 'Divine blessing of Lord Vishnu'
   },
   {
-    url: 'https://images.unsplash.com/photo-1757308530438-4e2340a6475f?w=1920&q=80',
-    title: 'Sacred Aarti Flames',
-    subtitle: 'Illuminate your spiritual path'
+    url: '/bg-jagannath.webp',
+    title: 'Jagannath Puri Dham',
+    subtitle: 'One of the four sacred Char Dham'
   },
   {
-    url: 'https://images.unsplash.com/photo-1734455937991-01f528d6b633?w=1920&q=80',
-    title: 'Golden Temple Architecture',
-    subtitle: 'Discover sacred places'
+    url: '/bg-shankaracharya.jpg',
+    title: 'Adi Shankaracharya',
+    subtitle: 'The great Advaita philosopher and his disciples'
   },
   {
-    url: 'https://images.unsplash.com/photo-1761658883717-2e8e1f0ff66b?w=1920&q=80',
-    title: 'Devotional Offerings',
-    subtitle: 'Embrace Hindu traditions'
+    url: '/bg-madhvacharya.jpg',
+    title: 'Sri Madhvacharya',
+    subtitle: 'The founder of Dvaita Vedanta philosophy'
   }
 ];
 
