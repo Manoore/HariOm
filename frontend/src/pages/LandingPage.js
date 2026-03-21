@@ -24,7 +24,7 @@ const CAROUSEL_IMAGES = [
     position: 'center top'
   },
   {
-    url: '/bg-padmanabha.avif',
+    url: '/bg-padmanabha-temple.jpg',
     title: 'Sri Padmanabhaswamy Temple',
     subtitle: 'Divine blessing of Lord Anantha Padmanabha',
     position: 'center'
