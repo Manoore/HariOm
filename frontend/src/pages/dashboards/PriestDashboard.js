@@ -1842,18 +1842,24 @@ function ClassesTab({ classes, onRefresh }) {
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {classes.map((cls) => (
-            <div key={cls.id} className={`bg-white rounded-xl shadow-sm p-4 border-l-4 ${cls.room_id ? 'border-green-500' : 'border-saffron'}`}>
+            <div key={cls.id} className={`rounded-xl shadow-sm p-4 border-l-4 ${
+              cls.is_free || cls.price === 0 
+                ? 'bg-green-50 border-green-500' 
+                : cls.room_id 
+                  ? 'bg-white border-green-500' 
+                  : 'bg-white border-saffron'
+            }`}>
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <h3 className="font-semibold text-gray-800">{cls.title}</h3>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{cls.category}</span>
                     {cls.is_free || cls.price === 0 ? (
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">FREE</span>
+                      <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full font-medium">FREE</span>
                     ) : (
                       <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">₹{cls.price}</span>
                     )}
-                    {cls.room_id && (
+                    {cls.room_id && !(cls.is_free || cls.price === 0) && (
                       <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                         <Video className="w-3 h-3" /> Room Ready
                       </span>
@@ -1899,8 +1905,8 @@ function ClassesTab({ classes, onRefresh }) {
                 </div>
               )}
 
-              {/* Room Actions */}
-              {(cls.enrolled_count || 0) > 0 && (
+              {/* Room Actions - Only for PAID classes */}
+              {(cls.enrolled_count || 0) > 0 && !(cls.is_free || cls.price === 0) && (
                 <div className="mt-3 pt-3 border-t flex gap-2">
                   {!cls.room_id ? (
                     <button

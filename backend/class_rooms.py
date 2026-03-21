@@ -20,10 +20,15 @@ notifications_collection = user_notifications_collection
 # ===================== ROOM GENERATION =====================
 
 async def generate_class_room(class_id: str) -> Dict[str, Any]:
-    """Generate a 100ms room for a class"""
+    """Generate a 100ms room for a class - ONLY for PAID classes"""
     cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
     if not cls:
         raise Exception("Class not found")
+    
+    # Skip room generation for FREE classes - they use external meeting links
+    is_free = cls.get("is_free", False) or cls.get("price", 0) == 0
+    if is_free:
+        raise Exception("Free classes use external meeting links, not 100ms rooms")
     
     # Check if room already exists
     if cls.get("room_id"):
@@ -161,19 +166,25 @@ async def check_and_create_upcoming_rooms():
     """
     Background task: Check for classes starting in ~10 minutes
     and create rooms + send notifications
+    ONLY for PAID classes - free classes use external meeting links
     """
     now = datetime.now(timezone.utc)
     ten_mins_later = now + timedelta(minutes=10)
     twelve_mins_later = now + timedelta(minutes=12)  # 2 min buffer
     
-    # Find classes starting in 10-12 minutes that don't have a room yet
+    # Find PAID classes starting in 10-12 minutes that don't have a room yet
+    # Skip free classes (is_free=True or price=0)
     query = {
         "schedule_time": {
             "$gte": ten_mins_later,
             "$lte": twelve_mins_later
         },
         "room_id": {"$exists": False},
-        "enrolled_count": {"$gt": 0}  # Only if someone enrolled
+        "enrolled_count": {"$gt": 0},  # Only if someone enrolled
+        "$and": [
+            {"$or": [{"is_free": False}, {"is_free": {"$exists": False}}]},
+            {"$or": [{"price": {"$gt": 0}}, {"price": {"$exists": False}}]}
+        ]
     }
     
     cursor = priest_classes_collection.find(query)
@@ -181,8 +192,14 @@ async def check_and_create_upcoming_rooms():
     
     async for cls in cursor:
         try:
+            # Double-check it's not a free class
+            is_free = cls.get("is_free", False) or cls.get("price", 0) == 0
+            if is_free:
+                print(f"Skipping free class: {cls.get('title')} (uses external link)")
+                continue
+                
             class_id = str(cls["_id"])
-            print(f"Creating room for class: {cls.get('title')} (ID: {class_id})")
+            print(f"Creating room for PAID class: {cls.get('title')} (ID: {class_id})")
             
             # Generate room
             await generate_class_room(class_id)

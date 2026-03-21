@@ -5191,12 +5191,20 @@ function ClassesTab({ isDesktop }) {
                   key={cls.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl shadow-sm border border-orange-100 overflow-hidden"
+                  className={`rounded-2xl shadow-sm overflow-hidden ${
+                    cls.is_free 
+                      ? 'bg-green-50 border-2 border-green-300' 
+                      : 'bg-white border border-orange-100'
+                  }`}
                 >
                   <div className="p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white font-semibold">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+                          cls.is_free 
+                            ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
+                            : 'bg-gradient-to-br from-saffron to-gold'
+                        }`}>
                           {cls.priest_name?.charAt(0) || 'P'}
                         </div>
                         <div>
@@ -5247,7 +5255,11 @@ function ClassesTab({ isDesktop }) {
                         <button
                           onClick={() => handleEnroll(cls)}
                           disabled={enrolling === cls.id}
-                          className="px-4 py-2 bg-saffron text-white rounded-xl text-sm font-medium hover:bg-saffron-dark transition-colors disabled:opacity-50 flex items-center gap-1"
+                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-1 ${
+                            cls.is_free 
+                              ? 'bg-green-500 text-white hover:bg-green-600' 
+                              : 'bg-saffron text-white hover:bg-saffron-dark'
+                          }`}
                         >
                           {enrolling === cls.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -5278,18 +5290,31 @@ function ClassesTab({ isDesktop }) {
                 </button>
               </div>
             ) : (
-              myEnrollments.map((cls) => (
+              myEnrollments.map((cls) => {
+                const isFreeClass = cls.is_free || cls.price === 0;
+                return (
                 <motion.div
                   key={cls.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className={`bg-white rounded-xl p-4 shadow-sm border ${cls.is_starting_soon ? 'border-green-300 bg-green-50' : 'border-orange-100'} flex items-center justify-between`}
+                  className={`rounded-xl p-4 shadow-sm border flex items-center justify-between ${
+                    isFreeClass 
+                      ? 'bg-green-50 border-green-300' 
+                      : cls.is_starting_soon 
+                        ? 'bg-green-50 border-green-300' 
+                        : 'bg-white border-orange-100'
+                  }`}
                 >
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-gray-800">{cls.title}</h3>
+                      {isFreeClass && (
+                        <span className="px-2 py-0.5 bg-green-500 text-white text-xs rounded-full font-medium">
+                          FREE
+                        </span>
+                      )}
                       {cls.is_starting_soon && (
-                        <span className="px-2 py-0.5 bg-green-500 text-white text-xs rounded-full animate-pulse">
+                        <span className="px-2 py-0.5 bg-orange-500 text-white text-xs rounded-full animate-pulse">
                           Starting Soon!
                         </span>
                       )}
@@ -5306,11 +5331,27 @@ function ClassesTab({ isDesktop }) {
                       </span>
                     </div>
                   </div>
-                  {/* Show Join Class button if room is ready */}
-                  {cls.can_join ? (
+                  {/* For FREE classes - show meeting link button */}
+                  {isFreeClass ? (
+                    cls.meeting_link ? (
+                      <a
+                        href={cls.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-medium hover:bg-green-600 transition-colors flex items-center gap-2"
+                      >
+                        <Play className="w-4 h-4" /> Join Free Class
+                      </a>
+                    ) : (
+                      <span className="px-4 py-2 bg-gray-100 text-gray-500 rounded-xl text-sm font-medium">
+                        Link coming soon
+                      </span>
+                    )
+                  ) : /* For PAID classes - show 100ms Join button */
+                  cls.can_join ? (
                     <button
                       onClick={() => handleJoinClass(cls.id)}
-                      className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-medium hover:bg-green-600 transition-colors flex items-center gap-2 animate-pulse"
+                      className="px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors flex items-center gap-2 animate-pulse"
                       data-testid={`join-class-${cls.id}`}
                     >
                       <Video className="w-4 h-4" /> Join Class
@@ -5330,7 +5371,7 @@ function ClassesTab({ isDesktop }) {
                     </span>
                   ) : null}
                 </motion.div>
-              ))
+              )})
             )}
           </div>
         )}

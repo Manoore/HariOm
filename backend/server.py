@@ -2602,8 +2602,11 @@ async def get_my_enrollments(user: dict = Depends(get_current_user)):
         if priest:
             priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
         
-        # Check room status
-        room_ready = bool(cls.get("room_id"))
+        # Check if class is free
+        is_free = cls.get("is_free", False) or cls.get("price", 0) == 0
+        
+        # Check room status - only for PAID classes
+        room_ready = bool(cls.get("room_id")) if not is_free else False
         schedule_time = cls.get("schedule_time")
         
         # Calculate if class is starting soon (within 15 mins)
@@ -2621,9 +2624,11 @@ async def get_my_enrollments(user: dict = Depends(get_current_user)):
             "schedule_time": safe_isoformat(cls.get("schedule_time")),
             "duration_minutes": cls.get("duration_minutes", 60),
             "meeting_link": cls.get("meeting_link", ""),
+            "is_free": is_free,
+            "price": cls.get("price", 0),
             "room_ready": room_ready,
             "is_starting_soon": is_starting_soon,
-            "can_join": room_ready and is_starting_soon
+            "can_join": room_ready and is_starting_soon and not is_free  # Free classes use meeting_link
         })
     
     return {"enrollments": classes}
