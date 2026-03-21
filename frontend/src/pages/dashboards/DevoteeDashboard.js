@@ -5193,7 +5193,7 @@ function ClassesTab({ isDesktop }) {
                   animate={{ opacity: 1, y: 0 }}
                   className={`rounded-2xl shadow-sm overflow-hidden ${
                     cls.is_free 
-                      ? 'bg-green-50 border-2 border-green-300' 
+                      ? 'bg-green-100 border-2 border-green-400' 
                       : 'bg-white border border-orange-100'
                   }`}
                 >
@@ -5209,13 +5209,17 @@ function ClassesTab({ isDesktop }) {
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">{cls.priest_name}</p>
-                          <span className="text-xs px-2 py-0.5 bg-orange-100 text-saffron rounded-full">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            cls.is_free 
+                              ? 'bg-green-200 text-green-800' 
+                              : 'bg-orange-100 text-saffron'
+                          }`}>
                             {cls.category || 'General'}
                           </span>
                         </div>
                       </div>
                       {cls.is_free ? (
-                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">FREE</span>
+                        <span className="text-sm px-3 py-1 bg-green-500 text-white rounded-full font-bold">FREE</span>
                       ) : (
                         <span className="text-sm font-semibold text-maroon">₹{cls.price}</span>
                       )}
