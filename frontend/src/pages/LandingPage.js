@@ -21,7 +21,7 @@ const CAROUSEL_IMAGES = [
     url: '/bg-puri-jagannath.jpg',
     title: 'Puri Jagannath Temple',
     subtitle: 'The sacred abode of Lord Jagannath',
-    position: 'top'
+    position: 'center top'
   },
   {
     url: '/bg-padmanabha.avif',
@@ -33,19 +33,19 @@ const CAROUSEL_IMAGES = [
     url: '/bg-jagannath.webp',
     title: 'Jagannath Puri Dham',
     subtitle: 'One of the four sacred Char Dham',
-    position: 'top'
+    position: 'center top'
   },
   {
     url: '/bg-shankaracharya.jpg',
     title: 'Adi Shankaracharya',
     subtitle: 'The great Advaita philosopher and his disciples',
-    position: '50% 5%'
+    position: 'center top'
   },
   {
     url: '/bg-madhvacharya.jpg',
     title: 'Sri Madhvacharya',
     subtitle: 'The founder of Dvaita Vedanta philosophy',
-    position: '50% 0%'
+    position: 'center top'
   }
 ];
 
