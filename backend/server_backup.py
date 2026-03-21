@@ -97,7 +97,7 @@ async def upload_image(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://pooja-live.preview.emergentagent.com"
+        backend_url = "https://vedic-hub-2.preview.emergentagent.com"
     
     # Return the URL
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -141,7 +141,7 @@ async def upload_video(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://pooja-live.preview.emergentagent.com"
+        backend_url = "https://vedic-hub-2.preview.emergentagent.com"
     
     # Return the URL
     video_url = f"{backend_url}/api/uploads/{unique_filename}"

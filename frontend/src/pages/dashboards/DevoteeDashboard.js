@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Home, Star, Sun, ShoppingBag, User, Calendar, MapPin,
+  Star, Sun, ShoppingBag, User, Calendar, MapPin,
   Bell, BellRing, ChevronRight, Clock, Package, Search, Filter,
   Plus, Minus, ShoppingCart, Heart, Settings, LogOut,
   CheckCircle, ArrowRight, ArrowLeft, Loader2, X, Menu, BookOpen, Play, Volume2, Music, Pause, SkipForward, SkipBack,
@@ -38,6 +38,14 @@ import {
   useAVToggle,
   HMSRoomProvider
 } from '@100mslive/react-sdk';
+
+// Custom Om Icon component for Home tab in sidebar
+const OmIcon = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="currentColor">
+    <path d="M45 20c-8 0-15 5-18 12-2 5-1 11 2 15 2 3 5 5 8 6-5 3-8 8-8 14 0 10 8 18 18 18 6 0 11-3 14-7 1 2 3 4 5 5 3 2 7 3 11 2 8-2 14-10 14-18 0-5-2-9-5-12 4-3 7-8 7-14 0-9-7-17-16-18-6-1-12 2-16 6-3-5-9-9-16-9zm2 8c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9zm25 5c4 0 8 4 8 9s-4 8-8 8c-5 0-9-4-9-8s4-9 9-9zM47 52c6 0 11 5 11 11s-5 11-11 11-11-5-11-11 5-11 11-11zm25 3c4 0 7 3 7 7s-3 7-7 7-7-3-7-7 3-7 7-7z"/>
+    <circle cx="78" cy="25" r="5"/>
+  </svg>
+);
 
 // 3D Animated Devotional SVG Icons
 const BellIcon3D = ({ size = "w-8 h-8" }) => (
@@ -147,7 +155,7 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
   const { logout } = useAuth();
   
   const tabs = [
-    { id: 'home', icon: Home, label: 'Home' },
+    { id: 'home', icon: OmIcon, label: 'Home' },
     { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages },
     { id: 'consultation', icon: Video, label: 'Call Astrologer' },
     { id: 'classes', icon: BookOpen, label: 'Vedic Classes' },
@@ -167,12 +175,11 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
       {/* Logo */}
       <div className="p-6 border-b border-orange-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10">
-            <svg viewBox="0 0 100 100" className="w-full h-full">
-              <ellipse cx="50" cy="85" rx="30" ry="8" fill="#B8860B" />
-              <path d="M30 85 Q30 70 35 60 L65 60 Q70 70 70 85" fill="#FFD700" />
-              <ellipse cx="50" cy="60" rx="18" ry="6" fill="#FFD700" />
-              <path d="M50 55 Q45 40 50 25 Q55 40 50 55" fill="#FF9933" />
+          <div className="w-10 h-10 text-saffron">
+            {/* Om Symbol */}
+            <svg viewBox="0 0 100 100" className="w-full h-full" fill="currentColor">
+              <path d="M45 20c-8 0-15 5-18 12-2 5-1 11 2 15 2 3 5 5 8 6-5 3-8 8-8 14 0 10 8 18 18 18 6 0 11-3 14-7 1 2 3 4 5 5 3 2 7 3 11 2 8-2 14-10 14-18 0-5-2-9-5-12 4-3 7-8 7-14 0-9-7-17-16-18-6-1-12 2-16 6-3-5-9-9-16-9zm2 8c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9zm25 5c4 0 8 4 8 9s-4 8-8 8c-5 0-9-4-9-8s4-9 9-9zM47 52c6 0 11 5 11 11s-5 11-11 11-11-5-11-11 5-11 11-11zm25 3c4 0 7 3 7 7s-3 7-7 7-7-3-7-7 3-7 7-7z"/>
+              <circle cx="78" cy="25" r="5"/>
             </svg>
           </div>
           <span className="font-cinzel text-xl font-bold text-maroon">DIVINE</span>
@@ -195,8 +202,8 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
         </div>
       </button>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      {/* Navigation - scrollable if needed */}
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto min-h-0">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -226,8 +233,8 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
         ))}
       </nav>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-orange-100">
+      {/* Logout - always visible at bottom */}
+      <div className="p-4 border-t border-orange-100 flex-shrink-0">
         <button 
           onClick={logout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-colors"
@@ -247,7 +254,7 @@ function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
   const [showMore, setShowMore] = useState(false);
   
   const mainTabs = [
-    { id: 'home', icon: Home, label: 'Home' },
+    { id: 'home', icon: OmIcon, label: 'Home' },
     { id: 'priests', icon: UserRoundCheck, label: 'Priests' },
     { id: 'shop', icon: ShoppingBag, label: 'Shop' },
     { id: 'more', icon: Menu, label: 'More', isMore: true },

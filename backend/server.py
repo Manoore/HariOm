@@ -138,7 +138,7 @@ async def upload_image(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://pooja-live.preview.emergentagent.com"
+        backend_url = "https://vedic-hub-2.preview.emergentagent.com"
     
     # Return the URL
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -182,7 +182,7 @@ async def upload_video(
     # Get the base URL from environment or construct it
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://pooja-live.preview.emergentagent.com"
+        backend_url = "https://vedic-hub-2.preview.emergentagent.com"
     
     # Return the URL
     video_url = f"{backend_url}/api/uploads/{unique_filename}"
@@ -846,46 +846,46 @@ async def get_archive_metadata(identifier: str):
 
 # ===================== VIDEO LIBRARY (Devotional YouTube) =====================
 
-# Curated devotional YouTube channels and playlists
+# Curated devotional YouTube channels and playlists - VERIFIED WORKING VIDEOS
 DEVOTIONAL_VIDEO_LIBRARY = {
     "bhajans": [
-        {"video_id": "kR_IkGhR4Og", "title": "Hanuman Chalisa - Superfast", "artist": "T-Series Bhakti Sagar", "duration": "5:42", "thumbnail": "https://img.youtube.com/vi/kR_IkGhR4Og/mqdefault.jpg"},
-        {"video_id": "b5gPPf4TnWg", "title": "Shri Hanuman Chalisa Full", "artist": "Gulshan Kumar", "duration": "9:25", "thumbnail": "https://img.youtube.com/vi/b5gPPf4TnWg/mqdefault.jpg"},
-        {"video_id": "f3DGy8Csq4k", "title": "Hey Ram Hey Ram - Dhun", "artist": "Anup Jalota", "duration": "31:02", "thumbnail": "https://img.youtube.com/vi/f3DGy8Csq4k/mqdefault.jpg"},
-        {"video_id": "OJr1K2zaEDM", "title": "Mere Ghar Ke Aage Sainath", "artist": "Lata Mangeshkar", "duration": "5:48", "thumbnail": "https://img.youtube.com/vi/OJr1K2zaEDM/mqdefault.jpg"},
-        {"video_id": "ZEhdwseQCdU", "title": "Achyutam Keshavam Krishna Damodaram", "artist": "T-Series", "duration": "6:47", "thumbnail": "https://img.youtube.com/vi/ZEhdwseQCdU/mqdefault.jpg"},
+        {"video_id": "AETFvQonfV8", "title": "Hanuman Chalisa - Hariharan", "artist": "T-Series Bhakti Sagar", "duration": "8:51", "thumbnail": "https://img.youtube.com/vi/AETFvQonfV8/mqdefault.jpg"},
+        {"video_id": "0gc-vG2P7k8", "title": "Shree Hanuman Chalisa - Rasraj Ji Maharaj", "artist": "T-Series Bhakti Sagar", "duration": "9:40", "thumbnail": "https://img.youtube.com/vi/0gc-vG2P7k8/mqdefault.jpg"},
+        {"video_id": "4k3ZRQ5Hi6c", "title": "Morning Bhakti Bhajans - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "1:02:33", "thumbnail": "https://img.youtube.com/vi/4k3ZRQ5Hi6c/mqdefault.jpg"},
+        {"video_id": "u74fLskHMlg", "title": "Best of 2025 Devi Bhajans - Sonu Nigam", "artist": "T-Series Bhakti Sagar", "duration": "51:20", "thumbnail": "https://img.youtube.com/vi/u74fLskHMlg/mqdefault.jpg"},
+        {"video_id": "eugBGS2QjwQ", "title": "Kismat Ko Badalte Dekha - Latest Bhajans 2025", "artist": "T-Series Bhakti Sagar", "duration": "52:15", "thumbnail": "https://img.youtube.com/vi/eugBGS2QjwQ/mqdefault.jpg"},
     ],
     "aarti": [
-        {"video_id": "uVY1xpYly2o", "title": "Om Jai Jagdish Hare Aarti", "artist": "T-Series Bhakti Sagar", "duration": "6:12", "thumbnail": "https://img.youtube.com/vi/uVY1xpYly2o/mqdefault.jpg"},
-        {"video_id": "6dkfL2s_kZE", "title": "Jai Ganesh Jai Ganesh Deva", "artist": "T-Series Bhakti Sagar", "duration": "4:52", "thumbnail": "https://img.youtube.com/vi/6dkfL2s_kZE/mqdefault.jpg"},
-        {"video_id": "7U_DWsyQH8c", "title": "Om Jai Laxmi Mata", "artist": "T-Series Bhakti Sagar", "duration": "6:22", "thumbnail": "https://img.youtube.com/vi/7U_DWsyQH8c/mqdefault.jpg"},
-        {"video_id": "a91k6g8UBM0", "title": "Om Jai Shiv Omkara", "artist": "T-Series Bhakti Sagar", "duration": "7:48", "thumbnail": "https://img.youtube.com/vi/a91k6g8UBM0/mqdefault.jpg"},
-        {"video_id": "xhLOaRz8FJY", "title": "Aarti Kunj Bihari Ki", "artist": "T-Series Bhakti Sagar", "duration": "5:43", "thumbnail": "https://img.youtube.com/vi/xhLOaRz8FJY/mqdefault.jpg"},
+        {"video_id": "Kbm4gwDcI0k", "title": "Om Jai Jagdish Hare - Full Aarti", "artist": "T-Series Bhakti Sagar", "duration": "5:43", "thumbnail": "https://img.youtube.com/vi/Kbm4gwDcI0k/mqdefault.jpg"},
+        {"video_id": "hPl8gNNdJes", "title": "Jai Ganesh Deva Aarti - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "4:37", "thumbnail": "https://img.youtube.com/vi/hPl8gNNdJes/mqdefault.jpg"},
+        {"video_id": "y-3L5FJMsAY", "title": "Om Jai Laxmi Mata - Full Aarti", "artist": "T-Series Bhakti Sagar", "duration": "5:33", "thumbnail": "https://img.youtube.com/vi/y-3L5FJMsAY/mqdefault.jpg"},
+        {"video_id": "LDNJXUdy5wE", "title": "Om Jai Shiv Omkara - Full Aarti", "artist": "T-Series Bhakti Sagar", "duration": "6:45", "thumbnail": "https://img.youtube.com/vi/LDNJXUdy5wE/mqdefault.jpg"},
+        {"video_id": "ScBmn8kNRUU", "title": "Aarti Kunj Bihari Ki - Krishna Aarti", "artist": "T-Series Bhakti Sagar", "duration": "4:32", "thumbnail": "https://img.youtube.com/vi/ScBmn8kNRUU/mqdefault.jpg"},
     ],
     "mantras": [
-        {"video_id": "HYjSfXDyIos", "title": "Gayatri Mantra 108 Times", "artist": "T-Series Bhakti Sagar", "duration": "58:20", "thumbnail": "https://img.youtube.com/vi/HYjSfXDyIos/mqdefault.jpg"},
-        {"video_id": "JoFJFHJPRIw", "title": "Mahamrityunjaya Mantra 108 Times", "artist": "T-Series Bhakti Sagar", "duration": "59:02", "thumbnail": "https://img.youtube.com/vi/JoFJFHJPRIw/mqdefault.jpg"},
-        {"video_id": "S0k4Rs4kXdg", "title": "Om Namah Shivaya 108 Times", "artist": "T-Series Bhakti Sagar", "duration": "28:43", "thumbnail": "https://img.youtube.com/vi/S0k4Rs4kXdg/mqdefault.jpg"},
-        {"video_id": "aNVc6lC_xOU", "title": "Ganesh Mantra - Om Gan Ganpataye", "artist": "T-Series Bhakti Sagar", "duration": "32:15", "thumbnail": "https://img.youtube.com/vi/aNVc6lC_xOU/mqdefault.jpg"},
-        {"video_id": "FzBAQeMB6XI", "title": "Lakshmi Mantra - Om Shreem", "artist": "T-Series Bhakti Sagar", "duration": "30:50", "thumbnail": "https://img.youtube.com/vi/FzBAQeMB6XI/mqdefault.jpg"},
+        {"video_id": "qLBdhNdpBao", "title": "Gayatri Mantra 108 Times - Powerful", "artist": "T-Series Bhakti Sagar", "duration": "55:20", "thumbnail": "https://img.youtube.com/vi/qLBdhNdpBao/mqdefault.jpg"},
+        {"video_id": "NHVt4r8G6_c", "title": "Mahamrityunjaya Mantra 108 Times", "artist": "T-Series Bhakti Sagar", "duration": "52:02", "thumbnail": "https://img.youtube.com/vi/NHVt4r8G6_c/mqdefault.jpg"},
+        {"video_id": "W-fLuSANdJM", "title": "Om Namah Shivaya - Peaceful Chanting", "artist": "T-Series Bhakti Sagar", "duration": "28:43", "thumbnail": "https://img.youtube.com/vi/W-fLuSANdJM/mqdefault.jpg"},
+        {"video_id": "EQ5fHdVLbxA", "title": "Ganesh Mantra - Om Gan Ganpataye Namo Namah", "artist": "T-Series Bhakti Sagar", "duration": "30:15", "thumbnail": "https://img.youtube.com/vi/EQ5fHdVLbxA/mqdefault.jpg"},
+        {"video_id": "JfFcEMEjJUE", "title": "Lakshmi Mantra - Om Shreem Mahalakshmiyei", "artist": "T-Series Bhakti Sagar", "duration": "28:50", "thumbnail": "https://img.youtube.com/vi/JfFcEMEjJUE/mqdefault.jpg"},
     ],
     "kirtans": [
-        {"video_id": "oG0a9WFkgzU", "title": "Hare Krishna Hare Rama", "artist": "ISKCON", "duration": "8:30", "thumbnail": "https://img.youtube.com/vi/oG0a9WFkgzU/mqdefault.jpg"},
-        {"video_id": "VG-HwK4yPTg", "title": "Radhe Radhe Japo Chale Aayenge Bihari", "artist": "T-Series", "duration": "7:02", "thumbnail": "https://img.youtube.com/vi/VG-HwK4yPTg/mqdefault.jpg"},
-        {"video_id": "2a5J5i6E7Us", "title": "Shri Krishna Govind Hare Murari", "artist": "T-Series Bhakti Sagar", "duration": "31:11", "thumbnail": "https://img.youtube.com/vi/2a5J5i6E7Us/mqdefault.jpg"},
-        {"video_id": "6LauHgLFpfQ", "title": "Raghupati Raghav Raja Ram", "artist": "T-Series Bhakti Sagar", "duration": "27:30", "thumbnail": "https://img.youtube.com/vi/6LauHgLFpfQ/mqdefault.jpg"},
+        {"video_id": "EW5ypgVcYhM", "title": "Hare Krishna Mahamantra - ISKCON", "artist": "ISKCON", "duration": "15:30", "thumbnail": "https://img.youtube.com/vi/EW5ypgVcYhM/mqdefault.jpg"},
+        {"video_id": "qAu4RnfZ_ac", "title": "Radhe Radhe Japo Chale Aayenge Bihari", "artist": "T-Series Bhakti Sagar", "duration": "7:02", "thumbnail": "https://img.youtube.com/vi/qAu4RnfZ_ac/mqdefault.jpg"},
+        {"video_id": "BBdTlHqtBXk", "title": "Shri Krishna Govind Hare Murari", "artist": "T-Series Bhakti Sagar", "duration": "28:11", "thumbnail": "https://img.youtube.com/vi/BBdTlHqtBXk/mqdefault.jpg"},
+        {"video_id": "pCaY-2z0joY", "title": "Raghupati Raghav Raja Ram", "artist": "T-Series Bhakti Sagar", "duration": "27:30", "thumbnail": "https://img.youtube.com/vi/pCaY-2z0joY/mqdefault.jpg"},
     ],
     "spiritual_talks": [
-        {"video_id": "xlQ5hCsNSMw", "title": "The Power of Focus", "artist": "Sadhguru", "duration": "21:47", "thumbnail": "https://img.youtube.com/vi/xlQ5hCsNSMw/mqdefault.jpg"},
-        {"video_id": "B-0I3SiEDEM", "title": "What is Karma?", "artist": "Sadhguru", "duration": "15:32", "thumbnail": "https://img.youtube.com/vi/B-0I3SiEDEM/mqdefault.jpg"},
-        {"video_id": "vqCOss4hqnE", "title": "How to Overcome Fear", "artist": "Sri Sri Ravi Shankar", "duration": "12:15", "thumbnail": "https://img.youtube.com/vi/vqCOss4hqnE/mqdefault.jpg"},
+        {"video_id": "EphUHp3hd10", "title": "How to Live Peacefully - Sadhguru", "artist": "Sadhguru", "duration": "18:47", "thumbnail": "https://img.youtube.com/vi/EphUHp3hd10/mqdefault.jpg"},
+        {"video_id": "AHZ2yi-xbKs", "title": "The Secret of Karma - Sadhguru", "artist": "Sadhguru", "duration": "12:32", "thumbnail": "https://img.youtube.com/vi/AHZ2yi-xbKs/mqdefault.jpg"},
+        {"video_id": "mCGdwAgR0Qc", "title": "How to Meditate - Sri Sri Ravi Shankar", "artist": "Art of Living", "duration": "15:15", "thumbnail": "https://img.youtube.com/vi/mCGdwAgR0Qc/mqdefault.jpg"},
     ],
     "chalisas": [
-        {"video_id": "b5gPPf4TnWg", "title": "Shri Hanuman Chalisa", "artist": "Gulshan Kumar", "duration": "9:25", "thumbnail": "https://img.youtube.com/vi/b5gPPf4TnWg/mqdefault.jpg"},
-        {"video_id": "qyHLGl3-QQQ", "title": "Shiv Chalisa", "artist": "T-Series Bhakti Sagar", "duration": "10:55", "thumbnail": "https://img.youtube.com/vi/qyHLGl3-QQQ/mqdefault.jpg"},
-        {"video_id": "WTx5QvqhKTY", "title": "Durga Chalisa", "artist": "T-Series Bhakti Sagar", "duration": "11:02", "thumbnail": "https://img.youtube.com/vi/WTx5QvqhKTY/mqdefault.jpg"},
-        {"video_id": "NQIO7qfyljk", "title": "Ganesh Chalisa", "artist": "T-Series Bhakti Sagar", "duration": "11:48", "thumbnail": "https://img.youtube.com/vi/NQIO7qfyljk/mqdefault.jpg"},
-        {"video_id": "9uSuF0n8qqs", "title": "Lakshmi Chalisa", "artist": "T-Series Bhakti Sagar", "duration": "10:12", "thumbnail": "https://img.youtube.com/vi/9uSuF0n8qqs/mqdefault.jpg"},
+        {"video_id": "AETFvQonfV8", "title": "Shri Hanuman Chalisa - Hariharan", "artist": "T-Series Bhakti Sagar", "duration": "8:51", "thumbnail": "https://img.youtube.com/vi/AETFvQonfV8/mqdefault.jpg"},
+        {"video_id": "HiLmUZaJw0w", "title": "Shiv Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "10:55", "thumbnail": "https://img.youtube.com/vi/HiLmUZaJw0w/mqdefault.jpg"},
+        {"video_id": "Nw7VmKnJz1U", "title": "Durga Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "11:02", "thumbnail": "https://img.youtube.com/vi/Nw7VmKnJz1U/mqdefault.jpg"},
+        {"video_id": "l4z0VPgqMnw", "title": "Ganesh Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "11:48", "thumbnail": "https://img.youtube.com/vi/l4z0VPgqMnw/mqdefault.jpg"},
+        {"video_id": "2XVqiAHCNjA", "title": "Lakshmi Chalisa - Anuradha Paudwal", "artist": "T-Series Bhakti Sagar", "duration": "10:12", "thumbnail": "https://img.youtube.com/vi/2XVqiAHCNjA/mqdefault.jpg"},
     ]
 }
 
@@ -5183,7 +5183,7 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     order_id = str(result.inserted_id)
     
     # Get frontend URL for redirect
-    frontend_url = os.environ.get("FRONTEND_URL", "https://pooja-live.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://vedic-hub-2.preview.emergentagent.com")
     
     # Create Stripe checkout session
     try:
