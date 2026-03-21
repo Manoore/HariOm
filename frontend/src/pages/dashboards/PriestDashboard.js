@@ -272,8 +272,8 @@ export default function PriestDashboard() {
     <div className="min-h-screen bg-gradient-to-b from-cream to-parchment">
       <Toaster position="top-center" richColors />
       
-      {/* Approval Status Banner */}
-      {priestProfile?.approval_status === 'pending' && (
+      {/* Approval Status Banner - Don't show if priest is verified */}
+      {!priestProfile?.is_verified && priestProfile?.approval_status === 'pending' && (
         <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
@@ -283,7 +283,7 @@ export default function PriestDashboard() {
           </div>
         </div>
       )}
-      {priestProfile?.approval_status === 'rejected' && (
+      {!priestProfile?.is_verified && priestProfile?.approval_status === 'rejected' && (
         <div className="bg-red-50 border-b border-red-200 px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
