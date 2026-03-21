@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Users, Star, ShoppingBag, Calendar, Settings, LogOut,
   ChevronRight, CheckCircle, AlertCircle, Loader2, TrendingUp,
-  Home, BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2, Search, User, Shield, Music, Play, Pause, Volume2, Menu, FileText, RefreshCw
+  BarChart3, UserCheck, Package, Bell, Video, Key, MessageSquare, Mail, Trash2, Check, X, BookOpen, Plus, Edit2, Search, User, Shield, Music, Play, Pause, Volume2, Menu, FileText, RefreshCw
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -22,13 +22,26 @@ const useIsDesktop = () => {
   return isDesktop;
 };
 
+// Custom Om Icon component (matches landing page style)
+const OmIcon = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="omGradientAdmin" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FF9933" />
+        <stop offset="100%" stopColor="#722F37" />
+      </linearGradient>
+    </defs>
+    <text x="50" y="70" textAnchor="middle" fontSize="60" fill="url(#omGradientAdmin)" fontFamily="serif" fontWeight="bold">ॐ</text>
+  </svg>
+);
+
 // Sidebar Navigation for Desktop
 function AdminSidebar({ activeTab, setActiveTab, user }) {
   const { logout } = useAuth();
   const isSuperAdmin = user?.role === 'super_admin';
   
   const tabs = [
-    { id: 'overview', icon: Home, label: 'Overview' },
+    { id: 'overview', icon: OmIcon, label: 'Overview' },
     { id: 'approvals', icon: CheckCircle, label: 'Approvals' },
     { id: 'users', icon: Users, label: 'Users' },
     { id: 'priests', icon: UserCheck, label: 'Priests' },
@@ -112,7 +125,7 @@ function AdminBottomNav({ activeTab, setActiveTab }) {
   const [showMore, setShowMore] = useState(false);
   
   const mainTabs = [
-    { id: 'overview', icon: Home, label: 'Home' },
+    { id: 'overview', icon: OmIcon, label: 'Home' },
     { id: 'users', icon: Users, label: 'Users' },
     { id: 'priests', icon: UserCheck, label: 'Priests' },
     { id: 'more', icon: Menu, label: 'More', isMore: true },

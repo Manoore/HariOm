@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Package, Plus, Settings, LogOut, ShoppingBag, Home,
+  Package, Plus, Settings, LogOut, ShoppingBag,
   Edit, Trash, Loader2, TrendingUp, DollarSign, BarChart3,
   AlertTriangle, Search, Filter, ChevronRight, X, Check,
   Truck, Clock, CheckCircle, XCircle, MessageSquare, Camera,
@@ -23,12 +23,25 @@ const useIsDesktop = () => {
   return isDesktop;
 };
 
+// Custom Om Icon component (matches landing page style)
+const OmIcon = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="omGradientShop" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FF9933" />
+        <stop offset="100%" stopColor="#722F37" />
+      </linearGradient>
+    </defs>
+    <text x="50" y="70" textAnchor="middle" fontSize="60" fill="url(#omGradientShop)" fontFamily="serif" fontWeight="bold">ॐ</text>
+  </svg>
+);
+
 // Sidebar for desktop
 function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
   const { logout } = useAuth();
   
   const tabs = [
-    { id: 'home', icon: Home, label: 'Dashboard' },
+    { id: 'home', icon: OmIcon, label: 'Dashboard' },
     { id: 'products', icon: Package, label: 'Products' },
     { id: 'orders', icon: ShoppingBag, label: 'Orders' },
     { id: 'inventory', icon: BarChart3, label: 'Inventory' },
@@ -105,7 +118,7 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
 // Bottom Navigation for Mobile
 function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
   const tabs = [
-    { id: 'home', icon: Home, label: 'Home' },
+    { id: 'home', icon: OmIcon, label: 'Home' },
     { id: 'products', icon: Package, label: 'Products' },
     { id: 'orders', icon: ShoppingBag, label: 'Orders' },
     { id: 'messages', icon: MessageSquare, label: 'Chat', badge: unreadMessages },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Home, Phone, DollarSign, Clock, Users, Star, Settings,
+  Phone, DollarSign, Clock, Users, Star, Settings,
   TrendingUp, Calendar, BarChart3, Wallet, Video, VideoOff,
   ChevronRight, Loader2, Bell, MessageSquare, LogOut, Menu,
   CheckCircle, XCircle, Play, Pause, IndianRupee, Award,
@@ -25,12 +25,25 @@ function useIsDesktop() {
   return isDesktop;
 }
 
+// Custom Om Icon component (matches landing page style)
+const OmIcon = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="omGradientAstro" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FF9933" />
+        <stop offset="100%" stopColor="#722F37" />
+      </linearGradient>
+    </defs>
+    <text x="50" y="70" textAnchor="middle" fontSize="60" fill="url(#omGradientAstro)" fontFamily="serif" fontWeight="bold">ॐ</text>
+  </svg>
+);
+
 // Sidebar Navigation
 function Sidebar({ activeTab, setActiveTab, user, isAvailable, onToggleAvailability }) {
   const { logout } = useAuth();
   
   const tabs = [
-    { id: 'home', icon: Home, label: 'Dashboard' },
+    { id: 'home', icon: OmIcon, label: 'Dashboard' },
     { id: 'calls', icon: Phone, label: 'Call History' },
     { id: 'earnings', icon: IndianRupee, label: 'Earnings' },
     { id: 'messages', icon: MessageSquare, label: 'Messages' },
@@ -128,7 +141,7 @@ function Sidebar({ activeTab, setActiveTab, user, isAvailable, onToggleAvailabil
 // Bottom Navigation for Mobile
 function BottomNav({ activeTab, setActiveTab }) {
   const tabs = [
-    { id: 'home', icon: Home, label: 'Home' },
+    { id: 'home', icon: OmIcon, label: 'Home' },
     { id: 'calls', icon: Phone, label: 'Calls' },
     { id: 'earnings', icon: IndianRupee, label: 'Earnings' },
     { id: 'messages', icon: MessageSquare, label: 'Messages' },

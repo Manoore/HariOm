@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Home, Calendar, Settings, LogOut, ChevronRight, Clock,
+  Calendar, Settings, LogOut, ChevronRight, Clock,
   CheckCircle, XCircle, User, Star, Bell, Loader2, BookOpen,
   Video, FileText, DollarSign, Users, TrendingUp, Plus, Edit,
   Trash2, Play, Square, Eye, Heart, CalendarDays, BarChart3,
@@ -25,9 +25,22 @@ const ROLE_CONFIG = {
   shop_owner: { label: 'Shop Owner', color: 'bg-green-600', icon: Users },
 };
 
+// Custom Om Icon component (matches landing page style)
+const OmIcon = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <defs>
+      <linearGradient id="omGradientPriest" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FF9933" />
+        <stop offset="100%" stopColor="#722F37" />
+      </linearGradient>
+    </defs>
+    <text x="50" y="70" textAnchor="middle" fontSize="60" fill="url(#omGradientPriest)" fontFamily="serif" fontWeight="bold">ॐ</text>
+  </svg>
+);
+
 // Tab configurations - split into main and more
 const mainTabs = [
-  { id: 'home', label: 'Home', icon: Home },
+  { id: 'home', label: 'Home', icon: OmIcon },
   { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'posts', label: 'Posts', icon: Send },
   { id: 'bookings', label: 'Bookings', icon: Calendar },
