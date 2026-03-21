@@ -115,7 +115,7 @@ const ImageCarousel = () => {
       {/* Current image - always visible */}
       <div className="absolute inset-0">
         <div 
-          className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+          className="absolute inset-0 bg-cover bg-top transition-opacity duration-1000"
           style={{ 
             backgroundImage: `url(${CAROUSEL_IMAGES[currentIndex].url})`,
             opacity: isTransitioning ? 0 : 1
@@ -130,7 +130,7 @@ const ImageCarousel = () => {
         style={{ opacity: isTransitioning ? 1 : 0 }}
       >
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-top"
           style={{ backgroundImage: `url(${CAROUSEL_IMAGES[nextIndex].url})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-maroon/90 via-maroon/70 to-maroon/50" />
