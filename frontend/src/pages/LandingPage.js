@@ -15,7 +15,7 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// Divine/Spiritual images for carousel - Sacred temples and Acharyas
+// Divine/Spiritual images for carousel - Sacred temples and Jagannath idols
 const CAROUSEL_IMAGES = [
   {
     url: '/bg-puri-jagannath.jpg',
@@ -24,9 +24,9 @@ const CAROUSEL_IMAGES = [
     position: 'center top'
   },
   {
-    url: '/bg-padmanabha.avif',
-    title: 'Sri Padmanabhaswamy Temple',
-    subtitle: 'Divine blessing of Lord Vishnu',
+    url: '/bg-jagannath-idol.jpeg',
+    title: 'Lord Jagannath',
+    subtitle: 'The divine deity of Puri',
     position: 'center'
   },
   {
@@ -36,16 +36,16 @@ const CAROUSEL_IMAGES = [
     position: 'center top'
   },
   {
-    url: '/bg-shankaracharya.jpg',
-    title: 'Adi Shankaracharya',
-    subtitle: 'The great Advaita philosopher and his disciples',
-    position: 'center top'
+    url: '/bg-jagannath-trinity.jpeg',
+    title: 'Jagannath, Balabhadra & Subhadra',
+    subtitle: 'The sacred trinity of Puri',
+    position: 'center'
   },
   {
-    url: '/bg-madhvacharya.jpg',
-    title: 'Sri Madhvacharya',
-    subtitle: 'The founder of Dvaita Vedanta philosophy',
-    position: 'center top'
+    url: '/bg-padmanabha.avif',
+    title: 'Sri Padmanabhaswamy Temple',
+    subtitle: 'Divine blessing of Lord Vishnu',
+    position: 'center'
   }
 ];
 
