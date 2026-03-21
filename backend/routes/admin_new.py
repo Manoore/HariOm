@@ -617,6 +617,86 @@ async def delete_audio_item(item_id: str, user: dict = Depends(require_role([Use
     return {"message": "Audio item deleted"}
 
 
+# ===================== VIDEO LIBRARY MANAGEMENT =====================
+
+from database import video_library_collection as video_lib_collection
+
+@router.get("/video-library")
+async def get_admin_video_library(user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Get all videos for admin management"""
+    videos = []
+    cursor = video_lib_collection.find({})
+    async for video in cursor:
+        videos.append({
+            "id": str(video["_id"]),
+            "title": video.get("title", ""),
+            "video_id": video.get("video_id", ""),
+            "artist": video.get("artist", ""),
+            "duration": video.get("duration", ""),
+            "category": video.get("category", ""),
+            "thumbnail": video.get("thumbnail", f"https://img.youtube.com/vi/{video.get('video_id', '')}/mqdefault.jpg"),
+            "is_active": video.get("is_active", True),
+            "created_at": video.get("created_at")
+        })
+    
+    return {"videos": videos}
+
+@router.post("/video-library")
+async def add_video(request: Request, user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Add a new video to the library"""
+    data = await request.json()
+    
+    video_doc = {
+        "title": data.get("title"),
+        "video_id": data.get("video_id"),
+        "artist": data.get("artist", ""),
+        "duration": data.get("duration", ""),
+        "category": data.get("category", "aarti"),
+        "thumbnail": f"https://img.youtube.com/vi/{data.get('video_id', '')}/mqdefault.jpg",
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await video_lib_collection.insert_one(video_doc)
+    
+    return {"message": "Video added successfully", "id": str(result.inserted_id)}
+
+@router.put("/video-library/{video_id}")
+async def update_video(video_id: str, request: Request, user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Update a video in the library"""
+    data = await request.json()
+    
+    update_data = {
+        "title": data.get("title"),
+        "video_id": data.get("video_id"),
+        "artist": data.get("artist", ""),
+        "duration": data.get("duration", ""),
+        "category": data.get("category"),
+        "thumbnail": f"https://img.youtube.com/vi/{data.get('video_id', '')}/mqdefault.jpg",
+        "updated_at": datetime.now(timezone.utc)
+    }
+    
+    result = await video_lib_collection.update_one(
+        {"_id": ObjectId(video_id)},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    return {"message": "Video updated successfully"}
+
+@router.delete("/video-library/{video_id}")
+async def delete_video(video_id: str, user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Delete a video from the library"""
+    result = await video_lib_collection.delete_one({"_id": ObjectId(video_id)})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    return {"message": "Video deleted successfully"}
+
+
 # ===================== PROVIDER APPROVAL MANAGEMENT =====================
 
 @router.get("/pending-approvals")
