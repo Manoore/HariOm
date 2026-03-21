@@ -177,13 +177,11 @@ function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
       {/* Logo */}
       <div className="p-6 border-b border-orange-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 text-saffron">
-            {/* Om Symbol */}
-            <svg viewBox="0 0 100 100" className="w-full h-full" fill="currentColor">
-              <path d="M45 20c-8 0-15 5-18 12-2 5-1 11 2 15 2 3 5 5 8 6-5 3-8 8-8 14 0 10 8 18 18 18 6 0 11-3 14-7 1 2 3 4 5 5 3 2 7 3 11 2 8-2 14-10 14-18 0-5-2-9-5-12 4-3 7-8 7-14 0-9-7-17-16-18-6-1-12 2-16 6-3-5-9-9-16-9zm2 8c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9zm25 5c4 0 8 4 8 9s-4 8-8 8c-5 0-9-4-9-8s4-9 9-9zM47 52c6 0 11 5 11 11s-5 11-11 11-11-5-11-11 5-11 11-11zm25 3c4 0 7 3 7 7s-3 7-7 7-7-3-7-7 3-7 7-7z"/>
-              <circle cx="78" cy="25" r="5"/>
-            </svg>
-          </div>
+          <img 
+            src="/temple-logo.png" 
+            alt="Divine Logo" 
+            className="w-10 h-10 rounded-lg object-cover"
+          />
           <span className="font-cinzel text-xl font-bold text-maroon">DIVINE</span>
         </div>
       </div>

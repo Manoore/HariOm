@@ -58,14 +58,11 @@ function AdminSidebar({ activeTab, setActiveTab, user }) {
       {/* Logo */}
       <div className="p-6 border-b border-orange-200">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10">
-            <svg viewBox="0 0 100 100" className="w-full h-full">
-              <ellipse cx="50" cy="85" rx="30" ry="8" fill="#B8860B" />
-              <path d="M30 85 Q30 70 35 60 L65 60 Q70 70 70 85" fill="#FFD700" />
-              <ellipse cx="50" cy="60" rx="18" ry="6" fill="#FFD700" />
-              <path d="M50 55 Q45 40 50 25 Q55 40 50 55" fill="#FF9933" />
-            </svg>
-          </div>
+          <img 
+            src="/temple-logo.png" 
+            alt="Divine Logo" 
+            className="w-10 h-10 rounded-lg object-cover"
+          />
           <span className="font-cinzel text-xl font-bold text-gray-800">DIVINE</span>
         </div>
       </div>

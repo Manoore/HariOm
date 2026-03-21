@@ -52,9 +52,11 @@ function Sidebar({ activeTab, setActiveTab, user, isAvailable, onToggleAvailabil
       {/* Logo */}
       <div className="p-6 border-b border-purple-100">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
-            <Star className="w-6 h-6 text-white" />
-          </div>
+          <img 
+            src="/temple-logo.png" 
+            alt="Divine Logo" 
+            className="w-10 h-10 rounded-lg object-cover"
+          />
           <div>
             <h1 className="font-cinzel text-xl font-bold text-purple-900">DIVINE</h1>
             <p className="text-xs text-purple-500">Astrologer Portal</p>
