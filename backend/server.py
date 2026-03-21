@@ -2634,6 +2634,145 @@ async def get_my_enrollments(user: dict = Depends(get_current_user)):
     return {"enrollments": classes}
 
 
+# ===================== PRIEST CLASSES MANAGEMENT =====================
+@app.get("/api/priest/classes")
+async def get_priest_classes(user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Get all classes created by priest"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    cursor = priest_classes_collection.find({"priest_id": str(priest["_id"])}).sort("created_at", -1)
+    classes = []
+    async for cls in cursor:
+        classes.append({
+            "id": str(cls["_id"]),
+            "title": cls["title"],
+            "description": cls.get("description", ""),
+            "class_type": cls.get("class_type", "online"),
+            "duration_minutes": cls.get("duration_minutes", 60),
+            "price": cls.get("price", 0),
+            "is_free": cls.get("is_free", False) or cls.get("price", 0) == 0,
+            "max_students": cls.get("max_students", 20),
+            "enrolled_count": cls.get("enrolled_count", 0),
+            "enrollments": cls.get("enrollments", []),
+            "schedule": cls.get("schedule", []),
+            "category": cls.get("category", "General"),
+            "frequency": cls.get("frequency", "weekly"),
+            "schedule_day": cls.get("schedule_day", ""),
+            "schedule_time": safe_isoformat(cls.get("schedule_time")),
+            "meeting_link": cls.get("meeting_link", ""),
+            "room_id": cls.get("room_id"),
+            "is_active": cls.get("is_active", True),
+            "location_type": cls.get("location_type", "online"),
+            "temple_name": cls.get("temple_name", ""),
+            "created_at": safe_isoformat(cls.get("created_at"))
+        })
+    return {"classes": classes}
+
+@app.post("/api/priest/classes")
+async def create_priest_class(request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Create a new class"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest profile not found")
+    
+    data = await request.json()
+    
+    # Parse schedule_time if provided
+    schedule_time = None
+    if data.get("schedule_time"):
+        try:
+            schedule_time = datetime.fromisoformat(data["schedule_time"].replace("Z", "+00:00"))
+        except:
+            pass
+    
+    # Determine if free class
+    is_free = data.get("is_free", False)
+    price = 0 if is_free else data.get("price", 500)
+    
+    class_dict = {
+        "priest_id": str(priest["_id"]),
+        "priest_name": user["name"],
+        "title": data.get("title"),
+        "description": data.get("description", ""),
+        "class_type": data.get("class_type", "online"),
+        "location_type": data.get("location_type", "online"),
+        "temple_name": data.get("temple_name", ""),
+        "duration_minutes": data.get("duration_minutes", 60),
+        "price": price,
+        "is_free": is_free,
+        "max_students": data.get("max_students", 20),
+        "enrolled_count": 0,
+        "enrollments": [],
+        "schedule": data.get("schedule", []),
+        "category": data.get("category", "General"),
+        "frequency": data.get("frequency", "once"),
+        "schedule_day": data.get("schedule_day", ""),
+        "schedule_time": schedule_time,
+        "meeting_link": data.get("meeting_link", ""),  # External link for free classes
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await priest_classes_collection.insert_one(class_dict)
+    return {"message": "Class created", "class_id": str(result.inserted_id)}
+
+@app.put("/api/priest/classes/{class_id}")
+async def update_priest_class(class_id: str, request: Request, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Update a class"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
+    
+    if not cls or cls["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    data = await request.json()
+    update_data = {}
+    
+    # Handle allowed fields
+    allowed_fields = [
+        "title", "description", "class_type", "duration_minutes", 
+        "price", "max_students", "schedule", "category", "is_active",
+        "frequency", "schedule_day", "meeting_link", "is_free",
+        "location_type", "temple_name"
+    ]
+    
+    for k, v in data.items():
+        if k in allowed_fields:
+            update_data[k] = v
+    
+    # Handle schedule_time specially
+    if "schedule_time" in data and data["schedule_time"]:
+        try:
+            update_data["schedule_time"] = datetime.fromisoformat(data["schedule_time"].replace("Z", "+00:00"))
+        except:
+            pass
+    
+    # If is_free is set to True, set price to 0
+    if update_data.get("is_free", False):
+        update_data["price"] = 0
+    
+    if update_data:
+        await priest_classes_collection.update_one(
+            {"_id": ObjectId(class_id)},
+            {"$set": update_data}
+        )
+    return {"message": "Class updated"}
+
+@app.delete("/api/priest/classes/{class_id}")
+async def delete_priest_class(class_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
+    """Delete a class"""
+    priest = await priests_collection.find_one({"user_id": str(user["_id"])})
+    cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
+    
+    if not cls or cls["priest_id"] != str(priest["_id"]):
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    await priest_classes_collection.delete_one({"_id": ObjectId(class_id)})
+    return {"message": "Class deleted"}
+
+
 # ===================== PRIEST PROFILE MANAGEMENT =====================
 @app.get("/api/priest/profile")
 async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]))):

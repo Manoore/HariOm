@@ -24,10 +24,29 @@ router = APIRouter(prefix="/api/priest", tags=["Priest Dashboard"])
 # ===================== HELPER FUNCTIONS =====================
 
 async def get_priest_profile(user: dict):
-    """Helper to get priest profile for current user"""
+    """Helper to get priest profile for current user, create if doesn't exist"""
     priest = await priests_collection.find_one({"user_id": str(user["_id"])})
     if not priest:
-        raise HTTPException(status_code=404, detail="Priest profile not found")
+        # Auto-create priest profile
+        priest = {
+            "user_id": str(user["_id"]),
+            "specializations": [],
+            "languages": ["Hindi", "Sanskrit"],
+            "experience_years": 1,
+            "bio": "",
+            "work_locations": [],
+            "service_areas": [],
+            "base_price": 1100,
+            "profile_photo": None,
+            "temple_affiliation": "",
+            "math_mutt": "",
+            "math_mutt_other": "",
+            "is_verified": False,
+            "approval_status": "pending",
+            "created_at": datetime.now(timezone.utc)
+        }
+        result = await priests_collection.insert_one(priest)
+        priest["_id"] = result.inserted_id
     return priest
 
 
@@ -41,24 +60,30 @@ async def get_priest_classes(user: dict = Depends(require_role([UserRole.PRIEST]
     cursor = priest_classes_collection.find({"priest_id": str(priest["_id"])}).sort("created_at", -1)
     classes = []
     async for cls in cursor:
+        # Determine if free class
+        is_free = cls.get("is_free", False) or cls.get("price", 0) == 0
+        
         classes.append({
             "id": str(cls["_id"]),
-            "title": cls["title"],
-            "description": cls["description"],
-            "class_type": cls["class_type"],
+            "title": cls.get("title", ""),
+            "description": cls.get("description", ""),
+            "class_type": cls.get("class_type", "online"),
             "location_type": cls.get("location_type", "online"),
             "temple_name": cls.get("temple_name", ""),
-            "duration_minutes": cls["duration_minutes"],
-            "price": cls["price"],
-            "max_students": cls["max_students"],
+            "duration_minutes": cls.get("duration_minutes", 60),
+            "price": cls.get("price", 0),
+            "is_free": is_free,
+            "max_students": cls.get("max_students", 20),
             "enrolled_count": cls.get("enrolled_count", 0),
             "schedule": cls.get("schedule", []),
             "category": cls.get("category", "General"),
             "frequency": cls.get("frequency", "weekly"),
             "schedule_day": cls.get("schedule_day", ""),
             "schedule_time": cls.get("schedule_time", ""),
+            "meeting_link": cls.get("meeting_link", ""),
+            "room_id": cls.get("room_id"),
             "is_active": cls.get("is_active", True),
-            "created_at": cls["created_at"].isoformat() if isinstance(cls["created_at"], datetime) else cls["created_at"]
+            "created_at": cls["created_at"].isoformat() if isinstance(cls.get("created_at"), datetime) else cls.get("created_at")
         })
     return {"classes": classes}
 

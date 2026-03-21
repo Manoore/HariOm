@@ -273,6 +273,9 @@ async def room_scheduler():
                 if cleaned > 0:
                     print(f"Cleaned up {cleaned} expired rooms")
                     
+        except TypeError as te:
+            # Handle datetime comparison errors gracefully
+            print(f"Scheduler datetime error (skipping): {te}")
         except Exception as e:
             print(f"Scheduler error: {e}")
         
