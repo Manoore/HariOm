@@ -32,7 +32,12 @@ async def get_admin_stats(user: dict = Depends(require_role([UserRole.ADMIN, Use
         "total_products": await products_collection.count_documents({}),
         "total_bookings": await bookings_collection.count_documents({}),
         "total_orders": await orders_collection.count_documents({}),
-        "pending_verifications": await priests_collection.count_documents({"is_verified": False})
+        "pending_verifications": await priests_collection.count_documents({
+            "$or": [
+                {"approval_status": "pending"},
+                {"approval_status": {"$exists": False}, "is_verified": {"$ne": True}}
+            ]
+        })
     }
     return stats
 

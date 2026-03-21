@@ -2518,6 +2518,12 @@ async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]
         }
         await priests_collection.insert_one(priest)
     
+    # Determine approval status - handle legacy records
+    approval_status = priest.get("approval_status")
+    if not approval_status:
+        # Legacy support: if is_verified is True, consider approved
+        approval_status = "approved" if priest.get("is_verified", False) else "pending"
+    
     return {
         "id": str(priest.get("_id", "")),
         "specializations": priest.get("specializations", []),
@@ -2532,7 +2538,7 @@ async def get_priest_profile(user: dict = Depends(require_role([UserRole.PRIEST]
         "math_mutt": priest.get("math_mutt", ""),
         "math_mutt_other": priest.get("math_mutt_other", ""),
         "is_verified": priest.get("is_verified", False),
-        "approval_status": priest.get("approval_status", "pending"),
+        "approval_status": approval_status,
         "rejection_reason": priest.get("rejection_reason", ""),
         "address": priest.get("address", ""),
         "city": priest.get("city", ""),
