@@ -1583,6 +1583,8 @@ function VideoLibraryTab({ isDesktop }) {
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, title: '' });
+  const [deleting, setDeleting] = useState(false);
 
   const VIDEO_CATEGORIES = [
     { id: 'aarti', label: 'Aarti' },
@@ -1631,14 +1633,18 @@ function VideoLibraryTab({ isDesktop }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this video?')) return;
+  const handleDelete = async () => {
+    if (!deleteConfirm.id) return;
+    setDeleting(true);
     try {
-      await api.delete(`/api/admin/video-library/${id}`);
+      await api.delete(`/api/admin/video-library/${deleteConfirm.id}`);
       toast.success('Video deleted');
+      setDeleteConfirm({ show: false, id: null, title: '' });
       fetchVideos();
     } catch (error) {
       toast.error('Failed to delete video');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -1737,7 +1743,7 @@ function VideoLibraryTab({ isDesktop }) {
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(video.id)}
+                    onClick={() => setDeleteConfirm({ show: true, id: video.id, title: video.title })}
                     className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -1836,6 +1842,39 @@ function VideoLibraryTab({ isDesktop }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="font-cinzel text-xl font-bold text-gray-800 mb-2">Delete Video</h3>
+              <p className="text-gray-600 mb-2">Are you sure you want to delete this video?</p>
+              <p className="text-sm font-medium text-maroon mb-6">"{deleteConfirm.title}"</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirm({ show: false, id: null, title: '' })}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
