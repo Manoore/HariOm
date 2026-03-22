@@ -1,0 +1,149 @@
+<analysis>**original_problem_statement**: 
+The user wants to build Divine App, a digital platform connecting users with Hindu spiritual services. Features include priest booking, astrology services, a spiritual e-commerce store, devotional content (mantras, audio, video), and live video/voice consultations. The platform must support multiple user roles (Devotee, Priest, Astrologer, Shop Owner, Admin).
+**PRODUCT REQUIREMENTS**:
+- Core Functions: Priest booking, spiritual learning, astrology services, and a comprehensive library of spiritual texts/scriptures.
+- Marketplace: Pooja Store for spiritual items.
+- Media & Content: Video library for devotional content (YouTube embeds) and an audio library.
+- Consultations & Classes: Live 100ms-powered video/voice calling with screen sharing for consultations, and 100ms integration for paid Vedic classes.
+- Internationalization (i18n): Multi-language translation of UI and dynamic content.
+
+**User's preferred language**: English
+*(INSTRUCT next agent to respond in English only)*
+
+**what currently exists?** 
+A full-stack application (React + FastAPI + MongoDB Atlas). It features live video/voice consultations (100ms), a video library, e-commerce, and dashboards for various user roles. In this session, the agent fixed massive UI/branding inconsistencies across all dashboards, repaired the database-driven video library, updated the landing page aesthetics, and began a major structural refactoring of the frontend to break down monolithic files, starting with the Admin Dashboard.
+
+**Last working item**:
+- **Last item agent was working**: Refactoring the massive  (>2600 lines) into smaller, modular component files (<500 lines each) inside . The agent was mid-way through extracting  when the context window ended.
+- **Status**: IN PROGRESS
+- **Agent Testing Done**: N (Refactoring is incomplete; the app is likely in a broken state for the Admin route).
+- **Which testing method agent to use?** Frontend testing agent (Must be used once the refactoring of  is complete to ensure all tabs render and function correctly).
+- **User Testing Done**: N
+
+**All Pending/In progress Issue list**:
+  - **Issue 1: Complete AdminDashboard Refactoring & Fix Imports (P0)**
+     - **Attempted fixes**: The agent successfully extracted , , , , , , and . However,  and the remaining tabs were not finished, and the main  file has not been fully updated to import these new components properly.
+     - **Next debug checklist**: 
+        - Finish extracting remaining tabs (, , , , , ).
+        - Update  to correctly import and render all these child components.
+        - Run frontend build to check for  or missing import errors.
+     - **Why fix this issue and what will be achieved with the fix?** The frontend will crash if a user logs in as Admin due to half-extracted code. Completing this restores Admin functionality and achieves the user's goal of cleaner, maintainable code.
+     - **Status**: IN PROGRESS
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** Frontend
+     - **Blocked on other issue**: None
+
+  - **Issue 2: GitHub Actions APK build fails intermittently (P1)**
+     - **Attempted fixes**: None in this session.
+     - **Next debug checklist**: Review GitHub Actions logs for the Build APK with Gradle step.
+     - **Why fix this issue and what will be achieved with the fix?** Enables reliable mobile app builds.
+     - **Status**: NOT STARTED
+     - **Is recurring issue?** Y
+     - **Should Test frontend/backend/both after fix?** N/A (DevOps)
+     - **Blocked on other issue**: None
+
+**In progress Task List**:
+  - **Task 1: Modularize large React components**
+     - **Where to resume**: . Continue extracting tabs from .
+     - **What will be achieved with this?** Reduces file sizes to <500 lines, improving maintainability and reducing AI context exhaustion in future updates.
+     - **Status**: IN PROGRESS
+     - **Should Test frontend/backend/both after fix?** Frontend
+     - **Blocked on something**: None
+
+**Upcoming and Future Tasks**:
+- (P1) Frontend Refactoring: Break down  (>5900 lines) into smaller components.
+- (P2) Backend Refactoring: Extract Shop/Marketplace, Payments, and remaining route logic from the massive  file (>6000 lines) to .
+- (P2) Implement Stripe Connect Integration for automatic payment splitting between the platform and vendors.
+- (P2) Add push notifications / email reminders for Vedic classes (e.g., 30 min and 5 min before an enrolled class starts).
+- (P2) Phase 2 of Live Streams: Implement 100ms HLS live streaming for in-app broadcasts.
+- (P3) Address the Temple section functionality.
+- (P3) Provider Onboarding Guide.
+
+**Completed work in this session**:
+- Fixed Video Library Data: Traced broken YouTube videos to the  database. Re-seeded  collection with working T-Series/ISKCON YouTube IDs. (DONE)
+- UI Branding Consistency: Replaced generic icons with the official  Om icon across *all* dashboards (Admin, Devotee, Priest, ShopOwner, Astrologer). Added consistent DIVINE branding next to the logo. (DONE)
+- Landing Page Carousel: Replaced static images with a rotating carousel of 3 specific temple gopurams (Tirupati, Puri Jagannath, Padmanabhaswamy). Fixed CSS positioning () so temple towers aren't cropped. (DONE)
+- Admin Sidebar Fix: Added  so the sidebar scrolls and the Logout button is accessible on smaller screens. (DONE)
+- Admin Video Library Management: Built full CRUD UI in Admin Dashboard and added backend routes in  to manage video library entries. (DONE)
+- Styled Confirmation Modal: Replaced browser native  with a custom, branded in-app modal for deleting videos. (DONE)
+
+**Earlier issues found/mentioned but not fixed**:
+*(None missed; the agent was actively addressing the user's latest request to refactor when context ended).*
+
+**Known issue recurrence from previous fork**:
+  - **Issue recurrence in previous fork**: Huge file sizes ( and ) leading to route overrides, context loss, and React hook order violations.
+  - **Recurrence count**: 3
+  - **Status**: IN PROGRESS (Agent actively started fixing this for AdminDashboard).
+
+**Code Architecture**:
+
+
+**Key Technical Concepts**:
+- React, FastAPI, MongoDB Atlas.
+- **Multiple Databases**: The app uses  for core user data/transactions, but connects to  for static spiritual data (videos, mantras, scriptures).
+
+**key DB schema**:
+  - : 
+  - : Core user collection.
+
+**changes in tech stack**:
+*(None)*
+
+**All files of reference**:
+-  (Currently broken/mid-refactor)
+-  (New modular files)
+-  (Contains new Video Library endpoints)
+-  (Updated carousel logic)
+
+**Areas that need refactoring**:
+-  (>5900 lines)
+-  (>6000 lines)
+
+**key api endpoints**:
+-  (New CRUD endpoints for admin)
+-  (Public fetch route)
+
+**Critical Info for New Agent**:
+- **Broken State Warning**: The frontend Admin UI is mid-refactor. Do not attempt to start new features until the extraction of  into  is fully complete and the app compiles successfully.
+- **Database Connection**: Video data is NOT in . It resides in the  database. The  route correctly imports  from  to handle this.
+- **Deployment workflow**: The user deploys manually from their Windows machine via CMD. If asked for deployment commands, provide:
+  - Backend: 
+  - Frontend: 
+
+**documents and test reports created in this job**:
+- 
+
+**Last 10 User Messages and any pending HUMAN messages**:
+1. *(User)* not only chalisa all the other has the same issue did you fix that aswell ?
+2. *(User)* give me now commands
+3. *(User)* btw the oum icon that we have on landing page should be replicated in all the other screen...
+4. *(User)* not only devotee in all the dashboards like priest, astrologer, shopowner and all
+5. *(User)* Adi Shankaracharya ,Madhvacharya, Ramanujacharya,Nimbakacharya, in the background of landing page add these guru images... [Uploaded images]
+6. *(User)* kirtana ,mantras and spiritual talks still show unavailable in video library also the image didnt get updated to oum...
+7. *(User)* add all these images as a background along with purijagganth smaiji on a landing page...
+8. *(User)* if you see the heads of all the acharays gone over the screen none of them visible...
+9. *(User)* all looks good except the head of ramanujacharya is still half and half -> *(Agent fixed object positioning)* -> *(User)* remove acharays just keep gopurams...
+10. *(User)* the scroll in the admin pageis not working as I was not able to check the logout and also I dont see any option to Manage video library from admin
+11. *(User)* I want to see the pop up with in the app not like a warning [Uploaded image of native browser alert]
+12. *(User)* Can we start splitting the larger data to smaller chunks cuz the data we have is like 5000 and lines of code so start splitting them and max length of each page should be 500 or less... -> *(Agent started this but context ended).*
+
+**Project Health Check**:
+- Backend: Running normally.
+- Frontend: **Broken** (AdminDashboard is mid-refactor with unfinished component extractions).
+
+**3rd Party Integrations**:
+- Firebase Auth / Hosting — requires User API Key
+- MongoDB Atlas — requires User API Key
+- 100ms (Video Calling) — requires User API Key
+
+**Testing status**:
+- Testing agent used after significant changes: NO (Refactoring incomplete, waiting to finish before testing).
+- Troubleshoot agent used after agent stuck in loop: NO
+- Test files created: None this session.
+- Known regressions: Admin dashboard currently un-compilable due to halted refactoring.
+
+**Credentials to test flow**:
+Standard test user credentials applied in code. Authentication flows locally bypass Firebase via bcrypt matching. Admin user exists in DB.
+
+**What agent forgot to execute**:
+The agent did not fail to execute anything; rather, it ran out of context tokens right in the middle of extracting the  from . The next agent *must* pick up exactly where the last agent left off by finishing the extraction of the remaining Admin tabs and fixing the imports in the parent  file.</analysis>
