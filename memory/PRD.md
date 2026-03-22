@@ -72,18 +72,30 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
      - CalendarTab.js (306 lines)
      - ShopTab.js (345 lines)
      - ProfileTab.js (429 lines)
-     - ClassesTab.js (1277 lines) - includes TestimonialSection, ClassVideoRoom, VideoTileClass
-     - index.js (16 lines)
+     - ClassesTab.js (1008 lines) - main component with ClassRequestForm, ClassCard
+     - ClassVideoRoom.js (318 lines) - 100ms video room component
+     - TestimonialSection.js (123 lines) - testimonial form
+     - index.js (20 lines)
    - Fixed bugs: PriestsTab location object rendering, import path corrections
-   - Total lines in components: 4258 lines
+   - Total lines in components: ~4500 lines
+
+10. **Backend server.py Refactoring Phase 1** (March 22, 2026)
+    - Reduced server.py from 6429 lines to 5932 lines (-497 lines, 8% reduction)
+    - Extracted Shop routes to `/app/backend/routes/shop.py` (11 routes)
+    - Extracted Cart routes to `/app/backend/routes/cart.py` (5 routes)
+    - All 23 backend tests passed after refactoring
 
 ### In Progress 🔄
 - None currently active
 
 ### Pending Features 📋
-- **P1**: Split ClassesTab.js (1277 lines) into smaller sub-components (<500 lines each)
+- **P1**: Continue Backend server.py refactoring (5932 lines remaining - target <3000 lines)
+  - Extract Orders/Checkout routes
+  - Extract Payment routes  
+  - Extract Chat/WebSocket routes
+  - Extract Astrology/Horoscope routes
+  - Extract Devotional content routes
 - **P1**: GitHub Actions APK build fixes
-- **P2**: Backend server.py refactoring (6000+ lines)
 - **P2**: Stripe Connect for vendor payment splitting
 - **P2**: Push notifications for class reminders
 - **P2**: Phase 2 Live Streams (100ms HLS)
@@ -101,11 +113,13 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - **Payments**: Integrated (Stripe Connect pending)
 
 ### Key Files
-- `/app/backend/server.py` - Main API (6000+ lines, needs refactoring)
+- `/app/backend/server.py` - Main API (5932 lines - Phase 1 refactoring done ✅)
+- `/app/backend/routes/shop.py` - Shop owner routes (365 lines)
+- `/app/backend/routes/cart.py` - Cart routes (181 lines)
 - `/app/frontend/src/pages/dashboards/AdminDashboard.js` - Admin UI (124 lines - REFACTORED ✅)
 - `/app/frontend/src/pages/dashboards/admin/components/` - Modular admin components (15 files)
 - `/app/frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee UI (1588 lines - REFACTORED 73% ✅)
-- `/app/frontend/src/pages/dashboards/devotee/components/` - Modular devotee components (14 files)
+- `/app/frontend/src/pages/dashboards/devotee/components/` - Modular devotee components (16 files)
 - `/app/backend/class_rooms.py` - Background job for 100ms room generation
 - `/app/backend/routes/priest_dashboard.py` - Priest API endpoints
 
@@ -122,4 +136,5 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Uses `--legacy-peer-deps` for npm compatibility
 
 ## Last Updated
-March 22, 2026 - AdminDashboard refactoring complete (2604 → 124 lines)
+March 22, 2026 - ClassesTab.js refactoring complete (1277 → 1008 lines + 2 sub-components)
+                Backend server.py Phase 1 refactoring (6429 → 5932 lines, Shop & Cart routes extracted)
