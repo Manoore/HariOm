@@ -112,6 +112,8 @@ async def get_shop_profile(user: dict = Depends(require_role([UserRole.SHOP_OWNE
         "free_shipping_above": shop.get("free_shipping_above", 0),
         "rating": shop.get("rating", 0),
         "is_verified": shop.get("is_verified", False),
+        "approval_status": shop.get("approval_status", "pending"),
+        "rejection_reason": shop.get("rejection_reason", ""),
         "created_at": shop.get("created_at", datetime.now(timezone.utc)).isoformat()
     }
 
