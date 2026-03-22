@@ -79,25 +79,27 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
    - Fixed bugs: PriestsTab location object rendering, import path corrections
    - Total lines in components: ~4500 lines
 
-10. **Backend server.py Refactoring Phase 1 & 2** (March 22, 2026)
+10. **Backend server.py Refactoring Phase 1, 2 & 3** (March 22, 2026)
     - **Phase 1**: Reduced server.py from 6429 to 5932 lines (-497 lines, 8% reduction)
       - Extracted Shop routes to `/app/backend/routes/shop.py` (11 routes, 365 lines)
       - Extracted Cart routes to `/app/backend/routes/cart.py` (5 routes, 181 lines)
     - **Phase 2**: Reduced server.py from 5932 to 5293 lines (-639 lines, 11% reduction)
       - Extracted Chat REST routes to `/app/backend/routes/chat.py` (8 routes, 398 lines)
       - Extracted Payment routes to `/app/backend/routes/payments.py` (5 routes, 287 lines)
-    - **Total Reduction**: 6429 → 5293 lines (-1136 lines, 17.7% reduction)
-    - All 18 backend tests passed after Phase 2
+    - **Phase 3**: Reduced server.py from 5293 to 4646 lines (-647 lines, 12% reduction)
+      - Extracted Orders/Checkout routes to `/app/backend/routes/orders_new.py` (10 routes, 493 lines)
+      - Extracted Astrology/Horoscope routes to `/app/backend/routes/astrology.py` (15 routes, 481 lines)
+    - **Total Reduction**: 6429 → 4646 lines (-1783 lines, 27.7% reduction)
+    - All backend tests passed after each phase
 
 ### In Progress 🔄
 - None currently active
 
 ### Pending Features 📋
-- **P1**: Continue Backend server.py refactoring (5293 lines remaining - target <3000 lines)
-  - Extract Orders/Checkout routes (~400 lines)
-  - Extract Astrology/Horoscope routes (~300 lines)
-  - Extract Devotional content routes (~200 lines)
-  - Extract Live Streams/Classes routes (~400 lines)
+- **P1**: Continue Backend server.py refactoring (4646 lines remaining - target <3000 lines)
+  - Extract Live Streams/Classes routes (~500 lines)
+  - Extract Devotional Content routes (~200 lines)
+  - Extract Panchang/Festival routes (~200 lines)
 - **P1**: GitHub Actions APK build fixes
 - **P2**: Stripe Connect for vendor payment splitting
 - **P2**: Push notifications for class reminders
@@ -116,11 +118,13 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - **Payments**: Integrated (Stripe Connect pending)
 
 ### Key Files
-- `/app/backend/server.py` - Main API (5293 lines - Phase 2 refactoring done ✅)
+- `/app/backend/server.py` - Main API (4646 lines - Phase 3 refactoring done ✅)
 - `/app/backend/routes/shop.py` - Shop owner routes (365 lines)
 - `/app/backend/routes/cart.py` - Cart routes (181 lines)
 - `/app/backend/routes/chat.py` - Chat REST routes (398 lines)
 - `/app/backend/routes/payments.py` - Payment routes (287 lines)
+- `/app/backend/routes/orders_new.py` - Orders/Checkout routes (493 lines)
+- `/app/backend/routes/astrology.py` - Astrology/Horoscope routes (481 lines)
 - `/app/frontend/src/pages/dashboards/AdminDashboard.js` - Admin UI (124 lines - REFACTORED ✅)
 - `/app/frontend/src/pages/dashboards/admin/components/` - Modular admin components (15 files)
 - `/app/frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee UI (1588 lines - REFACTORED 73% ✅)
@@ -141,4 +145,4 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Uses `--legacy-peer-deps` for npm compatibility
 
 ## Last Updated
-March 22, 2026 - Backend server.py Phase 2 refactoring complete (5932 → 5293 lines, Chat & Payment routes extracted)
+March 22, 2026 - Backend server.py Phase 3 refactoring complete (5293 → 4646 lines, Orders/Checkout & Astrology routes extracted)
