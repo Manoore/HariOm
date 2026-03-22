@@ -65,6 +65,8 @@ from routes.chat import router as chat_router, manager as chat_manager, create_c
 from routes.payments import router as payments_router
 from routes.orders_new import router as orders_new_router
 from routes.astrology import router as astrology_router
+from routes.devotional import router as devotional_router
+from routes.panchang import router as panchang_router
 
 # Import notification service
 try:
@@ -121,6 +123,8 @@ app.include_router(chat_router)
 app.include_router(payments_router)
 app.include_router(orders_new_router)
 app.include_router(astrology_router)
+app.include_router(devotional_router)
+app.include_router(panchang_router)
 
 @app.post("/api/upload/image")
 async def upload_image(
