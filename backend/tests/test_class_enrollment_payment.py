@@ -10,7 +10,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://priesthood-portal.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://divine-refactor.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 DEVOTEE_EMAIL = "devotee@divineapp.com"

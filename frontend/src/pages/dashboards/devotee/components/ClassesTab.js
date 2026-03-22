@@ -1,34 +1,16 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  BookOpen, Play, Pause, Calendar, Clock, Users, Star, Loader2, Search, 
-  Filter, ChevronRight, X, Check, Bell, MessageSquare, Video, Mic, MicOff,
-  VideoOff, PhoneOff, ScreenShare, ScreenShareOff, Hand, Volume2, VolumeX,
-  Maximize, Minimize, Edit, Send, AlertCircle, Plus, CheckCircle
+  BookOpen, Calendar, Clock, Users, Star, Loader2, 
+  X, MessageSquare, Video, Play, Send, Plus, CheckCircle
 } from 'lucide-react';
-import {
-  HMSRoomProvider,
-  useHMSStore,
-  useHMSActions,
-  selectIsConnectedToRoom,
-  selectLocalPeer,
-  selectPeers,
-  selectIsLocalAudioEnabled,
-  selectIsLocalVideoEnabled,
-  selectIsLocalScreenShared,
-  selectVideoTrackByPeerID,
-  selectPeerScreenSharing,
-  selectConnectionState,
-  selectRoomState,
-  selectRoom,
-  HMSRoomState,
-  useAVToggle,
-  useVideo,
-  selectScreenShareByPeerID,
-} from '@100mslive/react-sdk';
 import { useAuth } from '../../../../contexts/AuthContext';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+
+// Import separate components
+import { ClassVideoRoom } from './ClassVideoRoom';
+import { TestimonialSection } from './TestimonialSection';
 
 // SmartPayment component placeholder (actual implementation in main codebase)
 const SmartPayment = ({ amount, onSuccess, onCancel, metadata }) => {
@@ -43,296 +25,321 @@ const SmartPayment = ({ amount, onSuccess, onCancel, metadata }) => {
   );
 };
 
-function TestimonialSection() {
-  const [showForm, setShowForm] = useState(false);
-  const [content, setContent] = useState('');
-  const [rating, setRating] = useState(5);
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!content.trim()) {
-      toast.error('Please write your testimonial');
-      return;
-    }
-    
-    setSubmitting(true);
-    try {
-      await api.post('/api/testimonials', { content, rating });
-      toast.success('Thank you! Your testimonial will be reviewed and published soon.');
-      setContent('');
-      setRating(5);
-      setShowForm(false);
-    } catch (error) {
-      toast.error('Failed to submit testimonial. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+// Class Request Form Component
+function ClassRequestForm({ 
+  requestForm, 
+  setRequestForm, 
+  onSubmit, 
+  onClose, 
+  submitting,
+  categories,
+  days,
+  timeSlots,
+  durations,
+  languages,
+  meetingTypes,
+  frequencies
+}) {
+  const toggleDay = (day) => {
+    setRequestForm(prev => ({
+      ...prev,
+      preferred_days: prev.preferred_days.includes(day)
+        ? prev.preferred_days.filter(d => d !== day)
+        : [...prev.preferred_days, day]
+    }));
   };
 
   return (
-    <div className="bg-gradient-to-br from-saffron/10 to-gold/10 rounded-2xl border border-orange-200 p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="font-semibold text-maroon flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            Share Your Experience
-          </h3>
-          <p className="text-sm text-gray-600">Help others by sharing your experience with Divine App</p>
-        </div>
-        {!showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-saffron text-white rounded-xl hover:bg-saffron-dark transition-colors flex items-center gap-2"
-          >
-            <Edit className="w-4 h-4" />
-            Write Review
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
+          <h2 className="font-cinzel text-xl font-bold text-maroon">Request a Class</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+            <X className="w-5 h-5" />
           </button>
-        )}
-      </div>
-
-      {showForm && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="space-y-4"
-        >
+        </div>
+        <div className="p-6 space-y-4">
+          {/* Topic */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">Your Rating</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
+            <label className="block text-sm font-medium text-gray-700 mb-1">What do you want to learn? *</label>
+            <input
+              type="text"
+              value={requestForm.topic}
+              onChange={(e) => setRequestForm({...requestForm, topic: e.target.value})}
+              placeholder="e.g., Bhagavad Gita, Sanskrit basics, Puja vidhi"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+            />
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select
+              value={requestForm.category}
+              onChange={(e) => setRequestForm({...requestForm, category: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+            >
+              {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Additional Details</label>
+            <textarea
+              value={requestForm.description}
+              onChange={(e) => setRequestForm({...requestForm, description: e.target.value})}
+              placeholder="Any specific requirements or goals..."
+              rows={3}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+            />
+          </div>
+
+          {/* Preferred Days */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Days</label>
+            <div className="flex flex-wrap gap-2">
+              {days.map(day => (
                 <button
-                  key={star}
-                  onClick={() => setRating(star)}
-                  className="p-1 transition-transform hover:scale-110"
+                  key={day}
+                  type="button"
+                  onClick={() => toggleDay(day)}
+                  className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                    requestForm.preferred_days.includes(day)
+                      ? 'bg-saffron text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
                 >
-                  <Star className={`w-8 h-8 ${rating >= star ? 'text-gold fill-gold' : 'text-gray-300'}`} />
+                  {day.slice(0, 3)}
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Preferred Time */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">Your Testimonial</label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={4}
-              className="w-full px-4 py-3 rounded-xl border border-orange-200 focus:ring-2 focus:ring-saffron focus:border-transparent resize-none"
-              placeholder="Share how Divine App has helped you in your spiritual journey..."
-            />
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => setShowForm(false)}
-              className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Time</label>
+            <select
+              value={requestForm.preferred_time}
+              onChange={(e) => setRequestForm({...requestForm, preferred_time: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
             >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-saffron text-white rounded-xl hover:bg-saffron-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  Submit Testimonial
-                </>
-              )}
-            </button>
+              {timeSlots.map(time => <option key={time} value={time}>{time}</option>)}
+            </select>
           </div>
-        </motion.div>
-      )}
-    </div>
-  );
-}
 
-// Class Video Room Component - 100ms powered video classroom
-function ClassVideoRoom({ roomId, token, classTitle, priestName, onLeave }) {
-  const hmsActions = useHMSActions();
-  const isConnected = useHMSStore(selectIsConnectedToRoom);
-  const localPeer = useHMSStore(selectLocalPeer);
-  const peers = useHMSStore(selectPeers);
-  const isLocalAudioEnabled = useHMSStore(selectIsLocalAudioEnabled);
-  const isLocalVideoEnabled = useHMSStore(selectIsLocalVideoEnabled);
-  const screenSharingPeer = useHMSStore(selectPeerScreenSharing);
-  
-  const { toggleAudio, toggleVideo } = useAVToggle();
-  const [isConnecting, setIsConnecting] = useState(true);
-  const [error, setError] = useState(null);
+          {/* Duration */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Class Duration</label>
+            <select
+              value={requestForm.duration_preference}
+              onChange={(e) => setRequestForm({...requestForm, duration_preference: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+            >
+              {durations.map(dur => <option key={dur} value={dur}>{dur}</option>)}
+            </select>
+          </div>
 
-  useEffect(() => {
-    const joinRoom = async () => {
-      try {
-        setIsConnecting(true);
-        await hmsActions.join({
-          userName: 'Student',
-          authToken: token,
-        });
-        setIsConnecting(false);
-      } catch (err) {
-        console.error('Failed to join class:', err);
-        setError(err.message || 'Failed to connect');
-        setIsConnecting(false);
-      }
-    };
+          {/* Language */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Language</label>
+            <select
+              value={requestForm.language}
+              onChange={(e) => setRequestForm({...requestForm, language: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
+            >
+              {languages.map(lang => <option key={lang} value={lang}>{lang}</option>)}
+            </select>
+          </div>
 
-    if (token) {
-      joinRoom();
-    }
+          {/* Budget Range */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Budget Range (per class)</label>
+            <div className="flex gap-3 items-center">
+              <div className="flex-1">
+                <span className="text-xs text-gray-500">Min</span>
+                <input
+                  type="number"
+                  value={requestForm.budget_min}
+                  onChange={(e) => setRequestForm({...requestForm, budget_min: parseInt(e.target.value) || 0})}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron"
+                />
+              </div>
+              <span className="text-gray-400">to</span>
+              <div className="flex-1">
+                <span className="text-xs text-gray-500">Max</span>
+                <input
+                  type="number"
+                  value={requestForm.budget_max}
+                  onChange={(e) => setRequestForm({...requestForm, budget_max: parseInt(e.target.value) || 0})}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron"
+                />
+              </div>
+            </div>
+          </div>
 
-    return () => {
-      hmsActions.leave();
-    };
-  }, [token, hmsActions]);
+          {/* Meeting Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Meeting Type</label>
+            <div className="grid grid-cols-2 gap-3">
+              {meetingTypes.map(type => (
+                <button
+                  key={type.value}
+                  type="button"
+                  onClick={() => setRequestForm({...requestForm, meeting_type: type.value})}
+                  className={`p-3 rounded-xl border-2 text-left transition-all ${
+                    requestForm.meeting_type === type.value
+                      ? 'border-saffron bg-orange-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  data-testid={`meeting-type-${type.value}`}
+                >
+                  <div className="font-medium text-sm text-gray-800">{type.label}</div>
+                  <div className="text-xs text-gray-500 mt-1">{type.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
 
-  const handleLeave = async () => {
-    await hmsActions.leave();
-    onLeave();
-  };
+          {/* Frequency */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Class Frequency</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {frequencies.map(freq => (
+                <button
+                  key={freq.value}
+                  type="button"
+                  onClick={() => setRequestForm({...requestForm, frequency: freq.value})}
+                  className={`p-3 rounded-xl border-2 text-center transition-all ${
+                    requestForm.frequency === freq.value
+                      ? 'border-saffron bg-orange-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  data-testid={`frequency-${freq.value}`}
+                >
+                  <div className="font-medium text-sm text-gray-800">{freq.label}</div>
+                  <div className="text-xs text-gray-500">{freq.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
 
-  if (isConnecting) {
-    return (
-      <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center">
-        <div className="text-center text-white">
-          <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Joining {classTitle}...</h2>
-          <p className="text-gray-400">Please allow camera and microphone access</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center">
-        <div className="text-center text-white max-w-md p-6">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Connection Failed</h2>
-          <p className="text-gray-400 mb-4">{error}</p>
+          {/* Submit Button */}
           <button
-            onClick={onLeave}
-            className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full"
+            onClick={onSubmit}
+            disabled={submitting || !requestForm.topic.trim()}
+            className="w-full py-4 bg-saffron text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            Go Back
+            {submitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Send className="w-5 h-5" />
+                Submit Request
+              </>
+            )}
           </button>
         </div>
       </div>
-    );
-  }
-
-  const remotePeers = peers.filter(peer => !peer.isLocal);
-  const hostPeer = remotePeers.find(p => p.roleName === 'host') || remotePeers[0];
-
-  return (
-    <HMSRoomProvider>
-      <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-gray-800/80 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
-          <div>
-            <h3 className="text-white font-semibold">{classTitle}</h3>
-            <p className="text-gray-400 text-sm">Teacher: {priestName}</p>
-          </div>
-          <div className="flex items-center gap-2 text-gray-400 text-sm">
-            <Users className="w-4 h-4" />
-            <span>{peers.length} in class</span>
-            {isConnected && <span className="text-green-400 ml-2">● Connected</span>}
-          </div>
-        </div>
-
-        {/* Video Area */}
-        <div className="flex-1 relative bg-gray-900 p-4">
-          {/* Main view - Teacher/Screen share */}
-          <div className="absolute inset-4 bottom-32">
-            {screenSharingPeer ? (
-              <VideoTileClass peer={screenSharingPeer} isScreenShare={true} />
-            ) : hostPeer ? (
-              <VideoTileClass peer={hostPeer} label="Teacher" />
-            ) : (
-              <div className="w-full h-full bg-gray-800 rounded-lg flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <Loader2 className="w-12 h-12 mx-auto mb-2 animate-spin" />
-                  <p>Waiting for teacher to join...</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Self view - bottom right */}
-          {localPeer && (
-            <div className="absolute bottom-4 right-4 w-32 h-24 md:w-48 md:h-36 shadow-xl">
-              <VideoTileClass peer={localPeer} isLocal={true} label="You" />
-            </div>
-          )}
-        </div>
-
-        {/* Controls */}
-        <div className="bg-gray-800/80 backdrop-blur-sm px-4 py-4">
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={toggleAudio}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                isLocalAudioEnabled ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'
-              }`}
-            >
-              {isLocalAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-            </button>
-
-            <button
-              onClick={toggleVideo}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                isLocalVideoEnabled ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'
-              }`}
-            >
-              {isLocalVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-            </button>
-
-            <button
-              onClick={handleLeave}
-              className="w-14 h-14 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-colors"
-            >
-              <PhoneOff className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </HMSRoomProvider>
+    </div>
   );
 }
 
-// Video Tile for Class Room
-function VideoTileClass({ peer, isLocal = false, isScreenShare = false, label }) {
-  const videoTrack = useHMSStore(selectVideoTrackByPeerID(peer?.id));
-  const screenTrack = useHMSStore(selectScreenShareByPeerID(peer?.id));
-  const trackId = isScreenShare ? screenTrack?.id : videoTrack?.id;
-  const { videoRef } = useVideo({ trackId });
-
+// Class Card Component
+function ClassCard({ cls, isEnrolled, onEnroll, enrolling, formatDate }) {
   return (
-    <div className={`relative w-full h-full bg-gray-800 rounded-lg overflow-hidden ${isLocal ? 'border-2 border-blue-500' : ''}`}>
-      <video
-        ref={videoRef}
-        autoPlay
-        muted={isLocal}
-        playsInline
-        className={`w-full h-full object-cover ${!trackId ? 'hidden' : ''}`}
-      />
-      {!trackId && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
-          <div className="w-16 h-16 rounded-full bg-purple-500 flex items-center justify-center">
-            <span className="text-xl font-bold text-white">
-              {peer?.name?.charAt(0)?.toUpperCase() || '?'}
-            </span>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`rounded-2xl shadow-sm overflow-hidden ${
+        cls.is_free 
+          ? 'bg-green-100 border-2 border-green-400' 
+          : 'bg-white border border-orange-100'
+      }`}
+    >
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+              cls.is_free 
+                ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
+                : 'bg-gradient-to-br from-saffron to-gold'
+            }`}>
+              {cls.priest_name?.charAt(0) || 'P'}
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">{cls.priest_name}</p>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                cls.is_free 
+                  ? 'bg-green-200 text-green-800' 
+                  : 'bg-orange-100 text-saffron'
+              }`}>
+                {cls.category || 'General'}
+              </span>
+            </div>
+          </div>
+          {cls.is_free ? (
+            <span className="text-sm px-3 py-1 bg-green-500 text-white rounded-full font-bold">FREE</span>
+          ) : (
+            <span className="text-sm font-semibold text-maroon">₹{cls.price}</span>
+          )}
+        </div>
+        
+        <h3 className="font-semibold text-gray-800 mb-2">{cls.title}</h3>
+        <p className="text-sm text-gray-500 line-clamp-2 mb-3">{cls.description}</p>
+        
+        <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
+          <div className="flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5" />
+            <span>{formatDate(cls.schedule_time)}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5" />
+            <span>{cls.duration_minutes} min</span>
           </div>
         </div>
-      )}
-      <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-sm">
-        {label || peer?.name} {isScreenShare ? '- Screen' : ''}
+        
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-gray-400">
+            <span className={cls.available_slots <= 3 ? 'text-red-500 font-medium' : ''}>
+              {cls.available_slots > 0 ? `${cls.available_slots} slots left` : 'Full'}
+            </span>
+            <span className="mx-1">•</span>
+            <span>{cls.enrolled_count} enrolled</span>
+          </div>
+          {isEnrolled ? (
+            <span className="px-4 py-2 bg-green-100 text-green-700 rounded-xl text-sm font-medium flex items-center gap-1">
+              <CheckCircle className="w-4 h-4" /> Enrolled
+            </span>
+          ) : cls.available_slots <= 0 ? (
+            <span className="px-4 py-2 bg-gray-100 text-gray-500 rounded-xl text-sm font-medium">
+              Class Full
+            </span>
+          ) : (
+            <button
+              onClick={() => onEnroll(cls)}
+              disabled={enrolling === cls.id}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-1 ${
+                cls.is_free 
+                  ? 'bg-green-500 text-white hover:bg-green-600' 
+                  : 'bg-saffron text-white hover:bg-saffron-dark'
+              }`}
+            >
+              {enrolling === cls.id ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : cls.is_free ? (
+                'Enroll Free'
+              ) : (
+                <>Pay ₹{cls.price}</>
+              )}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -358,10 +365,11 @@ function ClassesTab({ isDesktop }) {
     budget_max: 2000,
     language: 'Hindi',
     duration_preference: '1 hour',
-    meeting_type: 'one_on_one',  // one_on_one or group
-    frequency: 'weekly'  // once, weekly, biweekly, monthly
+    meeting_type: 'one_on_one',
+    frequency: 'weekly'
   });
 
+  // Configuration options
   const categories = ['Vedic Studies', 'Sanskrit', 'Puja Rituals', 'Astrology', 'Yoga & Meditation', 'Scriptures', 'Mantras', 'Other'];
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const timeSlots = ['Early Morning (5-7 AM)', 'Morning (7-10 AM)', 'Afternoon (12-3 PM)', 'Evening (5-8 PM)', 'Night (8-10 PM)'];
@@ -381,7 +389,7 @@ function ClassesTab({ isDesktop }) {
   // State for video class room
   const [classRoom, setClassRoom] = useState(null);
   
-  // These hooks need to be at the top before any early return
+  // States for interested priests modal
   const [viewingPriests, setViewingPriests] = useState(null);
   const [interestedPriests, setInterestedPriests] = useState([]);
   const [loadingPriests, setLoadingPriests] = useState(false);
@@ -524,22 +532,12 @@ function ClassesTab({ isDesktop }) {
     }
   };
 
-  const toggleDay = (day) => {
-    setRequestForm(prev => ({
-      ...prev,
-      preferred_days: prev.preferred_days.includes(day)
-        ? prev.preferred_days.filter(d => d !== day)
-        : [...prev.preferred_days, day]
-    }));
-  };
-
   const handleEnroll = async (cls) => {
     setEnrolling(cls.id);
     try {
       const res = await api.post(`/api/classes/${cls.id}/enroll`);
       
       if (res.data.requires_payment) {
-        // Show payment modal for paid classes
         setPaymentModal({
           classId: cls.id,
           className: cls.title,
@@ -549,7 +547,6 @@ function ClassesTab({ isDesktop }) {
           paymentIntentId: res.data.payment_intent_id
         });
       } else {
-        // Free class - enrolled directly
         toast.success('Successfully enrolled in class!');
         fetchClasses();
         fetchMyEnrollments();
@@ -563,7 +560,6 @@ function ClassesTab({ isDesktop }) {
 
   const handlePaymentSuccess = async (paymentData) => {
     try {
-      // Complete enrollment after payment
       await api.post(`/api/classes/${paymentModal.classId}/enroll`, {
         payment_intent_id: paymentData.payment_id || paymentModal.paymentIntentId
       });
@@ -645,201 +641,20 @@ function ClassesTab({ isDesktop }) {
 
         {/* Request Class Modal */}
         {showRequestForm && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
-                <h2 className="font-cinzel text-xl font-bold text-maroon">Request a Class</h2>
-                <button onClick={() => setShowRequestForm(false)} className="p-2 hover:bg-gray-100 rounded-full">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="p-6 space-y-4">
-                {/* Topic */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">What do you want to learn? *</label>
-                  <input
-                    type="text"
-                    value={requestForm.topic}
-                    onChange={(e) => setRequestForm({...requestForm, topic: e.target.value})}
-                    placeholder="e.g., Bhagavad Gita, Sanskrit basics, Puja vidhi"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
-                  />
-                </div>
-
-                {/* Category */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <select
-                    value={requestForm.category}
-                    onChange={(e) => setRequestForm({...requestForm, category: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
-                  >
-                    {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                  </select>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Details</label>
-                  <textarea
-                    value={requestForm.description}
-                    onChange={(e) => setRequestForm({...requestForm, description: e.target.value})}
-                    placeholder="Any specific requirements or goals..."
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
-                  />
-                </div>
-
-                {/* Preferred Days */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Days</label>
-                  <div className="flex flex-wrap gap-2">
-                    {days.map(day => (
-                      <button
-                        key={day}
-                        type="button"
-                        onClick={() => toggleDay(day)}
-                        className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                          requestForm.preferred_days.includes(day)
-                            ? 'bg-saffron text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {day.slice(0, 3)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Preferred Time */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Time</label>
-                  <select
-                    value={requestForm.preferred_time}
-                    onChange={(e) => setRequestForm({...requestForm, preferred_time: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
-                  >
-                    {timeSlots.map(time => <option key={time} value={time}>{time}</option>)}
-                  </select>
-                </div>
-
-                {/* Duration */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Class Duration</label>
-                  <select
-                    value={requestForm.duration_preference}
-                    onChange={(e) => setRequestForm({...requestForm, duration_preference: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
-                  >
-                    {durations.map(dur => <option key={dur} value={dur}>{dur}</option>)}
-                  </select>
-                </div>
-
-                {/* Language */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Language</label>
-                  <select
-                    value={requestForm.language}
-                    onChange={(e) => setRequestForm({...requestForm, language: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron"
-                  >
-                    {languages.map(lang => <option key={lang} value={lang}>{lang}</option>)}
-                  </select>
-                </div>
-
-                {/* Budget Range */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Budget Range (per class)</label>
-                  <div className="flex gap-3 items-center">
-                    <div className="flex-1">
-                      <span className="text-xs text-gray-500">Min</span>
-                      <input
-                        type="number"
-                        value={requestForm.budget_min}
-                        onChange={(e) => setRequestForm({...requestForm, budget_min: parseInt(e.target.value) || 0})}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron"
-                      />
-                    </div>
-                    <span className="text-gray-400">to</span>
-                    <div className="flex-1">
-                      <span className="text-xs text-gray-500">Max</span>
-                      <input
-                        type="number"
-                        value={requestForm.budget_max}
-                        onChange={(e) => setRequestForm({...requestForm, budget_max: parseInt(e.target.value) || 0})}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-saffron"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Meeting Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Meeting Type</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {meetingTypes.map(type => (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() => setRequestForm({...requestForm, meeting_type: type.value})}
-                        className={`p-3 rounded-xl border-2 text-left transition-all ${
-                          requestForm.meeting_type === type.value
-                            ? 'border-saffron bg-orange-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        data-testid={`meeting-type-${type.value}`}
-                      >
-                        <div className="font-medium text-sm text-gray-800">{type.label}</div>
-                        <div className="text-xs text-gray-500 mt-1">{type.description}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Frequency */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Class Frequency</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {frequencies.map(freq => (
-                      <button
-                        key={freq.value}
-                        type="button"
-                        onClick={() => setRequestForm({...requestForm, frequency: freq.value})}
-                        className={`p-3 rounded-xl border-2 text-center transition-all ${
-                          requestForm.frequency === freq.value
-                            ? 'border-saffron bg-orange-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        data-testid={`frequency-${freq.value}`}
-                      >
-                        <div className="font-medium text-sm text-gray-800">{freq.label}</div>
-                        <div className="text-xs text-gray-500">{freq.description}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  onClick={handleSubmitRequest}
-                  disabled={submittingRequest || !requestForm.topic.trim()}
-                  className="w-full py-4 bg-saffron text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {submittingRequest ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      Submit Request
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+          <ClassRequestForm
+            requestForm={requestForm}
+            setRequestForm={setRequestForm}
+            onSubmit={handleSubmitRequest}
+            onClose={() => setShowRequestForm(false)}
+            submitting={submittingRequest}
+            categories={categories}
+            days={days}
+            timeSlots={timeSlots}
+            durations={durations}
+            languages={languages}
+            meetingTypes={meetingTypes}
+            frequencies={frequencies}
+          />
         )}
 
         {loading ? (
@@ -1004,96 +819,14 @@ function ClassesTab({ isDesktop }) {
               </div>
             ) : (
               classes.map((cls) => (
-                <motion.div
+                <ClassCard
                   key={cls.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`rounded-2xl shadow-sm overflow-hidden ${
-                    cls.is_free 
-                      ? 'bg-green-100 border-2 border-green-400' 
-                      : 'bg-white border border-orange-100'
-                  }`}
-                >
-                  <div className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
-                          cls.is_free 
-                            ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
-                            : 'bg-gradient-to-br from-saffron to-gold'
-                        }`}>
-                          {cls.priest_name?.charAt(0) || 'P'}
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">{cls.priest_name}</p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            cls.is_free 
-                              ? 'bg-green-200 text-green-800' 
-                              : 'bg-orange-100 text-saffron'
-                          }`}>
-                            {cls.category || 'General'}
-                          </span>
-                        </div>
-                      </div>
-                      {cls.is_free ? (
-                        <span className="text-sm px-3 py-1 bg-green-500 text-white rounded-full font-bold">FREE</span>
-                      ) : (
-                        <span className="text-sm font-semibold text-maroon">₹{cls.price}</span>
-                      )}
-                    </div>
-                    
-                    <h3 className="font-semibold text-gray-800 mb-2">{cls.title}</h3>
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-3">{cls.description}</p>
-                    
-                    <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{formatDate(cls.schedule_time)}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{cls.duration_minutes} min</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs text-gray-400">
-                        <span className={cls.available_slots <= 3 ? 'text-red-500 font-medium' : ''}>
-                          {cls.available_slots > 0 ? `${cls.available_slots} slots left` : 'Full'}
-                        </span>
-                        <span className="mx-1">•</span>
-                        <span>{cls.enrolled_count} enrolled</span>
-                      </div>
-                      {isEnrolled(cls.id) ? (
-                        <span className="px-4 py-2 bg-green-100 text-green-700 rounded-xl text-sm font-medium flex items-center gap-1">
-                          <CheckCircle className="w-4 h-4" /> Enrolled
-                        </span>
-                      ) : cls.available_slots <= 0 ? (
-                        <span className="px-4 py-2 bg-gray-100 text-gray-500 rounded-xl text-sm font-medium">
-                          Class Full
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleEnroll(cls)}
-                          disabled={enrolling === cls.id}
-                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-1 ${
-                            cls.is_free 
-                              ? 'bg-green-500 text-white hover:bg-green-600' 
-                              : 'bg-saffron text-white hover:bg-saffron-dark'
-                          }`}
-                        >
-                          {enrolling === cls.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : cls.is_free ? (
-                            'Enroll Free'
-                          ) : (
-                            <>Pay ₹{cls.price}</>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
+                  cls={cls}
+                  isEnrolled={isEnrolled(cls.id)}
+                  onEnroll={handleEnroll}
+                  enrolling={enrolling}
+                  formatDate={formatDate}
+                />
               ))
             )}
           </div>
@@ -1272,6 +1005,4 @@ function ClassesTab({ isDesktop }) {
   );
 }
 
-// LiveEventsTab imported from ./devotee/components/LiveEventsTab
-
-export { ClassesTab, TestimonialSection };
+export { ClassesTab, TestimonialSection, ClassVideoRoom, ClassRequestForm, ClassCard };

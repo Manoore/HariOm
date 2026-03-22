@@ -39,7 +39,7 @@ async def upload_image(
     
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://priesthood-portal.preview.emergentagent.com"
+        backend_url = "https://divine-refactor.preview.emergentagent.com"
     
     image_url = f"{backend_url}/api/uploads/{unique_filename}"
     
@@ -68,7 +68,7 @@ async def upload_video(
     
     backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
     if not backend_url:
-        backend_url = "https://priesthood-portal.preview.emergentagent.com"
+        backend_url = "https://divine-refactor.preview.emergentagent.com"
     
     video_url = f"{backend_url}/api/uploads/{unique_filename}"
     

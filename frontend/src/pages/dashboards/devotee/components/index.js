@@ -13,4 +13,8 @@ export { LiveEventsTab } from './LiveEventsTab';
 export { CalendarTab } from './CalendarTab';
 export { ShopTab } from './ShopTab';
 export { ProfileTab } from './ProfileTab';
-export { ClassesTab, TestimonialSection } from './ClassesTab';
+
+// Classes Tab and related components
+export { ClassesTab, ClassRequestForm, ClassCard } from './ClassesTab';
+export { ClassVideoRoom, VideoTileClass } from './ClassVideoRoom';
+export { TestimonialSection } from './TestimonialSection';
