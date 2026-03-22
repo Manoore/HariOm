@@ -10,3 +10,7 @@ export { HomeTab } from './HomeTab';
 export { ReviewModal } from './ReviewModal';
 export { PriestsTab } from './PriestsTab';
 export { LiveEventsTab } from './LiveEventsTab';
+export { CalendarTab } from './CalendarTab';
+export { ShopTab } from './ShopTab';
+export { ProfileTab } from './ProfileTab';
+export { ClassesTab, TestimonialSection } from './ClassesTab';
