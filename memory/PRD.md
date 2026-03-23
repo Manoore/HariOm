@@ -85,20 +85,27 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
     - **Phase 3**: Extracted Orders (10 routes) + Astrology (15 routes) - 647 lines removed
     - **Phase 4**: Created Devotional (20 routes, 442 lines) + Panchang (8 routes, 381 lines) route files
 
-11. **Backend server.py Refactoring Phase 5 - COMPLETE** (March 23, 2026)
-    - ✅ Removed duplicate Panchang/Festival routes (~344 lines) from server.py
-    - ✅ Removed duplicate Devotional Content routes (~200 lines) from server.py
-    - ✅ Removed duplicate Scripture routes (~188 lines) from server.py
-    - ✅ Removed duplicate Panchang routes (~82 lines) from astrology.py
-    - **Current server.py**: 3918 lines (down from 4650, -15.7% reduction)
-    - **Total reduction from original**: 6429 → 3918 lines (-39% reduction)
-    - All 15 API tests passed (100% success rate)
+11. **Backend server.py Refactoring Phase 5 & 6 - COMPLETE** (March 23, 2026)
+    - ✅ Phase 5: Removed duplicate Panchang/Festival/Devotional/Scripture routes
+    - ✅ Phase 6: Complete modular extraction - **server.py reduced from 4650 to 541 lines (88% reduction!)**
+    - **New modular route files created:**
+      - `routes/uploads.py` - File uploads (image/video)
+      - `routes/places.py` - Google Places API
+      - `routes/translate.py` - Translation API
+      - `routes/video_library.py` - YouTube devotional videos
+      - `routes/classes.py` - Classes & Live Streams (~700 lines)
+      - `routes/feedback.py` - Feedback & Testimonials
+      - `routes/consultation.py` - Consultation, Wallet, System Config (~370 lines)
+      - `routes/archive.py` - Internet Archive Vedic Library (~320 lines)
+      - `routes/shop.py` (updated) - Added marketplace_router for public products
+    - **Total**: 18 modular route files in `/app/backend/routes/`
+    - **Original server.py**: 6429 lines → **Final**: 541 lines (**92% reduction!**)
+    - All 28 API tests passed (100% success rate - iteration_29.json)
 
 ### In Progress 🔄
 - None currently active
 
 ### Pending Features 📋
-- **P1**: Extract Live Streams/Classes routes from server.py (~500 lines) to reach <3000 lines target
 - **P1**: GitHub Actions APK build fixes
 - **P2**: Stripe Connect for vendor payment splitting
 - **P2**: Push notifications for class reminders
@@ -117,7 +124,8 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - **Payments**: Integrated (Stripe Connect pending)
 
 ### Key Files
-- `/app/backend/server.py` - Main API (4650 lines - Phase 4 done, duplicates remain ⚠️)
+- `/app/backend/server.py` - Main API (541 lines - fully modularized ✅)
+- `/app/backend/routes/` - 18 modular route files
 - `/app/backend/routes/shop.py` - Shop owner routes (365 lines)
 - `/app/backend/routes/cart.py` - Cart routes (181 lines)
 - `/app/backend/routes/chat.py` - Chat REST routes (398 lines)
