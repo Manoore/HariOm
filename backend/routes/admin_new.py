@@ -51,6 +51,81 @@ async def get_admin_stats(user: dict = Depends(require_role([UserRole.ADMIN, Use
 
 # ===================== USER MANAGEMENT =====================
 
+@router.post("/users/create")
+async def admin_create_user(request: Request, admin: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Admin creates a new user with any role"""
+    data = await request.json()
+    
+    name = data.get("name")
+    email = data.get("email")
+    password = data.get("password")
+    role = data.get("role", "devotee")
+    phone = data.get("phone", "")
+    
+    if not name or not email or not password:
+        raise HTTPException(status_code=400, detail="Name, email, and password are required")
+    
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Check if email already exists
+    existing = await users_collection.find_one({"email": email.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Validate role
+    valid_roles = ["devotee", "priest", "astrologer", "shop_owner", "admin"]
+    if role not in valid_roles:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {', '.join(valid_roles)}")
+    
+    # Create user
+    hashed_password = get_password_hash(password)
+    new_user = {
+        "name": name,
+        "email": email.lower(),
+        "phone": phone,
+        "password": hashed_password,
+        "role": role,
+        "is_verified": True,  # Admin-created users are auto-verified
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc),
+        "created_by_admin": str(admin["_id"])
+    }
+    
+    result = await users_collection.insert_one(new_user)
+    user_id = str(result.inserted_id)
+    
+    # Auto-create profile based on role
+    if role == "priest":
+        await priests_collection.insert_one({
+            "user_id": user_id,
+            "approval_status": "approved",  # Admin-created priests are auto-approved
+            "is_verified": True,
+            "created_at": datetime.now(timezone.utc)
+        })
+    elif role == "astrologer":
+        await astrologers_collection.insert_one({
+            "user_id": user_id,
+            "approval_status": "approved",
+            "is_verified": True,
+            "created_at": datetime.now(timezone.utc)
+        })
+    elif role == "shop_owner":
+        await shops_collection.insert_one({
+            "owner_id": user_id,
+            "name": f"{name}'s Shop",
+            "approval_status": "approved",
+            "is_verified": True,
+            "created_at": datetime.now(timezone.utc)
+        })
+    
+    return {
+        "message": f"User created successfully as {role}",
+        "user_id": user_id,
+        "email": email.lower(),
+        "role": role
+    }
+
 @router.get("/users")
 async def get_all_users(
     user: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN])),

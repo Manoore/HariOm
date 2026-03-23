@@ -244,8 +244,6 @@ export function RegisterPage() {
               >
                 <option value="devotee">Devotee (Book services)</option>
                 <option value="priest">Priest (Offer services)</option>
-                <option value="astrologer">Astrologer (Consultations)</option>
-                <option value="shop_owner">Shop Owner (Sell products)</option>
               </select>
             </div>
 
