@@ -254,3 +254,28 @@ test_reports/
 # Environment files
 *.env
 *.env.*
+-e 
+# Environment files
+*.env
+*.env.*
+-e 
+# Environment files
+*.env
+*.env.*
+-e 
+# Environment files
+*.env
+*.env.*
+
+# Backup files
+*.bak
+*.bak2
+*_backup.py
+*_backup.js
+
+# Lock files (optional - uncomment if needed)
+# yarn.lock
+# package-lock.json
+
+# Test reports (keep in repo for history)
+# test_reports/
