@@ -75,6 +75,7 @@ from routes.classes import router as classes_router
 from routes.feedback import router as feedback_router
 from routes.consultation import router as consultation_router
 from routes.archive import router as archive_router
+from routes.posts import router as posts_router
 
 # Import notification service
 try:
@@ -132,6 +133,7 @@ app.include_router(classes_router)
 app.include_router(feedback_router)
 app.include_router(consultation_router)
 app.include_router(archive_router)
+app.include_router(posts_router)
 
 # Upload routes moved to routes/uploads.py
 

@@ -279,3 +279,11 @@ test_reports/
 
 # Test reports (keep in repo for history)
 # test_reports/
+-e 
+# Environment files
+*.env
+*.env.*
+-e 
+# Environment files
+*.env
+*.env.*

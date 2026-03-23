@@ -34,6 +34,24 @@ async def get_posts(limit: int = 20, skip: int = 0):
         })
     return {"posts": posts}
 
+@router.get("/feed")
+async def get_posts_feed(limit: int = 20, skip: int = 0):
+    """Get all posts (public feed) - alias for /posts"""
+    cursor = priest_posts_collection.find().sort("created_at", -1).skip(skip).limit(limit)
+    posts = []
+    async for post in cursor:
+        posts.append({
+            "id": str(post["_id"]),
+            "priest_id": post.get("priest_id"),
+            "priest_name": post.get("priest_name"),
+            "content": post.get("content"),
+            "image_url": post.get("image_url"),
+            "likes_count": post.get("likes_count", 0),
+            "comments_count": post.get("comments_count", 0),
+            "created_at": post.get("created_at").isoformat() if post.get("created_at") else None
+        })
+    return {"posts": posts}
+
 @router.post("")
 async def create_post(request: Request, user: dict = Depends(require_role([UserRole.PRIEST, UserRole.ADMIN]))):
     """Create a new post"""
