@@ -12,4 +12,5 @@ export { AudioLibraryTab } from './AudioLibraryTab';
 export { FeedbackTab } from './FeedbackTab';
 export { ProfileTab } from './ProfileTab';
 export { AdminManagementTab } from './AdminManagementTab';
+export { SettingsTab } from './SettingsTab';
 export { useIsDesktop, OmIcon } from './shared';

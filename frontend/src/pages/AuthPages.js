@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
+import api from '../lib/api';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -133,8 +134,28 @@ export function RegisterPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [signupSettings, setSignupSettings] = useState({
+    enable_priest_signup: true,
+    enable_astrologer_signup: false,
+    enable_shop_owner_signup: false
+  });
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Fetch signup settings to determine which roles to show
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/api/admin/signup-settings');
+        if (res.data.settings) {
+          setSignupSettings(res.data.settings);
+        }
+      } catch (error) {
+        console.log('Using default signup settings');
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -243,7 +264,15 @@ export function RegisterPage() {
                 data-testid="register-role"
               >
                 <option value="devotee">Devotee (Book services)</option>
-                <option value="priest">Priest (Offer services)</option>
+                {signupSettings.enable_priest_signup && (
+                  <option value="priest">Priest (Offer services)</option>
+                )}
+                {signupSettings.enable_astrologer_signup && (
+                  <option value="astrologer">Astrologer (Consultations)</option>
+                )}
+                {signupSettings.enable_shop_owner_signup && (
+                  <option value="shop_owner">Shop Owner (Sell products)</option>
+                )}
               </select>
             </div>
 

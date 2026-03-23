@@ -22,6 +22,7 @@ import {
   FeedbackTab,
   ProfileTab,
   AdminManagementTab,
+  SettingsTab,
   useIsDesktop
 } from './admin/components';
 
@@ -102,6 +103,7 @@ export default function AdminDashboard() {
       {activeTab === 'admin-management' && user?.role === 'super_admin' && <AdminManagementTab isDesktop={isDesktop} />}
       {activeTab === 'consultation' && <ConsultationSettingsAdmin />}
       {activeTab === 'system' && <SystemSettingsAdmin />}
+      {activeTab === 'app-settings' && <SettingsTab isDesktop={isDesktop} />}
       {activeTab === 'profile' && <ProfileTab isDesktop={isDesktop} user={user} onRefresh={fetchData} />}
 
       {/* Mobile Logout - shown only on overview */}

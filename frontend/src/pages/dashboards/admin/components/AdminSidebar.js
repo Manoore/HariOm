@@ -25,6 +25,7 @@ export function AdminSidebar({ activeTab, setActiveTab, user }) {
     ...(isSuperAdmin ? [{ id: 'admin-management', icon: Key, label: 'Admin Management' }] : []),
     { id: 'consultation', icon: Video, label: 'Consultation Settings' },
     { id: 'system', icon: Settings, label: 'System Settings' },
+    { id: 'app-settings', icon: Settings, label: 'App Settings' },
     { id: 'profile', icon: User, label: 'My Profile' },
   ];
 

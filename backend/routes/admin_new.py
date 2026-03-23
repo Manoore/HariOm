@@ -13,12 +13,50 @@ from database import (
     users_collection, priests_collection, astrologers_collection,
     products_collection, bookings_collection, orders_collection,
     puja_types_collection, audio_library_collection, shops_collection,
-    user_notifications_collection
+    user_notifications_collection, system_config_collection
 )
 from models import UserRole
 from auth import require_role, get_password_hash, verify_password
 
 router = APIRouter(prefix="/api/admin", tags=["Admin"])
+
+# ===================== SIGNUP SETTINGS =====================
+
+@router.get("/signup-settings")
+async def get_signup_settings():
+    """Get public signup settings - no auth required for signup page to read"""
+    settings = await system_config_collection.find_one({"key": "signup_settings"})
+    if not settings:
+        # Return defaults
+        return {
+            "settings": {
+                "enable_priest_signup": True,
+                "enable_astrologer_signup": False,
+                "enable_shop_owner_signup": False
+            }
+        }
+    return {"settings": settings.get("value", {})}
+
+
+@router.put("/signup-settings")
+async def update_signup_settings(request: Request, admin: dict = Depends(require_role([UserRole.ADMIN, UserRole.SUPER_ADMIN]))):
+    """Update signup settings - admin only"""
+    data = await request.json()
+    
+    settings = {
+        "enable_priest_signup": data.get("enable_priest_signup", True),
+        "enable_astrologer_signup": data.get("enable_astrologer_signup", False),
+        "enable_shop_owner_signup": data.get("enable_shop_owner_signup", False)
+    }
+    
+    await system_config_collection.update_one(
+        {"key": "signup_settings"},
+        {"$set": {"key": "signup_settings", "value": settings, "updated_at": datetime.now(timezone.utc)}},
+        upsert=True
+    )
+    
+    return {"message": "Settings updated", "settings": settings}
+
 
 # ===================== ADMIN STATS =====================
 
