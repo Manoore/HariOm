@@ -362,3 +362,124 @@ async def update_product_stock(product_id: str, request: Request, user: dict = D
         raise HTTPException(status_code=404, detail="Product not found")
     
     return {"message": "Stock updated"}
+
+
+
+# ===================== PUBLIC MARKETPLACE ROUTES =====================
+
+# Create a separate router for public marketplace (without /shop prefix)
+from fastapi import APIRouter as MarketAPIRouter
+marketplace_router = MarketAPIRouter(prefix="/api", tags=["Marketplace"])
+
+
+@marketplace_router.get("/products")
+async def get_products(
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    location: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    skip: int = 0,
+    limit: int = 20
+):
+    """Get all products from approved shops"""
+    # First, get all approved shop IDs
+    approved_shops_query = {
+        "$or": [
+            {"approval_status": "approved"},
+            {"is_verified": True, "approval_status": {"$exists": False}}
+        ]
+    }
+    approved_shops_cursor = shops_collection.find(approved_shops_query, {"_id": 1})
+    approved_shop_ids = []
+    async for shop in approved_shops_cursor:
+        approved_shop_ids.append(str(shop["_id"]))
+    
+    # Only show products from approved shops
+    query = {"shop_id": {"$in": approved_shop_ids}} if approved_shop_ids else {"shop_id": {"$in": []}}
+    
+    if category:
+        query["category"] = {"$regex": category, "$options": "i"}
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}}
+        ]
+    if min_price is not None:
+        query["price"] = {"$gte": min_price}
+    if max_price is not None:
+        query.setdefault("price", {})["$lte"] = max_price
+    
+    # If location filter is provided, first get approved shops in that location
+    if location:
+        location_query = {
+            "$and": [
+                approved_shops_query,
+                {"$or": [
+                    {"city": {"$regex": location, "$options": "i"}},
+                    {"state": {"$regex": location, "$options": "i"}},
+                    {"address": {"$regex": location, "$options": "i"}},
+                    {"pincode": location},
+                    {"location.city": {"$regex": location, "$options": "i"}},
+                    {"location.state": {"$regex": location, "$options": "i"}}
+                ]}
+            ]
+        }
+        shops_cursor = shops_collection.find(location_query)
+        shop_ids_in_location = []
+        async for shop in shops_cursor:
+            shop_ids_in_location.append(str(shop["_id"]))
+        
+        if shop_ids_in_location:
+            query["shop_id"] = {"$in": shop_ids_in_location}
+        else:
+            return {"products": [], "total": 0}
+    
+    cursor = products_collection.find(query).skip(skip).limit(limit)
+    products = []
+    async for product in cursor:
+        shop = await shops_collection.find_one({"_id": ObjectId(product["shop_id"])}) if product.get("shop_id") else None
+        products.append({
+            "id": str(product["_id"]),
+            "shop_id": product["shop_id"],
+            "shop_name": product.get("shop_name", "Unknown"),
+            "shop_city": shop.get("city", "") if shop else "",
+            "shop_state": shop.get("state", "") if shop else "",
+            "name": product["name"],
+            "description": product["description"],
+            "price": product["price"],
+            "category": product["category"],
+            "stock": product["stock"],
+            "images": product.get("images", []),
+            "rating": product.get("rating", 0),
+            "total_reviews": product.get("total_reviews", 0)
+        })
+    return {"products": products, "total": await products_collection.count_documents(query)}
+
+
+@marketplace_router.get("/products/{product_id}")
+async def get_product(product_id: str):
+    """Get a single product by ID"""
+    product = await products_collection.find_one({"_id": ObjectId(product_id)})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {
+        "id": str(product["_id"]),
+        "shop_id": product["shop_id"],
+        "shop_name": product.get("shop_name", "Unknown"),
+        "name": product["name"],
+        "description": product["description"],
+        "price": product["price"],
+        "category": product["category"],
+        "stock": product["stock"],
+        "images": product.get("images", []),
+        "rating": product.get("rating", 0),
+        "total_reviews": product.get("total_reviews", 0)
+    }
+
+
+@marketplace_router.get("/product-categories")
+async def get_product_categories():
+    """Get all product categories"""
+    categories = await products_collection.distinct("category")
+    return {"categories": categories}
