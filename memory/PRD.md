@@ -84,18 +84,21 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
     - **Phase 2**: Extracted Chat (8 routes) + Payments (5 routes) - 639 lines removed
     - **Phase 3**: Extracted Orders (10 routes) + Astrology (15 routes) - 647 lines removed
     - **Phase 4**: Created Devotional (20 routes, 442 lines) + Panchang (8 routes, 381 lines) route files
-    - **Total Route Files Created**: 8 modular files totaling ~3,028 lines
-    - **Current server.py**: 4650 lines (down from 6429, -27.7% reduction)
-    - Note: Duplicate routes still exist in server.py and need cleanup in Phase 5 to reach <3000 lines target
+
+11. **Backend server.py Refactoring Phase 5 - COMPLETE** (March 23, 2026)
+    - ✅ Removed duplicate Panchang/Festival routes (~344 lines) from server.py
+    - ✅ Removed duplicate Devotional Content routes (~200 lines) from server.py
+    - ✅ Removed duplicate Scripture routes (~188 lines) from server.py
+    - ✅ Removed duplicate Panchang routes (~82 lines) from astrology.py
+    - **Current server.py**: 3918 lines (down from 4650, -15.7% reduction)
+    - **Total reduction from original**: 6429 → 3918 lines (-39% reduction)
+    - All 15 API tests passed (100% success rate)
 
 ### In Progress 🔄
 - None currently active
 
 ### Pending Features 📋
-- **P1**: Phase 5 Backend Cleanup - Remove duplicate routes from server.py (target <3000 lines)
-  - Remove duplicate Panchang/Festival routes (~300 lines)
-  - Remove duplicate Devotional Content routes (~400 lines)
-  - Remove duplicate Products routes (~100 lines)
+- **P1**: Extract Live Streams/Classes routes from server.py (~500 lines) to reach <3000 lines target
 - **P1**: GitHub Actions APK build fixes
 - **P2**: Stripe Connect for vendor payment splitting
 - **P2**: Push notifications for class reminders
