@@ -8,7 +8,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://divine-refactor.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://vedic-services-core.preview.emergentagent.com').rstrip('/')
 
 # Test credentials from previous tests
 TEST_DEVOTEE = {"email": "devotee@test.com", "password": "test1234"}

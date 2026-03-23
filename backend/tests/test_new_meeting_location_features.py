@@ -13,7 +13,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://divine-refactor.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://vedic-services-core.preview.emergentagent.com')
 
 # Test accounts
 TEST_PRIEST_EMAIL = "pandit.sharma@divineapp.com"

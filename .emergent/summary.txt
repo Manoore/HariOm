@@ -1,5 +1,5 @@
 <analysis>**original_problem_statement**: 
-Build Divine App, a digital platform connecting users with Hindu spiritual services. Features include priest booking, astrology services, a spiritual e-commerce store, devotional content (mantras, audio, video), and live video/voice consultations. 
+Build Divine App, a digital platform connecting users with Hindu spiritual services. Features include priest booking, astrology services, a spiritual e-commerce store, devotional content (mantras, audio, video), and live video/voice consultations.
 **PRODUCT REQUIREMENTS**:
 - Core Functions: Priest booking, spiritual learning, astrology services, scriptures library.
 - Marketplace: Pooja Store for spiritual items.
@@ -11,27 +11,26 @@ Build Divine App, a digital platform connecting users with Hindu spiritual servi
 *(INSTRUCT next agent to respond in English only)*
 
 **what currently exists?** 
-A full-stack application (React + FastAPI + MongoDB Atlas). In this session, the agent completed a massive refactoring of  (reducing it from 2604 to 124 lines). Following user orders, the agent then began refactoring the massive  (5948 lines) in phases. Phases 1, 2, and 3 are done, reducing the main file to 1588 lines. The agent is currently mid-way through splitting the remaining large extracted file,  (1277 lines), into smaller sub-components when the context window ended.
+A full-stack application (React + FastAPI + MongoDB Atlas). In this session, the agent successfully completed the frontend refactoring of . The primary focus then shifted to heavily refactoring the monolithic backend  (originally 6429 lines) into modular routes. Phases 1 through 4 of the backend refactoring successfully created and attached modular routers (, , , , , , , ).  is currently at 4650 lines. The agent was in Phase 5—attempting to safely delete the duplicate Devotional, Scripture, and Panchang routes from  to reach the <3000 lines goal—when the context window ended.
 
 **Last working item**:
-- **Last item agent was working**: Splitting  (1277 lines) into smaller sub-components (, , , ). The agent successfully created  and  but ran out of context before moving the code, updating imports, and finalizing the split.
+- **Last item agent was working**: Phase 5 of backend refactoring - Removing duplicate Panchang/Festival (lines ~1030-1374) and Devotional/Scriptures routes from . The modular routers for these are already created and attached, but the old code still lives inside .
 - **Status**: IN PROGRESS
-- **Agent Testing Done**: N (Refactoring incomplete; app may not compile).
-- **Which testing method agent to use?** Frontend testing agent (Must be used once  refactor is complete to ensure all nested components render correctly) and screenshot tool.
+- **Agent Testing Done**: N (for the deletion phase; the creation phase was fully tested)
+- **Which testing method agent to use?** backend testing agent + curl to verify routes still work after removing the duplicate code blocks.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-  - **Issue 1: Complete ClassesTab.js Refactoring & Fix Imports (P0)**
-     - **Attempted fixes**: Created  and  files. 
+  - **Issue 1: Delete duplicate routes in server.py (P0)**
+     - **Attempted fixes**: Agent tried a massive  to delete lines 1030-1374 (Panchang section), but it failed because  struggles with exact verbatim matches on huge multi-hundred-line chunks.
      - **Next debug checklist**: 
-        - Extract the actual code from  into  and .
-        - Create and extract  and .
-        - Update  to correctly import these child components.
-        - Run  or webpack logs to catch and fix  or  (especially for 100ms hooks like  and  icons).
-     - **Why fix this issue and what will be achieved with the fix?** Completes the DevoteeDashboard modularization and prevents the app from crashing due to half-finished file extractions.
+        - Check .
+        - Use smaller, 50-100 line chunks in  to delete the old Panchang, Devotional, and Scripture route sections.
+        - Ensure you do NOT delete the  endpoint or websocket managers that aren't in the modular routers.
+     - **Why fix this issue and what will be achieved with the fix?** Will drastically reduce  size toward the <3000 line target and remove redundant code that could cause routing conflicts or confusion.
      - **Status**: IN PROGRESS
-     - **Is recurring issue?** N
-     - **Should Test frontend/backend/both after fix?** Frontend
+     - **Is recurring issue?** N (but large  failures are common)
+     - **Should Test frontend/backend/both after fix?** Backend
      - **Blocked on other issue**: None
 
   - **Issue 2: GitHub Actions APK build fails intermittently (P1)**
@@ -43,94 +42,109 @@ A full-stack application (React + FastAPI + MongoDB Atlas). In this session, the
      - **Should Test frontend/backend/both after fix?** NA
 
 **In progress Task List**:
-  - **Task 1: Modularize ClassesTab.js**
-     - **Where to resume**: . Continue moving code into the newly created  and , then handle the rest of the file.
-     - **What will be achieved with this?** Breaks down the last remaining monolithic React component (>1000 lines) into maintainable files.
+  - **Task 1: Complete Phase 5 Backend Refactoring**
+     - **Where to resume**: . Delete the duplicate Panchang/Festival routes and Devotional Content routes.
+     - **What will be achieved with this?** Clean modular backend architecture.
      - **Status**: IN PROGRESS
-     - **Should Test frontend/backend/both after fix?** Frontend
+     - **Should Test frontend/backend/both after fix?** Backend
      - **Blocked on something**: None
 
-**Upcoming and Future Tasks**:
-- (P1) Backend Refactoring: Extract Shop/Marketplace, Payments, and remaining route logic from the massive  file (>6000 lines) to .
+  - **Task 2: Extract Live Streams/Classes routes**
+     - **Where to resume**: . These routes (~500 lines) were part of the P1 requirement but haven't been moved into a modular router yet. 
+     - **What will be achieved with this?** Pushes  below the 3000-line target.
+     - **Status**: NOT STARTED
+     - **Should Test frontend/backend/both after fix?** Backend
+
+**Upcoming and Future Tasks**
 - (P2) Implement Stripe Connect Integration for automatic payment splitting between the platform and vendors.
-- (P2) Add push notifications / email reminders for Vedic classes (e.g., 30 min and 5 min before an enrolled class starts).
+- (P2) Add push notifications / email reminders for Vedic classes.
 - (P2) Phase 2 of Live Streams: Implement 100ms HLS live streaming for in-app broadcasts.
 - (P3) Address the Temple section functionality.
 - (P3) Provider Onboarding Guide.
 
-**Completed work in this session**:
-- **AdminDashboard Refactoring**: Extracted 15 components, reducing  from 2604 to 124 lines. Tested and working perfectly. (DONE)
-- **DevoteeDashboard Phase 1**: Extracted Navigation, Feed, Consultation, Home, and ReviewModal. (DONE)
-- **DevoteeDashboard Phase 2**: Extracted PriestsTab and LiveEventsTab. (DONE)
-- **Bug Fix**: Fixed React rendering crash in  caused by treating the  object as a React child. (DONE)
-- **DevoteeDashboard Phase 3**: Extracted MantrasTab, ShopTab, ProfileTab, and CalendarTab. Main  file reduced from 5948 to 1588 lines. Fixed resulting relative path and import errors. (DONE)
+**Completed work in this session**
+-  frontend refactor into smaller components (DONE, 100% test pass).
+- Backend Refactoring Phase 1: Extracted  and  routes (DONE).
+- Backend Refactoring Phase 2: Extracted  and  routes (DONE).
+- Backend Refactoring Phase 3: Extracted  and  routes (DONE).
+- Backend Refactoring Phase 4: Created  and  routes and included them in  (DONE).
 
-**Earlier issues found/mentioned but not fixed**:
+**Earlier issues found/mentioned but not fixed**
 *(None)*
 
-**Known issue recurrence from previous fork**:
-  - **Issue recurrence in previous fork**: Missing imports and module path issues when extracting large React components to subfolders.
-  - **Recurrence count**: 3 (Occurred heavily during DevoteeDashboard Phase 3).
-  - **Status**: RESOLVED for previous tabs, but HIGH RISK for the pending  refactor. *Note for next agent: Carefully check 100ms hooks (, ) and  imports when splitting ClassesTab.*
+**Known issue recurrence from previous fork**
+  - **Issue recurrence in previous fork**:  failing when trying to replace/delete hundreds of lines of code at once due to verbatim matching constraints.
+  - **Recurrence count**: 2 (in current session during Phase 5).
+  - **Status**: IN PROGRESS
+  - **Note**: Next agent must delete duplicate routes in  in smaller, logical chunks (e.g., one route at a time) to avoid this tool failure.
 
-**Code Architecture**:
+**Code Architecture**
 
 
-**Key Technical Concepts**:
+**Key Technical Concepts**
 - React, FastAPI, MongoDB Atlas.
-- **100ms SDK**: Used heavily in the  and  components for live video logic.
+- **100ms SDK**: Live video logic.
+- **FastAPI APIRouter**: Extensive use of routing modules to break down the monolithic server.
 
-**key DB schema**:
+**key DB schema**
   - : Core user collection.
 
-**changes in tech stack**:
+**changes in tech stack**
 *(None)*
 
-**All files of reference**:
--  (Needs splitting)
--  (Created, needs code)
--  (Created, needs code)
--  (Must be updated to export new components)
+**All files of reference** 
+-  (Needs duplicates removed)
+-  (Created in this session)
+-  (Created in this session)
+-  (Created in this session)
+-  (Created in this session)
 
-**Areas that need refactoring**:
--  (>6000 lines - this is the next major P1 task after Devotee frontend is finished).
+**Areas that need refactoring**
+- : Currently at 4650 lines. Needs duplicate Panchang and Devotional routes deleted. Needs Live Stream/Classes routes extracted to a new file.
 
-**key api endpoints**:
-*(Standard backend endpoints intact)*
+**key api endpoints**
+- , , , ,  (Now routed through modular files).
 
-**Critical Info for New Agent**:
-- **Broken State Warning**: The  extraction is incomplete. Do not attempt to start backend refactoring or new features until you have finished splitting , updated its imports, and successfully compiled the frontend.
-- When extracting code into , ensure all  related imports () and UI icons are moved with it, as missing imports have been a recurring issue in this refactor.
+**Critical Info for New Agent**
+- **IMPORTANT BACKEND STATE**:  currently has the  and  included and working perfectly. However, the *original* route definitions for these endpoints are *still* sitting inside  (around lines 1030-1850). You must carefully delete these old routes without breaking the server.
+- **WebSocket Warning**: While extracting REST routes, note that some WebSocket endpoints (like  or ) were intentionally left in  because they require the  decorator rather than . Be careful not to delete them.
 
-**documents and test reports created in this job**:
--  (Updated with refactoring progress)
--  (AdminDashboard test report)
+**documents and test reports created in this job**
+- 
+-  (Frontend test)
+-  (Phase 1 backend test)
+-  (Phase 2 backend test)
+-  (Phase 3 backend test)
+-  (Phase 4 backend test)
 
-**Last 10 User Messages and any pending HUMAN messages**:
-1. *(User)* please use ask_human tool and confirm your plan now.
-2. *(User)* yes continue as planned start with admin
-3. *(User)* lets do devotee now
-4. *(User)* P1: DevoteeDashboard Phase 2 - Extract remaining tabs (MantrasTab, PriestsTab, ShopTab, ProfileTab, ClassesTab ~935 lines, LiveEventsTab)
-5. *(User)* 🔴 P1: Continue DevoteeDashboard Phase 3 - Extract MantrasTab, ShopTab, ProfileTab, ClassesTab (~933 lines)
-6. *(User)* 🔴 P1: Split ClassesTab.js (1277 lines) into smaller sub-components -> *(Agent started this but context ended).*
+**Last 10 User Messages and any pending HUMAN messages**
+1. *(User)* Should I proceed with P0 (ClassesTab refactoring) first...
+2. *(User)* Yes, complete ClassesTab refactoring first and then Continue with backend server.py refactoring (P1)
+3. *(User)* option b and also remove if any duplicates
+4. *(User)* P1: Continue backend server.py refactoring (5932 lines → target <3000): Extract Orders/Checkout routes (~200 lines)...
+5. *(User)* P1: Continue backend refactoring (5293 → target <3000 lines) Extract Orders/Checkout routes (~400 lines)...
+6. *(User)* P1: Continue backend refactoring (4646 → target <3000 lines) Extract Live Streams/Classes routes...
+7. *(User)* P1: Phase 5 - Remove duplicate routes from server.py Remove ~800 lines of duplicates to reach <3000 lines target
+8. *(User)* finish what you started *(Agent was trying to delete duplicates but ran out of context)*.
 
-**Project Health Check**:
-- Backend: Running normally.
-- Frontend: **Potentially Broken/Unstable** ( is mid-refactor).
+**Project Health Check:**
+- Backend: Running & Healthy (but contains redundant code blocks).
+- Frontend: Running & Healthy.
 
-**3rd Party Integrations**:
+**3rd Party Integrations** 
 - Firebase Auth / Hosting — requires User API Key
 - MongoDB Atlas — requires User API Key
 - 100ms (Video Calling) — requires User API Key
+- Stripe — requires User API Key
 
-**Testing status**:
-- Testing agent used after significant changes: YES (For Admin Dashboard).
+**Testing status**
+- Testing agent used after significant changes: YES (iterations 23, 24, 25, 26, 27)
 - Troubleshoot agent used after agent stuck in loop: NO
-- Test files created: None this session.
-- Known regressions: Pending imports in Devotee Dashboard due to mid-refactor state.
+- Test files created: None
+- Known regressions: None, all test passes were 100%.
 
-**Credentials to test flow**:
-Standard test user credentials applied in code. Authentication flows locally bypass Firebase via bcrypt matching. Test Devotee user created ().
+**Credentials to test flow:**
+Standard test Devotee user created ().
 
-**What agent forgot to execute**:
-The agent did not forget anything; the context window maxed out right after executing  for  and . The next agent must pick up exactly from here to migrate the code from  into these new files.</analysis>
+**What agent forgot to execute**
+The agent ran out of context space while trying to figure out the exact line boundaries to delete the duplicate Panchang/Festival routes in . Pick up exactly from Phase 5 of the backend refactoring.</analysis>
