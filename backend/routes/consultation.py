@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from bson import ObjectId
 
-from database import astrologers_collection, users_collection, festivals_collection, temples_collection, bookings_collection, service_reviews_collection
+from database import astrologers_collection, users_collection, festivals_collection, temples_collection, bookings_collection, service_reviews_collection, puja_types_collection
 from auth import get_current_user, require_role
 from video_consultation import (
     get_system_settings, update_system_settings,
@@ -23,6 +23,25 @@ from system_config import (
 )
 
 router = APIRouter(prefix="/api", tags=["Consultation"])
+
+
+# ===================== PUBLIC PUJA TYPES =====================
+
+@router.get("/puja-types")
+async def get_public_puja_types():
+    """Get all puja types - public endpoint"""
+    cursor = puja_types_collection.find({}).sort("name", 1)
+    puja_types = []
+    async for puja in cursor:
+        puja_types.append({
+            "id": str(puja["_id"]),
+            "name": puja.get("name"),
+            "description": puja.get("description"),
+            "duration": puja.get("duration"),
+            "base_price": puja.get("base_price", 0),
+            "category": puja.get("category", "general")
+        })
+    return {"puja_types": puja_types}
 
 
 # ===================== ASTROLOGER ROUTES =====================
