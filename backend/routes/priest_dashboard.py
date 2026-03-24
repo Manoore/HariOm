@@ -252,7 +252,15 @@ async def get_priest_analytics(user: dict = Depends(require_role([UserRole.PRIES
     # This month's earnings
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    this_month_bookings = [b for b in all_bookings if b["status"] == "completed" and b.get("created_at", now) >= month_start]
+    this_month_bookings = []
+    for b in all_bookings:
+        if b["status"] == "completed":
+            created = b.get("created_at")
+            if created is not None:
+                if created.tzinfo is None:
+                    created = created.replace(tzinfo=timezone.utc)
+                if created >= month_start:
+                    this_month_bookings.append(b)
     monthly_earnings = sum(b.get("price", 0) for b in this_month_bookings)
     
     # Get classes stats

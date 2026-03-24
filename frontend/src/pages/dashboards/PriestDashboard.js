@@ -1572,8 +1572,8 @@ function ProfileTab({ profile, user, onRefresh }) {
               <option value="">-- Select Math/Mutt --</option>
               {Object.entries(mathMuttCategories).map(([category, mutts]) => (
                 <optgroup key={category} label={category}>
-                  {mutts.map(mutt => (
-                    <option key={mutt.id} value={mutt.name}>{mutt.name}</option>
+                  {mutts.map((mutt, idx) => (
+                    <option key={idx} value={typeof mutt === 'string' ? mutt : mutt.name}>{typeof mutt === 'string' ? mutt : mutt.name}</option>
                   ))}
                 </optgroup>
               ))}
