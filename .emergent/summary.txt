@@ -4,37 +4,49 @@ Build Divine App, a digital platform connecting users with Hindu spiritual servi
 - Core Functions: Priest booking, spiritual learning, astrology services, scriptures library.
 - Marketplace: Pooja Store for spiritual items.
 - Media & Content: Video/Audio libraries for devotional content.
-- Consultations & Classes: Live 100ms-powered video/voice calling with screen sharing for consultations, and 100ms integration for paid Vedic classes.
-- Internationalization (i18n): Multi-language translation of UI and dynamic content.
+- Consultations & Classes: Live 100ms-powered video/voice calling with screen sharing.
+- Admin controls for user signups, user creation, and role management.
 
 **User's preferred language**: English
 *(INSTRUCT next agent to respond in English only)*
 
 **what currently exists?** 
-A full-stack application (React + FastAPI + MongoDB Atlas). In this session, the agent successfully completed the frontend refactoring of . The primary focus then shifted to heavily refactoring the monolithic backend  (originally 6429 lines) into modular routes. Phases 1 through 4 of the backend refactoring successfully created and attached modular routers (, , , , , , , ).  is currently at 4650 lines. The agent was in Phase 5—attempting to safely delete the duplicate Devotional, Scripture, and Panchang routes from  to reach the <3000 lines goal—when the context window ended.
+A full-stack application (React + FastAPI + MongoDB). In this highly productive session, the monolithic  was successfully reduced from 4650 lines down to **541 lines**. All routes were successfully extracted into 30 modular files inside . Additionally, the agent implemented an Admin control feature to dynamically show/hide the Astrologer and Shop Owner roles from the public signup dropdown, alongside a Create User feature in the Admin dashboard.
 
 **Last working item**:
-- **Last item agent was working**: Phase 5 of backend refactoring - Removing duplicate Panchang/Festival (lines ~1030-1374) and Devotional/Scriptures routes from . The modular routers for these are already created and attached, but the old code still lives inside .
+- **Last item agent was working**: Fixing a React frontend build failure. The agent modified  to fetch and use  to conditionally render role dropdowns. However, running  failed due to an ESLint error:  around line 1644.
 - **Status**: IN PROGRESS
-- **Agent Testing Done**: N (for the deletion phase; the creation phase was fully tested)
-- **Which testing method agent to use?** backend testing agent + curl to verify routes still work after removing the duplicate code blocks.
+- **Agent Testing Done**: N
+- **Which testing method agent to use?** Frontend testing agent (to verify  works and builds successfully) OR manual testing via  ().
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-  - **Issue 1: Delete duplicate routes in server.py (P0)**
-     - **Attempted fixes**: Agent tried a massive  to delete lines 1030-1374 (Panchang section), but it failed because  struggles with exact verbatim matches on huge multi-hundred-line chunks.
+  - **Issue 1: ESLint Build Error in AuthScreen.js (P0)**
+     - **Attempted fixes**: The agent successfully added the  state to  and modified the JSX to use it, but ran out of context right as the build failed.
      - **Next debug checklist**: 
-        - Check .
-        - Use smaller, 50-100 line chunks in  to delete the old Panchang, Devotional, and Scripture route sections.
-        - Ensure you do NOT delete the  endpoint or websocket managers that aren't in the modular routers.
-     - **Why fix this issue and what will be achieved with the fix?** Will drastically reduce  size toward the <3000 line target and remove redundant code that could cause routing conflicts or confusion.
+        - Check  around line 1644.
+        -  is likely being referenced inside a nested component, modal, or function where it is out of scope, or it wasn't passed as a prop if abstracted. Fix the scoping issue.
+        - Run 
+> divine-app@1.0.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Failed to compile.
+
+[eslint] 
+src/pages/AuthScreen.js
+  Line 1644:18:  'signupSettings' is not defined  no-undef
+  Line 1647:18:  'signupSettings' is not defined  no-undef
+  Line 1650:18:  'signupSettings' is not defined  no-undef
+
+Search for the keywords to learn more about each error. to verify the fix.
+     - **Why fix this issue and what will be achieved with the fix?** The user is currently completely blocked from deploying the frontend to Firebase because the production build fails.
      - **Status**: IN PROGRESS
-     - **Is recurring issue?** N (but large  failures are common)
-     - **Should Test frontend/backend/both after fix?** Backend
-     - **Blocked on other issue**: None
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** Frontend
 
   - **Issue 2: GitHub Actions APK build fails intermittently (P1)**
-     - **Attempted fixes**: None in this session.
+     - **Attempted fixes**: None in this session (carried over from previous).
      - **Next debug checklist**: Review GitHub Actions logs for the Build APK with Gradle step.
      - **Why fix this issue and what will be achieved with the fix?** Enables reliable mobile app builds.
      - **Status**: NOT STARTED
@@ -42,20 +54,10 @@ A full-stack application (React + FastAPI + MongoDB Atlas). In this session, the
      - **Should Test frontend/backend/both after fix?** NA
 
 **In progress Task List**:
-  - **Task 1: Complete Phase 5 Backend Refactoring**
-     - **Where to resume**: . Delete the duplicate Panchang/Festival routes and Devotional Content routes.
-     - **What will be achieved with this?** Clean modular backend architecture.
-     - **Status**: IN PROGRESS
-     - **Should Test frontend/backend/both after fix?** Backend
-     - **Blocked on something**: None
-
-  - **Task 2: Extract Live Streams/Classes routes**
-     - **Where to resume**: . These routes (~500 lines) were part of the P1 requirement but haven't been moved into a modular router yet. 
-     - **What will be achieved with this?** Pushes  below the 3000-line target.
-     - **Status**: NOT STARTED
-     - **Should Test frontend/backend/both after fix?** Backend
+*(None - Last task is tracked as an issue above)*
 
 **Upcoming and Future Tasks**
+- (P1) Enable Astrologer & Shop Owner signups for multi-vendor phase (currently disabled per user request, managed via Admin toggle).
 - (P2) Implement Stripe Connect Integration for automatic payment splitting between the platform and vendors.
 - (P2) Add push notifications / email reminders for Vedic classes.
 - (P2) Phase 2 of Live Streams: Implement 100ms HLS live streaming for in-app broadcasts.
@@ -63,73 +65,77 @@ A full-stack application (React + FastAPI + MongoDB Atlas). In this session, the
 - (P3) Provider Onboarding Guide.
 
 **Completed work in this session**
--  frontend refactor into smaller components (DONE, 100% test pass).
-- Backend Refactoring Phase 1: Extracted  and  routes (DONE).
-- Backend Refactoring Phase 2: Extracted  and  routes (DONE).
-- Backend Refactoring Phase 3: Extracted  and  routes (DONE).
-- Backend Refactoring Phase 4: Created  and  routes and included them in  (DONE).
+- Phase 5 Backend Refactoring: Deleted duplicate routes (DONE).
+- Extracted 10+ additional route modules to reduce  from 4650 to 541 lines (, , , , , , , , etc.) (DONE).
+- Fixed missing 404 endpoints post-refactoring (, ) (DONE).
+- Built Admin Settings Tab () to toggle Priest/Astrologer/Shop Owner signups (DONE).
+- Added backend admin routes for  and  (DONE).
+- Added Admin Create User functionality in  (DONE).
 
 **Earlier issues found/mentioned but not fixed**
 *(None)*
 
 **Known issue recurrence from previous fork**
-  - **Issue recurrence in previous fork**:  failing when trying to replace/delete hundreds of lines of code at once due to verbatim matching constraints.
-  - **Recurrence count**: 2 (in current session during Phase 5).
-  - **Status**: IN PROGRESS
-  - **Note**: Next agent must delete duplicate routes in  in smaller, logical chunks (e.g., one route at a time) to avoid this tool failure.
+- **Issue recurrence in previous fork**: Confusion around Firebase deployments vs Emergent previews. The user handles their own local deployments via CLI ( and ). 
+- **Recurrence count**: Multiple instances of the user deploying old code or having the wrong  variables pointing to Emergent previews instead of Cloud Run.
+- **Status**: RESOLVED (but requires vigilance).
+- **Note**: Next agent must ensure that any frontend  changes are clearly communicated to the user, as  is in  and must be updated on the user's local machine manually.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 - React, FastAPI, MongoDB Atlas.
-- **100ms SDK**: Live video logic.
-- **FastAPI APIRouter**: Extensive use of routing modules to break down the monolithic server.
+- Firebase Hosting (Frontend), Google Cloud Run (Backend).
+- **System Configs in DB**: Used  collection to store global toggle states for the app.
 
 **key DB schema**
   - : Core user collection.
+  - : Holds 
 
 **changes in tech stack**
 *(None)*
 
 **All files of reference** 
--  (Needs duplicates removed)
--  (Created in this session)
--  (Created in this session)
--  (Created in this session)
--  (Created in this session)
+-  (Needs immediate fix)
+-  (Core app entry)
+-  (Admin toggle UI)
+-  (Admin user creation UI)
+-  (Admin API logic)
 
 **Areas that need refactoring**
-- : Currently at 4650 lines. Needs duplicate Panchang and Devotional routes deleted. Needs Live Stream/Classes routes extracted to a new file.
+*(Backend refactoring is essentially complete. Great job!)*
 
 **key api endpoints**
-- , , , ,  (Now routed through modular files).
+-  (GET/PUT)
+-  (POST)
+-  (GET)
 
 **Critical Info for New Agent**
-- **IMPORTANT BACKEND STATE**:  currently has the  and  included and working perfectly. However, the *original* route definitions for these endpoints are *still* sitting inside  (around lines 1030-1850). You must carefully delete these old routes without breaking the server.
-- **WebSocket Warning**: While extracting REST routes, note that some WebSocket endpoints (like  or ) were intentionally left in  because they require the  decorator rather than . Be careful not to delete them.
+- **The Immediate Blocker**: The user is trying to deploy their frontend using , but it is failing due to an ESLint  error for  in . This is the top priority to fix so they can deploy.
+- **Deployment context**: The user has their own private GitHub repo. They push code from Emergent to GitHub, pull it locally, and deploy to Google Cloud Run and Firebase. Always remind them to run  after pulling.
+- **Two Signup Screens**: The app uses  for web and  for mobile views. Both need to be kept in sync regarding signup logic.
 
 **documents and test reports created in this job**
 - 
--  (Frontend test)
--  (Phase 1 backend test)
--  (Phase 2 backend test)
--  (Phase 3 backend test)
--  (Phase 4 backend test)
+-  (Phase 5 refactoring test)
+-  (Final backend extraction tests - 100% pass)
 
-**Last 10 User Messages and any pending HUMAN messages**
-1. *(User)* Should I proceed with P0 (ClassesTab refactoring) first...
-2. *(User)* Yes, complete ClassesTab refactoring first and then Continue with backend server.py refactoring (P1)
-3. *(User)* option b and also remove if any duplicates
-4. *(User)* P1: Continue backend server.py refactoring (5932 lines → target <3000): Extract Orders/Checkout routes (~200 lines)...
-5. *(User)* P1: Continue backend refactoring (5293 → target <3000 lines) Extract Orders/Checkout routes (~400 lines)...
-6. *(User)* P1: Continue backend refactoring (4646 → target <3000 lines) Extract Live Streams/Classes routes...
-7. *(User)* P1: Phase 5 - Remove duplicate routes from server.py Remove ~800 lines of duplicates to reach <3000 lines target
-8. *(User)* finish what you started *(Agent was trying to delete duplicates but ran out of context)*.
+**Last 10 User Messages and any pending HUMAN messages** 
+1. *(User)* where do i see dropdown values in admin ?I dont see a toggle to hide the dropdowns
+2. *(Agent)* Creates  and updates Admin API.
+3. *(User)* continue
+4. *(Agent)* Wires up the frontend Admin dashboard to use Settings tab.
+5. *(User)* I still see all the value profiles in dropdown...
+6. *(Agent)* Identifies  issue pointing to preview URL.
+7. *(User)* I did redeployed few times now and did hard refresh and opened in incognito
+8. *(User)* I already have correct backend url in the env
+9. *(User)* Still no luck can you verify after refactoring are you calling the right backend to show the values ?
+10. *(User)* PS C:\Users... npm run build -> Failed to compile. src\pages\AuthScreen.js Line 1644:18: 'signupSettings' is not defined no-undef.
 
 **Project Health Check:**
-- Backend: Running & Healthy (but contains redundant code blocks).
-- Frontend: Running & Healthy.
+- Backend: Running & Healthy (Massively improved architecture).
+- Frontend: **Broken** (Build failing due to ESLint error in ).
 
 **3rd Party Integrations** 
 - Firebase Auth / Hosting — requires User API Key
@@ -138,13 +144,13 @@ A full-stack application (React + FastAPI + MongoDB Atlas). In this session, the
 - Stripe — requires User API Key
 
 **Testing status**
-- Testing agent used after significant changes: YES (iterations 23, 24, 25, 26, 27)
+- Testing agent used after significant changes: YES (iteration 28, 29)
 - Troubleshoot agent used after agent stuck in loop: NO
 - Test files created: None
-- Known regressions: None, all test passes were 100%.
+- Known regressions:  compilation failure.
 
 **Credentials to test flow:**
-Standard test Devotee user created ().
+Standard test Admin / Devotee roles are managed via the DB.
 
 **What agent forgot to execute**
-The agent ran out of context space while trying to figure out the exact line boundaries to delete the duplicate Panchang/Festival routes in . Pick up exactly from Phase 5 of the backend refactoring.</analysis>
+The agent successfully updated  with the dynamic signup logic but forgot that  was out of scope when applying the exact same logic to the massive  file (1800+ lines). The agent ran out of context before fixing the scoping issue.</analysis>
