@@ -743,11 +743,24 @@ async def get_priest_earnings(user: dict = Depends(require_role([UserRole.PRIEST
     # This month earnings
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    this_month_bookings = [b for b in completed_bookings if b.get("created_at", now) >= month_start]
+    this_month_bookings = []
+    for b in completed_bookings:
+        created = b.get("created_at")
+        if created:
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            if created >= month_start:
+                this_month_bookings.append(b)
     monthly_earnings = sum(b.get("price", 0) for b in this_month_bookings)
     
     # Recent transactions
-    recent = sorted(completed_bookings, key=lambda x: x.get("created_at", now), reverse=True)[:10]
+    def safe_date(b):
+        d = b.get("created_at")
+        if d and d.tzinfo is None:
+            d = d.replace(tzinfo=timezone.utc)
+        return d or now
+    
+    recent = sorted(completed_bookings, key=safe_date, reverse=True)[:10]
     transactions = []
     for b in recent:
         transactions.append({
