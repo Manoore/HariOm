@@ -105,6 +105,10 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 ### In Progress 🔄
 - None currently active
 
+12. **AuthScreen.js ESLint Build Fix** (Feb 2026)
+    - Fixed `signupSettings` scoping issue — passed as prop from `AuthScreen` to `RegisterScreen`
+    - `npm run build` now completes successfully
+
 ### Pending Features 📋
 - **P1**: GitHub Actions APK build fixes
 - **P2**: Stripe Connect for vendor payment splitting
@@ -153,4 +157,4 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Uses `--legacy-peer-deps` for npm compatibility
 
 ## Last Updated
-March 22, 2026 - Backend server.py Phase 4 complete (8 modular route files created, ~3028 lines of routes extracted)
+Feb 2026 - Fixed AuthScreen.js ESLint build error (signupSettings prop scoping)

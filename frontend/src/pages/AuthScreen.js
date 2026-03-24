@@ -976,6 +976,7 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
             setSelectedCountry={setSelectedCountry}
             showCountryDropdown={showCountryDropdown}
             setShowCountryDropdown={setShowCountryDropdown}
+            signupSettings={signupSettings}
           />
         )}
       </AnimatePresence>
@@ -1449,7 +1450,8 @@ function RegisterScreen({
   data, setData, onSubmit, loading, showPassword, setShowPassword, 
   onBack, onSwitch, onGoogleSignIn, googleLoading,
   authMethod, setAuthMethod, otpSent, otp, setOtp, otpLoading, onSendOTP, onVerifyOTP, resetPhoneAuth,
-  selectedCountry, setSelectedCountry, showCountryDropdown, setShowCountryDropdown
+  selectedCountry, setSelectedCountry, showCountryDropdown, setShowCountryDropdown,
+  signupSettings
 }) {
   const [showRoleSelect, setShowRoleSelect] = useState(false);
   
