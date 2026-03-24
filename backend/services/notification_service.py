@@ -24,9 +24,39 @@ logger = logging.getLogger(__name__)
 resend.api_key = os.environ.get("RESEND_API_KEY")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
 
-# FCM Configuration
-FCM_SERVER_KEY = os.environ.get("FCM_SERVER_KEY")
-FCM_API_URL = "https://fcm.googleapis.com/fcm/send"
+# Initialize Firebase Admin SDK for FCM V1 API
+import firebase_admin
+from firebase_admin import credentials, messaging as fcm_messaging
+
+def _init_firebase_admin():
+    """Initialize Firebase Admin SDK using service account JSON"""
+    if firebase_admin._apps:
+        return True
+    
+    sa_path = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")
+    sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
+    
+    try:
+        if sa_path and os.path.exists(sa_path):
+            cred = credentials.Certificate(sa_path)
+            firebase_admin.initialize_app(cred)
+            logger.info("Firebase Admin initialized from service account file")
+            return True
+        elif sa_json:
+            import json
+            sa_dict = json.loads(sa_json)
+            cred = credentials.Certificate(sa_dict)
+            firebase_admin.initialize_app(cred)
+            logger.info("Firebase Admin initialized from JSON env variable")
+            return True
+        else:
+            logger.warning("No Firebase service account configured. Push notifications will be disabled.")
+            return False
+    except Exception as e:
+        logger.error(f"Failed to initialize Firebase Admin: {e}")
+        return False
+
+FIREBASE_ADMIN_READY = _init_firebase_admin()
 
 
 class NotificationType(str, Enum):
@@ -310,10 +340,10 @@ async def store_inapp_notification(user_id: str, notification_type: Notification
 
 
 async def send_push_notification(user_id: str, title: str, body: str, data: dict = None) -> dict:
-    """Send FCM push notification to all registered devices for a user"""
-    if not FCM_SERVER_KEY:
-        logger.warning("FCM_SERVER_KEY not configured, skipping push notification")
-        return {"status": "skipped", "reason": "FCM server key not configured"}
+    """Send FCM push notification to all registered devices for a user using V1 API"""
+    if not FIREBASE_ADMIN_READY:
+        logger.warning("Firebase Admin not initialized, skipping push notification")
+        return {"status": "skipped", "reason": "Firebase Admin not configured"}
     
     try:
         # Get all active tokens for the user
@@ -323,38 +353,53 @@ async def send_push_notification(user_id: str, title: str, body: str, data: dict
         if not tokens:
             return {"status": "skipped", "reason": "No push tokens registered"}
         
-        headers = {
-            "Authorization": f"key={FCM_SERVER_KEY}",
-            "Content-Type": "application/json"
-        }
+        # Build the message
+        notification = fcm_messaging.Notification(
+            title=title,
+            body=body,
+            image=None
+        )
         
-        payload = {
-            "registration_ids": tokens,
-            "notification": {
-                "title": title,
-                "body": body,
-                "icon": "/temple-logo.png",
-                "click_action": os.environ.get("FRONTEND_URL", "https://divine-104d4.web.app"),
-            },
-            "data": data or {},
-            "priority": "high"
-        }
+        web_push = fcm_messaging.WebpushConfig(
+            notification=fcm_messaging.WebpushNotification(
+                title=title,
+                body=body,
+                icon="/temple-logo.png",
+            ),
+            fcm_options=fcm_messaging.WebpushFCMOptions(
+                link=os.environ.get("FRONTEND_URL", "https://divine-104d4.web.app")
+            )
+        )
         
-        async with httpx.AsyncClient() as client:
-            response = await client.post(FCM_API_URL, json=payload, headers=headers, timeout=10)
-            result = response.json()
+        str_data = {k: str(v) for k, v in (data or {}).items()}
         
-        # Handle invalid tokens
-        if result.get("results"):
-            for i, res in enumerate(result["results"]):
-                if res.get("error") in ["InvalidRegistration", "NotRegistered"]:
-                    await fcm_tokens_collection.update_one(
-                        {"token": tokens[i]},
-                        {"$set": {"active": False}}
-                    )
+        # Send to each token
+        success_count = 0
+        failure_count = 0
         
-        logger.info(f"Push sent to {len(tokens)} devices for user {user_id}: success={result.get('success')}")
-        return {"status": "success", "sent_to": len(tokens), "fcm_result": result}
+        for token in tokens:
+            try:
+                message = fcm_messaging.Message(
+                    notification=notification,
+                    webpush=web_push,
+                    data=str_data,
+                    token=token,
+                )
+                fcm_messaging.send(message)
+                success_count += 1
+            except fcm_messaging.UnregisteredError:
+                # Token is invalid, deactivate it
+                await fcm_tokens_collection.update_one(
+                    {"token": token},
+                    {"$set": {"active": False}}
+                )
+                failure_count += 1
+            except Exception as e:
+                logger.error(f"Failed to send to token {token[:20]}...: {e}")
+                failure_count += 1
+        
+        logger.info(f"Push sent to {success_count}/{len(tokens)} devices for user {user_id}")
+        return {"status": "success", "sent": success_count, "failed": failure_count}
     except Exception as e:
         logger.error(f"Failed to send push notification: {str(e)}")
         return {"status": "failed", "error": str(e)}
