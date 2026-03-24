@@ -491,7 +491,6 @@ export default function MobileApp() {
 
   // Memoize dashboard component based on role
   const DashboardComponent = useMemo(() => {
-    if (!userRole) return null;
     switch (userRole) {
       case 'admin':
       case 'super_admin':
@@ -527,7 +526,7 @@ export default function MobileApp() {
         return <AuthScreen key="auth" />;
       }
 
-      return DashboardComponent ? <DashboardComponent key={`dashboard-${userRole}`} /> : null;
+      return <DashboardComponent key={`dashboard-${userRole}`} />;
     }
 
     // Desktop/Web flow - Always show landing page first unless user explicitly wants dashboard
