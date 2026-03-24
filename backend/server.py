@@ -131,6 +131,54 @@ app.include_router(consultation_router)
 app.include_router(archive_router)
 app.include_router(posts_router)
 
+# ===================== MATH/MUTT API =====================
+@app.get("/api/math-mutt")
+async def get_math_mutt_options():
+    """Get list of Math/Mutt affiliations grouped by category"""
+    mutts = []
+    async for m in math_mutt_collection.find({}, {"_id": 0}):
+        mutts.append(m)
+    
+    if not mutts:
+        # Seed default data
+        default_mutts = [
+            {"name": "Sringeri Sharada Peetham", "category": "Shankaracharya Peetham", "location": "Sringeri, Karnataka"},
+            {"name": "Kanchi Kamakoti Peetham", "category": "Shankaracharya Peetham", "location": "Kanchipuram, Tamil Nadu"},
+            {"name": "Dwarka Sharda Peetham", "category": "Shankaracharya Peetham", "location": "Dwarka, Gujarat"},
+            {"name": "Jyotirmath Peetham", "category": "Shankaracharya Peetham", "location": "Joshimath, Uttarakhand"},
+            {"name": "Govardhan Math", "category": "Shankaracharya Peetham", "location": "Puri, Odisha"},
+            {"name": "Udupi Sri Krishna Matha", "category": "Vaishnavite Math", "location": "Udupi, Karnataka"},
+            {"name": "Pejawar Adhokshaja Matha", "category": "Vaishnavite Math", "location": "Udupi, Karnataka"},
+            {"name": "Palimar Matha", "category": "Vaishnavite Math", "location": "Udupi, Karnataka"},
+            {"name": "Adamaru Matha", "category": "Vaishnavite Math", "location": "Udupi, Karnataka"},
+            {"name": "Puttige Matha", "category": "Vaishnavite Math", "location": "Udupi, Karnataka"},
+            {"name": "Sodhe Matha", "category": "Vaishnavite Math", "location": "Udupi, Karnataka"},
+            {"name": "Kaniyooru Matha", "category": "Vaishnavite Math", "location": "Udupi, Karnataka"},
+            {"name": "Shiroor Matha", "category": "Vaishnavite Math", "location": "Udupi, Karnataka"},
+            {"name": "Raghavendra Swamy Matha", "category": "Madhva Math", "location": "Mantralayam, Andhra Pradesh"},
+            {"name": "Uttaradi Math", "category": "Madhva Math", "location": "Multiple locations"},
+            {"name": "Vyasaraja Matha", "category": "Madhva Math", "location": "Multiple locations"},
+            {"name": "Sosale Vyasaraja Matha", "category": "Madhva Math", "location": "Sosale, Karnataka"},
+            {"name": "Swaminarayan Sampraday", "category": "Swaminarayan", "location": "Ahmedabad, Gujarat"},
+            {"name": "BAPS Swaminarayan Sanstha", "category": "Swaminarayan", "location": "Ahmedabad, Gujarat"},
+            {"name": "Sri Ramakrishna Math", "category": "Other", "location": "Belur Math, West Bengal"},
+            {"name": "Chinmaya Mission", "category": "Other", "location": "Multiple locations"},
+            {"name": "Arsha Vidya Gurukulam", "category": "Other", "location": "Coimbatore, Tamil Nadu"},
+            {"name": "ISKCON", "category": "Vaishnavite Math", "location": "Multiple locations"},
+            {"name": "Other", "category": "Other", "location": ""},
+        ]
+        await math_mutt_collection.insert_many(default_mutts)
+        mutts = default_mutts
+    
+    categories = {}
+    for m in mutts:
+        cat = m.get("category", "Other")
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(m["name"])
+    
+    return {"math_mutts": [m["name"] for m in mutts], "categories": categories}
+
 # Upload routes moved to routes/uploads.py
 
 # ===================== SEED DATA =====================

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { Bell, Check, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
@@ -31,10 +32,14 @@ function NotificationBell() {
     return () => clearInterval(interval);
   }, []);
 
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef(null);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
+          buttonRef.current && !buttonRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
@@ -65,6 +70,13 @@ function NotificationBell() {
   };
 
   const handleOpen = () => {
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 8,
+        left: Math.max(8, rect.right - 320),
+      });
+    }
     setIsOpen(!isOpen);
     if (!isOpen) {
       fetchNotifications();
@@ -119,9 +131,10 @@ function NotificationBell() {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       {/* Bell Button */}
       <button
+        ref={buttonRef}
         onClick={handleOpen}
         className="relative p-2 rounded-full hover:bg-orange-50 transition-colors"
         data-testid="notification-bell"
@@ -134,15 +147,18 @@ function NotificationBell() {
         )}
       </button>
 
-      {/* Dropdown */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-orange-100 z-50 overflow-hidden"
-          >
+      {/* Dropdown via Portal */}
+      {ReactDOM.createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              ref={dropdownRef}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="fixed w-80 bg-white rounded-2xl shadow-xl border border-orange-100 overflow-hidden"
+              style={{ top: dropdownPos.top, left: dropdownPos.left, zIndex: 9999 }}
+            >
             {/* Header */}
             <div className="px-4 py-3 border-b border-orange-100 flex items-center justify-between bg-gradient-to-r from-orange-50 to-amber-50">
               <h3 className="font-semibold text-gray-800">Notifications</h3>
@@ -233,8 +249,10 @@ function NotificationBell() {
             )}
           </motion.div>
         )}
-      </AnimatePresence>
-    </div>
+      </AnimatePresence>,
+      document.body
+      )}
+    </>
   );
 }
 

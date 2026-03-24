@@ -16,6 +16,27 @@ from auth import get_current_user, require_role
 
 router = APIRouter(prefix="/api", tags=["Chat"])
 
+
+def is_participant(user_id: str, participants: list) -> bool:
+    """Check if user is a participant in a chat room (supports both formats)"""
+    for p in participants:
+        if isinstance(p, dict):
+            if p.get("user_id") == user_id:
+                return True
+        elif p == user_id:
+            return True
+    return False
+
+
+def get_other_participant_id(user_id: str, participants: list) -> str:
+    """Get the other participant's user_id from a chat room"""
+    for p in participants:
+        pid = p.get("user_id") if isinstance(p, dict) else p
+        if pid != user_id:
+            return pid
+    return None
+
+
 # WebSocket connection manager
 class ConnectionManager:
     def __init__(self):
@@ -252,10 +273,10 @@ async def get_chat_room(room_id: str, user: dict = Depends(get_current_user)):
     if not room:
         raise HTTPException(status_code=404, detail="Chat room not found")
     
-    if str(user["_id"]) not in room["participants"]:
+    if not is_participant(str(user["_id"]), room["participants"]):
         raise HTTPException(status_code=403, detail="Not authorized to view this chat")
     
-    other_id = [p for p in room["participants"] if p != str(user["_id"])][0]
+    other_id = get_other_participant_id(str(user["_id"]), room["participants"])
     other_details = room.get("participant_details", {}).get(other_id, {"name": "User", "role": "unknown"})
     
     return {
@@ -280,7 +301,7 @@ async def get_chat_messages(room_id: str, skip: int = 0, limit: int = 50, user: 
     if not room:
         raise HTTPException(status_code=404, detail="Chat room not found")
     
-    if str(user["_id"]) not in room["participants"]:
+    if not is_participant(str(user["_id"]), room["participants"]):
         raise HTTPException(status_code=403, detail="Not authorized to view this chat")
     
     cursor = chat_messages_collection.find({"room_id": room_id}).sort("created_at", -1).skip(skip).limit(limit)
@@ -316,7 +337,7 @@ async def send_chat_message(room_id: str, request: Request, user: dict = Depends
     if not room:
         raise HTTPException(status_code=404, detail="Chat room not found")
     
-    if str(user["_id"]) not in room["participants"]:
+    if not is_participant(str(user["_id"]), room["participants"]):
         raise HTTPException(status_code=403, detail="Not authorized")
     
     if not room.get("is_active", True):
@@ -339,7 +360,7 @@ async def send_chat_message(room_id: str, request: Request, user: dict = Depends
     result = await chat_messages_collection.insert_one(message_data)
     
     # Update room's last message time and unread counts
-    other_participant = [p for p in room["participants"] if p != str(user["_id"])][0]
+    other_participant = get_other_participant_id(str(user["_id"]), room["participants"])
     await chat_rooms_collection.update_one(
         {"_id": ObjectId(room_id)},
         {
@@ -374,7 +395,7 @@ async def mark_messages_read(room_id: str, user: dict = Depends(get_current_user
     if not room:
         raise HTTPException(status_code=404, detail="Chat room not found")
     
-    if str(user["_id"]) not in room["participants"]:
+    if not is_participant(str(user["_id"]), room["participants"]):
         raise HTTPException(status_code=403, detail="Not authorized")
     
     await chat_messages_collection.update_many(
