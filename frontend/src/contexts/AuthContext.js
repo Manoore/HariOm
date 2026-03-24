@@ -44,8 +44,34 @@ export function AuthProvider({ children }) {
         const result = await checkGoogleRedirectResult();
         if (result && result.user) {
           console.log('Google redirect sign-in detected:', result.user.email);
-          // Reset the flag to allow processing the redirect user
           hasProcessedInitialState.current = false;
+          
+          // Retrieve pending role from before redirect
+          const pendingRole = localStorage.getItem('divine_pending_role');
+          
+          const idToken = await result.user.getIdToken();
+          localStorage.setItem('divine_token', idToken);
+          
+          try {
+            const res = await api.post('/api/auth/firebase-sync', {
+              firebase_uid: result.user.uid,
+              email: result.user.email,
+              name: result.user.displayName || result.user.email?.split('@')[0] || 'User',
+              photo_url: result.user.photoURL,
+              role: pendingRole || undefined
+            });
+            
+            if (isMounted) {
+              setFirebaseUser(result.user);
+              setUser(res.data.user);
+              localStorage.setItem('divine_user', JSON.stringify(res.data.user));
+              localStorage.removeItem('divine_pending_role');
+              hasProcessedInitialState.current = true;
+              setLoading(false);
+            }
+          } catch (syncError) {
+            console.error('Backend sync after redirect failed:', syncError);
+          }
         }
       } catch (error) {
         console.error('Error checking redirect result:', error);
@@ -175,10 +201,22 @@ export function AuthProvider({ children }) {
     try {
       console.log('Starting Google Sign-In...', selectedRole ? `with role: ${selectedRole}` : '');
       
+      // Store selected role for redirect flow (mobile)
+      if (selectedRole) {
+        localStorage.setItem('divine_pending_role', selectedRole);
+      }
+      
       const result = await firebaseGoogleSignIn();
+      
+      // On mobile, signInWithRedirect returns null — the result is handled 
+      // by checkGoogleRedirectResult after page reload
+      if (!result) {
+        console.log('Redirect flow initiated (mobile), waiting for redirect...');
+        return { user: null, redirecting: true };
+      }
+      
       console.log('Google Sign-In successful:', result.user?.email);
       
-      // Handle the sign-in directly here since we're ignoring subsequent auth state changes
       if (result.user) {
         const idToken = await result.user.getIdToken();
         localStorage.setItem('divine_token', idToken);
@@ -189,12 +227,13 @@ export function AuthProvider({ children }) {
             email: result.user.email,
             name: result.user.displayName || result.user.email?.split('@')[0] || 'User',
             photo_url: result.user.photoURL,
-            role: selectedRole // Pass role for new users
+            role: selectedRole
           });
           
           setFirebaseUser(result.user);
           setUser(res.data.user);
           localStorage.setItem('divine_user', JSON.stringify(res.data.user));
+          localStorage.removeItem('divine_pending_role');
           hasProcessedInitialState.current = true;
         } catch (syncError) {
           console.error('Backend sync failed:', syncError);
@@ -207,6 +246,7 @@ export function AuthProvider({ children }) {
           setFirebaseUser(result.user);
           setUser(basicUser);
           localStorage.setItem('divine_user', JSON.stringify(basicUser));
+          localStorage.removeItem('divine_pending_role');
           hasProcessedInitialState.current = true;
         }
       }
