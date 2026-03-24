@@ -3,256 +3,72 @@
 ## Original Problem Statement
 Build "Divine App," a digital platform connecting users with Hindu spiritual services. Features include priest booking, astrology services, a spiritual e-commerce store, devotional content (mantras, audio, video), and live video/voice consultations.
 
-## User Personas
-- **Devotee**: Primary user who books priests, consults astrologers, shops for spiritual items, accesses devotional content
-- **Priest**: Service provider offering poojas, ceremonies, and religious services
-- **Astrologer**: Provides horoscope readings and consultations via video calls
-- **Shop Owner**: Sells spiritual items through the marketplace
-- **Admin**: Platform administrator managing users, approvals, and content
+## Core Architecture
+- **Frontend**: React + Tailwind CSS + Shadcn UI
+- **Backend**: FastAPI + Python
+- **Database**: MongoDB Atlas
+- **Integrations**: Firebase (Auth/Hosting/FCM), Stripe, 100ms (Video), Google Places API, Resend (Email)
 
-## Core Features
+## User Roles
+- **Devotee** (devotee@divineapp.com / devotee123)
+- **Priest** (pandit.sharma@divineapp.com / priest123)
+- **Astrologer** (astro.joshi@divineapp.com / astro123)
+- **Shop Owner** (shop.poojamart@divineapp.com / shop123)
+- **Admin** (admin@divine.com / admin123)
 
-### Implemented ✅
-1. **Authentication System**
-   - Firebase Auth integration
-   - Local bcrypt fallback for testing
-   - Role-based dashboards (Devotee, Priest, Astrologer, Shop Owner, Admin)
+## Implemented Features
 
-2. **Priest Services**
-   - Priest profiles with specializations, languages, services
-   - Booking system with payment integration
-   - Availability management
-   - Admin approval workflow
+### Core Platform
+- Multi-role authentication (JWT + Firebase Google Auth)
+- Devotee, Priest, Astrologer, Shop Owner, Admin dashboards
+- In-app notification system + Firebase Push Notifications (FCM V1)
+- Mobile-responsive design with bottom nav + desktop sidebar
 
-3. **Astrology Services**
-   - Astrologer profiles
-   - 100ms WebRTC video consultations
-   - Wallet system for payments
+### Devotee Dashboard Tabs
+- Home, Messages, Call Astrologer, Vedic Classes, Live Events
+- Spiritual Feed, Mantras & Shlokas, Sacred Scriptures
+- Festival Calendar, Book Priests, **Temples** (NEW), Astrology, Pooja Store, Profile
 
-4. **E-Commerce (Pooja Store)**
-   - Product listings with categories
-   - Shopping cart functionality
-   - Order management
+### Temples Section (NEW - Mar 2026)
+- 268 temples across 33 Indian states, 10 deity categories
+- Data sourced from rishabhmodi03/hindu-temples GitHub repo
+- Full-text search, state/deity filters, pagination
+- Detailed temple view with tabs: Overview, History, Architecture, Visit Guide, Scriptures
+- Backend: /api/temples/list, /api/temples/states, /api/temples/deities, /api/temples/stats, /api/temples/{id}
 
-5. **Devotional Content**
-   - Video Library (YouTube embeds) - all categories working
-   - Audio Library (mantras, bhajans, aarti)
-   - Scripture Library
+### Priest Dashboard
+- Profile management with Math/Mutt affiliation dropdown (fixed)
+- Analytics dashboard (fixed datetime timezone bug)
+- Booking management, earnings tracking
 
-6. **Vedic Classes (Phase 1)**
-   - Priest class creation (Free & Paid)
-   - Automated 100ms room generation for paid classes
-   - YouTube Live embed for streams
-   - Free class green styling differentiation
+### Other Features
+- Stripe payments, E-commerce store
+- 100ms video calling for astrology consultations
+- Chat system, Panchang calendar, Scriptures library
 
-7. **UI/UX**
-   - Om icon in Devotee sidebar (Home menu)
-   - Logout button visibility fixed
-   - Multi-language support (i18n)
-
-### Completed in Latest Session ✅
-8. **Admin Dashboard Refactoring** (March 22, 2026)
-   - Reduced AdminDashboard.js from 2604 lines to 124 lines
-   - Created 15 modular component files in `/admin/components/`
-   - All components under 500 lines (largest: AudioLibraryTab at 390 lines)
-   - Components: AdminSidebar, OverviewTab, UsersTab, PriestsTab, ProductsTab, BookingsTab, VideoLibraryTab, ApprovalsTab, PujaTypesTab, AudioLibraryTab, FeedbackTab, ProfileTab, AdminManagementTab, shared utilities
-
-9. **DevoteeDashboard Refactoring Complete** (March 22, 2026)
-   - Reduced DevoteeDashboard.js from 5948 lines to 1588 lines (73% reduction!)
-   - Created 14 modular component files in `/devotee/components/`:
-     - shared.js (93 lines) - Icons, useIsDesktop hook
-     - MobileHeader.js (23 lines)
-     - Navigation.js (202 lines) - Sidebar, BottomNav
-     - FeedTab.js (317 lines) - PostCard, FeedTab
-     - ConsultationTab.js (96 lines)
-     - HomeTab.js (421 lines)
-     - ReviewModal.js (100 lines)
-     - PriestsTab.js (307 lines)
-     - LiveEventsTab.js (326 lines)
-     - CalendarTab.js (306 lines)
-     - ShopTab.js (345 lines)
-     - ProfileTab.js (429 lines)
-     - ClassesTab.js (1008 lines) - main component with ClassRequestForm, ClassCard
-     - ClassVideoRoom.js (318 lines) - 100ms video room component
-     - TestimonialSection.js (123 lines) - testimonial form
-     - index.js (20 lines)
-   - Fixed bugs: PriestsTab location object rendering, import path corrections
-   - Total lines in components: ~4500 lines
-
-10. **Backend server.py Refactoring Phase 1-4** (March 22, 2026)
-    - **Phase 1**: Extracted Shop (11 routes) + Cart (5 routes) - 497 lines removed
-    - **Phase 2**: Extracted Chat (8 routes) + Payments (5 routes) - 639 lines removed
-    - **Phase 3**: Extracted Orders (10 routes) + Astrology (15 routes) - 647 lines removed
-    - **Phase 4**: Created Devotional (20 routes, 442 lines) + Panchang (8 routes, 381 lines) route files
-
-11. **Backend server.py Refactoring Phase 5 & 6 - COMPLETE** (March 23, 2026)
-    - ✅ Phase 5: Removed duplicate Panchang/Festival/Devotional/Scripture routes
-    - ✅ Phase 6: Complete modular extraction - **server.py reduced from 4650 to 541 lines (88% reduction!)**
-    - **New modular route files created:**
-      - `routes/uploads.py` - File uploads (image/video)
-      - `routes/places.py` - Google Places API
-      - `routes/translate.py` - Translation API
-      - `routes/video_library.py` - YouTube devotional videos
-      - `routes/classes.py` - Classes & Live Streams (~700 lines)
-      - `routes/feedback.py` - Feedback & Testimonials
-      - `routes/consultation.py` - Consultation, Wallet, System Config (~370 lines)
-      - `routes/archive.py` - Internet Archive Vedic Library (~320 lines)
-      - `routes/shop.py` (updated) - Added marketplace_router for public products
-    - **Total**: 18 modular route files in `/app/backend/routes/`
-    - **Original server.py**: 6429 lines → **Final**: 541 lines (**92% reduction!**)
-    - All 28 API tests passed (100% success rate - iteration_29.json)
-
-### In Progress 🔄
-- None currently active
-
-### P0 — Production Cleanup (Next Session) 🔴
-**Goal: Remove all Emergent dependencies and make code fully independent for production deployment**
-
-1. **Replace `emergentintegrations` Stripe wrapper → Official `stripe` SDK**
-   - Files: `routes/payments.py`, `routes/orders.py`, `server.py`
-   - Install `stripe` package, rewrite checkout session creation using official Stripe API
-   - Remove `emergentintegrations` from Dockerfile private CDN install (line 39-40)
-
-2. **Replace `emergentintegrations` OpenAI STT → Official `openai` SDK**
-   - File: `server.py` (line 337 - `OpenAISpeechToText`)
-   - User will need their own OpenAI API key (`OPENAI_API_KEY` in `.env`)
-
-3. **Remove all hardcoded Emergent preview URLs**
-   - `routes/uploads.py` (lines 42, 71) — replace with `os.environ.get("BACKEND_URL")`
-   - `routes/orders.py` (line 171) — uses `FRONTEND_URL` env with preview fallback
-   - `routes/orders_new.py` (line 364) — same as above
-   - Backend `.env`: Update `FRONTEND_URL` to production URL (`https://divine-104d4.web.app`)
-
-4. **Remove `EMERGENT_LLM_KEY` from backend `.env`**
-   - Replace with `OPENAI_API_KEY` if OpenAI STT is needed
-   - Or remove STT feature if not used
-
-5. **Clean Dockerfile**
-   - Remove line 39-40: `pip install emergentintegrations --extra-index-url ...`
-   - Ensure `stripe` and `openai` are in `requirements.txt`
-
-6. **Delete test files with preview URLs** (or update them)
-   - `/app/backend/tests/test_backend_refactoring.py`
-   - `/app/backend/tests/test_admin_approval_workflow.py`
-   - `/app/backend/tests/test_divine_app.py`
-   - `/app/backend/tests/test_video_consultation.py`
-   - `/app/backend/tests/test_astrology_fixes.py`
-   - `/app/backend/tests/test_system_config.py`
-   - `/app/backend/tests/test_scriptures.py`
-   - `/app/backend/tests/test_orders_astrology_modular.py`
-   - `/app/backend/tests/test_new_meeting_location_features.py`
-   - `/app/backend/tests/test_class_enrollment_payment.py`
-
-7. **Production `.env` templates** — Create `.env.example` files for both backend and frontend with all required variables (no values, just keys)
-
-### P0 — Play Store Deployment (TWA Setup) 🔴
-**Goal: Wrap the Firebase-hosted web app as an Android app for Google Play Store**
-
-**Prerequisites:**
-- Google Play Developer Account ($25 one-time) → https://play.google.com/console
-- App signed with your own keystore
-
-**What's needed:**
-| Item | Details |
-|---|---|
-| App Name | "Divine - Hindu Spiritual Services" |
-| Package Name | e.g., `com.divine.app` |
-| App Icon | 512x512 PNG (high-res) |
-| Feature Graphic | 1024x500 PNG |
-| Screenshots | Min 2 phone screenshots (1080x1920) |
-| Privacy Policy URL | Public webpage required |
-| Short Description | Max 80 characters |
-| Full Description | Max 4000 characters |
-| Content Rating | Questionnaire in Play Console |
-| Category | Lifestyle or Education |
-| Signed AAB | Generated from TWA/Android Studio |
-
-**TWA (Trusted Web Activity) approach:**
-- Wraps `divine-104d4.web.app` as a native Android app
-- Web + Mobile always in sync (same codebase)
-- Push notifications work via FCM (already set up)
-- Uses Bubblewrap CLI tool to generate TWA project
-- Digital Asset Links file needed in Firebase Hosting
-
-### CI/CD Pipeline (Future)
-- GitHub Actions workflow for:
-  - Auto-deploy backend to Cloud Run on push to `main`
-  - Auto-deploy frontend to Firebase Hosting on push to `main`
-  - Run tests before deploy
-  - Build AAB for Play Store on release tags
-
-12. **AuthScreen.js ESLint Build Fix** (March 24, 2026)
-    - Fixed `signupSettings` scoping issue — passed as prop from `AuthScreen` to `RegisterScreen`
-    - `npm run build` now completes successfully
-
-13. **Mobile Splash Screen & Enhanced Icons** (March 24, 2026)
-    - Added animated splash screen with Om logo, floating particles, and loading animation (~2.8s)
-    - Enhanced 4 service icons (Bell, Zodiac, Temple, Cart) with detailed SVGs, gradients, glows
-    - Upgraded icon cards with gradient backgrounds, borders, and tap animations
-
-14. **In-App Notifications System - Fully Wired** (March 24, 2026)
-    - NotificationBell component now rendered in: Desktop sidebar, MobileHeader, HomeTab
-    - Backend notification service already triggers on: bookings, class enrollment, payments
-    - Added test notification endpoint (`POST /api/notifications/test`)
-    - Added admin announcement endpoint (`POST /api/notifications/admin/announce`)
-    - Bell shows unread count badge, dropdown with mark-read/delete actions
-
-15. **Push Notifications via Firebase Cloud Messaging** (March 24, 2026)
-    - Frontend: Service worker (`firebase-messaging-sw.js`), permission prompt component, FCM token registration
-    - Backend: Token storage (`fcm_tokens` collection), FCM Legacy API push sending
-    - `usePushNotifications` hook handles permission, token retrieval, foreground message display
-    - `PushNotificationPrompt` component shows after 3s on login if permission not yet granted
-    - Push integrated into existing `send_notification` service — all events auto-send push
-    - VAPID key configured in frontend `.env`
-    - NOTE: FCM Server Key needed in backend `.env` as `FCM_SERVER_KEY` for push delivery to work
-
-### Pending Features 📋
-- **P1**: GitHub Actions APK build fixes
-- **P1**: CI/CD Pipeline (GitHub Actions → Cloud Run + Firebase auto-deploy)
-- **P2**: Stripe Connect for vendor payment splitting
-- **P2**: Push notifications for class reminders
-- **P2**: Phase 2 Live Streams (100ms HLS)
-- **P3**: Temple section functionality
-- **P3**: Provider onboarding guide
-
-## Technical Architecture
-
-### Stack
-- **Frontend**: React, Tailwind CSS, Framer Motion
-- **Backend**: FastAPI (Python)
-- **Database**: MongoDB
-- **Auth**: Firebase + bcrypt fallback
-- **Video**: 100ms WebRTC SDK
-- **Payments**: Integrated (Stripe Connect pending)
-
-### Key Files
-- `/app/backend/server.py` - Main API (541 lines - fully modularized ✅)
-- `/app/backend/routes/` - 18 modular route files
-- `/app/backend/routes/shop.py` - Shop owner routes (365 lines)
-- `/app/backend/routes/cart.py` - Cart routes (181 lines)
-- `/app/backend/routes/chat.py` - Chat REST routes (398 lines)
-- `/app/backend/routes/payments.py` - Payment routes (287 lines)
-- `/app/backend/routes/orders_new.py` - Orders/Checkout routes (493 lines)
-- `/app/backend/routes/astrology.py` - Astrology/Horoscope routes (481 lines)
-- `/app/backend/routes/devotional.py` - Devotional Content routes (442 lines)
-- `/app/backend/routes/panchang.py` - Panchang/Festival routes (381 lines)
-- `/app/frontend/src/pages/dashboards/AdminDashboard.js` - Admin UI (124 lines - REFACTORED ✅)
-- `/app/frontend/src/pages/dashboards/admin/components/` - Modular admin components (15 files)
-- `/app/frontend/src/pages/dashboards/DevoteeDashboard.js` - Devotee UI (1588 lines - REFACTORED 73% ✅)
-- `/app/frontend/src/pages/dashboards/devotee/components/` - Modular devotee components (16 files)
-- `/app/backend/class_rooms.py` - Background job for 100ms room generation
-
-### API Endpoints
-- `POST /api/auth/login` - User authentication
-- `GET /api/video-library` - Devotional video content
-- `GET /api/priest/profile` - Priest profile management
-- `GET /api/my-enrollments` - User class enrollments
-- `GET /api/classes` - Available Vedic classes
+## Bug Fixes (Mar 2026 Session)
+1. Math/Mutt dropdown showing empty categories → Fixed (API returns strings, not objects)
+2. Priest analytics 500 error → Fixed (timezone-naive vs aware datetime comparison)
+3. Consultation temples endpoint 500 → Fixed (missing city/description fields in new schema)
 
 ## Deployment
-- **Backend**: Google Cloud Run (`gcloud run deploy divine-backend --source .`)
-- **Frontend**: Firebase Hosting (`npm run build && npx firebase deploy`)
-- Uses `--legacy-peer-deps` for npm compatibility
+- Backend: Google Cloud Run (divine-backend-149993395431.us-central1.run.app)
+- Frontend: Firebase Hosting (divine-104d4.web.app)
+- Deploy commands:
+  - Backend: `cd backend && gcloud run deploy divine-backend --source . --region us-central1 --allow-unauthenticated`
+  - Frontend: `cd frontend && npm run build && npx firebase-tools deploy --only hosting`
 
-## Last Updated
-March 24, 2026 - Added Production Cleanup & Play Store deployment plan to PRD. Push Notifications (FCM V1) fully implemented with Firebase Admin SDK.
+## Pending Issues
+- P0: Blank screen on mobile deployment (caching/service worker issue)
+- P1: Mobile Google Sign-In not working (blocked by blank screen)
+- P1: GitHub Actions APK build fails intermittently
+
+## Upcoming Tasks
+- Production data cleanup (remove test data)
+- Play Store TWA Setup
+- CI/CD Pipeline (GitHub Actions → Cloud Run + Firebase)
+- Astrologer & Shop Owner signups (multi-vendor)
+- Stripe Connect for payment splitting
+- Scheduled push notification reminders
+- Phase 2 Live Streams (100ms HLS)
+- Provider Onboarding Guide
