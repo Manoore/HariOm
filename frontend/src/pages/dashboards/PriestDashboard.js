@@ -15,6 +15,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 import ChatTab from '../../components/Chat/ChatTab';
 import AddressAutocomplete from '../../components/AddressAutocomplete';
+import NotificationBell from '../../components/NotificationBell';
 
 // Role display configuration
 const ROLE_CONFIG = {
@@ -310,13 +311,16 @@ export default function PriestDashboard() {
         <aside className="w-64 min-h-screen bg-white border-r border-orange-100 fixed left-0 top-0 bottom-0 z-20">
           {/* Company Logo */}
           <div className="p-4 border-b border-orange-100">
-            <div className="flex items-center gap-3">
-              <img 
-                src="/temple-logo.png" 
-                alt="Divine Logo" 
-                className="w-10 h-10 rounded-lg object-cover"
-              />
-              <span className="font-cinzel text-xl font-bold text-maroon">DIVINE</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/temple-logo.png" 
+                  alt="Divine Logo" 
+                  className="w-10 h-10 rounded-lg object-cover"
+                />
+                <span className="font-cinzel text-xl font-bold text-maroon">DIVINE</span>
+              </div>
+              <NotificationBell />
             </div>
           </div>
           

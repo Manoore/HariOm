@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { 
   Sun, ShoppingBag, User, Calendar, Menu,
-  LogOut, BookOpen, Play, Music, Rss, MessageSquare, Video, X, UserRoundCheck
+  LogOut, BookOpen, Play, Music, Rss, MessageSquare, Video, X, UserRoundCheck, Bell
 } from 'lucide-react';
 import { useCart } from '../../../../contexts/CartContext';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { OmIcon } from './shared';
+import NotificationBell from '../../../../components/NotificationBell';
 
 // Sidebar Navigation for Desktop
 export function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
@@ -32,13 +33,16 @@ export function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
     <div className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-orange-100 flex flex-col z-40">
       {/* Logo */}
       <div className="p-6 border-b border-orange-100">
-        <div className="flex items-center gap-3">
-          <img 
-            src="/temple-logo.png" 
-            alt="Divine Logo" 
-            className="w-10 h-10 rounded-lg object-cover"
-          />
-          <span className="font-cinzel text-xl font-bold text-maroon">DIVINE</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/temple-logo.png" 
+              alt="Divine Logo" 
+              className="w-10 h-10 rounded-lg object-cover"
+            />
+            <span className="font-cinzel text-xl font-bold text-maroon">DIVINE</span>
+          </div>
+          <NotificationBell />
         </div>
       </div>
 

@@ -114,3 +114,52 @@ async def delete_notification(notification_id: str, user: dict = Depends(get_cur
         raise HTTPException(status_code=404, detail="Notification not found")
     
     return {"message": "Notification deleted"}
+
+
+
+@router.post("/test")
+async def create_test_notification(user: dict = Depends(get_current_user)):
+    """Create a test notification for the current user (for testing)"""
+    notification = {
+        "user_id": str(user["_id"]),
+        "type": "test",
+        "title": "Welcome to Divine!",
+        "message": "Your notification system is working. You'll receive updates about bookings, classes, and more here.",
+        "icon": "bell",
+        "data": {},
+        "is_read": False,
+        "created_at": datetime.now(timezone.utc)
+    }
+    result = await notification_logs_collection.insert_one(notification)
+    return {"message": "Test notification created", "id": str(result.inserted_id)}
+
+
+@router.post("/admin/announce")
+async def send_admin_announcement(
+    title: str,
+    message: str,
+    user: dict = Depends(get_current_user)
+):
+    """Admin: Send announcement notification to all users"""
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    
+    from database import users_collection
+    
+    users_cursor = users_collection.find({}, {"_id": 1})
+    count = 0
+    async for u in users_cursor:
+        notification = {
+            "user_id": str(u["_id"]),
+            "type": "announcement",
+            "title": title,
+            "message": message,
+            "icon": "bell",
+            "data": {"from": "admin"},
+            "is_read": False,
+            "created_at": datetime.now(timezone.utc)
+        }
+        await notification_logs_collection.insert_one(notification)
+        count += 1
+    
+    return {"message": f"Announcement sent to {count} users"}

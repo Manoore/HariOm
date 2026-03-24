@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import NotificationBell from '../../../../components/NotificationBell';
 
 // Mobile Header with Back Button
 export function MobileHeader({ title, onBack, rightElement }) {
@@ -16,8 +17,10 @@ export function MobileHeader({ title, onBack, rightElement }) {
       <h2 className="font-cinzel text-lg font-semibold text-maroon absolute left-1/2 -translate-x-1/2">
         {title}
       </h2>
-      {rightElement && <div>{rightElement}</div>}
-      {!rightElement && <div className="w-16" />} {/* Spacer for centering */}
+      <div className="flex items-center gap-1">
+        <NotificationBell />
+        {rightElement && <div>{rightElement}</div>}
+      </div>
     </div>
   );
 }

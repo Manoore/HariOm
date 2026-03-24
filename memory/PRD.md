@@ -105,9 +105,21 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 ### In Progress 🔄
 - None currently active
 
-12. **AuthScreen.js ESLint Build Fix** (Feb 2026)
+12. **AuthScreen.js ESLint Build Fix** (March 24, 2026)
     - Fixed `signupSettings` scoping issue — passed as prop from `AuthScreen` to `RegisterScreen`
     - `npm run build` now completes successfully
+
+13. **Mobile Splash Screen & Enhanced Icons** (March 24, 2026)
+    - Added animated splash screen with Om logo, floating particles, and loading animation (~2.8s)
+    - Enhanced 4 service icons (Bell, Zodiac, Temple, Cart) with detailed SVGs, gradients, glows
+    - Upgraded icon cards with gradient backgrounds, borders, and tap animations
+
+14. **In-App Notifications System - Fully Wired** (March 24, 2026)
+    - NotificationBell component now rendered in: Desktop sidebar, MobileHeader, HomeTab
+    - Backend notification service already triggers on: bookings, class enrollment, payments
+    - Added test notification endpoint (`POST /api/notifications/test`)
+    - Added admin announcement endpoint (`POST /api/notifications/admin/announce`)
+    - Bell shows unread count badge, dropdown with mark-read/delete actions
 
 ### Pending Features 📋
 - **P1**: GitHub Actions APK build fixes
@@ -157,4 +169,4 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Uses `--legacy-peer-deps` for npm compatibility
 
 ## Last Updated
-Feb 2026 - Fixed AuthScreen.js ESLint build error (signupSettings prop scoping)
+March 24, 2026 - In-App Notifications wired up, Splash Screen & Enhanced Icons added, ESLint build fix
