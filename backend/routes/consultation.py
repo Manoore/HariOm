@@ -101,20 +101,23 @@ async def get_temples(city: Optional[str] = None, state: Optional[str] = None):
     """Get temples with optional city/state filter"""
     query = {}
     if city:
-        query["city"] = {"$regex": city, "$options": "i"}
+        query["$or"] = [
+            {"state": {"$regex": city, "$options": "i"}},
+            {"name": {"$regex": city, "$options": "i"}},
+        ]
     if state:
         query["state"] = {"$regex": state, "$options": "i"}
     
-    cursor = temples_collection.find(query)
+    cursor = temples_collection.find(query).limit(50)
     temples = []
     async for temple in cursor:
         temples.append({
             "id": str(temple["_id"]),
-            "name": temple["name"],
-            "city": temple["city"],
-            "state": temple["state"],
-            "deity": temple["deity"],
-            "description": temple["description"]
+            "name": temple.get("name", ""),
+            "city": temple.get("city", temple.get("state", "")),
+            "state": temple.get("state", ""),
+            "deity": temple.get("deity", ""),
+            "description": (temple.get("description") or temple.get("info") or "")[:200]
         })
     return {"temples": temples, "count": len(temples)}
 

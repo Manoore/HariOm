@@ -373,9 +373,4 @@ async def get_all_festivals():
 
 # ===================== TEMPLE ROUTES =====================
 
-@router.get("/temples")
-async def get_all_temples():
-    """Get all temples from database"""
-    cursor = temples_collection.find({"is_active": {"$ne": False}}, {"_id": 0})
-    temples = await cursor.to_list(length=100)
-    return {"status": "ok", "temples": temples, "count": len(temples)}
+# Temples endpoint moved to routes/temples.py

@@ -54,6 +54,7 @@ import { CalendarTab } from './devotee/components/CalendarTab';
 import { ShopTab } from './devotee/components/ShopTab';
 import { ProfileTab } from './devotee/components/ProfileTab';
 import { ClassesTab, TestimonialSection } from './devotee/components/ClassesTab';
+import { TemplesTab } from './devotee/components/TemplesTab';
 
 // Mantras & Shlokas Tab Content
 function MantrasTab({ isDesktop }) {
@@ -1573,6 +1574,14 @@ export default function DevoteeDashboard() {
           <>
             {!isDesktop && <MobileHeader title="Pooja Store" onBack={() => setActiveTab('home')} />}
             <ShopTab isDesktop={isDesktop} ProductDetailView={ProductDetailView} />
+          </>
+        )}
+        {activeTab === 'temples' && (
+          <>
+            {!isDesktop && <MobileHeader title="Temples" onBack={() => setActiveTab('home')} />}
+            <div className={`${isDesktop ? 'p-6 max-w-5xl mx-auto' : 'p-4 pb-24'}`}>
+              <TemplesTab isDesktop={isDesktop} />
+            </div>
           </>
         )}
         {activeTab === 'profile' && (

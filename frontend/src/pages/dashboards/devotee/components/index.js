@@ -14,6 +14,8 @@ export { CalendarTab } from './CalendarTab';
 export { ShopTab } from './ShopTab';
 export { ProfileTab } from './ProfileTab';
 
+export { TemplesTab } from './TemplesTab';
+
 // Classes Tab and related components
 export { ClassesTab, ClassRequestForm, ClassCard } from './ClassesTab';
 export { ClassVideoRoom, VideoTileClass } from './ClassVideoRoom';

@@ -72,6 +72,7 @@ from routes.feedback import router as feedback_router
 from routes.consultation import router as consultation_router
 from routes.archive import router as archive_router
 from routes.posts import router as posts_router
+from routes.temples import router as temples_router
 
 # Import notification service
 try:
@@ -130,6 +131,7 @@ app.include_router(feedback_router)
 app.include_router(consultation_router)
 app.include_router(archive_router)
 app.include_router(posts_router)
+app.include_router(temples_router)
 
 # ===================== MATH/MUTT API =====================
 @app.get("/api/math-mutt")

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Sun, ShoppingBag, User, Calendar, Menu,
-  LogOut, BookOpen, Play, Music, Rss, MessageSquare, Video, X, UserRoundCheck, Bell
+  LogOut, BookOpen, Play, Music, Rss, MessageSquare, Video, X, UserRoundCheck, Bell, Landmark
 } from 'lucide-react';
 import { useCart } from '../../../../contexts/CartContext';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -24,6 +24,7 @@ export function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
     { id: 'scriptures', icon: BookOpen, label: 'Sacred Scriptures' },
     { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
     { id: 'priests', icon: UserRoundCheck, label: 'Book Priests' },
+    { id: 'temples', icon: Landmark, label: 'Temples' },
     { id: 'astrology', icon: Sun, label: 'Astrology' },
     { id: 'shop', icon: ShoppingBag, label: 'Pooja Store' },
     { id: 'profile', icon: User, label: 'My Account' },
@@ -127,6 +128,7 @@ export function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
     { id: 'live', icon: Play, label: 'Live Events' },
     { id: 'mantras', icon: Music, label: 'Mantras & Shlokas' },
     { id: 'scriptures', icon: BookOpen, label: 'Scriptures' },
+    { id: 'temples', icon: Landmark, label: 'Temples' },
     { id: 'astrology', icon: Sun, label: 'Astrology' },
     { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
     { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
