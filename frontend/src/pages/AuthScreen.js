@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Loader2, ChevronLeft, Bell, Sparkles, Building2, ShoppingCart, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 import { isFirebaseConfigured } from '../lib/firebase';
+import api from '../lib/api';
 
 // Popular country codes for phone auth
 const COUNTRY_CODES = [
@@ -111,6 +112,28 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   const [registerData, setRegisterData] = useState({
     name: '', email: '', phone: '', password: '', role: 'devotee'
   });
+  
+  // Signup settings from admin
+  const [signupSettings, setSignupSettings] = useState({
+    enable_priest_signup: true,
+    enable_astrologer_signup: false,
+    enable_shop_owner_signup: false
+  });
+  
+  // Fetch signup settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/api/admin/signup-settings');
+        if (res.data.settings) {
+          setSignupSettings(res.data.settings);
+        }
+      } catch (error) {
+        console.log('Using default signup settings');
+      }
+    };
+    fetchSettings();
+  }, []);
   
   // Phone auth states
   const [authMethod, setAuthMethod] = useState('email'); // 'email' or 'phone'
@@ -1618,9 +1641,15 @@ function RegisterScreen({
                 data-testid="register-role"
               >
                 <option value="devotee">Devotee (Book services)</option>
-                <option value="priest">Priest (Offer services)</option>
-                <option value="astrologer">Astrologer (Consultations)</option>
-                <option value="shop_owner">Shop Owner (Sell products)</option>
+                {signupSettings.enable_priest_signup && (
+                  <option value="priest">Priest (Offer services)</option>
+                )}
+                {signupSettings.enable_astrologer_signup && (
+                  <option value="astrologer">Astrologer (Consultations)</option>
+                )}
+                {signupSettings.enable_shop_owner_signup && (
+                  <option value="shop_owner">Shop Owner (Sell products)</option>
+                )}
               </select>
             </motion.div>
 
