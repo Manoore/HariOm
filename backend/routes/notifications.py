@@ -1,16 +1,21 @@
 """
 Notification Routes Module
-API endpoints for fetching and managing user notifications
+API endpoints for fetching and managing user notifications + push token registration
 """
 
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
 from datetime import datetime, timezone
 from bson import ObjectId
 
-from database import notification_logs_collection
+from database import notification_logs_collection, fcm_tokens_collection
 from auth import get_current_user
 
 router = APIRouter(prefix="/api/notifications", tags=["Notifications"])
+
+
+class PushTokenRequest(BaseModel):
+    token: str
 
 
 @router.get("")
@@ -114,6 +119,41 @@ async def delete_notification(notification_id: str, user: dict = Depends(get_cur
         raise HTTPException(status_code=404, detail="Notification not found")
     
     return {"message": "Notification deleted"}
+
+
+@router.post("/register-push-token")
+async def register_push_token(body: PushTokenRequest, user: dict = Depends(get_current_user)):
+    """Register or update FCM push token for the current user"""
+    user_id = str(user["_id"])
+    
+    # Upsert: update if token exists for this user, or insert new
+    await fcm_tokens_collection.update_one(
+        {"user_id": user_id, "token": body.token},
+        {
+            "$set": {
+                "user_id": user_id,
+                "token": body.token,
+                "updated_at": datetime.now(timezone.utc),
+                "active": True
+            },
+            "$setOnInsert": {
+                "created_at": datetime.now(timezone.utc)
+            }
+        },
+        upsert=True
+    )
+    
+    return {"message": "Push token registered"}
+
+
+@router.delete("/push-token")
+async def remove_push_token(body: PushTokenRequest, user: dict = Depends(get_current_user)):
+    """Remove FCM push token (e.g., on logout)"""
+    await fcm_tokens_collection.delete_many({
+        "user_id": str(user["_id"]),
+        "token": body.token
+    })
+    return {"message": "Push token removed"}
 
 
 

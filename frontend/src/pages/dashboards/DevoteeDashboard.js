@@ -20,6 +20,7 @@ import AddressAutocomplete from '../../components/AddressAutocomplete';
 import { PriestDetailView, AstrologyTab } from '../../components/DevoteeDashboard';
 import ScripturesTab from '../../components/DevoteeDashboard/ScripturesTab';
 import SmartPayment from '../../components/PaymentComponents';
+import PushNotificationPrompt from '../../components/PushNotificationPrompt';
 import NotificationBell from '../../components/NotificationBell';
 import LanguageSelector from '../../components/LanguageSelector';
 // 100ms SDK imports for Class Video Room
@@ -1583,6 +1584,7 @@ export default function DevoteeDashboard() {
       </div>
       
       {!isDesktop && <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} unreadMessages={unreadMessages} />}
+      <PushNotificationPrompt />
     </div>
   );
 }

@@ -1,8 +1,9 @@
 """
 Notification Service Module
-Handles all notifications (Email & In-App) for the Divine App.
+Handles all notifications (Email, In-App & Push) for the Divine App.
 - Email users: Send email via Resend
 - Phone users: Store as in-app notification
+- Push: Send FCM push notifications to registered devices
 """
 
 import os
@@ -12,15 +13,20 @@ from datetime import datetime, timezone
 from typing import Optional
 from enum import Enum
 
+import httpx
 import resend
 
-from database import users_collection, notification_logs_collection
+from database import users_collection, notification_logs_collection, fcm_tokens_collection
 
 logger = logging.getLogger(__name__)
 
 # Initialize Resend
 resend.api_key = os.environ.get("RESEND_API_KEY")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+
+# FCM Configuration
+FCM_SERVER_KEY = os.environ.get("FCM_SERVER_KEY")
+FCM_API_URL = "https://fcm.googleapis.com/fcm/send"
 
 
 class NotificationType(str, Enum):
@@ -303,6 +309,57 @@ async def store_inapp_notification(user_id: str, notification_type: Notification
         return {"status": "failed", "error": str(e)}
 
 
+async def send_push_notification(user_id: str, title: str, body: str, data: dict = None) -> dict:
+    """Send FCM push notification to all registered devices for a user"""
+    if not FCM_SERVER_KEY:
+        logger.warning("FCM_SERVER_KEY not configured, skipping push notification")
+        return {"status": "skipped", "reason": "FCM server key not configured"}
+    
+    try:
+        # Get all active tokens for the user
+        cursor = fcm_tokens_collection.find({"user_id": user_id, "active": True})
+        tokens = [doc["token"] async for doc in cursor]
+        
+        if not tokens:
+            return {"status": "skipped", "reason": "No push tokens registered"}
+        
+        headers = {
+            "Authorization": f"key={FCM_SERVER_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "registration_ids": tokens,
+            "notification": {
+                "title": title,
+                "body": body,
+                "icon": "/temple-logo.png",
+                "click_action": os.environ.get("FRONTEND_URL", "https://divine-104d4.web.app"),
+            },
+            "data": data or {},
+            "priority": "high"
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(FCM_API_URL, json=payload, headers=headers, timeout=10)
+            result = response.json()
+        
+        # Handle invalid tokens
+        if result.get("results"):
+            for i, res in enumerate(result["results"]):
+                if res.get("error") in ["InvalidRegistration", "NotRegistered"]:
+                    await fcm_tokens_collection.update_one(
+                        {"token": tokens[i]},
+                        {"$set": {"active": False}}
+                    )
+        
+        logger.info(f"Push sent to {len(tokens)} devices for user {user_id}: success={result.get('success')}")
+        return {"status": "success", "sent_to": len(tokens), "fcm_result": result}
+    except Exception as e:
+        logger.error(f"Failed to send push notification: {str(e)}")
+        return {"status": "failed", "error": str(e)}
+
+
 async def log_notification(user_id: str, notification_type: str, channel: str, 
                           contact: str, status: str, details: dict = None):
     """Log notification to database for tracking (only for email channel)"""
@@ -354,6 +411,22 @@ async def send_notification(user_id: str, notification_type: NotificationType, d
     # Add user_name to data
     data["user_name"] = user_name
     
+    # Always store as in-app notification (regardless of email/phone)
+    config = NOTIFICATION_CONFIG.get(notification_type, {"title": "Notification", "icon": "bell"})
+    inapp_template = INAPP_MESSAGES.get(notification_type, "You have a new notification.")
+    try:
+        inapp_message = inapp_template.format(**data)
+    except KeyError:
+        inapp_message = inapp_template
+    
+    await store_inapp_notification(
+        user_id=user_id,
+        notification_type=notification_type,
+        title=config["title"],
+        message=inapp_message,
+        data=data
+    )
+    
     result = None
     
     if channel == "email":
@@ -380,29 +453,20 @@ async def send_notification(user_id: str, notification_type: NotificationType, d
             status=result.get("status", "unknown"),
             details=result
         )
-        
-    elif channel == "inapp":
-        # Store as in-app notification
-        inapp_template = INAPP_MESSAGES.get(notification_type, "You have a new notification.")
-        try:
-            message = inapp_template.format(**data)
-        except KeyError:
-            message = inapp_template
-        
-        config = NOTIFICATION_CONFIG.get(notification_type, {"title": "Notification"})
-        
-        result = await store_inapp_notification(
-            user_id=user_id,
-            notification_type=notification_type,
-            title=config["title"],
-            message=message,
-            data=data
-        )
+    
+    # Always try to send push notification (works for both email and phone users)
+    push_result = await send_push_notification(
+        user_id=user_id,
+        title=config["title"],
+        body=inapp_message,
+        data={"type": notification_type.value}
+    )
     
     return {
-        "status": result.get("status") if result else "failed",
+        "status": result.get("status") if result else "success",
         "channel": channel,
         "contact": contact,
+        "push": push_result.get("status", "skipped"),
         **(result or {})
     }
 

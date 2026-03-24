@@ -121,6 +121,15 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
     - Added admin announcement endpoint (`POST /api/notifications/admin/announce`)
     - Bell shows unread count badge, dropdown with mark-read/delete actions
 
+15. **Push Notifications via Firebase Cloud Messaging** (March 24, 2026)
+    - Frontend: Service worker (`firebase-messaging-sw.js`), permission prompt component, FCM token registration
+    - Backend: Token storage (`fcm_tokens` collection), FCM Legacy API push sending
+    - `usePushNotifications` hook handles permission, token retrieval, foreground message display
+    - `PushNotificationPrompt` component shows after 3s on login if permission not yet granted
+    - Push integrated into existing `send_notification` service — all events auto-send push
+    - VAPID key configured in frontend `.env`
+    - NOTE: FCM Server Key needed in backend `.env` as `FCM_SERVER_KEY` for push delivery to work
+
 ### Pending Features 📋
 - **P1**: GitHub Actions APK build fixes
 - **P2**: Stripe Connect for vendor payment splitting
@@ -169,4 +178,4 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Uses `--legacy-peer-deps` for npm compatibility
 
 ## Last Updated
-March 24, 2026 - In-App Notifications wired up, Splash Screen & Enhanced Icons added, ESLint build fix
+March 24, 2026 - Push Notifications (FCM) fully implemented, In-App Notifications wired, Splash Screen & Enhanced Icons added

@@ -72,6 +72,7 @@ audio_library_collection = db["audio_library"]
 # Notification Logs Collection
 notification_logs_collection = db["notification_logs"]
 user_notifications_collection = db["user_notifications"]
+fcm_tokens_collection = db["fcm_tokens"]
 
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]

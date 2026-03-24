@@ -1,6 +1,7 @@
 # Services module
 from .notification_service import (
     send_notification,
+    send_push_notification,
     notify_booking_created,
     notify_booking_confirmed,
     notify_booking_cancelled,
@@ -13,6 +14,7 @@ from .notification_service import (
 
 __all__ = [
     'send_notification',
+    'send_push_notification',
     'notify_booking_created',
     'notify_booking_confirmed',
     'notify_booking_cancelled',
