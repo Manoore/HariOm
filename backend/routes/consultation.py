@@ -396,6 +396,38 @@ async def get_astrologer_earnings(period: str = "week", user: dict = Depends(get
     return await get_astrologer_earnings_report(str(user["_id"]), period)
 
 
+@router.get("/astrologer/incoming-calls")
+async def get_incoming_calls(user: dict = Depends(get_current_user)):
+    """Get active/ringing calls for the astrologer"""
+    if user.get("role") != "astrologer":
+        raise HTTPException(status_code=403, detail="Astrologer access required")
+    
+    from database import consultation_calls_collection
+    
+    calls = []
+    cursor = consultation_calls_collection.find({
+        "astrologer_user_id": str(user["_id"]),
+        "status": {"$in": ["active", "ringing"]}
+    }).sort("started_at", -1)
+    
+    async for call in cursor:
+        # Get caller info
+        caller = await users_collection.find_one({"_id": ObjectId(call["user_id"])})
+        calls.append({
+            "call_id": str(call["_id"]),
+            "room_id": call.get("room_id"),
+            "caller_name": caller.get("name", "Unknown") if caller else "Unknown",
+            "caller_photo": caller.get("photo_url") if caller else None,
+            "rate_per_minute": call.get("rate_per_minute", 0),
+            "started_at": call.get("started_at", "").isoformat() if call.get("started_at") else None,
+            "status": call.get("status"),
+            "astrologer_token": call.get("astrologer_token_cache", None)
+        })
+    
+    return {"calls": calls}
+
+
+
 @router.get("/astrologer/calls")
 async def get_astrologer_calls(skip: int = 0, limit: int = 20, user: dict = Depends(get_current_user)):
     """Get astrologer's call history"""

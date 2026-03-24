@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Phone, DollarSign, Clock, Users, Star, Settings,
   TrendingUp, Calendar, BarChart3, Wallet, Video, VideoOff,
   ChevronRight, Loader2, Bell, MessageSquare, LogOut, Menu,
   CheckCircle, XCircle, Play, Pause, IndianRupee, Award,
-  User, Edit, Save, X, ArrowUpRight, ArrowDownRight
+  User, Edit, Save, X, ArrowUpRight, ArrowDownRight, PhoneCall, PhoneOff
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -734,6 +734,55 @@ export default function AstrologerDashboard() {
     }
   };
 
+  // Incoming call state
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [callAudio] = useState(() => {
+    try {
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ==');
+      audio.loop = true;
+      return audio;
+    } catch { return null; }
+  });
+
+  // Poll for incoming calls every 5 seconds
+  const checkIncomingCalls = useCallback(async () => {
+    if (!isAvailable) return;
+    try {
+      const res = await api.get('/api/astrologer/incoming-calls');
+      const calls = res.data?.calls || [];
+      if (calls.length > 0 && !incomingCall) {
+        setIncomingCall(calls[0]);
+        try { callAudio?.play(); } catch {}
+      } else if (calls.length === 0 && incomingCall) {
+        setIncomingCall(null);
+        try { callAudio?.pause(); } catch {}
+      }
+    } catch {}
+  }, [isAvailable, incomingCall, callAudio]);
+
+  useEffect(() => {
+    if (!isAvailable) { setIncomingCall(null); return; }
+    const interval = setInterval(checkIncomingCalls, 5000);
+    checkIncomingCalls();
+    return () => clearInterval(interval);
+  }, [isAvailable, checkIncomingCalls]);
+
+  const acceptCall = () => {
+    if (!incomingCall) return;
+    try { callAudio?.pause(); } catch {}
+    const callUrl = `/consultation/video/${incomingCall.room_id}?token=${encodeURIComponent(incomingCall.astrologer_token)}&callId=${incomingCall.call_id}&role=astrologer`;
+    window.location.href = callUrl;
+  };
+
+  const declineCall = async () => {
+    if (!incomingCall) return;
+    try {
+      callAudio?.pause();
+      await api.post(`/api/consultation/${incomingCall.call_id}/end`, { reason: 'declined' });
+    } catch {}
+    setIncomingCall(null);
+  };
+
   const toggleAvailability = async () => {
     try {
       const res = await api.put('/api/astrologer/availability', {
@@ -790,6 +839,60 @@ export default function AstrologerDashboard() {
           </div>
         </div>
       )}
+
+      {/* Incoming Call Modal */}
+      <AnimatePresence>
+        {incomingCall && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl p-8 mx-4 max-w-sm w-full text-center"
+            >
+              {/* Pulsing ring */}
+              <div className="relative mx-auto w-24 h-24 mb-5">
+                <motion.div
+                  className="absolute inset-0 rounded-full bg-green-100"
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+                <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+                  <motion.div animate={{ rotate: [0, -10, 10, -10, 0] }} transition={{ duration: 0.5, repeat: Infinity }}>
+                    <PhoneCall className="w-10 h-10 text-white" />
+                  </motion.div>
+                </div>
+              </div>
+
+              <h3 className="text-xl font-bold text-gray-900 mb-1">Incoming Call</h3>
+              <p className="text-lg text-purple-700 font-medium mb-1">{incomingCall.caller_name}</p>
+              <p className="text-sm text-gray-500 mb-6">Consultation Request</p>
+
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={declineCall}
+                  className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg transition-colors"
+                  data-testid="decline-call-btn"
+                >
+                  <PhoneOff className="w-7 h-7 text-white" />
+                </button>
+                <button
+                  onClick={acceptCall}
+                  className="w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center shadow-lg transition-colors"
+                  data-testid="accept-call-btn"
+                >
+                  <Phone className="w-7 h-7 text-white" />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Content */}
       {loading ? (

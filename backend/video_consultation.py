@@ -409,6 +409,35 @@ async def start_consultation_call(user_id: str, astrologer_user_id: str) -> Dict
     result = await consultation_calls_collection.insert_one(call_record)
     call_id = str(result.inserted_id)
     
+    # Cache astrologer token in the call record for retrieval
+    await consultation_calls_collection.update_one(
+        {"_id": result.inserted_id},
+        {"$set": {"astrologer_token_cache": astrologer_token}}
+    )
+    
+    # Send push notification to astrologer
+    try:
+        from services.notification_service import send_push_notification, store_inapp_notification, NotificationType
+        caller = await users_collection.find_one({"_id": ObjectId(user_id)})
+        caller_name = caller.get("name", "Someone") if caller else "Someone"
+        
+        await send_push_notification(
+            user_id=astrologer_user_id,
+            title="Incoming Consultation Call",
+            body=f"{caller_name} is calling you for a consultation",
+            data={"type": "incoming_call", "call_id": call_id, "room_id": room_id}
+        )
+        
+        await store_inapp_notification(
+            user_id=astrologer_user_id,
+            notification_type=NotificationType.BOOKING_CREATED,
+            title="Incoming Call",
+            message=f"{caller_name} is calling you for a consultation",
+            data={"call_id": call_id, "room_id": room_id}
+        )
+    except Exception as e:
+        print(f"Failed to notify astrologer: {e}")
+    
     return {
         "call_id": call_id,
         "room_id": room_id,
