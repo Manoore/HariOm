@@ -31,77 +31,276 @@ const COUNTRY_CODES = [
   { code: '+254', country: 'Kenya', flag: '🇰🇪', maxLength: 9 },
 ];
 
-// 3D Animated Devotional Icons
+// Splash Screen Component
+const SplashScreen = ({ onComplete }) => {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 2800);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+      style={{ background: 'linear-gradient(160deg, #FFF8E7 0%, #FFF1D6 30%, #FFE4B5 70%, #FFDAB0 100%)' }}
+      exit={{ opacity: 0, scale: 1.1 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Floating particles */}
+      {[...Array(12)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            width: Math.random() * 6 + 3,
+            height: Math.random() * 6 + 3,
+            background: `rgba(255, ${180 + Math.random() * 55}, 0, ${0.15 + Math.random() * 0.2})`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+          animate={{
+            y: [0, -30, 0],
+            opacity: [0.2, 0.6, 0.2],
+            scale: [1, 1.5, 1],
+          }}
+          transition={{
+            duration: 3 + Math.random() * 2,
+            repeat: Infinity,
+            delay: Math.random() * 2,
+          }}
+        />
+      ))}
+
+      {/* Glowing ring */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{
+          width: 180,
+          height: 180,
+          border: '2px solid rgba(255, 165, 0, 0.15)',
+          boxShadow: '0 0 40px rgba(255, 165, 0, 0.1)',
+        }}
+        animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.1, 0.3] }}
+        transition={{ duration: 2.5, repeat: Infinity }}
+      />
+
+      {/* Om Logo */}
+      <motion.div
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.8, type: 'spring', bounce: 0.4 }}
+        className="relative"
+      >
+        <motion.div
+          className="w-28 h-28 rounded-2xl overflow-hidden shadow-2xl"
+          style={{ boxShadow: '0 20px 60px rgba(139, 69, 19, 0.3)' }}
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <img src="/temple-logo.png" alt="Divine" className="w-full h-full object-cover" />
+        </motion.div>
+      </motion.div>
+
+      {/* App Name */}
+      <motion.h1
+        className="font-cinzel text-4xl font-bold mt-6"
+        style={{ color: '#5B1A1A' }}
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+      >
+        DIVINE
+      </motion.h1>
+
+      <motion.p
+        className="text-sm mt-1"
+        style={{ color: '#A0522D' }}
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.6, duration: 0.5 }}
+      >
+        Spiritual Services
+      </motion.p>
+
+      {/* Loading dots */}
+      <motion.div
+        className="flex gap-2 mt-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+      >
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={i}
+            className="w-2 h-2 rounded-full"
+            style={{ background: '#CD853F' }}
+            animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+          />
+        ))}
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Enhanced Animated Devotional Icons
 const BellIcon3D = () => (
-  <motion.svg viewBox="0 0 100 100" className="w-8 h-8" animate={{ rotate: [-3, 3, -3] }} transition={{ duration: 0.4, repeat: Infinity }}>
+  <motion.svg viewBox="0 0 100 100" className="w-12 h-12" animate={{ rotate: [-5, 5, -5] }} transition={{ duration: 0.5, repeat: Infinity }}>
     <defs>
       <linearGradient id="bellGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#FFD700" />
+        <stop offset="50%" stopColor="#FFA500" />
         <stop offset="100%" stopColor="#CD853F" />
       </linearGradient>
+      <radialGradient id="bellShine" cx="35%" cy="30%">
+        <stop offset="0%" stopColor="#FFFACD" stopOpacity="0.8" />
+        <stop offset="100%" stopColor="#FFD700" stopOpacity="0" />
+      </radialGradient>
+      <filter id="bellGlow">
+        <feGaussianBlur stdDeviation="2" result="glow" />
+        <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
     </defs>
-    <ellipse cx="50" cy="15" rx="5" ry="5" fill="#B8860B" />
-    <path d="M45 15 L45 25 Q30 35 30 60 L70 60 Q70 35 55 25 L55 15" fill="url(#bellGrad)" />
-    <ellipse cx="50" cy="60" rx="22" ry="8" fill="#CD853F" />
-    <circle cx="50" cy="70" r="6" fill="#B8860B" />
+    <ellipse cx="50" cy="12" rx="4" ry="4" fill="#B8860B" />
+    <line x1="50" y1="16" x2="50" y2="22" stroke="#B8860B" strokeWidth="3" />
+    <path d="M42 22 L42 30 Q28 38 26 58 L74 58 Q72 38 58 30 L58 22" fill="url(#bellGrad)" filter="url(#bellGlow)" />
+    <path d="M42 22 L42 30 Q28 38 26 58 L74 58 Q72 38 58 30 L58 22" fill="url(#bellShine)" />
+    <ellipse cx="50" cy="58" rx="26" ry="6" fill="#CD853F" />
+    <ellipse cx="50" cy="58" rx="26" ry="6" fill="url(#bellShine)" opacity="0.3" />
+    <circle cx="50" cy="68" r="5" fill="#B8860B" />
+    <circle cx="50" cy="67" r="2" fill="#FFD700" opacity="0.6" />
+    {/* Sound waves */}
+    <path d="M18 45 Q14 50 18 55" stroke="#FFD700" strokeWidth="1.5" fill="none" opacity="0.5" />
+    <path d="M82 45 Q86 50 82 55" stroke="#FFD700" strokeWidth="1.5" fill="none" opacity="0.5" />
   </motion.svg>
 );
 
 const ZodiacIcon3D = () => (
-  <motion.svg viewBox="0 0 100 100" className="w-8 h-8" animate={{ rotate: [0, 360] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }}>
+  <motion.svg viewBox="0 0 100 100" className="w-12 h-12">
     <defs>
       <linearGradient id="zodiacGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#4B0082" />
-        <stop offset="100%" stopColor="#9400D3" />
+        <stop offset="0%" stopColor="#1a0533" />
+        <stop offset="50%" stopColor="#4B0082" />
+        <stop offset="100%" stopColor="#7B2FBE" />
       </linearGradient>
+      <radialGradient id="starGlow" cx="50%" cy="50%">
+        <stop offset="0%" stopColor="#FFD700" stopOpacity="1" />
+        <stop offset="100%" stopColor="#FFD700" stopOpacity="0" />
+      </radialGradient>
+      <filter id="zodiacGlow">
+        <feGaussianBlur stdDeviation="1.5" result="glow" />
+        <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
     </defs>
-    <circle cx="50" cy="50" r="35" fill="none" stroke="url(#zodiacGrad)" strokeWidth="3" />
-    <circle cx="50" cy="50" r="25" fill="none" stroke="#FFD700" strokeWidth="1" strokeDasharray="4 4" />
-    <circle cx="50" cy="18" r="4" fill="#FFD700" />
-    <circle cx="82" cy="50" r="4" fill="#FFD700" />
-    <circle cx="50" cy="82" r="4" fill="#FFD700" />
-    <circle cx="18" cy="50" r="4" fill="#FFD700" />
-    <circle cx="50" cy="50" r="6" fill="#4B0082" />
+    <circle cx="50" cy="50" r="40" fill="url(#zodiacGrad)" />
+    <motion.circle cx="50" cy="50" r="35" fill="none" stroke="#FFD700" strokeWidth="1" strokeDasharray="6 4" animate={{ rotate: [0, 360] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} style={{ transformOrigin: '50px 50px' }} />
+    <motion.circle cx="50" cy="50" r="25" fill="none" stroke="#9370DB" strokeWidth="0.8" strokeDasharray="3 5" animate={{ rotate: [360, 0] }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }} style={{ transformOrigin: '50px 50px' }} />
+    {/* Stars */}
+    <circle cx="50" cy="15" r="3.5" fill="#FFD700" filter="url(#zodiacGlow)" />
+    <circle cx="85" cy="50" r="3.5" fill="#FFA500" filter="url(#zodiacGlow)" />
+    <circle cx="50" cy="85" r="3.5" fill="#FFD700" filter="url(#zodiacGlow)" />
+    <circle cx="15" cy="50" r="3.5" fill="#FFA500" filter="url(#zodiacGlow)" />
+    {/* Center sun */}
+    <circle cx="50" cy="50" r="8" fill="url(#starGlow)" />
+    <circle cx="50" cy="50" r="5" fill="#FFD700" />
+    <circle cx="48" cy="48" r="2" fill="#FFFACD" opacity="0.7" />
   </motion.svg>
 );
 
 const TempleIcon3D = () => (
-  <motion.svg viewBox="0 0 100 100" className="w-8 h-8" animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 3, repeat: Infinity }}>
+  <motion.svg viewBox="0 0 100 100" className="w-12 h-12" animate={{ scale: [1, 1.03, 1] }} transition={{ duration: 3, repeat: Infinity }}>
     <defs>
       <linearGradient id="templeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#DEB887" />
+        <stop offset="0%" stopColor="#F4E4C1" />
         <stop offset="100%" stopColor="#CD853F" />
       </linearGradient>
       <linearGradient id="roofGrad" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stopColor="#FFD700" />
+        <stop offset="50%" stopColor="#FFA500" />
         <stop offset="100%" stopColor="#B8860B" />
       </linearGradient>
+      <linearGradient id="pillarGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#DEB887" />
+        <stop offset="50%" stopColor="#F5DEB3" />
+        <stop offset="100%" stopColor="#DEB887" />
+      </linearGradient>
+      <filter id="templeGlow">
+        <feGaussianBlur stdDeviation="1.5" result="glow" />
+        <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
     </defs>
-    <rect x="20" y="65" width="60" height="30" fill="url(#templeGrad)" />
-    <rect x="28" y="45" width="44" height="20" fill="url(#templeGrad)" />
-    <polygon points="50,10 78,45 22,45" fill="url(#roofGrad)" />
-    <circle cx="50" cy="28" r="5" fill="#FFD700" />
-    <rect x="40" y="70" width="20" height="25" fill="#4A3728" />
+    {/* Base */}
+    <rect x="15" y="80" width="70" height="8" rx="2" fill="#A0522D" />
+    {/* Main body */}
+    <rect x="22" y="55" width="56" height="25" fill="url(#templeGrad)" />
+    {/* Pillars */}
+    <rect x="26" y="55" width="6" height="25" fill="url(#pillarGrad)" />
+    <rect x="68" y="55" width="6" height="25" fill="url(#pillarGrad)" />
+    {/* Middle tier */}
+    <rect x="28" y="42" width="44" height="13" fill="url(#templeGrad)" />
+    <path d="M26 42 L74 42 L72 55 L28 55 Z" fill="url(#roofGrad)" opacity="0.5" />
+    {/* Main roof/dome */}
+    <polygon points="50,8 76,42 24,42" fill="url(#roofGrad)" />
+    {/* Kalash on top */}
+    <motion.g animate={{ y: [0, -2, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+      <circle cx="50" cy="12" r="5" fill="#FFD700" filter="url(#templeGlow)" />
+      <path d="M47 12 L50 6 L53 12" fill="#FFD700" />
+    </motion.g>
+    {/* Door */}
+    <path d="M42 80 L42 62 Q50 56 58 62 L58 80 Z" fill="#4A2810" />
+    <circle cx="55" cy="72" r="1.5" fill="#FFD700" />
+    {/* Window details */}
+    <circle cx="35" cy="48" r="3" fill="#4A2810" opacity="0.5" />
+    <circle cx="65" cy="48" r="3" fill="#4A2810" opacity="0.5" />
   </motion.svg>
 );
 
 const CartIcon3D = () => (
-  <motion.svg viewBox="0 0 100 100" className="w-8 h-8" animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+  <motion.svg viewBox="0 0 100 100" className="w-12 h-12" animate={{ y: [0, -4, 0] }} transition={{ duration: 2.5, repeat: Infinity }}>
     <defs>
-      <linearGradient id="cartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <linearGradient id="basketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#DEB887" />
+        <stop offset="50%" stopColor="#CD853F" />
         <stop offset="100%" stopColor="#8B4513" />
       </linearGradient>
+      <linearGradient id="flowerGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FF6B6B" />
+        <stop offset="100%" stopColor="#FF4444" />
+      </linearGradient>
+      <linearGradient id="flowerGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FFB347" />
+        <stop offset="100%" stopColor="#FF8C00" />
+      </linearGradient>
+      <filter id="basketGlow">
+        <feGaussianBlur stdDeviation="1" result="glow" />
+        <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
     </defs>
-    <path d="M20 35 L30 75 L70 75 L80 35 Z" fill="url(#cartGrad)" stroke="#8B4513" strokeWidth="2" />
-    <path d="M25 45 L75 45 M27 55 L73 55 M29 65 L71 65" stroke="#A0522D" strokeWidth="2" fill="none" />
-    <ellipse cx="35" cy="28" rx="6" ry="8" fill="#FF6347" />
-    <ellipse cx="50" cy="26" rx="5" ry="7" fill="#FFD700" />
-    <ellipse cx="65" cy="28" rx="6" ry="8" fill="#32CD32" />
+    {/* Basket body */}
+    <path d="M22 40 L30 78 Q50 82 70 78 L78 40 Z" fill="url(#basketGrad)" />
+    {/* Basket weave pattern */}
+    <path d="M26 48 L74 48 M28 56 L72 56 M30 64 L70 64 M32 72 L68 72" stroke="#A0522D" strokeWidth="1.5" fill="none" opacity="0.4" />
+    <path d="M38 40 L36 78 M50 40 L50 80 M62 40 L64 78" stroke="#A0522D" strokeWidth="1" fill="none" opacity="0.3" />
+    {/* Handle */}
+    <path d="M32 40 Q50 24 68 40" stroke="#8B4513" strokeWidth="3" fill="none" />
+    {/* Flowers and items */}
+    <motion.g animate={{ rotate: [-3, 3, -3] }} transition={{ duration: 2, repeat: Infinity }} style={{ transformOrigin: '35px 32px' }}>
+      <circle cx="35" cy="32" r="7" fill="url(#flowerGrad1)" filter="url(#basketGlow)" />
+      <circle cx="35" cy="32" r="3" fill="#FFD700" />
+    </motion.g>
+    <motion.g animate={{ rotate: [3, -3, 3] }} transition={{ duration: 2.5, repeat: Infinity }} style={{ transformOrigin: '52px 28px' }}>
+      <circle cx="52" cy="28" r="6" fill="url(#flowerGrad2)" filter="url(#basketGlow)" />
+      <circle cx="52" cy="28" r="2.5" fill="#FFD700" />
+    </motion.g>
+    <circle cx="66" cy="33" r="5" fill="#32CD32" opacity="0.8" />
+    <path d="M64 30 Q66 24 68 30" stroke="#228B22" strokeWidth="1.5" fill="none" />
+    {/* Incense stick */}
+    <line x1="42" y1="36" x2="42" y2="18" stroke="#CD853F" strokeWidth="1.5" />
+    <motion.circle cx="42" cy="16" r="2" fill="#FF6347" opacity="0.6" animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.8, 1.2, 0.8] }} transition={{ duration: 1.5, repeat: Infinity }} />
   </motion.svg>
 );
 
 export default function AuthScreen({ initialMode = 'welcome', onBack, showBackButton = false }) {
+  const [showSplash, setShowSplash] = useState(initialMode === 'welcome');
   const [mode, setMode] = useState(initialMode === 'login' ? 'login' : initialMode === 'register' ? 'register' : 'welcome');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -278,6 +477,11 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream to-parchment flex items-center justify-center relative overflow-hidden">
       <Toaster position="top-center" richColors />
+      
+      {/* Splash Screen */}
+      <AnimatePresence>
+        {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+      </AnimatePresence>
       
       {/* Hidden reCAPTCHA container */}
       <div id="recaptcha-container"></div>
@@ -1093,21 +1297,29 @@ function WelcomeScreen({ onLogin, onRegister, onGoogleSignIn, googleLoading, onB
         </motion.p>
 
         <motion.div 
-          className="grid grid-cols-2 gap-4 w-full max-w-xs"
+          className="grid grid-cols-2 gap-4 w-full max-w-sm"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
           {[
-            { Icon: BellIcon3D, label: 'Book Priests' },
-            { Icon: ZodiacIcon3D, label: 'Horoscope' },
-            { Icon: TempleIcon3D, label: 'Temples' },
-            { Icon: CartIcon3D, label: 'Pooja Store' },
+            { Icon: BellIcon3D, label: 'Book Priests', color: 'from-amber-50 to-orange-50', border: 'border-amber-200' },
+            { Icon: ZodiacIcon3D, label: 'Horoscope', color: 'from-indigo-50 to-purple-50', border: 'border-indigo-200' },
+            { Icon: TempleIcon3D, label: 'Temples', color: 'from-yellow-50 to-amber-50', border: 'border-yellow-200' },
+            { Icon: CartIcon3D, label: 'Pooja Store', color: 'from-orange-50 to-red-50', border: 'border-orange-200' },
           ].map((item, i) => (
-            <div key={i} className="bg-white/60 backdrop-blur rounded-xl p-3 flex flex-col items-center justify-center">
+            <motion.div
+              key={i}
+              className={`bg-gradient-to-br ${item.color} border ${item.border} backdrop-blur rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm`}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 + i * 0.1 }}
+            >
               <item.Icon />
-              <span className="text-xs text-gray-600 mt-1">{item.label}</span>
-            </div>
+              <span className="text-sm font-medium text-gray-700 mt-2">{item.label}</span>
+            </motion.div>
           ))}
         </motion.div>
       </div>
