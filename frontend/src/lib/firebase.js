@@ -84,23 +84,16 @@ export const firebaseGoogleSignIn = async () => {
   
   try {
     console.log('Initiating Google Sign-In...');
-    
-    // Check if mobile device
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      // Use redirect for mobile (popups are often blocked)
-      console.log('Mobile detected, using redirect flow...');
-      await signInWithRedirect(auth, googleProvider);
-      // The result will be handled by getRedirectResult in AuthContext
-      return null;
-    } else {
-      // Use popup for desktop
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log('Google Sign-In successful:', result.user.email);
-      return result;
-    }
+    const result = await signInWithPopup(auth, googleProvider);
+    console.log('Google Sign-In successful:', result.user.email);
+    return result;
   } catch (error) {
+    // If popup is blocked on mobile, fall back to redirect
+    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+      console.log('Popup blocked/closed, falling back to redirect...');
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
     console.error('Google Sign-In error:', error.code, error.message);
     throw error;
   }
