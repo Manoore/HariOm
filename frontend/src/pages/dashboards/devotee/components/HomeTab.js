@@ -7,7 +7,6 @@ import api from '../../../../lib/api';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import NotificationBell from '../../../../components/NotificationBell';
 import LanguageSelector from '../../../../components/LanguageSelector';
 import { BellIcon3D, ZodiacIcon3D, CartIcon3D, TempleIcon3D } from './shared';
 import { PostCard } from './FeedTab';
@@ -106,7 +105,6 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <NotificationBell />
           <LanguageSelector className="text-gray-700" />
         </div>
       </div>
