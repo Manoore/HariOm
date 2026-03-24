@@ -593,7 +593,7 @@ function ClassesTab({ isDesktop }) {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-cream to-parchment pb-20 lg:pb-0 ${isDesktop ? 'ml-64' : ''}`}>
+    <div className="min-h-screen bg-gradient-to-b from-cream to-parchment pb-20 lg:pb-0">
       <div className="p-4 lg:p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

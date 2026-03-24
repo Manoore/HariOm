@@ -124,7 +124,7 @@ export function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const languages = ['Hindi', 'Sanskrit', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Marathi', 'Bengali', 'Gujarati', 'English'];
 
   return (
-    <div className={`pb-24 lg:pb-8 ${isDesktop ? 'ml-64 px-8' : 'px-4'}`}>
+    <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       <div className="pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon">Book a Priest</h1>
