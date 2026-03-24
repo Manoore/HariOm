@@ -105,6 +105,82 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 ### In Progress 🔄
 - None currently active
 
+### P0 — Production Cleanup (Next Session) 🔴
+**Goal: Remove all Emergent dependencies and make code fully independent for production deployment**
+
+1. **Replace `emergentintegrations` Stripe wrapper → Official `stripe` SDK**
+   - Files: `routes/payments.py`, `routes/orders.py`, `server.py`
+   - Install `stripe` package, rewrite checkout session creation using official Stripe API
+   - Remove `emergentintegrations` from Dockerfile private CDN install (line 39-40)
+
+2. **Replace `emergentintegrations` OpenAI STT → Official `openai` SDK**
+   - File: `server.py` (line 337 - `OpenAISpeechToText`)
+   - User will need their own OpenAI API key (`OPENAI_API_KEY` in `.env`)
+
+3. **Remove all hardcoded Emergent preview URLs**
+   - `routes/uploads.py` (lines 42, 71) — replace with `os.environ.get("BACKEND_URL")`
+   - `routes/orders.py` (line 171) — uses `FRONTEND_URL` env with preview fallback
+   - `routes/orders_new.py` (line 364) — same as above
+   - Backend `.env`: Update `FRONTEND_URL` to production URL (`https://divine-104d4.web.app`)
+
+4. **Remove `EMERGENT_LLM_KEY` from backend `.env`**
+   - Replace with `OPENAI_API_KEY` if OpenAI STT is needed
+   - Or remove STT feature if not used
+
+5. **Clean Dockerfile**
+   - Remove line 39-40: `pip install emergentintegrations --extra-index-url ...`
+   - Ensure `stripe` and `openai` are in `requirements.txt`
+
+6. **Delete test files with preview URLs** (or update them)
+   - `/app/backend/tests/test_backend_refactoring.py`
+   - `/app/backend/tests/test_admin_approval_workflow.py`
+   - `/app/backend/tests/test_divine_app.py`
+   - `/app/backend/tests/test_video_consultation.py`
+   - `/app/backend/tests/test_astrology_fixes.py`
+   - `/app/backend/tests/test_system_config.py`
+   - `/app/backend/tests/test_scriptures.py`
+   - `/app/backend/tests/test_orders_astrology_modular.py`
+   - `/app/backend/tests/test_new_meeting_location_features.py`
+   - `/app/backend/tests/test_class_enrollment_payment.py`
+
+7. **Production `.env` templates** — Create `.env.example` files for both backend and frontend with all required variables (no values, just keys)
+
+### P0 — Play Store Deployment (TWA Setup) 🔴
+**Goal: Wrap the Firebase-hosted web app as an Android app for Google Play Store**
+
+**Prerequisites:**
+- Google Play Developer Account ($25 one-time) → https://play.google.com/console
+- App signed with your own keystore
+
+**What's needed:**
+| Item | Details |
+|---|---|
+| App Name | "Divine - Hindu Spiritual Services" |
+| Package Name | e.g., `com.divine.app` |
+| App Icon | 512x512 PNG (high-res) |
+| Feature Graphic | 1024x500 PNG |
+| Screenshots | Min 2 phone screenshots (1080x1920) |
+| Privacy Policy URL | Public webpage required |
+| Short Description | Max 80 characters |
+| Full Description | Max 4000 characters |
+| Content Rating | Questionnaire in Play Console |
+| Category | Lifestyle or Education |
+| Signed AAB | Generated from TWA/Android Studio |
+
+**TWA (Trusted Web Activity) approach:**
+- Wraps `divine-104d4.web.app` as a native Android app
+- Web + Mobile always in sync (same codebase)
+- Push notifications work via FCM (already set up)
+- Uses Bubblewrap CLI tool to generate TWA project
+- Digital Asset Links file needed in Firebase Hosting
+
+### CI/CD Pipeline (Future)
+- GitHub Actions workflow for:
+  - Auto-deploy backend to Cloud Run on push to `main`
+  - Auto-deploy frontend to Firebase Hosting on push to `main`
+  - Run tests before deploy
+  - Build AAB for Play Store on release tags
+
 12. **AuthScreen.js ESLint Build Fix** (March 24, 2026)
     - Fixed `signupSettings` scoping issue — passed as prop from `AuthScreen` to `RegisterScreen`
     - `npm run build` now completes successfully
@@ -132,6 +208,7 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 
 ### Pending Features 📋
 - **P1**: GitHub Actions APK build fixes
+- **P1**: CI/CD Pipeline (GitHub Actions → Cloud Run + Firebase auto-deploy)
 - **P2**: Stripe Connect for vendor payment splitting
 - **P2**: Push notifications for class reminders
 - **P2**: Phase 2 Live Streams (100ms HLS)
@@ -178,4 +255,4 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Uses `--legacy-peer-deps` for npm compatibility
 
 ## Last Updated
-March 24, 2026 - Push Notifications (FCM) fully implemented, In-App Notifications wired, Splash Screen & Enhanced Icons added
+March 24, 2026 - Added Production Cleanup & Play Store deployment plan to PRD. Push Notifications (FCM V1) fully implemented with Firebase Admin SDK.
