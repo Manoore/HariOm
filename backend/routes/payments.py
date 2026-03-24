@@ -201,30 +201,32 @@ async def create_razorpay_order(data: RazorpayOrderRequest, user: dict = Depends
 @router.post("/create-checkout")
 async def create_stripe_checkout(request: Request, payment: PaymentCreate, user: dict = Depends(get_current_user)):
     """Create a Stripe checkout session"""
-    from emergentintegrations.llm.stripe import StripeCheckout, CheckoutSessionRequest
+    import stripe
     
-    host_url = str(request.base_url).rstrip('/')
-    webhook_url = f"{host_url}/api/webhook/stripe"
-    
-    # Get Stripe credentials from system config or env
     stripe_creds = await get_stripe_credentials()
     
     if not stripe_creds["secret_key"]:
         raise HTTPException(status_code=500, detail="Stripe API key not configured")
     
-    stripe_checkout = StripeCheckout(
-        api_key=stripe_creds["secret_key"],
-        webhook_url=webhook_url
-    )
+    stripe.api_key = stripe_creds["secret_key"]
     
-    # Determine success/cancel URLs
-    origin = request.headers.get("origin", host_url)
+    origin = request.headers.get("origin", str(request.base_url).rstrip('/'))
     success_url = f"{origin}/payment/success?session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{origin}/payment/cancel"
     
-    checkout_request = CheckoutSessionRequest(
-        amount=float(payment.amount),
-        currency=payment.currency.lower(),
+    session = stripe.checkout.Session.create(
+        payment_method_types=["card"],
+        line_items=[{
+            "price_data": {
+                "currency": payment.currency.lower(),
+                "product_data": {
+                    "name": payment.payment_type.replace("_", " ").title(),
+                },
+                "unit_amount": int(float(payment.amount) * 100),
+            },
+            "quantity": 1,
+        }],
+        mode="payment",
         success_url=success_url,
         cancel_url=cancel_url,
         metadata={
@@ -234,12 +236,9 @@ async def create_stripe_checkout(request: Request, payment: PaymentCreate, user:
         }
     )
     
-    session = await stripe_checkout.create_checkout_session(checkout_request)
-    
-    # Create payment transaction record
     await payment_transactions_collection.insert_one({
         "user_id": str(user["_id"]),
-        "session_id": session.session_id,
+        "session_id": session.id,
         "amount": payment.amount,
         "currency": payment.currency,
         "payment_type": payment.payment_type,
@@ -249,39 +248,34 @@ async def create_stripe_checkout(request: Request, payment: PaymentCreate, user:
         "created_at": datetime.now(timezone.utc)
     })
     
-    return {"url": session.url, "session_id": session.session_id}
+    return {"url": session.url, "session_id": session.id}
 
 
 @router.get("/status/{session_id}")
 async def get_payment_status(session_id: str, request: Request):
     """Get payment status from Stripe session"""
-    from emergentintegrations.llm.stripe import StripeCheckout
+    import stripe
     
-    host_url = str(request.base_url).rstrip('/')
-    webhook_url = f"{host_url}/api/webhook/stripe"
-    
-    # Get Stripe credentials from system config or env
     stripe_creds = await get_stripe_credentials()
     
     if not stripe_creds["secret_key"]:
         raise HTTPException(status_code=500, detail="Stripe API key not configured")
     
-    stripe_checkout = StripeCheckout(
-        api_key=stripe_creds["secret_key"],
-        webhook_url=webhook_url
-    )
+    stripe.api_key = stripe_creds["secret_key"]
     
-    status = await stripe_checkout.get_checkout_status(session_id)
+    session = stripe.checkout.Session.retrieve(session_id)
     
-    # Update payment transaction
+    payment_status = session.payment_status or "unpaid"
+    status = session.status or "open"
+    
     await payment_transactions_collection.update_one(
         {"session_id": session_id},
-        {"$set": {"payment_status": status.payment_status, "status": status.status}}
+        {"$set": {"payment_status": payment_status, "status": status}}
     )
     
     return {
-        "status": status.status,
-        "payment_status": status.payment_status,
-        "amount_total": status.amount_total,
-        "currency": status.currency
+        "status": status,
+        "payment_status": payment_status,
+        "amount_total": session.amount_total,
+        "currency": session.currency
     }

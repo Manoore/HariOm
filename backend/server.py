@@ -46,10 +46,6 @@ from horoscope_service import get_daily_horoscope as local_daily_horoscope, gene
 from config import settings
 import prokerala
 
-from emergentintegrations.payments.stripe.checkout import (
-    StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
-)
-
 # Import modular routers
 from routes.reviews import router as reviews_router
 from routes.admin_new import router as admin_router

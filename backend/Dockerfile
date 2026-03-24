@@ -36,9 +36,6 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir bcrypt==4.0.1 && \
     pip install --no-cache-dir -r requirements.txt
 
-# Install emergentintegrations from private index
-RUN pip install --no-cache-dir emergentintegrations --extra-index-url https://d33sy5i8bnduwe.cloudfront.net/simple/
-
 # Copy application code
 COPY . .
 

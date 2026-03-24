@@ -361,7 +361,7 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     order_id = str(result.inserted_id)
     
     # Get frontend URL for redirect
-    frontend_url = os.environ.get("FRONTEND_URL", "https://divine-app-preview-1.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://divine-104d4.web.app")
     
     # Get Stripe credentials
     stripe_creds = await get_stripe_credentials()
