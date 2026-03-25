@@ -66,6 +66,18 @@ function PaymentHandler({ children }) {
 }
 
 function App() {
+  // Clean up stale/broken service workers on app load
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          // Force update the service worker so stale cached versions are replaced
+          registration.update().catch(() => {});
+        }
+      }).catch(() => {});
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <CartProvider>

@@ -12,13 +12,21 @@ export function usePushNotifications() {
   const [supported, setSupported] = useState(false);
 
   useEffect(() => {
-    // Check if push is supported
-    const isSupported = 'Notification' in window && 
-                        'serviceWorker' in navigator && 
-                        isFirebaseConfigured && 
-                        VAPID_KEY;
-    setSupported(isSupported);
-    setPermission(Notification?.permission || 'default');
+    // Check if push is supported (Safari on iOS does not support FCM)
+    const checkSupport = () => {
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const hasNotification = 'Notification' in window;
+      const hasSW = 'serviceWorker' in navigator;
+      const hasPushManager = 'PushManager' in window;
+      
+      return hasNotification && hasSW && hasPushManager && isFirebaseConfigured && VAPID_KEY && !(isIOS && isSafari);
+    };
+    
+    setSupported(checkSupport());
+    if ('Notification' in window) {
+      setPermission(Notification.permission);
+    }
   }, []);
 
   // Listen for foreground messages
