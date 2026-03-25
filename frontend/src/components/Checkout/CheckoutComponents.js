@@ -357,6 +357,13 @@ export function CheckoutPage({ onBack, onComplete }) {
             contact: formData.shipping_phone,
           },
           theme: { color: '#E67E22' },
+          method: {
+            upi: true,
+            card: true,
+            netbanking: true,
+            wallet: true,
+            paylater: true,
+          },
           handler: async (response) => {
             try {
               await api.post('/api/razorpay/verify', {
