@@ -55,6 +55,7 @@ import { ShopTab } from './devotee/components/ShopTab';
 import { ProfileTab } from './devotee/components/ProfileTab';
 import { ClassesTab, TestimonialSection } from './devotee/components/ClassesTab';
 import { TemplesTab } from './devotee/components/TemplesTab';
+import { MyActivityTab } from './devotee/components/MyActivityTab';
 
 // Mantras & Shlokas Tab Content
 function MantrasTab({ isDesktop }) {
@@ -1509,6 +1510,9 @@ export default function DevoteeDashboard() {
       <div className={activeTab === 'astrology' ? '' : ''}>
         {activeTab === 'home' && (
           <HomeTab setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} isDesktop={isDesktop} />
+        )}
+        {activeTab === 'activity' && (
+          <MyActivityTab isDesktop={isDesktop} setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} />
         )}
         {activeTab === 'messages' && (
           <>

@@ -15,6 +15,7 @@ export { ShopTab } from './ShopTab';
 export { ProfileTab } from './ProfileTab';
 
 export { TemplesTab } from './TemplesTab';
+export { MyActivityTab } from './MyActivityTab';
 
 // Classes Tab and related components
 export { ClassesTab, ClassRequestForm, ClassCard } from './ClassesTab';

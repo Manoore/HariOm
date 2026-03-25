@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Sun, ShoppingBag, User, Calendar, Menu,
-  LogOut, BookOpen, Play, Music, Rss, MessageSquare, Video, X, UserRoundCheck, Bell, Landmark
+  LogOut, BookOpen, Play, Music, Rss, MessageSquare, Video, X, UserRoundCheck, Bell, Landmark, ClipboardList
 } from 'lucide-react';
 import { useCart } from '../../../../contexts/CartContext';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -15,6 +15,7 @@ export function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
   
   const tabs = [
     { id: 'home', icon: OmIcon, label: 'Home' },
+    { id: 'activity', icon: ClipboardList, label: 'My Activity' },
     { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages },
     { id: 'consultation', icon: Video, label: 'Call Astrologer' },
     { id: 'classes', icon: BookOpen, label: 'Vedic Classes' },
@@ -116,10 +117,10 @@ export function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
   
   const mainTabs = [
     { id: 'home', icon: OmIcon, label: 'Home' },
+    { id: 'activity', icon: ClipboardList, label: 'Activity' },
     { id: 'priests', icon: UserRoundCheck, label: 'Priests' },
     { id: 'shop', icon: ShoppingBag, label: 'Shop' },
     { id: 'more', icon: Menu, label: 'More', isMore: true },
-    { id: 'profile', icon: User, label: 'Profile' },
   ];
 
   const moreTabs = [
@@ -133,6 +134,7 @@ export function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
     { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
     { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
     { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages },
+    { id: 'profile', icon: User, label: 'My Account' },
   ];
 
   return (

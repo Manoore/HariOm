@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sun, Send, Heart, MessageCircle, CalendarDays, AlertCircle, BarChart3, Eye } from 'lucide-react';
+import { BookingCard } from './BookingsTab';
 
 // ==================== STAT CARD ====================
 function StatCard({ icon: Icon, value, label, highlight }) {
