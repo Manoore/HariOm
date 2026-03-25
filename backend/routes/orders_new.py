@@ -17,7 +17,7 @@ from database import (
 from models import OrderStatus, UserRole
 from auth import get_current_user
 from routes.chat import create_chat_room, deactivate_chat_room
-from system_config import get_stripe_credentials, get_fees_and_taxes, calculate_fees_and_taxes
+from system_config import get_stripe_credentials, get_razorpay_credentials, get_fees_and_taxes, calculate_fees_and_taxes
 
 router = APIRouter(prefix="/api", tags=["Orders"])
 
@@ -237,7 +237,7 @@ async def pay_for_order(order_id: str, user: dict = Depends(get_current_user)):
 
 @router.post("/checkout")
 async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_user)):
-    """Create order with Stripe checkout flow"""
+    """Create order with Stripe or Razorpay checkout flow"""
     cart = await cart_collection.find_one({"user_id": str(user["_id"])})
     if not cart or not cart.get("items"):
         raise HTTPException(status_code=400, detail="Cart is empty")
@@ -246,7 +246,6 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     subtotal = 0
     shop_shipping = {}
     shop_names = {}
-    stripe_line_items = []
     
     for cart_item in cart["items"]:
         product = await products_collection.find_one({"_id": ObjectId(cart_item["product_id"])})
@@ -273,19 +272,6 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
             "image": product.get("images", [None])[0] if product.get("images") else None
         })
         
-        # Create Stripe line item
-        stripe_line_items.append({
-            "price_data": {
-                "currency": "inr",
-                "product_data": {
-                    "name": product["name"],
-                    "images": product.get("images", [])[:1] if product.get("images") else [],
-                },
-                "unit_amount": int(product["price"] * 100),
-            },
-            "quantity": cart_item["quantity"],
-        })
-        
         if shop_id and shop_id not in shop_shipping:
             shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
             if shop:
@@ -304,17 +290,6 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
         else:
             total_shipping += shipping_info["cost"]
     
-    # Add shipping as a line item if applicable
-    if total_shipping > 0:
-        stripe_line_items.append({
-            "price_data": {
-                "currency": "inr",
-                "product_data": {"name": "Shipping"},
-                "unit_amount": int(total_shipping * 100),
-            },
-            "quantity": 1,
-        })
-    
     # Get fees and taxes configuration
     fees_config = await get_fees_and_taxes()
     fees_calc = calculate_fees_and_taxes(subtotal, fees_config)
@@ -323,28 +298,6 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     tax_amount = fees_calc["tax_amount"]
     tax_label = fees_calc["tax_label"]
     tax_percentage = fees_calc["tax_percentage"]
-    
-    # Add platform fee as line item
-    if platform_fee > 0:
-        stripe_line_items.append({
-            "price_data": {
-                "currency": "inr",
-                "product_data": {"name": "Platform Fee"},
-                "unit_amount": int(platform_fee * 100),
-            },
-            "quantity": 1,
-        })
-    
-    # Add tax as line item
-    if tax_amount > 0:
-        stripe_line_items.append({
-            "price_data": {
-                "currency": "inr",
-                "product_data": {"name": f"{tax_label} ({tax_percentage}%)"},
-                "unit_amount": int(tax_amount * 100),
-            },
-            "quantity": 1,
-        })
     
     total_amount = subtotal + total_shipping + platform_fee + tax_amount
     
@@ -379,35 +332,117 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     result = await orders_collection.insert_one(order_dict)
     order_id = str(result.inserted_id)
     
-    # Get frontend URL for redirect
     frontend_url = os.environ.get("FRONTEND_URL", "https://divine-104d4.web.app")
     
-    # Get Stripe credentials
-    stripe_creds = await get_stripe_credentials()
-    stripe.api_key = stripe_creds["secret_key"]
+    # ==================== RAZORPAY FLOW ====================
+    if data.payment_method == "razorpay":
+        try:
+            import httpx
+            razorpay_creds = await get_razorpay_credentials()
+            
+            async with httpx.AsyncClient() as client:
+                rz_response = await client.post(
+                    "https://api.razorpay.com/v1/orders",
+                    auth=(razorpay_creds["key_id"], razorpay_creds["key_secret"]),
+                    json={
+                        "amount": int(total_amount * 100),
+                        "currency": "INR",
+                        "receipt": f"order_{order_id[-8:]}",
+                        "notes": {
+                            "order_id": order_id,
+                            "user_id": str(user["_id"]),
+                            "user_email": user.get("email", "")
+                        }
+                    }
+                )
+                
+                if rz_response.status_code != 200:
+                    raise Exception(f"Razorpay API error: {rz_response.text}")
+                
+                rz_order = rz_response.json()
+            
+            await orders_collection.update_one(
+                {"_id": ObjectId(order_id)},
+                {"$set": {"razorpay_order_id": rz_order["id"]}}
+            )
+            
+            # Clear cart
+            await cart_collection.delete_one({"user_id": str(user["_id"])})
+            
+            return {
+                "message": "Razorpay order created",
+                "order_id": order_id,
+                "order_number": order_id[-8:].upper(),
+                "subtotal": subtotal,
+                "shipping": total_shipping,
+                "platform_fee": platform_fee,
+                "tax_amount": tax_amount,
+                "tax_label": tax_label,
+                "tax_percentage": tax_percentage,
+                "total": total_amount,
+                "payment_method": "razorpay",
+                "razorpay_order_id": rz_order["id"],
+                "razorpay_key_id": razorpay_creds["key_id"],
+                "amount": int(total_amount * 100),
+                "currency": "INR",
+                "user_name": user.get("name", ""),
+                "user_email": user.get("email", ""),
+                "user_phone": data.shipping_phone
+            }
+        except Exception as e:
+            await orders_collection.delete_one({"_id": ObjectId(order_id)})
+            raise HTTPException(status_code=500, detail=f"Razorpay order creation failed: {str(e)}")
     
-    # Create Stripe checkout session
+    # ==================== STRIPE FLOW ====================
+    stripe_line_items = []
+    for item in items:
+        stripe_line_items.append({
+            "price_data": {
+                "currency": "inr",
+                "product_data": {
+                    "name": item["name"],
+                    "images": [item["image"]] if item.get("image") else [],
+                },
+                "unit_amount": int(item["price"] * 100),
+            },
+            "quantity": item["quantity"],
+        })
+    
+    if total_shipping > 0:
+        stripe_line_items.append({
+            "price_data": {"currency": "inr", "product_data": {"name": "Shipping"}, "unit_amount": int(total_shipping * 100)},
+            "quantity": 1,
+        })
+    if platform_fee > 0:
+        stripe_line_items.append({
+            "price_data": {"currency": "inr", "product_data": {"name": "Platform Fee"}, "unit_amount": int(platform_fee * 100)},
+            "quantity": 1,
+        })
+    if tax_amount > 0:
+        stripe_line_items.append({
+            "price_data": {"currency": "inr", "product_data": {"name": f"{tax_label} ({tax_percentage}%)"}, "unit_amount": int(tax_amount * 100)},
+            "quantity": 1,
+        })
+    
     try:
+        stripe_creds = await get_stripe_credentials()
+        stripe.api_key = stripe_creds["secret_key"]
+        
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             line_items=stripe_line_items,
             mode="payment",
             success_url=f"{frontend_url}?payment=success&order_id={order_id}",
             cancel_url=f"{frontend_url}?payment=cancelled&order_id={order_id}",
-            metadata={
-                "order_id": order_id,
-                "user_id": str(user["_id"])
-            },
+            metadata={"order_id": order_id, "user_id": str(user["_id"])},
             **({'customer_email': user.get("email")} if user.get("email") and '@' in str(user.get("email", "")) else {}),
         )
         
-        # Store stripe session id
         await orders_collection.update_one(
             {"_id": ObjectId(order_id)},
             {"$set": {"stripe_session_id": checkout_session.id}}
         )
         
-        # Clear cart after successful checkout session creation
         await cart_collection.delete_one({"user_id": str(user["_id"])})
         
         return {
@@ -421,13 +456,12 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
             "tax_label": tax_label,
             "tax_percentage": tax_percentage,
             "total": total_amount,
-            "payment_method": data.payment_method,
+            "payment_method": "stripe",
             "checkout_url": checkout_session.url,
             "session_id": checkout_session.id
         }
         
     except stripe.error.StripeError as e:
-        # If Stripe fails, delete the order
         await orders_collection.delete_one({"_id": ObjectId(order_id)})
         raise HTTPException(status_code=500, detail=f"Payment processing failed: {str(e)}")
 
@@ -510,6 +544,95 @@ async def confirm_payment(order_id: str, user: dict = Depends(get_current_user))
         "order_number": order_id[-8:].upper(),
         "status": "confirmed"
     }
+
+
+@router.post("/razorpay/verify")
+async def verify_razorpay_payment(request: Request, user: dict = Depends(get_current_user)):
+    """Verify Razorpay payment signature and confirm order"""
+    data = await request.json()
+    razorpay_order_id = data.get("razorpay_order_id")
+    razorpay_payment_id = data.get("razorpay_payment_id")
+    razorpay_signature = data.get("razorpay_signature")
+    order_id = data.get("order_id")
+
+    if not all([razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id]):
+        raise HTTPException(status_code=400, detail="Missing payment verification data")
+
+    order = await orders_collection.find_one({"_id": ObjectId(order_id)})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order["user_id"] != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if order.get("payment_status") == "paid":
+        return {"message": "Payment already confirmed", "order_id": order_id}
+
+    # Verify signature
+    import hmac
+    import hashlib
+    razorpay_creds = await get_razorpay_credentials()
+
+    generated_signature = hmac.new(
+        razorpay_creds["key_secret"].encode(),
+        f"{razorpay_order_id}|{razorpay_payment_id}".encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    if generated_signature != razorpay_signature:
+        raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+    # Payment verified — update order
+    await orders_collection.update_one(
+        {"_id": ObjectId(order_id)},
+        {
+            "$set": {
+                "payment_status": "paid",
+                "status": OrderStatus.PAID,
+                "paid_at": datetime.now(timezone.utc),
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_signature": razorpay_signature
+            },
+            "$push": {
+                "status_history": {
+                    "status": "paid",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "note": "Payment confirmed via Razorpay"
+                }
+            }
+        }
+    )
+
+    # Reduce stock
+    for item in order["items"]:
+        await products_collection.update_one(
+            {"_id": ObjectId(item["product_id"])},
+            {"$inc": {"stock": -item["quantity"]}}
+        )
+
+    # Create chat rooms with shop owners
+    for shop_id in order.get("shop_ids", []):
+        shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
+        if shop:
+            shop_owner = await users_collection.find_one({"_id": ObjectId(shop["owner_id"])})
+            if shop_owner:
+                shop_items_count = len([i for i in order["items"] if i.get("shop_id") == shop_id])
+                context = f"Order #{order_id[-8:].upper()} - {shop_items_count} item(s)"
+                await create_chat_room(
+                    room_type="order",
+                    reference_id=order_id,
+                    participant1_id=str(user["_id"]),
+                    participant1_name=user.get("name", "Customer"),
+                    participant2_id=str(shop_owner["_id"]),
+                    participant2_name=shop.get("name", shop_owner.get("name", "Shop")),
+                    context=context
+                )
+
+    return {
+        "message": "Payment verified successfully",
+        "order_id": order_id,
+        "order_number": order_id[-8:].upper(),
+        "status": "confirmed"
+    }
+
 
 
 @router.get("/checkout/fees-taxes")

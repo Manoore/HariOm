@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShoppingCart, X, Plus, Minus, Trash2, MapPin, Phone, User,
@@ -11,6 +11,7 @@ import { useCart } from '../../contexts/CartContext';
 import { usePayment } from '../../contexts/PaymentContext';
 import { toast } from 'sonner';
 import AddressAutocomplete from '../AddressAutocomplete';
+import { useRazorpay } from 'react-razorpay';
 
 // Cart Sidebar Component
 export function CartSidebar({ isOpen, onClose, onCheckout }) {
@@ -208,10 +209,11 @@ export function CheckoutPage({ onBack, onComplete }) {
   const { user } = useAuth();
   const { paymentGateway } = usePayment();
   const { refreshCart } = useCart();
+  const { Razorpay, isLoading: razorpayLoading, error: razorpayError } = useRazorpay();
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [step, setStep] = useState(1); // 1: Address, 2: Payment, 3: Confirmation
+  const [step, setStep] = useState(1);
   const [feesConfig, setFeesConfig] = useState(null);
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -222,7 +224,7 @@ export function CheckoutPage({ onBack, onComplete }) {
     shipping_state: '',
     shipping_pincode: '',
     notes: '',
-    payment_method: paymentGateway || 'stripe'
+    payment_method: paymentGateway || 'razorpay'
   });
 
   useEffect(() => {
@@ -338,62 +340,71 @@ export function CheckoutPage({ onBack, onComplete }) {
 
     setSubmitting(true);
     try {
-      // Try new checkout endpoint first
-      let res;
-      try {
-        res = await api.post('/api/checkout', formData);
-      } catch (checkoutError) {
-        if (checkoutError.response?.status === 404) {
-          // Fall back to older two-step flow:
-          // Step 1: Create order
-          const shippingAddress = `${formData.shipping_name}, ${formData.shipping_address}, ${formData.shipping_city}, ${formData.shipping_state} - ${formData.shipping_pincode}. Phone: ${formData.shipping_phone}`;
-          
-          const orderRes = await api.post('/api/orders', {
-            items: cartData.items.map(item => ({
-              product_id: item.product_id,
-              quantity: item.quantity
-            })),
-            shipping_address: shippingAddress,
-            payment_method: 'stripe'
-          });
-          
-          // Step 2: Create payment checkout session
-          const paymentRes = await api.post('/api/payments/create-checkout', {
-            amount: totals.total * 100, // Convert to paise
-            currency: 'inr',
-            payment_type: 'order',
-            reference_id: orderRes.data.order_id || orderRes.data.id,
-            payment_method: 'stripe'
-          });
-          
-          res = { data: { ...orderRes.data, ...paymentRes.data } };
-        } else {
-          throw checkoutError;
-        }
+      const res = await api.post('/api/checkout', formData);
+      
+      // ==================== RAZORPAY FLOW ====================
+      if (res.data.payment_method === 'razorpay' && res.data.razorpay_order_id) {
+        const options = {
+          key: res.data.razorpay_key_id,
+          amount: res.data.amount,
+          currency: res.data.currency || 'INR',
+          name: 'Divine App',
+          description: `Order #${res.data.order_number}`,
+          order_id: res.data.razorpay_order_id,
+          prefill: {
+            name: res.data.user_name || formData.shipping_name,
+            email: res.data.user_email || '',
+            contact: formData.shipping_phone,
+          },
+          theme: { color: '#E67E22' },
+          handler: async (response) => {
+            try {
+              await api.post('/api/razorpay/verify', {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                order_id: res.data.order_id,
+              });
+              toast.success('Payment successful! Order confirmed.');
+              if (refreshCart) refreshCart();
+              onComplete({ order_id: res.data.order_id, order_number: res.data.order_number });
+            } catch (verifyError) {
+              console.error('Verification error:', verifyError);
+              toast.error('Payment verification failed. Please contact support.');
+              setSubmitting(false);
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              toast.error('Payment cancelled');
+              setSubmitting(false);
+            },
+          },
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', (response) => {
+          toast.error(`Payment failed: ${response.error.description}`);
+          setSubmitting(false);
+        });
+        rzp.open();
+        return;
       }
       
-      // If checkout_url or url is returned (Stripe), redirect to Stripe checkout
+      // ==================== STRIPE FLOW ====================
       const stripeUrl = res.data.checkout_url || res.data.url;
       if (stripeUrl) {
         toast.success('Redirecting to payment...');
-        // Store order info before redirect
         localStorage.setItem('pending_order', JSON.stringify({
           order_id: res.data.order_id || res.data.id,
           order_number: res.data.order_number,
           total: res.data.total || totals.total
         }));
-        // Clear cart count in context (backend already cleared the cart)
-        if (refreshCart) {
-          refreshCart();
-        }
-        // Redirect to Stripe checkout page
+        if (refreshCart) refreshCart();
         window.location.href = stripeUrl;
       } else {
-        // Non-Stripe flow (if needed in future)
         toast.success('Order placed successfully!');
-        if (refreshCart) {
-          refreshCart();
-        }
+        if (refreshCart) refreshCart();
         onComplete(res.data);
       }
     } catch (error) {

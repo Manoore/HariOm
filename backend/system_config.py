@@ -285,6 +285,26 @@ DEFAULT_CONFIG = {
         "required": False
     },
     
+    # Order Settings
+    "auto_confirm_days": {
+        "value": "7",
+        "category": "order_settings",
+        "label": "Auto-Confirm Delivery (Days)",
+        "description": "Auto-confirm delivery after these many days if customer doesn't respond",
+        "sensitive": False,
+        "required": False,
+        "type": "number"
+    },
+    "auto_payout_enabled": {
+        "value": True,
+        "category": "order_settings",
+        "label": "Auto-Payout on Delivery",
+        "description": "Automatically transfer provider share after delivery confirmation",
+        "sensitive": False,
+        "required": False,
+        "type": "boolean"
+    },
+    
     # Notification Settings
     "enable_email_notifications": {
         "value": True,
@@ -619,6 +639,7 @@ CONFIG_CATEGORIES = {
     "payment": {"label": "Payment Gateway Keys", "icon": "credit-card", "description": "Stripe and Razorpay API keys"},
     "payment_settings": {"label": "Payment Settings", "icon": "settings", "description": "Payment gateway configuration"},
     "fees_taxes": {"label": "Fees & Taxes", "icon": "receipt", "description": "Platform fees, GST, and tax settings"},
+    "order_settings": {"label": "Order Settings", "icon": "package", "description": "Auto-confirm, auto-payout, and delivery settings"},
     "firebase": {"label": "Firebase", "icon": "flame", "description": "Firebase authentication settings"},
     "branding": {"label": "App Branding", "icon": "palette", "description": "App name, tagline, and contact info"},
     "maintenance": {"label": "Maintenance", "icon": "tool", "description": "Maintenance mode settings"},
