@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, ChevronRight, Clock, Loader2, MessageSquare } from 'lucide-react';
+import { Star, ChevronRight, Clock, Loader2, MessageSquare, MapPin, Award, Landmark } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -92,6 +92,52 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
             <h3 className="font-semibold text-gray-800 mb-2">About</h3>
             <p className="text-gray-600 text-sm">{priest.bio}</p>
           </div>
+
+          {/* Priest Details: Subcaste, Math/Mutt, Temple, Work Locations */}
+          {(priest.subcaste || priest.math_mutt || priest.temple_affiliation || (priest.work_locations && priest.work_locations.length > 0)) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+              {priest.subcaste && (
+                <div className="bg-white rounded-xl p-3 border border-orange-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Award className="w-4 h-4 text-saffron" />
+                    <span className="text-xs font-medium text-gray-500">Subcaste</span>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800">{priest.subcaste}</p>
+                </div>
+              )}
+              {priest.math_mutt && (
+                <div className="bg-white rounded-xl p-3 border border-orange-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Landmark className="w-4 h-4 text-saffron" />
+                    <span className="text-xs font-medium text-gray-500">Math/Mutt</span>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800">{priest.math_mutt}</p>
+                </div>
+              )}
+              {priest.temple_affiliation && (
+                <div className="bg-white rounded-xl p-3 border border-orange-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Landmark className="w-4 h-4 text-maroon" />
+                    <span className="text-xs font-medium text-gray-500">Temple Affiliation</span>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-800">{priest.temple_affiliation}</p>
+                </div>
+              )}
+              {priest.work_locations && priest.work_locations.length > 0 && (
+                <div className="bg-white rounded-xl p-3 border border-orange-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <MapPin className="w-4 h-4 text-green-600" />
+                    <span className="text-xs font-medium text-gray-500">Work Locations</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {priest.work_locations.map((loc, i) => (
+                      <span key={i} className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{loc}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Services */}
           <h2 className="font-cinzel text-lg font-semibold text-maroon mb-3">Services</h2>

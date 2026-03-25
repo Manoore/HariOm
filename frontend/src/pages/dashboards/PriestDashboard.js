@@ -1181,8 +1181,10 @@ function ProfileTab({ profile, user, onRefresh }) {
     profile_photo: profile?.profile_photo || '',
     temple_affiliation: profile?.temple_affiliation || '',
     math_mutt: profile?.math_mutt || '',
-    math_mutt_other: profile?.math_mutt_other || ''
+    math_mutt_other: profile?.math_mutt_other || '',
+    subcaste: profile?.subcaste || ''
   });
+  const [subcasteOptions, setSubcasteOptions] = useState([]);
   const [newLocation, setNewLocation] = useState('');
 
   // Fetch specializations (puja types) from API
@@ -1212,6 +1214,19 @@ function ProfileTab({ profile, user, onRefresh }) {
       }
     };
     fetchMathMutt();
+  }, []);
+
+  // Fetch Subcaste options from API
+  useEffect(() => {
+    const fetchSubcastes = async () => {
+      try {
+        const res = await api.get('/api/subcastes');
+        setSubcasteOptions(res.data.subcastes || []);
+      } catch (error) {
+        console.error('Failed to load subcaste options:', error);
+      }
+    };
+    fetchSubcastes();
   }, []);
 
   const handlePhotoUpload = async (e) => {
@@ -1587,6 +1602,33 @@ function ProfileTab({ profile, user, onRefresh }) {
             {formData.math_mutt === 'Other' && formData.math_mutt_other 
               ? formData.math_mutt_other 
               : formData.math_mutt || 'No Math/Mutt affiliation added'}
+          </p>
+        )}
+      </div>
+
+      {/* Subcaste */}
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+        <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+          <Award className="w-5 h-5 text-saffron" />
+          Subcaste
+        </h3>
+        <p className="text-xs text-gray-500 mb-3">Select your subcaste (if applicable)</p>
+        
+        {editing ? (
+          <select
+            value={formData.subcaste}
+            onChange={(e) => setFormData({ ...formData, subcaste: e.target.value })}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50"
+            data-testid="priest-subcaste"
+          >
+            <option value="">-- Select Subcaste --</option>
+            {subcasteOptions.map((sc, idx) => (
+              <option key={idx} value={sc}>{sc}</option>
+            ))}
+          </select>
+        ) : (
+          <p className="text-gray-600 text-sm md:text-base">
+            {formData.subcaste || 'No subcaste selected'}
           </p>
         )}
       </div>

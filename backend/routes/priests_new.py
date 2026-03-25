@@ -27,6 +27,8 @@ async def get_priests(
     zipcode: Optional[str] = None,
     min_rating: Optional[float] = None,
     puja_type: Optional[str] = None,
+    subcaste: Optional[str] = None,
+    math_mutt: Optional[str] = None,
     skip: int = 0,
     limit: int = 20
 ):
@@ -49,7 +51,8 @@ async def get_priests(
             {"location.state": {"$regex": location, "$options": "i"}},
             {"location.address": {"$regex": location, "$options": "i"}},
             {"city": {"$regex": location, "$options": "i"}},
-            {"state": {"$regex": location, "$options": "i"}}
+            {"state": {"$regex": location, "$options": "i"}},
+            {"work_locations": {"$elemMatch": {"$regex": location, "$options": "i"}}}
         ]
     if zipcode:
         query["$or"] = query.get("$or", []) + [
@@ -60,6 +63,10 @@ async def get_priests(
         ]
     if min_rating:
         query["rating"] = {"$gte": min_rating}
+    if subcaste:
+        query["subcaste"] = {"$regex": subcaste, "$options": "i"}
+    if math_mutt:
+        query["math_mutt"] = {"$regex": math_mutt, "$options": "i"}
     
     # Filter by puja_type if provided
     priest_ids_with_puja = None
@@ -115,7 +122,11 @@ async def get_priests(
             "available_online": priest.get("available_online", True),
             "location": priest.get("location", {}),
             "city": priest.get("city") or priest.get("location", {}).get("city", ""),
-            "state": priest.get("state") or priest.get("location", {}).get("state", "")
+            "state": priest.get("state") or priest.get("location", {}).get("state", ""),
+            "subcaste": priest.get("subcaste", ""),
+            "math_mutt": priest.get("math_mutt", ""),
+            "temple_affiliation": priest.get("temple_affiliation", ""),
+            "work_locations": priest.get("work_locations", []),
         })
     
     return {"priests": priests, "total": await priests_collection.count_documents(query)}
@@ -161,7 +172,11 @@ async def get_priest(priest_id: str):
         "city": priest.get("city") or priest.get("location", {}).get("city", ""),
         "state": priest.get("state") or priest.get("location", {}).get("state", ""),
         "base_price": priest.get("base_price", 1100),
-        "profile_photo": priest.get("profile_photo")
+        "profile_photo": priest.get("profile_photo"),
+        "subcaste": priest.get("subcaste", ""),
+        "math_mutt": priest.get("math_mutt", ""),
+        "temple_affiliation": priest.get("temple_affiliation", ""),
+        "work_locations": priest.get("work_locations", []),
     }
 
 @router.get("/{priest_id}/services")

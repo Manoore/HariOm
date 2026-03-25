@@ -14,29 +14,41 @@ export function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const [locationFilter, setLocationFilter] = useState('');
   const [languageFilter, setLanguageFilter] = useState('');
   const [pujaTypeFilter, setPujaTypeFilter] = useState('');
+  const [subcasteFilter, setSubcasteFilter] = useState('');
+  const [mathMuttFilter, setMathMuttFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [nearbyMode, setNearbyMode] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [pujaTypes, setPujaTypes] = useState([]);
   const [pujaCategories, setPujaCategories] = useState({});
+  const [subcasteOptions, setSubcasteOptions] = useState([]);
+  const [mathMuttOptions, setMathMuttOptions] = useState([]);
+  const [mathMuttCategories, setMathMuttCategories] = useState({});
 
   useEffect(() => {
-    const loadPujaTypes = async () => {
+    const loadFilters = async () => {
       try {
-        const res = await api.get('/api/puja-types');
-        setPujaTypes(res.data.puja_types || []);
-        setPujaCategories(res.data.categories || {});
+        const [pujaRes, subcasteRes, muttRes] = await Promise.all([
+          api.get('/api/puja-types'),
+          api.get('/api/subcastes'),
+          api.get('/api/math-mutt'),
+        ]);
+        setPujaTypes(pujaRes.data.puja_types || []);
+        setPujaCategories(pujaRes.data.categories || {});
+        setSubcasteOptions(subcasteRes.data.subcastes || []);
+        setMathMuttOptions(muttRes.data.math_mutts || []);
+        setMathMuttCategories(muttRes.data.categories || {});
       } catch (error) {
-        console.error('Failed to load puja types:', error);
+        console.error('Failed to load filter options:', error);
       }
     };
-    loadPujaTypes();
+    loadFilters();
   }, []);
 
   useEffect(() => {
     fetchPriests();
-  }, [filter, locationFilter, languageFilter, pujaTypeFilter]);
+  }, [filter, locationFilter, languageFilter, pujaTypeFilter, subcasteFilter, mathMuttFilter]);
 
   const fetchPriests = async () => {
     try {
@@ -46,6 +58,8 @@ export function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       if (locationFilter) params.append('location', locationFilter);
       if (languageFilter) params.append('language', languageFilter);
       if (pujaTypeFilter) params.append('puja_type', pujaTypeFilter);
+      if (subcasteFilter) params.append('subcaste', subcasteFilter);
+      if (mathMuttFilter) params.append('math_mutt', mathMuttFilter);
       const queryString = params.toString() ? `?${params.toString()}` : '';
       const res = await api.get(`/api/priests${queryString}`);
       setPriests(res.data.priests || []);
@@ -116,11 +130,13 @@ export function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
     setLocationFilter('');
     setLanguageFilter('');
     setPujaTypeFilter('');
+    setSubcasteFilter('');
+    setMathMuttFilter('');
     setNearbyMode(false);
     setUserLocation(null);
   };
 
-  const hasActiveFilters = filter || locationFilter || languageFilter || pujaTypeFilter;
+  const hasActiveFilters = filter || locationFilter || languageFilter || pujaTypeFilter || subcasteFilter || mathMuttFilter;
   const languages = ['Hindi', 'Sanskrit', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Marathi', 'Bengali', 'Gujarati', 'English'];
 
   return (
@@ -168,7 +184,7 @@ export function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
               exit={{ opacity: 0, height: 0 }}
               className="bg-white rounded-2xl border border-orange-100 p-4 mb-4 overflow-hidden"
             >
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <BookOpen className="w-4 h-4 inline mr-1" />
@@ -218,6 +234,46 @@ export function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
                     <option value="">All Languages</option>
                     {languages.map(lang => (
                       <option key={lang} value={lang}>{lang}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Subcaste
+                  </label>
+                  <select
+                    value={subcasteFilter}
+                    onChange={(e) => setSubcasteFilter(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent text-sm bg-white"
+                    data-testid="subcaste-filter"
+                  >
+                    <option value="">All Subcastes</option>
+                    {subcasteOptions.map(sc => (
+                      <option key={sc} value={sc}>{sc}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Math/Mutt
+                  </label>
+                  <select
+                    value={mathMuttFilter}
+                    onChange={(e) => setMathMuttFilter(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-orange-200 rounded-xl focus:ring-2 focus:ring-saffron focus:border-transparent text-sm bg-white"
+                    data-testid="math-mutt-filter"
+                  >
+                    <option value="">All Math/Mutts</option>
+                    {Object.entries(mathMuttCategories).map(([category, mutts]) => (
+                      <optgroup key={category} label={category}>
+                        {mutts.map((mutt, idx) => (
+                          <option key={idx} value={typeof mutt === 'string' ? mutt : mutt.name}>
+                            {typeof mutt === 'string' ? mutt : mutt.name}
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </div>
@@ -284,6 +340,16 @@ export function PriestsTab({ setActiveTab, setSelectedPriest, isDesktop }) {
                           : priest.location
                         }
                       </p>
+                    )}
+                    {(priest.subcaste || priest.math_mutt) && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {priest.subcaste && (
+                          <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">{priest.subcaste}</span>
+                        )}
+                        {priest.math_mutt && (
+                          <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{priest.math_mutt}</span>
+                        )}
+                      </div>
                     )}
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-300 flex-shrink-0" />
