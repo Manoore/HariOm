@@ -67,12 +67,16 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 8. Priest can't cancel confirmed bookings → Fixed
 9. Browser confirm dialogs instead of app modals → Fixed
 10. Live stream reminders not notifying → Fixed
+11. **P0: Cart & Checkout flow broken → Fixed (Mar 25, 2026)**
+    - Root cause: CartSidebar and CheckoutPage called `/api/cart` instead of `/api/cart/summary`
+    - `/api/cart` only returns `{items, total}` while `/api/cart/summary` returns full data including `subtotal`, `item_count`, `shipping`, `shipping_breakdown`
+    - Fix: Changed both API calls in `CheckoutComponents.js` to use `/api/cart/summary`
 
 ## Pending Issues (User Verification)
-- P0: Blank screen on mobile/Safari (code-complete, needs Firebase deploy)
-- P1: Mobile Google Sign-In (blocked by Safari fix)
-- P1: GOOGLE_PLACES_API_KEY on Cloud Run
-- P1: GitHub Actions APK build fails
+- Blank screen on mobile/Safari (code-complete, needs Firebase deploy)
+- Mobile Google Sign-In (blocked by Safari fix)
+- GOOGLE_PLACES_API_KEY on Cloud Run
+- GitHub Actions APK build fails
 
 ## Upcoming Tasks
 - (P1) Razorpay Integration: Replace Stripe for UPI payouts
