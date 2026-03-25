@@ -36,6 +36,14 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Detailed temple view with tabs: Overview, History, Architecture, Visit Guide, Scriptures
 - Backend: /api/temples/list, /api/temples/states, /api/temples/deities, /api/temples/stats, /api/temples/{id}
 
+### Subcaste Management (NEW - Mar 2026)
+- 126 subcastes seeded from user-provided list
+- Admin CRUD: /api/subcastes (GET, POST, PUT, DELETE)
+- Admin dashboard "Subcastes" tab for managing subcastes
+- Priest profile includes subcaste dropdown
+- Devotee can search/filter priests by subcaste and math_mutt
+- Priest detail view shows subcaste, math_mutt, temple affiliation, work locations
+
 ### Priest Dashboard
 - Profile management with Math/Mutt affiliation dropdown (fixed)
 - Analytics dashboard (fixed datetime timezone bug)

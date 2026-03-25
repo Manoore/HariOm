@@ -19,6 +19,7 @@ export function AdminSidebar({ activeTab, setActiveTab, user }) {
     { id: 'products', icon: Package, label: 'Products' },
     { id: 'bookings', icon: Calendar, label: 'Bookings' },
     { id: 'puja-types', icon: BookOpen, label: 'Puja Types' },
+    { id: 'subcastes', icon: BookOpen, label: 'Subcastes' },
     { id: 'audio-library', icon: Music, label: 'Audio Library' },
     { id: 'video-library', icon: Play, label: 'Video Library' },
     { id: 'feedback', icon: MessageSquare, label: 'Feedback & Reviews' },

@@ -25,6 +25,7 @@ import {
   SettingsTab,
   useIsDesktop
 } from './admin/components';
+import { SubcastesTab } from './admin/components/SubcastesTab';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -97,6 +98,7 @@ export default function AdminDashboard() {
       {activeTab === 'products' && <ProductsTab products={products} isDesktop={isDesktop} loading={loading} />}
       {activeTab === 'bookings' && <BookingsTab bookings={bookings} isDesktop={isDesktop} loading={loading} />}
       {activeTab === 'puja-types' && <PujaTypesTab isDesktop={isDesktop} />}
+      {activeTab === 'subcastes' && <SubcastesTab isDesktop={isDesktop} />}
       {activeTab === 'audio-library' && <AudioLibraryTab isDesktop={isDesktop} />}
       {activeTab === 'video-library' && <VideoLibraryTab isDesktop={isDesktop} />}
       {activeTab === 'feedback' && <FeedbackTab isDesktop={isDesktop} />}
