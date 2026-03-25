@@ -3,11 +3,13 @@ import { motion } from 'framer-motion';
 import { Mail, MessageSquare, Star, Loader2, Check, Trash2 } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 export function FeedbackTab({ isDesktop }) {
   const [feedback, setFeedback] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [activeSubTab, setActiveSubTab] = useState('feedback');
 
   useEffect(() => {
@@ -41,7 +43,8 @@ export function FeedbackTab({ isDesktop }) {
   };
 
   const handleDeleteTestimonial = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this testimonial?')) return;
+    const ok = await confirm({ title: 'Delete Testimonial?', message: 'This testimonial will be permanently removed.', confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try {
       await api.delete(`/api/testimonials/${id}`);
       toast.success('Testimonial deleted');
@@ -53,6 +56,7 @@ export function FeedbackTab({ isDesktop }) {
 
   return (
     <div className={`${isDesktop ? 'px-8' : 'px-4'} py-6`}>
+      <ConfirmDialog />
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setActiveSubTab('feedback')}

@@ -3,11 +3,13 @@ import { motion } from 'framer-motion';
 import { Plus, Edit2, Trash2, Loader2, Check, X, Shield } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 export function AdminManagementTab({ isDesktop }) {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [form, setForm] = useState({ name: '', email: '', password: '', is_super_admin: false });
   const [saving, setSaving] = useState(false);
@@ -61,7 +63,13 @@ export function AdminManagementTab({ isDesktop }) {
   };
 
   const handleToggleStatus = async (adminId, isActive) => {
-    if (!window.confirm(`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this admin?`)) return;
+    const ok = await confirm({
+      title: `${isActive ? 'Deactivate' : 'Activate'} Admin?`,
+      message: `This admin will be ${isActive ? 'deactivated and lose access' : 'reactivated'}.`,
+      confirmLabel: isActive ? 'Deactivate' : 'Activate',
+      variant: isActive ? 'danger' : 'default'
+    });
+    if (!ok) return;
     try {
       await api.put(`/api/admin/admins/${adminId}`, { is_active: !isActive });
       toast.success(`Admin ${isActive ? 'deactivated' : 'activated'}`);
@@ -72,7 +80,13 @@ export function AdminManagementTab({ isDesktop }) {
   };
 
   const handleDelete = async (adminId) => {
-    if (!window.confirm('Are you sure you want to delete this admin? This action cannot be undone.')) return;
+    const ok = await confirm({
+      title: 'Delete Admin?',
+      message: 'This admin will be permanently removed. This cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/admin/admins/${adminId}`);
       toast.success('Admin deleted');
@@ -84,6 +98,7 @@ export function AdminManagementTab({ isDesktop }) {
 
   return (
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
+      <ConfirmDialog />
       <div className="pt-4">
         <div className="flex items-center justify-between mb-6">
           <div>

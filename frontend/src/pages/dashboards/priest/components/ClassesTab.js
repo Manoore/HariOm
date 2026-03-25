@@ -4,15 +4,17 @@ import { Plus, Edit, Trash2, Users, Clock, BookOpen, X, Loader2, Play, Square, E
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
 import { SCHEDULE_FREQUENCIES, DAYS } from './shared';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 function ClassesTab({ classes, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
-  const [activeView, setActiveView] = useState('myClasses'); // 'myClasses' or 'requests'
+  const [activeView, setActiveView] = useState('myClasses');
   const [classRequests, setClassRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [creatingRoom, setCreatingRoom] = useState(null);
   const [joiningClass, setJoiningClass] = useState(null);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   useEffect(() => {
     if (activeView === 'requests') {
@@ -43,7 +45,13 @@ function ClassesTab({ classes, onRefresh }) {
   };
 
   const deleteClass = async (classId) => {
-    if (!window.confirm('Delete this class?')) return;
+    const ok = await confirm({
+      title: 'Delete Class?',
+      message: 'This class and all its enrollments will be permanently removed.',
+      confirmLabel: 'Delete',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/priest/classes/${classId}`);
       toast.success('Class deleted');
@@ -93,6 +101,7 @@ function ClassesTab({ classes, onRefresh }) {
 
   return (
     <div className="space-y-4">
+      <ConfirmDialog />
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg md:text-xl font-semibold text-maroon">Classes</h2>
         <button

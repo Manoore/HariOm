@@ -24,72 +24,58 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - In-app notification system + Firebase Push Notifications (FCM V1)
 - Mobile-responsive design with bottom nav + desktop sidebar
 
-### Devotee Dashboard Tabs
-- Home, My Activity, Messages, Call Astrologer, Vedic Classes, Live Events
-- Spiritual Feed, Mantras & Shlokas, Sacred Scriptures
-- Festival Calendar, Book Priests, Temples, Astrology, Pooja Store, Profile
-
-### My Activity Tab (Mar 25, 2026) - NEW
+### My Activity Tab (Mar 25, 2026)
 - Dedicated tab in sidebar (2nd position) and mobile bottom nav
-- **Bookings sub-tab**: Full list with status filters (All/Pending/Confirmed/Completed/Cancelled), cancel buttons, review buttons
-- **Orders sub-tab**: All store orders with item previews, delivery status tracking
-- **Call History sub-tab**: Astrology consultation history with duration and amount
-- Empty states guide users to relevant actions
+- **Bookings sub-tab**: Full list with status filters, cancel buttons, review buttons
+- **Orders sub-tab**: All store orders with item previews, delivery status
+- **Call History sub-tab**: Astrology consultation history
 
-### Priest Booking Notifications (Mar 25, 2026) - FIXED
-- Priests now receive in-app + email + push notifications when a devotee books them
-- Priests receive notifications when a devotee cancels a booking
-- When priest cancels, only devotee is notified (no redundant self-notification)
-- New notification types: PRIEST_NEW_BOOKING, PRIEST_BOOKING_CANCELLED
-- Email templates added for both types
-
-### Temples Section (Mar 2026)
-- 268 temples across 33 Indian states, 10 deity categories
-- Full-text search, state/deity filters, pagination
-- Detailed temple view with tabs: Overview, History, Architecture, Visit Guide, Scriptures
-
-### Subcaste Management (Mar 2026)
-- 126 subcastes seeded, Admin CRUD
-- Priest profile includes subcaste dropdown
-- Devotee can search/filter priests by subcaste and math_mutt
+### Priest Booking Notifications (Mar 25, 2026)
+- Priests receive in-app + email + push on new bookings and cancellations
+- Smart routing: only the other party gets notified on cancellation
 
 ### Dashboard Refactoring (Mar 25, 2026) - COMPLETED
-- **PriestDashboard.js**: ~3200 → 377 lines + 10 components in `/priest/components/`
-- **AstrologerDashboard.js**: 949 → 252 lines + 7 components in `/astrologer/components/`
-- **ShopOwnerDashboard.js**: 1391 → 80 lines + 8 components in `/shopowner/components/`
-- All component files under 500 lines. Full frontend regression tested.
+- PriestDashboard: ~3200 → 377 lines + 10 components
+- AstrologerDashboard: 949 → 252 lines + 7 components
+- ShopOwnerDashboard: 1391 → 80 lines + 8 components
+
+### Priest Cancel Booking (Mar 25, 2026) - FIXED
+- Priest can now cancel confirmed bookings (Cancel button added)
+- Styled in-app confirm dialog replaces all browser window.confirm() across entire app
+
+### Styled Confirm Dialog (Mar 25, 2026) - COMPLETED
+- Reusable `useConfirmDialog` hook in `/components/ui/ConfirmDialog.js`
+- Replaces ALL window.confirm() calls in: StreamsTab, ServicesTab, ClassesTab, PostsTab, MiscTabs, ProductsTab, AdminManagementTab, PujaTypesTab, SubcastesTab, FeedbackTab, AudioLibraryTab, FeedTab, BookingsTab
+
+### Live Stream Reminders (Mar 25, 2026) - FIXED
+- When priest starts a stream, all users who set reminders get notified
+- Reminders cleaned up after notification sent
 
 ### Other Features
-- Stripe payments, E-commerce store
-- 100ms video calling for astrology consultations
+- Temples section (268 temples), Subcaste management (126 subcastes)
+- Stripe payments, E-commerce store, 100ms video calling
 - Chat system, Panchang calendar, Scriptures library
 
 ## Bug Fixes (Mar 2026)
-1. Math/Mutt dropdown showing empty categories → Fixed
-2. Priest analytics 500 error → Fixed (timezone-naive vs aware datetime)
+1. Math/Mutt dropdown empty → Fixed
+2. Priest analytics 500 error → Fixed
 3. Puja Type dropdown empty → Fixed
-4. Astrologer redirected to landing page after accepting call → Fixed
-5. Duplicate notification bell in priest dashboard → Fixed
-6. Missing imports in priest components (ClassesTab, MiscTabs, ServicesTab) → Fixed
-7. BookingsTab.js missing useState import → Fixed
-8. ProfileTab.js missing Star/Plus imports → Fixed
-9. Priest not receiving booking notifications → Fixed
-
-## Deployment
-- Backend: Google Cloud Run (divine-backend)
-- Frontend: Firebase Hosting (divine-104d4.web.app)
-- Deploy commands:
-  - Backend: `cd backend && gcloud run deploy divine-backend --source . --region us-central1 --allow-unauthenticated --port 8001`
-  - Frontend: `cd frontend && npm run build && npx firebase-tools deploy --only hosting`
+4. Astrologer redirect after call → Fixed
+5. Duplicate notification bell → Fixed
+6. Missing imports in priest components → Fixed
+7. Priest not receiving booking notifications → Fixed
+8. Priest can't cancel confirmed bookings → Fixed
+9. Browser confirm dialogs instead of app modals → Fixed
+10. Live stream reminders not notifying → Fixed
 
 ## Pending Issues (User Verification)
 - P0: Blank screen on mobile/Safari (code-complete, needs Firebase deploy)
-- P1: Mobile Google Sign-In not working (blocked by Safari fix)
-- P1: GOOGLE_PLACES_API_KEY on Cloud Run (user needs gcloud update-env-vars)
-- P1: GitHub Actions APK build fails intermittently
+- P1: Mobile Google Sign-In (blocked by Safari fix)
+- P1: GOOGLE_PLACES_API_KEY on Cloud Run
+- P1: GitHub Actions APK build fails
 
 ## Upcoming Tasks
-- (P1) Razorpay Integration: Replace Stripe for UPI payouts to providers
+- (P1) Razorpay Integration: Replace Stripe for UPI payouts
 - (P1) CI/CD Pipeline: GitHub Actions → Cloud Run + Firebase
 - (P1) Play Store TWA Setup
 - (P2) Production data cleanup

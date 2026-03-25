@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 const categories = [
   'Pooja Items', 'Idols & Statues', 'Books & Scriptures', 
@@ -18,6 +19,7 @@ export function ProductsTab({ isDesktop }) {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', category: '', stock: '', images: [], video_url: ''
   });
@@ -160,7 +162,13 @@ export function ProductsTab({ isDesktop }) {
   };
 
   const handleDelete = async (productId) => {
-    if (!window.confirm('Delete this product?')) return;
+    const ok = await confirm({
+      title: 'Delete Product?',
+      message: 'This product will be permanently removed from your store.',
+      confirmLabel: 'Delete',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/shop/products/${productId}`);
       toast.success('Product deleted');
@@ -182,6 +190,7 @@ export function ProductsTab({ isDesktop }) {
 
   return (
     <div className={`p-4 lg:p-8 pb-24 lg:pb-8`}>
+      <ConfirmDialog />
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="font-cinzel text-2xl font-bold text-maroon">Products</h1>

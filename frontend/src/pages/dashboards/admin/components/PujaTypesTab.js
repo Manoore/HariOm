@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { BookOpen, Plus, Search, Edit2, Trash2, Loader2, Check, X } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 const PUJA_CATEGORIES = [
   'Deity Puja', 'Festival Puja', 'Samskara', 'Griha Puja', 'Graha Puja',
@@ -18,6 +19,7 @@ export function PujaTypesTab({ isDesktop }) {
   const [form, setForm] = useState({ name: '', category: 'Deity Puja' });
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [filterCategory, setFilterCategory] = useState('');
 
   useEffect(() => {
@@ -61,7 +63,8 @@ export function PujaTypesTab({ isDesktop }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this puja type?')) return;
+    const ok = await confirm({ title: 'Delete Puja Type?', message: 'This puja type will be permanently removed.', confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try {
       await api.delete(`/api/admin/puja-types/${id}`);
       toast.success('Puja type deleted!');
@@ -92,6 +95,7 @@ export function PujaTypesTab({ isDesktop }) {
 
   return (
     <div className={`${isDesktop ? 'px-8 pb-8' : 'px-4 pb-24'}`}>
+      <ConfirmDialog />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">Puja Types Management</h2>

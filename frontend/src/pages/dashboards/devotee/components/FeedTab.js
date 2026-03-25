@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Send, Image as ImageIcon, X, Loader2, Rss } from 
 import api from '../../../../lib/api';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 // PostCard Component with Comments and Likes
 export function PostCard({ post }) {
@@ -17,6 +18,7 @@ export function PostCard({ post }) {
   const [loadingComments, setLoadingComments] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -106,7 +108,8 @@ export function PostCard({ post }) {
   };
 
   const deleteComment = async (commentId) => {
-    if (!window.confirm('Delete this comment?')) return;
+    const ok = await confirm({ title: 'Delete Comment?', message: 'This comment will be permanently removed.', confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try {
       await api.delete(`/api/posts/${post.id}/comments/${commentId}`);
       setComments(comments.filter(c => c.id !== commentId));
@@ -118,6 +121,7 @@ export function PostCard({ post }) {
 
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm border border-orange-50">
+      <ConfirmDialog />
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 bg-gradient-to-br from-saffron to-gold rounded-full flex items-center justify-center text-white font-cinzel flex-shrink-0">
           {post.priest_name?.charAt(0) || 'P'}

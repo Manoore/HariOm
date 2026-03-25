@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Edit, Trash2, Loader2, X, Briefcase, IndianRupee, Clock, Save } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 function ServicesTab({ services, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const handleAddClick = (e) => {
     e.preventDefault();
@@ -16,7 +18,13 @@ function ServicesTab({ services, onRefresh }) {
   };
 
   const deleteService = async (serviceId) => {
-    if (!window.confirm('Delete this service?')) return;
+    const ok = await confirm({
+      title: 'Delete Service?',
+      message: 'This service will be permanently removed. Existing bookings will not be affected.',
+      confirmLabel: 'Delete',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/priest/services/${serviceId}`);
       toast.success('Service deleted');
@@ -28,6 +36,7 @@ function ServicesTab({ services, onRefresh }) {
 
   return (
     <div className="space-y-4">
+      <ConfirmDialog />
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg font-semibold text-maroon">Services</h2>
         <button 

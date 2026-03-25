@@ -14,10 +14,16 @@ from database import (
     priest_availability_collection, priest_content_collection,
     priest_streams_collection, bookings_collection, reviews_collection,
     priest_services_collection, priest_posts_collection, class_enrollments_collection,
-    payment_transactions_collection
+    payment_transactions_collection, stream_reminders_collection
 )
 from models import UserRole
 from auth import require_role
+
+try:
+    from services.notification_service import send_notification, NotificationType
+    NOTIFICATIONS_ENABLED = True
+except ImportError:
+    NOTIFICATIONS_ENABLED = False
 
 router = APIRouter(prefix="/api/priest", tags=["Priest Dashboard"])
 
@@ -461,7 +467,7 @@ async def delete_stream(stream_id: str, user: dict = Depends(require_role([UserR
 
 @router.put("/streams/{stream_id}/start")
 async def start_stream(stream_id: str, user: dict = Depends(require_role([UserRole.PRIEST]))):
-    """Start a live stream"""
+    """Start a live stream and notify users who set reminders"""
     priest = await get_priest_profile(user)
     stream = await priest_streams_collection.find_one({"_id": ObjectId(stream_id)})
     
@@ -472,6 +478,29 @@ async def start_stream(stream_id: str, user: dict = Depends(require_role([UserRo
         {"_id": ObjectId(stream_id)},
         {"$set": {"status": "live", "started_at": datetime.now(timezone.utc)}}
     )
+    
+    # Notify all users who set a reminder for this stream
+    if NOTIFICATIONS_ENABLED:
+        try:
+            reminder_cursor = stream_reminders_collection.find({"stream_id": stream_id})
+            async for reminder in reminder_cursor:
+                try:
+                    await send_notification(
+                        reminder["user_id"],
+                        NotificationType.CLASS_ENROLLED,
+                        {
+                            "class_name": stream.get("title", "Live Stream"),
+                            "teacher_name": user.get("name", "Priest"),
+                            "schedule": "NOW LIVE"
+                        }
+                    )
+                except Exception:
+                    pass
+            # Clean up reminders after notification
+            await stream_reminders_collection.delete_many({"stream_id": stream_id})
+        except Exception:
+            pass
+    
     return {"message": "Stream started", "status": "live"}
 
 

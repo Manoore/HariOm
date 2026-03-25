@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Edit, Trash2, Loader2, X, Video, Play, Square, Eye, Users, Clock, Calendar } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 function StreamsTab({ streams, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
   const [editingStream, setEditingStream] = useState(null);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const scheduled = streams.filter(s => s.status === 'scheduled');
   const live = streams.filter(s => s.status === 'live');
   const past = streams.filter(s => s.status === 'ended');
@@ -24,7 +26,13 @@ function StreamsTab({ streams, onRefresh }) {
   };
 
   const deleteStream = async (streamId) => {
-    if (!window.confirm('Delete this scheduled stream?')) return;
+    const ok = await confirm({
+      title: 'Delete Stream?',
+      message: 'This scheduled stream will be permanently deleted.',
+      confirmLabel: 'Delete',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/priest/streams/${streamId}`);
       toast.success('Stream deleted');
@@ -45,7 +53,13 @@ function StreamsTab({ streams, onRefresh }) {
   };
 
   const endStream = async (streamId) => {
-    if (!window.confirm('End this stream?')) return;
+    const ok = await confirm({
+      title: 'End Live Stream?',
+      message: 'Your viewers will be disconnected. Are you sure you want to end this stream?',
+      confirmLabel: 'End Stream',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await api.put(`/api/priest/streams/${streamId}/end`);
       toast.success('Stream ended');
@@ -57,6 +71,7 @@ function StreamsTab({ streams, onRefresh }) {
 
   return (
     <div className="space-y-4">
+      <ConfirmDialog />
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg font-semibold text-maroon">Live Streams</h2>
         <button 

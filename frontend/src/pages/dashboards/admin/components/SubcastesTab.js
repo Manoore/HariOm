@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Loader2, Search, X } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 export function SubcastesTab({ isDesktop }) {
   const [subcastes, setSubcastes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [search, setSearch] = useState('');
 
   const fetchSubcastes = async () => {
@@ -40,7 +42,8 @@ export function SubcastesTab({ isDesktop }) {
   };
 
   const deleteSubcaste = async (name) => {
-    if (!window.confirm(`Delete "${name}"?`)) return;
+    const ok = await confirm({ title: 'Delete Subcaste?', message: `"${name}" will be permanently removed.`, confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try {
       await api.delete(`/api/subcastes/${encodeURIComponent(name)}`);
       toast.success(`Deleted "${name}"`);
@@ -56,6 +59,7 @@ export function SubcastesTab({ isDesktop }) {
 
   return (
     <div className={`${isDesktop ? 'p-6 max-w-4xl mx-auto' : 'p-4 pb-24'}`}>
+      <ConfirmDialog />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="font-cinzel text-xl md:text-2xl font-bold text-maroon">Manage Subcastes</h2>

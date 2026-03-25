@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Star, Sun, Moon, Sunrise, Sunset, IndianRupee, TrendingUp, Calendar, Upload, Image, Trash2, X, Loader2, Camera, Plus, CalendarDays } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 function ReviewsTab({ reviews }) {
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0';
@@ -32,6 +33,7 @@ function PortfolioTab({ portfolio, onRefresh }) {
   const [uploading, setUploading] = useState(false);
   const [newItem, setNewItem] = useState({ title: '', description: '', type: 'image', url: '' });
   const fileInputRef = useRef(null);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -94,7 +96,13 @@ function PortfolioTab({ portfolio, onRefresh }) {
   };
 
   const handleDelete = async (itemId) => {
-    if (!window.confirm('Delete this portfolio item?')) return;
+    const ok = await confirm({
+      title: 'Delete Portfolio Item?',
+      message: 'This item will be permanently removed from your portfolio.',
+      confirmLabel: 'Delete',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/priest/portfolio/${itemId}`);
       toast.success('Item deleted');
@@ -112,6 +120,7 @@ function PortfolioTab({ portfolio, onRefresh }) {
 
   return (
     <div className="space-y-4">
+      <ConfirmDialog />
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg font-semibold text-maroon">Portfolio</h2>
         <button 

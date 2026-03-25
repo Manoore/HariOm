@@ -3,11 +3,13 @@ import { motion } from 'framer-motion';
 import { Music, Plus, Search, Edit2, Trash2, Loader2, Check, X, Play, Pause } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 export function AudioLibraryTab({ isDesktop }) {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [form, setForm] = useState({ title: '', search_query: '', category: 'ESSENTIAL DAILY MANTRAS' });
@@ -118,7 +120,8 @@ export function AudioLibraryTab({ isDesktop }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this audio item?')) return;
+    const ok = await confirm({ title: 'Delete Audio?', message: 'This audio item will be permanently removed.', confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try {
       await api.delete(`/api/admin/audio-library/${id}`);
       toast.success('Audio item deleted!');
@@ -150,6 +153,7 @@ export function AudioLibraryTab({ isDesktop }) {
 
   return (
     <div className={`${isDesktop ? 'px-8 pb-8' : 'px-4 pb-24'}`}>
+      <ConfirmDialog />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pt-4">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">Audio Library Management</h2>

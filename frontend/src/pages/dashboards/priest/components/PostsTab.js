@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Send, Heart, MessageCircle, Eye, Trash2, Camera, X, Loader2 } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 function PostsTab({ posts, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
@@ -11,6 +12,7 @@ function PostsTab({ posts, onRefresh }) {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -84,7 +86,13 @@ function PostsTab({ posts, onRefresh }) {
   };
 
   const deletePost = async (postId) => {
-    if (!window.confirm('Delete this post?')) return;
+    const ok = await confirm({
+      title: 'Delete Post?',
+      message: 'This post will be permanently removed from your feed.',
+      confirmLabel: 'Delete',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/priest/posts/${postId}`);
       toast.success('Post deleted');
@@ -102,6 +110,7 @@ function PostsTab({ posts, onRefresh }) {
 
   return (
     <div className="space-y-4">
+      <ConfirmDialog />
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-lg md:text-xl font-semibold text-maroon">Daily Updates</h2>
         <button
