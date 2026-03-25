@@ -354,12 +354,14 @@ async def cancel_booking(booking_id: str, request: Request, user: dict = Depends
     # Deactivate chat room
     await deactivate_chat_room("booking", booking_id)
     
-    # Send cancellation notification to devotee
+    # Send cancellation notifications to both parties (except the one who cancelled)
     if NOTIFICATIONS_ENABLED:
         try:
             priest_doc = await priests_collection.find_one({"_id": ObjectId(booking["priest_id"])})
             priest_user = await users_collection.find_one({"_id": ObjectId(priest_doc["user_id"])}) if priest_doc else None
+            devotee = await users_collection.find_one({"_id": ObjectId(booking["user_id"])})
             
+            # Always notify the devotee about the cancellation
             await notify_booking_cancelled(booking["user_id"], {
                 "service_name": booking.get("service_name", "Puja"),
                 "priest_name": priest_user.get("name", "Priest") if priest_user else "Priest",
@@ -368,17 +370,16 @@ async def cancel_booking(booking_id: str, request: Request, user: dict = Depends
                 "refund_status": update_data["refund_status"]
             })
             
-            # If there's a refund, also send refund notification
+            # If there's a refund, also send refund notification to devotee
             if refund_amount > 0:
                 await notify_refund_initiated(booking["user_id"], {
                     "refund_amount": refund_amount,
                     "original_amount": price,
-                    "reason": "Booking cancellation"
+                    "reason": "Booking cancellation by priest" if is_priest else "Booking cancellation"
                 })
             
-            # Notify the priest about the cancellation
-            if priest_doc and priest_doc.get("user_id"):
-                devotee = await users_collection.find_one({"_id": ObjectId(booking["user_id"])})
+            # Notify the priest only if the devotee cancelled (not if priest cancelled themselves)
+            if not is_priest and priest_doc and priest_doc.get("user_id"):
                 await notify_priest_booking_cancelled(priest_doc["user_id"], {
                     "devotee_name": devotee.get("name", "A devotee") if devotee else "A devotee",
                     "service_name": booking.get("service_name", "Puja"),
