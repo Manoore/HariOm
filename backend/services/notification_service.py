@@ -64,6 +64,9 @@ class NotificationType(str, Enum):
     BOOKING_CONFIRMED = "booking_confirmed"
     BOOKING_CANCELLED = "booking_cancelled"
     BOOKING_COMPLETED = "booking_completed"
+    # Priest-facing booking notifications
+    PRIEST_NEW_BOOKING = "priest_new_booking"
+    PRIEST_BOOKING_CANCELLED = "priest_booking_cancelled"
     CLASS_ENROLLED = "class_enrolled"
     PAYMENT_SUCCESS = "payment_success"
     PAYMENT_FAILED = "payment_failed"
@@ -77,6 +80,8 @@ NOTIFICATION_CONFIG = {
     NotificationType.BOOKING_CONFIRMED: {"title": "Booking Confirmed", "icon": "check-circle"},
     NotificationType.BOOKING_CANCELLED: {"title": "Booking Cancelled", "icon": "x-circle"},
     NotificationType.BOOKING_COMPLETED: {"title": "Puja Completed", "icon": "star"},
+    NotificationType.PRIEST_NEW_BOOKING: {"title": "New Booking Received", "icon": "calendar-plus"},
+    NotificationType.PRIEST_BOOKING_CANCELLED: {"title": "Booking Cancelled", "icon": "x-circle"},
     NotificationType.CLASS_ENROLLED: {"title": "Class Enrollment", "icon": "book-open"},
     NotificationType.PAYMENT_SUCCESS: {"title": "Payment Successful", "icon": "credit-card"},
     NotificationType.PAYMENT_FAILED: {"title": "Payment Failed", "icon": "alert-circle"},
@@ -90,6 +95,8 @@ INAPP_MESSAGES = {
     NotificationType.BOOKING_CONFIRMED: "Great news! Your booking for {service_name} has been confirmed by {priest_name}.",
     NotificationType.BOOKING_CANCELLED: "Your booking for {service_name} has been cancelled. Refund: ₹{refund_amount}",
     NotificationType.BOOKING_COMPLETED: "Your puja {service_name} is complete! Please rate your experience with {priest_name}.",
+    NotificationType.PRIEST_NEW_BOOKING: "New booking from {devotee_name} for {service_name} on {booking_date}. Amount: ₹{amount}",
+    NotificationType.PRIEST_BOOKING_CANCELLED: "Booking for {service_name} by {devotee_name} has been cancelled.",
     NotificationType.CLASS_ENROLLED: "You're enrolled in {class_name} by {teacher_name}. Schedule: {schedule}",
     NotificationType.PAYMENT_SUCCESS: "Payment of ₹{amount} successful for {description}.",
     NotificationType.REFUND_INITIATED: "Refund of ₹{refund_amount} has been initiated. Will be credited in 5-7 days.",
@@ -240,6 +247,50 @@ EMAIL_TEMPLATES = {
                 </div>
                 
                 <p style="color: #155724; margin-top: 30px;">Thank you for your trust! 🙏</p>
+            </div>
+        </div>
+        """
+    },
+    NotificationType.PRIEST_NEW_BOOKING: {
+        "subject": "New Booking Received - Divine App",
+        "template": """
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #8B0000, #CD853F); border-radius: 10px;">
+                <h1 style="color: white; margin: 0;">New Booking</h1>
+            </div>
+            <div style="padding: 30px; background: #FFF9F5; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #8B4513;">Namaste {user_name}!</h2>
+                <p style="color: #333; line-height: 1.6;">You have received a new booking request.</p>
+                
+                <div style="background: white; padding: 20px; border-radius: 10px; border-left: 4px solid #8B0000; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>Devotee:</strong> {devotee_name}</p>
+                    <p style="margin: 5px 0;"><strong>Service:</strong> {service_name}</p>
+                    <p style="margin: 5px 0;"><strong>Date:</strong> {booking_date}</p>
+                    <p style="margin: 5px 0;"><strong>Amount:</strong> ₹{amount}</p>
+                </div>
+                
+                <p style="color: #666; font-size: 14px;">Please open the app to confirm or manage this booking.</p>
+                
+                <p style="color: #8B4513; margin-top: 30px;">Om Namah Shivaya</p>
+            </div>
+        </div>
+        """
+    },
+    NotificationType.PRIEST_BOOKING_CANCELLED: {
+        "subject": "Booking Cancelled - Divine App",
+        "template": """
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #dc3545, #c82333); border-radius: 10px;">
+                <h1 style="color: white; margin: 0;">Booking Cancelled</h1>
+            </div>
+            <div style="padding: 30px; background: #FFF5F5; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #721c24;">Namaste {user_name},</h2>
+                <p style="color: #333; line-height: 1.6;">A booking has been cancelled by the devotee.</p>
+                
+                <div style="background: white; padding: 20px; border-radius: 10px; border-left: 4px solid #dc3545; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>Devotee:</strong> {devotee_name}</p>
+                    <p style="margin: 5px 0;"><strong>Service:</strong> {service_name}</p>
+                </div>
             </div>
         </div>
         """
@@ -551,3 +602,13 @@ async def notify_payment_success(user_id: str, payment_data: dict):
 async def notify_refund_initiated(user_id: str, refund_data: dict):
     """Send notification when refund is initiated"""
     return await send_notification(user_id, NotificationType.REFUND_INITIATED, refund_data)
+
+
+async def notify_priest_new_booking(priest_user_id: str, booking_data: dict):
+    """Send notification to priest when they receive a new booking"""
+    return await send_notification(priest_user_id, NotificationType.PRIEST_NEW_BOOKING, booking_data)
+
+
+async def notify_priest_booking_cancelled(priest_user_id: str, booking_data: dict):
+    """Send notification to priest when a booking is cancelled"""
+    return await send_notification(priest_user_id, NotificationType.PRIEST_BOOKING_CANCELLED, booking_data)

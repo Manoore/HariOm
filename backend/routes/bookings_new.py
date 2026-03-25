@@ -20,7 +20,8 @@ try:
     from services.notification_service import (
         notify_booking_created, notify_booking_confirmed,
         notify_booking_cancelled, notify_booking_completed,
-        notify_refund_initiated
+        notify_refund_initiated, notify_priest_new_booking,
+        notify_priest_booking_cancelled
     )
     NOTIFICATIONS_ENABLED = True
 except ImportError:
@@ -107,7 +108,7 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
     
     result = await bookings_collection.insert_one(booking_dict)
     
-    # Send notification
+    # Send notification to devotee
     if NOTIFICATIONS_ENABLED:
         try:
             booking_date_str = data.booking_date.strftime("%B %d, %Y at %I:%M %p") if hasattr(data.booking_date, 'strftime') else str(data.booking_date)
@@ -119,7 +120,20 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
                 "booking_id": str(result.inserted_id)[:8].upper()
             })
         except Exception:
-            # Don't fail booking if notification fails
+            pass
+    
+    # Send notification to priest (in-app + email + push)
+    if NOTIFICATIONS_ENABLED and priest.get("user_id"):
+        try:
+            booking_date_str = data.booking_date.strftime("%B %d, %Y at %I:%M %p") if hasattr(data.booking_date, 'strftime') else str(data.booking_date)
+            await notify_priest_new_booking(priest["user_id"], {
+                "devotee_name": user.get("name", "A devotee"),
+                "service_name": data.service_name,
+                "booking_date": booking_date_str,
+                "amount": service["price"],
+                "booking_id": str(result.inserted_id)[:8].upper()
+            })
+        except Exception:
             pass
     
     return {
@@ -340,7 +354,7 @@ async def cancel_booking(booking_id: str, request: Request, user: dict = Depends
     # Deactivate chat room
     await deactivate_chat_room("booking", booking_id)
     
-    # Send cancellation notification
+    # Send cancellation notification to devotee
     if NOTIFICATIONS_ENABLED:
         try:
             priest_doc = await priests_collection.find_one({"_id": ObjectId(booking["priest_id"])})
@@ -360,6 +374,14 @@ async def cancel_booking(booking_id: str, request: Request, user: dict = Depends
                     "refund_amount": refund_amount,
                     "original_amount": price,
                     "reason": "Booking cancellation"
+                })
+            
+            # Notify the priest about the cancellation
+            if priest_doc and priest_doc.get("user_id"):
+                devotee = await users_collection.find_one({"_id": ObjectId(booking["user_id"])})
+                await notify_priest_booking_cancelled(priest_doc["user_id"], {
+                    "devotee_name": devotee.get("name", "A devotee") if devotee else "A devotee",
+                    "service_name": booking.get("service_name", "Puja"),
                 })
         except Exception:
             pass
