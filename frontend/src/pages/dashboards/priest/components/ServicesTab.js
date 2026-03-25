@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit, Trash2, Loader2, X, Briefcase, IndianRupee, Clock } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, X, Briefcase, IndianRupee, Clock, Save } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
 

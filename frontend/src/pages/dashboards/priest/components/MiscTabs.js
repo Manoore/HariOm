@@ -1,5 +1,8 @@
-import React from 'react';
-import { Star, Sun, Moon, Sunrise, Sunset, IndianRupee, TrendingUp, Calendar } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { Star, Sun, Moon, Sunrise, Sunset, IndianRupee, TrendingUp, Calendar, Upload, Image, Trash2, X, Loader2, Camera, Plus, CalendarDays } from 'lucide-react';
+import api from '../../../../lib/api';
+import { toast } from 'sonner';
 
 function ReviewsTab({ reviews }) {
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0';

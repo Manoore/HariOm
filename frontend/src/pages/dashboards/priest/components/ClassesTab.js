@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit, Trash2, Users, Clock, BookOpen, X, Loader2, Play, Square, Eye, Repeat, DollarSign, MapPin, Building2, IndianRupee } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Clock, BookOpen, X, Loader2, Play, Square, Eye, Repeat, DollarSign, MapPin, Building2, IndianRupee, MessageCircle, Video, Save } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
 import { SCHEDULE_FREQUENCIES, DAYS } from './shared';
