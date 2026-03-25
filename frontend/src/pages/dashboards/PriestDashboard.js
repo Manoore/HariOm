@@ -48,6 +48,7 @@ export default function PriestDashboard() {
   const [loading, setLoading] = useState(true);
   const [welcomeShown, setWelcomeShown] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
   // Data states
   const [analytics, setAnalytics] = useState(null);
@@ -62,6 +63,12 @@ export default function PriestDashboard() {
   const [priestProfile, setPriestProfile] = useState(null);
   const [streams, setStreams] = useState([]);
   const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (user && !welcomeShown) {
@@ -153,7 +160,7 @@ export default function PriestDashboard() {
   const renderContent = () => {
     switch (activeTab) {
       case 'home': return <HomeTab analytics={analytics} bookings={bookings} panchang={panchang} festivals={festivals} posts={posts} updateStatus={updateBookingStatus} />;
-      case 'messages': return <ChatTab isDesktop={true} />;
+      case 'messages': return <ChatTab isDesktop={isDesktop} />;
       case 'posts': return <PostsTab posts={posts} onRefresh={silentRefresh} />;
       case 'profile': return <ProfileTab profile={priestProfile} user={user} onRefresh={silentRefresh} />;
       case 'bookings': return <BookingsTab bookings={bookings} updateStatus={updateBookingStatus} />;
