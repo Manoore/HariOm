@@ -421,14 +421,6 @@ export default function PriestDashboard() {
                     </div>
                   </div>
                 )}
-                <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors relative">
-                  <Bell className="w-5 h-5 text-white" />
-                  {bookings.filter(b => b.status === 'pending').length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                      {bookings.filter(b => b.status === 'pending').length}
-                    </span>
-                  )}
-                </button>
               </div>
             </div>
           </header>
