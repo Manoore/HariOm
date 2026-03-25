@@ -4,7 +4,7 @@ import {
   Video, VideoOff, Mic, MicOff, Phone, PhoneOff, 
   Maximize2, Minimize2, Settings, Loader2, Wallet,
   Clock, Star, MessageSquare, Gift, AlertTriangle,
-  Monitor, MonitorOff
+  Monitor, MonitorOff, Send, X, ArrowLeft
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +24,7 @@ import {
   selectPeerScreenSharing,
   selectVideoTrackByPeerID,
   selectScreenShareByPeerID,
+  selectHMSMessages,
   HMSRoomProvider,
   useVideo,
   useAVToggle,
@@ -91,6 +92,10 @@ function VideoCallContent({ callData, onEndCall, astrologerInfo }) {
   const [gracePeriod, setGracePeriod] = useState(null);
   const [isConnecting, setIsConnecting] = useState(true);
   const [connectionError, setConnectionError] = useState(null);
+  const [showChat, setShowChat] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const chatMessages = useHMSStore(selectHMSMessages);
+  const chatEndRef = useRef(null);
   
   const wsRef = useRef(null);
   const timerRef = useRef(null);
@@ -224,12 +229,36 @@ function VideoCallContent({ callData, onEndCall, astrologerInfo }) {
 
   const handleToggleScreenShare = async () => {
     try {
+      // Check if screen sharing is supported
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        toast.error('Screen sharing is not supported on this device/browser. Try using Chrome on desktop.');
+        return;
+      }
       await hmsActions.setScreenShareEnabled(!isLocalScreenShared);
     } catch (error) {
       console.error('Screen share error:', error);
-      toast.error('Failed to share screen');
+      if (error.name === 'NotAllowedError') {
+        toast.error('Screen sharing permission was denied');
+      } else if (error.name === 'NotSupportedError' || error.message?.includes('not supported')) {
+        toast.error('Screen sharing is not supported on this device. Try Chrome on desktop.');
+      } else {
+        toast.error('Failed to share screen. This feature may not be available on mobile browsers.');
+      }
     }
   };
+
+  const handleSendChat = () => {
+    if (!chatInput.trim()) return;
+    hmsActions.sendBroadcastMessage(chatInput.trim());
+    setChatInput('');
+  };
+
+  // Auto-scroll chat
+  useEffect(() => {
+    if (showChat && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, showChat]);
 
   const handleRechargeSuccess = (wallet) => {
     setCallState(prev => ({
@@ -444,14 +473,93 @@ function VideoCallContent({ callData, onEndCall, astrologerInfo }) {
             <PhoneOff className="w-7 h-7" />
           </button>
 
-          {/* Chat (optional) */}
+          {/* Chat Toggle */}
           <button
-            className="w-14 h-14 bg-gray-700 rounded-full flex items-center justify-center text-white hover:bg-gray-600 transition-colors"
+            onClick={() => setShowChat(!showChat)}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors relative ${
+              showChat ? 'bg-purple-500 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'
+            }`}
+            data-testid="toggle-chat"
           >
             <MessageSquare className="w-6 h-6" />
+            {chatMessages.length > 0 && !showChat && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
+                {chatMessages.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
+
+      {/* In-Call Chat Panel */}
+      <AnimatePresence>
+        {showChat && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="absolute bottom-24 left-0 right-0 md:left-auto md:right-4 md:bottom-28 md:w-96 bg-gray-800/95 backdrop-blur-md rounded-t-2xl md:rounded-2xl border border-gray-700 flex flex-col z-10"
+            style={{ maxHeight: '50vh' }}
+            data-testid="in-call-chat-panel"
+          >
+            {/* Chat Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+              <h3 className="text-white font-semibold text-sm">In-Call Chat</h3>
+              <button onClick={() => setShowChat(false)} className="text-gray-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-[150px]">
+              {chatMessages.length === 0 ? (
+                <p className="text-gray-500 text-sm text-center py-4">No messages yet. Say hi!</p>
+              ) : (
+                chatMessages.map((msg) => {
+                  const isOwn = msg.sender?.name === user?.name;
+                  return (
+                    <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${
+                        isOwn ? 'bg-purple-500 text-white rounded-br-sm' : 'bg-gray-700 text-gray-200 rounded-bl-sm'
+                      }`}>
+                        {!isOwn && (
+                          <p className="text-xs text-purple-300 mb-0.5">{msg.sender?.name}</p>
+                        )}
+                        <p className="text-sm">{msg.message}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Chat Input */}
+            <div className="px-3 py-3 border-t border-gray-700">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendChat()}
+                  placeholder="Type a message..."
+                  className="flex-1 bg-gray-700 text-white text-sm rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/50 placeholder-gray-400"
+                  data-testid="in-call-chat-input"
+                />
+                <button
+                  onClick={handleSendChat}
+                  disabled={!chatInput.trim()}
+                  className="w-9 h-9 bg-purple-500 rounded-full flex items-center justify-center text-white disabled:opacity-40 hover:bg-purple-600 transition-colors"
+                  data-testid="in-call-chat-send"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
