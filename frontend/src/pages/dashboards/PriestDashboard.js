@@ -1962,6 +1962,11 @@ function ClassesTab({ classes, onRefresh }) {
                   {cls.frequency === 'weekly' && `Every ${cls.schedule_day || 'week'}`}
                   {cls.frequency === 'biweekly' && 'Bi-weekly'}
                   {cls.frequency === 'monthly' && 'Monthly'}
+                  {(cls.start_time || cls.schedule_time) && (
+                    <span className="ml-1 text-gray-500">
+                      {cls.start_time || cls.schedule_time}{cls.end_time ? ` - ${cls.end_time}` : ''}
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -2017,7 +2022,7 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
   const [form, setForm] = useState({
     title: '', description: '', class_type: 'online', duration_minutes: 60,
     is_free: false, price: 500, max_students: 20, category: 'General',
-    frequency: 'weekly', schedule_day: 'Monday', schedule_time: '10:00',
+    frequency: 'weekly', schedule_day: 'Monday', start_time: '10:00', end_time: '11:00',
     meeting_link: '', location_type: 'online', temple_name: ''
   });
   const [saving, setSaving] = useState(false);
@@ -2035,7 +2040,8 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
         is_free: editData.is_free || editData.price === 0,
         frequency: editData.frequency || 'weekly',
         schedule_day: editData.schedule_day || 'Monday',
-        schedule_time: editData.schedule_time || '10:00',
+        start_time: editData.start_time || editData.schedule_time || '10:00',
+        end_time: editData.end_time || '11:00',
         meeting_link: editData.meeting_link || '',
         location_type: editData.location_type || 'online',
         temple_name: editData.temple_name || ''
@@ -2044,7 +2050,7 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
       setForm({
         title: '', description: '', class_type: 'online', duration_minutes: 60,
         is_free: false, price: 500, max_students: 20, category: 'General',
-        frequency: 'weekly', schedule_day: 'Monday', schedule_time: '10:00',
+        frequency: 'weekly', schedule_day: 'Monday', start_time: '10:00', end_time: '11:00',
         meeting_link: '', location_type: 'online', temple_name: ''
       });
     }
@@ -2228,9 +2234,15 @@ function ClassModal({ isOpen, onClose, editData, onSuccess }) {
               )}
             </div>
             
-            <div className="mt-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-              <input type="time" value={form.schedule_time} onChange={(e) => setForm({ ...form, schedule_time: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" />
+            <div className="grid grid-cols-2 gap-4 mt-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                <input type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" data-testid="class-start-time" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                <input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-xl" data-testid="class-end-time" />
+              </div>
             </div>
           </div>
           
