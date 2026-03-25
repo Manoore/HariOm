@@ -301,7 +301,7 @@ export function ChatRoom({ room, onBack, isDesktop }) {
   }, {});
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full min-h-0 bg-white">
       {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b border-gray-100 bg-white">
         {!isDesktop && (
@@ -511,7 +511,7 @@ export default function ChatTab({ isDesktop }) {
   // Desktop: Side-by-side layout
   if (isDesktop) {
     return (
-      <div className="p-4 lg:p-8 pb-8 h-[calc(100vh-2rem)]">
+      <div className="p-4 lg:p-8 pb-8" style={{ height: 'calc(100vh - 2rem)' }}>
         <div className="bg-white rounded-2xl shadow-sm border border-orange-50 h-full flex overflow-hidden">
           {/* Room List */}
           <div className="w-80 border-r border-gray-100 flex flex-col">
@@ -530,7 +530,7 @@ export default function ChatTab({ isDesktop }) {
           </div>
 
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             {selectedRoom ? (
               <ChatRoom 
                 room={selectedRoom} 
@@ -558,7 +558,7 @@ export default function ChatTab({ isDesktop }) {
       <Toaster position="top-center" richColors />
       
       {selectedRoom ? (
-        <div className="fixed inset-0 bg-white z-[60] flex flex-col pb-16">
+        <div className="fixed inset-0 bg-white z-[60] flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <ChatRoom 
             room={selectedRoom} 
             onBack={() => setSelectedRoom(null)}
