@@ -86,6 +86,27 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - GOOGLE_PLACES_API_KEY on Cloud Run
 - GitHub Actions APK build fails
 
+## Recent Additions (Mar 25, 2026)
+### Razorpay Integration
+- Dual payment gateway: Users can choose Razorpay (UPI/Net Banking) or Stripe (Cards) at checkout
+- Razorpay order creation via REST API (not SDK)
+- Payment verification with HMAC signature validation
+- Stripe webhook for reliable server-side payment confirmation
+
+### Admin-Configurable Payment Settings
+- Platform Fee: Enable/disable, percentage or flat amount, configurable value
+- GST: Enable/disable toggle (disabled by default, per Indian ₹20L threshold)
+- When enabled: configurable percentage, GSTIN, GST on platform fee only option
+- Auto-Confirm Delivery: Configurable days (default 7)
+- Auto-Payout on Completion: Toggle for automatic provider payouts
+- Fee Preview: Shows breakdown for ₹1000 sample order
+
+### Payment Flow (Collect & Transfer Model)
+1. Customer pays → Full amount to platform (Razorpay or Stripe)
+2. Order delivered → Auto-confirmed after N days (admin-configurable)
+3. Auto-payout → Provider share transferred (minus platform fee + GST if enabled)
+4. Refunds/cancellations → Admin handles via dashboard
+
 ## Upcoming Tasks
 - (P1) Razorpay Integration: Replace Stripe for UPI payouts
 - (P1) CI/CD Pipeline: GitHub Actions → Cloud Run + Firebase
