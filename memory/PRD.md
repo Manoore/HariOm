@@ -69,8 +69,16 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 10. Live stream reminders not notifying → Fixed
 11. **P0: Cart & Checkout flow broken → Fixed (Mar 25, 2026)**
     - Root cause: CartSidebar and CheckoutPage called `/api/cart` instead of `/api/cart/summary`
-    - `/api/cart` only returns `{items, total}` while `/api/cart/summary` returns full data including `subtotal`, `item_count`, `shipping`, `shipping_breakdown`
     - Fix: Changed both API calls in `CheckoutComponents.js` to use `/api/cart/summary`
+12. **Payment status always pending → Fixed (Mar 25, 2026)**
+    - Root cause: Stripe webhook missing from `orders_new.py` (existed in dead `orders.py`)
+    - Fix: Added `POST /api/webhooks/stripe` to `orders_new.py` with `checkout.session.completed` handler
+    - Added `status_history` tracking to all order creation/updates
+13. **Order tracking not visible → Fixed (Mar 25, 2026)**
+    - Added 4-step tracking timeline (Order Placed → Payment Confirmed → Shipped → Delivered)
+    - Shows dates, visual progress, tracking numbers, and cancelled status
+14. **Notification bell inconsistent on mobile → Fixed (Mar 25, 2026)**
+    - Added `NotificationBell` to: AstrologerDashboard mobile header, ShopOwnerDashboard mobile header, AdminDashboard mobile+desktop headers, PriestDashboard sticky nav bar + tablet header
 
 ## Pending Issues (User Verification)
 - Blank screen on mobile/Safari (code-complete, needs Firebase deploy)

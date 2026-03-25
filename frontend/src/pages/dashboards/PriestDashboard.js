@@ -329,7 +329,10 @@ export default function PriestDashboard() {
         <div className="sticky top-0 z-20 bg-white shadow-sm px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">{currentTab && <currentTab.icon className="w-5 h-5 text-saffron" />}<span className="font-medium text-gray-800">{currentTab?.label || 'Home'}</span></div>
-            {isMoreTab && <button onClick={() => setActiveTab('home')} className="text-saffron text-sm flex items-center gap-1"><ChevronLeft className="w-4 h-4" /> Back</button>}
+            <div className="flex items-center gap-2">
+              {isMoreTab && <button onClick={() => setActiveTab('home')} className="text-saffron text-sm flex items-center gap-1"><ChevronLeft className="w-4 h-4" /> Back</button>}
+              <NotificationBell />
+            </div>
           </div>
         </div>
         <div className="px-4 py-4">

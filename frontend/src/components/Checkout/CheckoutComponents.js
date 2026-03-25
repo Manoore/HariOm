@@ -995,7 +995,7 @@ export function MyOrdersPage({ onBack, onViewOrder }) {
                   <span className="text-sm text-gray-500">{order.items?.length} items</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-saffron">₹{order.total_amount}</span>
+                  <span className="font-bold text-saffron">₹{Number(order.total_amount).toFixed(2)}</span>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </div>
               </div>
@@ -1201,17 +1201,17 @@ export function OrderDetailPage({ orderId, onBack }) {
         <div className="mt-4 pt-4 border-t space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Subtotal</span>
-            <span>₹{order.subtotal}</span>
+            <span>₹{Number(order.subtotal).toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Shipping</span>
             <span className={order.shipping_cost === 0 ? 'text-green-600' : ''}>
-              {order.shipping_cost === 0 ? 'FREE' : `₹${order.shipping_cost}`}
+              {order.shipping_cost === 0 ? 'FREE' : `₹${Number(order.shipping_cost).toFixed(2)}`}
             </span>
           </div>
           <div className="flex justify-between text-lg font-bold pt-2 border-t">
             <span>Total</span>
-            <span className="text-saffron">₹{order.total_amount}</span>
+            <span className="text-saffron">₹{Number(order.total_amount).toFixed(2)}</span>
           </div>
         </div>
       </div>
