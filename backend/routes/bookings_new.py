@@ -10,7 +10,7 @@ from bson import ObjectId
 
 from database import (
     users_collection, priests_collection, bookings_collection,
-    priest_services_collection, chat_rooms_collection
+    priest_services_collection, chat_rooms_collection, system_settings_collection
 )
 from models import BookingCreate, BookingStatus, UserRole
 from auth import get_current_user, require_role
@@ -28,6 +28,35 @@ except ImportError:
     NOTIFICATIONS_ENABLED = False
 
 router = APIRouter(prefix="/api", tags=["Bookings"])
+
+# Default cancellation rules (used when no admin policy is set)
+DEFAULT_RULES = [
+    {"min_hours": 24, "max_hours": None, "refund_percent": 100},
+    {"min_hours": 0, "max_hours": 24, "refund_percent": 50},
+    {"min_hours": None, "max_hours": 0, "refund_percent": 0},
+]
+
+async def get_cancellation_refund(hours_until_booking: float) -> int:
+    """Get refund percentage based on admin-configured cancellation policy"""
+    policy = await system_settings_collection.find_one({"type": "cancellation_policy"}, {"_id": 0})
+    rules = policy.get("rules", DEFAULT_RULES) if policy else DEFAULT_RULES
+    
+    # Sort rules so the most specific match wins (highest min_hours first)
+    for rule in sorted(rules, key=lambda r: r.get("min_hours") or -9999, reverse=True):
+        min_h = rule.get("min_hours")
+        max_h = rule.get("max_hours")
+        
+        # "After booking time" rule: hours < 0
+        if min_h is None and max_h is not None and hours_until_booking <= max_h:
+            return rule.get("refund_percent", 0)
+        # "More than X hours" rule: hours > min_h
+        if min_h is not None and max_h is None and hours_until_booking > min_h:
+            return rule.get("refund_percent", 100)
+        # "Between X and Y hours" rule
+        if min_h is not None and max_h is not None and min_h <= hours_until_booking <= max_h:
+            return rule.get("refund_percent", 50)
+    
+    return 0
 
 # Helper function to create chat room (imported from main module)
 async def create_chat_room(room_type: str, reference_id: str, participant1_id: str, 
@@ -306,7 +335,7 @@ async def cancel_booking(booking_id: str, request: Request, user: dict = Depends
     except Exception:
         reason = ""
     
-    # Calculate refund based on 24-hour policy
+    # Calculate refund based on admin-configured policy
     booking_date = booking.get("booking_date")
     now = datetime.now(timezone.utc)
     
@@ -315,25 +344,13 @@ async def cancel_booking(booking_id: str, request: Request, user: dict = Depends
     price = booking.get("price", 0)
     
     if booking_date:
-        # Make booking_date timezone aware if it isn't
         if isinstance(booking_date, datetime):
             if booking_date.tzinfo is None:
                 booking_date = booking_date.replace(tzinfo=timezone.utc)
             
             hours_until_booking = (booking_date - now).total_seconds() / 3600
-            
-            if hours_until_booking > 24:
-                # More than 24 hours: Full refund
-                refund_percentage = 100
-                refund_amount = price
-            elif hours_until_booking > 0:
-                # Within 24 hours: 50% refund
-                refund_percentage = 50
-                refund_amount = price * 0.5
-            else:
-                # Booking time passed: No refund
-                refund_percentage = 0
-                refund_amount = 0
+            refund_percentage = await get_cancellation_refund(hours_until_booking)
+            refund_amount = price * (refund_percentage / 100)
     
     # Update booking status
     update_data = {
@@ -425,18 +442,14 @@ async def get_cancellation_preview(booking_id: str, user: dict = Depends(get_cur
                 booking_date = booking_date.replace(tzinfo=timezone.utc)
             
             hours_until_booking = (booking_date - now).total_seconds() / 3600
+            refund_percentage = await get_cancellation_refund(hours_until_booking)
+            refund_amount = price * (refund_percentage / 100)
             
-            if hours_until_booking > 24:
-                refund_percentage = 100
-                refund_amount = price
-                policy_message = "Full refund - cancellation more than 24 hours before booking"
-            elif hours_until_booking > 0:
-                refund_percentage = 50
-                refund_amount = price * 0.5
-                policy_message = "50% refund - cancellation within 24 hours of booking"
+            if refund_percentage == 100:
+                policy_message = f"Full refund - cancellation more than {abs(hours_until_booking):.0f} hours before booking"
+            elif refund_percentage > 0:
+                policy_message = f"{refund_percentage}% refund - based on cancellation policy"
             else:
-                refund_percentage = 0
-                refund_amount = 0
                 policy_message = "No refund - booking time has passed"
     
     return {

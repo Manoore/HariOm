@@ -13,7 +13,7 @@ from database import (
     users_collection, priests_collection, astrologers_collection,
     products_collection, bookings_collection, orders_collection,
     puja_types_collection, audio_library_collection, shops_collection,
-    user_notifications_collection, system_config_collection
+    user_notifications_collection, system_config_collection, system_settings_collection
 )
 from models import UserRole
 from auth import require_role, get_password_hash, verify_password
@@ -958,3 +958,38 @@ async def reject_provider(provider_type: str, provider_id: str, request: Request
         })
     
     return {"message": f"{provider_type.capitalize()} rejected"}
+
+
+# ===================== CANCELLATION POLICY =====================
+
+DEFAULT_CANCELLATION_RULES = [
+    {"min_hours": 24, "max_hours": None, "refund_percent": 100, "label": "More than 24 hours before"},
+    {"min_hours": 0, "max_hours": 24, "refund_percent": 50, "label": "Within 24 hours"},
+    {"min_hours": None, "max_hours": 0, "refund_percent": 0, "label": "After booking time"},
+]
+
+@router.get("/cancellation-policy")
+async def get_cancellation_policy(user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Get cancellation policy settings"""
+    policy = await system_settings_collection.find_one({"type": "cancellation_policy"}, {"_id": 0})
+    if not policy:
+        return {"type": "cancellation_policy", "rules": DEFAULT_CANCELLATION_RULES}
+    return policy
+
+@router.put("/cancellation-policy")
+async def update_cancellation_policy(request: Request, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Update cancellation policy settings"""
+    data = await request.json()
+    rules = data.get("rules", [])
+    
+    for rule in rules:
+        rp = rule.get("refund_percent")
+        if rp is None or not (0 <= rp <= 100):
+            raise HTTPException(status_code=400, detail="Refund percent must be between 0 and 100")
+    
+    await system_settings_collection.update_one(
+        {"type": "cancellation_policy"},
+        {"$set": {"type": "cancellation_policy", "rules": rules, "updated_at": datetime.now(timezone.utc)}},
+        upsert=True
+    )
+    return {"message": "Cancellation policy updated"}

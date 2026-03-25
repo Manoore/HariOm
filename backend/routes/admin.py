@@ -115,6 +115,43 @@ async def update_consultation_settings(request: Request, user: dict = Depends(re
     )
     return {"message": "Settings updated"}
 
+# Default cancellation policy
+DEFAULT_CANCELLATION_POLICY = {
+    "rules": [
+        {"min_hours": 24, "max_hours": None, "refund_percent": 100, "label": "More than 24 hours before"},
+        {"min_hours": 0, "max_hours": 24, "refund_percent": 50, "label": "Within 24 hours"},
+        {"min_hours": None, "max_hours": 0, "refund_percent": 0, "label": "After booking time"},
+    ]
+}
+
+@router.get("/cancellation-policy")
+async def get_cancellation_policy(user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Get cancellation policy settings"""
+    policy = await system_settings_collection.find_one({"type": "cancellation_policy"}, {"_id": 0})
+    if not policy:
+        return {**DEFAULT_CANCELLATION_POLICY, "type": "cancellation_policy"}
+    return policy
+
+@router.put("/cancellation-policy")
+async def update_cancellation_policy(request: Request, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Update cancellation policy settings"""
+    data = await request.json()
+    rules = data.get("rules", [])
+    
+    # Validate rules
+    for rule in rules:
+        rp = rule.get("refund_percent")
+        if rp is None or not (0 <= rp <= 100):
+            raise HTTPException(status_code=400, detail="Refund percent must be between 0 and 100")
+    
+    await system_settings_collection.update_one(
+        {"type": "cancellation_policy"},
+        {"$set": {"type": "cancellation_policy", "rules": rules, "updated_at": datetime.now(timezone.utc)}},
+        upsert=True
+    )
+    return {"message": "Cancellation policy updated"}
+
+
 # System Config
 @router.get("/system-config")
 async def get_system_config(user: dict = Depends(require_role([UserRole.ADMIN]))):
