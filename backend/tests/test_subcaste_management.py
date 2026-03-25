@@ -13,7 +13,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://astro-connect-31.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pooja-marketplace-1.preview.emergentagent.com').rstrip('/')
 
 
 class TestSubcasteAPI:
