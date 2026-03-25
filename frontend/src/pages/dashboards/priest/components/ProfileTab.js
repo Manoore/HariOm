@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Edit, Save, X, Camera, Loader2, MapPin, Phone, Mail, Award, Building2, ChevronDown } from 'lucide-react';
+import { User, Edit, Save, X, Camera, Loader2, MapPin, Phone, Mail, Award, Building2, ChevronDown, Star, Plus } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
 import AddressAutocomplete from '../../../../components/AddressAutocomplete';
