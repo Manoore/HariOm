@@ -1,181 +1,518 @@
 <analysis>**original_problem_statement**:
-Build Divine App, a digital platform connecting users with Hindu spiritual services. Features include priest booking, astrology services, a spiritual e-commerce store, devotional content (mantras, audio, video), and live video/voice consultations.
+Build Divine App, a digital platform connecting users with Hindu spiritual services. Features include priest booking, astrology services, a spiritual e-commerce store, devotional content, and live video/voice consultations. 
 
-**PRODUCT REQUIREMENTS**:
-- Core Functions: Priest booking, spiritual learning, astrology services, scriptures library.
-- Marketplace: Pooja Store for spiritual items.
-- Media & Content: Video/Audio libraries for devotional content.
-- Consultations & Classes: Live 100ms-powered video/voice calling with screen sharing.
-- Admin controls for user signups, user creation, and role management.
+PRODUCT REQUIREMENTS:
+- Modular refactoring of all large dashboard components.
+- Devotee My Activity tab for unified tracking of bookings, orders, and call history.
+- Real-time and push notifications for priests upon booking creation/cancellation.
+- Admin-configurable cancellation, refund policy, and payment settings (Platform fees, GST).
+- Dual payment gateway integration (Stripe & Razorpay) for checkout.
 
-**User's preferred language**: English
-*(INSTRUCT next agent to respond in English only)*
+**User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
-**what currently exists?**
-A full-stack application (React + FastAPI + MongoDB). The codebase has been significantly cleaned of all Emergent-specific dependencies and now uses official SDKs for Stripe and Firebase. Major features implemented and debugged in this session include a mobile splash screen, a globally wired in-app notification system, a complete Firebase Push Notification (FCM v1) system, and a full incoming video call notification flow for astrologers. A large number of bugs related to UI layout, API endpoints (404s, 500s), and authentication flows were fixed. The backend is stable, but the frontend is experiencing a critical caching issue on the user's mobile deployment.
+**what currently exists?** 
+A full-stack application (React + FastAPI + MongoDB). The dashboards are modularized. The backend incorporates dynamic refund policies, dynamic platform fee/GST configurations, and webhook handling. A customized  system is in place. Video consultations leverage the 100ms SDK with integrated in-call chat. E-commerce supports a dual payment gateway (Stripe + Razorpay). Currently, there is a critical blocking bug where new users experience a blank screen after registering via phone number and OTP.
 
 **Last working item**:
-- **Last item agent was working**: Diagnosing why the user sees a blank screen when opening the deployed app on a mobile device.
-- **Status**: USER VERIFICATION PENDING
-- **Agent Testing Done**: Y (Agent confirmed via screenshot tool that the mobile view works correctly in the isolated preview environment, pointing to a caching problem on the user's end.)
-- **Which testing method agent to use?** Manual testing by user. The user needs to test on their mobile device after clearing their browser's cache and site data for the app URL, or by using an incognito/private tab.
+- **Last item agent was working**: Investigating a blank screen bug for new users. The user reported that while existing cached logins work, new users face a blank screen after entering their phone number and OTP. The agent started grepping  and  to inspect the  and  flows.
+- **Status**: IN PROGRESS
+- **Agent Testing Done**: N
+- **Which testing method agent to use?**: Frontend testing agent / Screenshot tool (to observe the DOM state post-OTP) and backend logs.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: (P0) Blank Screen on Mobile Deployment**
-    - **Attempted fixes**: The agent identified this as a caching problem, likely due to the  service worker serving a stale, broken version of the app. The user has been instructed to clear their mobile browser's cache and data.
-    - **Next debug checklist**:
-        1. Wait for user to confirm if clearing cache/incognito mode resolves the blank screen.
-        2. If it does not, add cache-busting headers to  to force browsers to fetch the latest  and service worker, then instruct the user to redeploy the frontend.
-    - **Why fix this issue and what will be achieved with the fix?**: The mobile version of the app is currently unusable for the user.
-    - **Status**: USER VERIFICATION PENDING
-    - **Is recurring issue?**: Y
-    - **Should Test frontend/backend/both after fix?**: Frontend (User testing on a mobile device).
+Issue 1: (P0) New User Phone/OTP Auth Results in Blank Screen
+- **Attempted fixes**: Agent executed initial file searches for  and  functions in frontend but hasn't applied fixes yet.
+- **Next debug checklist**: Inspect  and . Check the state transition after OTP verification ( / ). Ensure user profile data is correctly initialized in the backend and the frontend correctly redirects to the dashboard instead of crashing. Look out for  pointer exceptions on missing user properties.
+- **Why fix this issue and what will be achieved with the fix?**: It completely blocks new user onboarding and app sharing. 
+- **Status**: IN PROGRESS
+- **Is recurring issue?**: N
+- **Should Test frontend/backend/both after fix?**: Both (Frontend for UI transitions, Backend for user creation logic).
+- **Blocked on other issue**: None.
 
-- **Issue 2: (P1) Mobile Google Sign-In Not Working**
-    - **Attempted fixes**: The agent switched the implementation from  to  to avoid a redirect loop. The user still reports it's not working.
-    - **Next debug checklist**: This issue is likely masked by or related to the blank screen caching issue. Once Issue 1 is resolved, re-test the Google Sign-In flow on a mobile device.
-    - **Why fix this issue and what will be achieved with the fix?**: A core authentication flow is broken for mobile users.
-    - **Status**: BLOCKED
-    - **Is recurring issue?**: Y
-    - **Should Test frontend/backend/both after fix?**: Frontend
-    - **Blocked on other issue**: Blank Screen on Mobile Deployment
+Issue 2: (P1) Safari Mobile Blank Screen Deployment Verification
+- **Attempted fixes**: Caching headers and SW fixes were implemented in a much prior session. User needs to verify on an iPhone after recent deployments.
+- **Next debug checklist**: Await user confirmation after they test on an actual iOS device. Check if Issue 1 is related to this.
+- **Why fix this issue and what will be achieved with the fix?**: Resolves a critical bug making the app unusable on iOS Safari.
+- **Status**: USER VERIFICATION PENDING
+- **Is recurring issue?**: Y
+- **Should Test frontend/backend/both after fix?**: Frontend (Manual testing on mobile)
 
-- **Issue 3: (P1) GitHub Actions APK build fails intermittently**
-    - **Attempted fixes**: None in this session (carried over from previous).
-    - **Next debug checklist**: Review GitHub Actions logs in the user's private repository for the Build APK with Gradle step to identify the cause of the intermittent failures.
-    - **Why fix this issue and what will be achieved with the fix?**: To enable reliable automated builds for the Google Play Store.
-    - **Status**: NOT STARTED
-    - **Is recurring issue?**: Y
-    - **Should Test frontend/backend/both after fix?**: N/A
+Issue 3: (P1) Mobile Google Sign-In Not Working
+- **Attempted fixes**: None recently.
+- **Next debug checklist**: Needs re-testing on a mobile device.
+- **Why fix this issue and what will be achieved with the fix?**: Restores social auth for mobile users.
+- **Status**: BLOCKED (Blocked on Safari Mobile verification / general mobile auth stability)
+- **Is recurring issue?**: Y
+- **Should Test frontend/backend/both after fix?**: Frontend
 
 **In progress Task List**:
+*(No feature tasks are currently in progress; only the P0 Auth Blank Screen bug is active).*
+
+**Upcoming and Future Tasks**:
+Upcoming Tasks:
+- (P1) CI/CD Pipeline Setup: GitHub Actions to auto-deploy backend to Cloud Run and frontend to Firebase on  branch push.
+- (P1) Play Store TWA Setup: Guide user to generate a Trusted Web Activity (TWA) Android App Bundle.
+- (P2) Provider Payout Dashboard: Allow shop owners/priests to see their earnings, pending payouts, and payout history with UPI ID management.
+- (P2) Production Data Cleanup: Clean up remaining test data from DB.
+
+Future Tasks:
+- (P2) Enable Astrologer & Shop Owner signups for the multi-vendor phase.
+- (P2) Implement scheduled push notification reminders for Vedic classes.
+- (P2) Implement Phase 2 of Live Streams (100ms HLS broadcasting).
+- (P3) Implement Temple section enhancements (AI-generated images, maps, nearby temples).
+
+**Completed work in this session**:
+- Devotee Shop Cart & Checkout Flow Fix ( implemented) (DONE)
+- Stripe Webhook integration for Payment Confirmation () (DONE)
+- Order Tracking Timeline added to  (DONE)
+-  alignment & visibility fixed across all dashboards (DONE)
+- Chat Tab UI Fixed for Mobile ( cut-off bug fixed) (DONE)
+- Video Consultation In-Call Chat via 100ms SDK + Mobile Screen Share fallback (DONE)
+- Razorpay Integration added as an alternative to Stripe (DONE)
+- Admin UI for Payment, Fees, and Tax configurations (DONE)
+
+**Earlier issues found/mentioned but not fixed**:
 *(None)*
 
-**Upcoming and Future Tasks**
-- **Upcoming Tasks (P0):**
-    - **Production Cleanup:** The user requested a full cleanup of Emergent-related code. This is now complete, but the next step is to remove all temporary test data from the database, keeping only manually created profiles.
-    - **Play Store TWA Setup (P1):** Guide the user to generate a Trusted Web Activity (TWA) Android App Bundle (AAB) to publish their web app to the Google Play Store.
-    - **CI/CD Pipeline Setup (P1):** Set up GitHub Actions to automatically deploy the backend to Cloud Run and the frontend to Firebase on pushes to the  branch.
+**Known issue recurrence from previous fork**:
+- **Issue recurrence in previous fork**: The user frequently struggles with executing backend/frontend deployment commands properly and runs into Cloud Run deployment failures.
+- **Recurrence count**: High
+- **Status**: IN PROGRESS
+- **Note**: ALWAYS provide exact, copy-pasteable bash scripts for deployment whenever backend/frontend changes are finalized. *Never assume the user knows the GCP or Firebase commands.*
+Example:
 
-- **Future Tasks:**
-    - (P1) Enable Astrologer & Shop Owner signups for the multi-vendor phase.
-    - (P2) Implement Stripe Connect for automatic payment splitting.
-    - (P2) Add scheduled push notification reminders for Vedic classes.
-    - (P2) Implement Phase 2 of Live Streams (100ms HLS broadcasting).
-    - (P3) Implement the Temple section functionality.
-    - (P3) Create a Provider Onboarding Guide.
+> divine-app@1.0.0 build
+> react-scripts build
 
-**Completed work in this session**
-- **Bug Fixes:**
-    - Fixed ESLint build error in  and multiple subsequent bugs related to mobile rendering (), layout (double margins), and authentication (Google Sign-In COOP error, redirect loops).
-    - Resolved 500 Internal Server Error on the priest earnings endpoint caused by a datetime timezone mismatch.
-    - Fixed 403 Forbidden error in the chat system by correcting the participant validation logic in .
-    - Fixed 404 Not Found errors on Shop Owner and Astrologer dashboards by seeding necessary test data and identifying stale deployed code.
-    - Fixed the unclickable notification bell by re-rendering its dropdown in a React Portal to escape the clipping context of the sidebar.
-    - Fixed the non-functional Math/Mutt Affiliation dropdown by creating the missing API endpoint and seeding the database.
-- **Features & Enhancements:**
-    - Added a mobile splash screen and enhanced UI icons to .
-    - Fully wired up the existing in-app  component into the global UI.
-    - Implemented a complete Push Notification system using Firebase Cloud Messaging (FCM) v1 API, including frontend permissions and backend sending logic.
-    - Built the full incoming call flow for astrologers, including backend polling endpoints, push notifications, and a frontend ringing/answer modal.
-- **Production Code Cleanup:**
-    - Replaced all  library dependencies (for Stripe and OpenAI) with official SDKs.
-    - Removed the unused Karaoke/Whisper feature.
-    - Scanned and removed all hardcoded Emergent preview URLs and API keys from the production codebase.
-    - Cleaned the  to remove dependencies on Emergent's private package index.
+Creating an optimized production build...
+Compiled with warnings.
 
-**Earlier issues found/mentioned but not fixed**
-*(None)*
+Failed to parse source map from '/app/frontend/node_modules/react-razorpay/src/index.ts' file: Error: ENOENT: no such file or directory, open '/app/frontend/node_modules/react-razorpay/src/index.ts'
 
-**Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork**: The user frequently forgets to deploy the latest code from GitHub to their own Firebase/Cloud Run environments after the agent makes changes.
-- **Recurrence count**: High. This happened multiple times this session, leading to the user reporting bugs that were already fixed in the preview environment.
-- **Status**: RECURRING (Requires vigilance).
-- **Note**: The next agent must be very clear and direct about deployment steps (, , ) after every significant change.
+Failed to parse source map from '/app/frontend/node_modules/react-razorpay/src/razorpay.ts' file: Error: ENOENT: no such file or directory, open '/app/frontend/node_modules/react-razorpay/src/razorpay.ts'
 
-**Code Architecture**
+[eslint] 
+src/components/Admin/ConsultationSettingsAdmin.js
+  Line 5:25:  'CheckCircle' is defined but never used  no-unused-vars
+
+src/components/Admin/SystemSettingsAdmin.js
+  Line 5:41:  'CheckCircle' is defined but never used  no-unused-vars
+  Line 6:48:  'Phone' is defined but never used        no-unused-vars
+  Line 6:55:  'Mail' is defined but never used         no-unused-vars
+
+src/components/Chat/ChatTab.js
+  Line 1:46:   'useCallback' is defined but never used                                                                          no-unused-vars
+  Line 2:18:   'AnimatePresence' is defined but never used                                                                      no-unused-vars
+  Line 5:15:   'Phone' is defined but never used                                                                                no-unused-vars
+  Line 5:22:   'Video' is defined but never used                                                                                no-unused-vars
+  Line 5:29:   'MoreVertical' is defined but never used                                                                         no-unused-vars
+  Line 5:43:   'Check' is defined but never used                                                                                no-unused-vars
+  Line 6:26:   'Clock' is defined but never used                                                                                no-unused-vars
+  Line 6:33:   'User' is defined but never used                                                                                 no-unused-vars
+  Line 16:11:  'user' is assigned a value but never used                                                                        no-unused-vars
+  Line 149:6:  React Hook useEffect has a missing dependency: 'loadMessages'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/components/Checkout/CheckoutComponents.js
+  Line 1:38:    'useRef' is defined but never used                                                                             no-unused-vars
+  Line 4:49:    'Phone' is defined but never used                                                                              no-unused-vars
+  Line 4:56:    'User' is defined but never used                                                                               no-unused-vars
+  Line 20:43:   'refreshCart' is assigned a value but never used                                                               no-unused-vars
+  Line 212:32:  'razorpayLoading' is assigned a value but never used                                                           no-unused-vars
+  Line 212:56:  'razorpayError' is assigned a value but never used                                                             no-unused-vars
+  Line 1035:6:  React Hook useEffect has a missing dependency: 'fetchOrder'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/components/DevoteeDashboard/AstrologyTab.js
+  Line 3:21:   'Search' is defined but never used                         no-unused-vars
+  Line 3:38:   'ChevronRight' is defined but never used                   no-unused-vars
+  Line 11:11:  'user' is assigned a value but never used                  no-unused-vars
+  Line 30:10:  'personalHoroscope' is assigned a value but never used     no-unused-vars
+  Line 30:29:  'setPersonalHoroscope' is assigned a value but never used  no-unused-vars
+
+src/components/DevoteeDashboard/PriestDetailView.js
+  Line 9:11:  'user' is assigned a value but never used  no-unused-vars
+
+src/components/DevoteeDashboard/ScripturesTab.js
+  Line 4:27:   'ChevronLeft' is defined but never used                                                                         no-unused-vars
+  Line 393:6:  React Hook useEffect has a missing dependency: 'fetchVerses'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/components/NotificationBell.js
+  Line 3:31:  'X' is defined but never used  no-unused-vars
+
+src/components/PaymentComponents.js
+  Line 3:51:    'CheckCircle' is defined but never used       no-unused-vars
+  Line 291:26:  'country' is assigned a value but never used  no-unused-vars
+
+src/components/PushNotificationPrompt.js
+  Line 7:11:  'permission' is assigned a value but never used  no-unused-vars
+
+src/components/Reviews/ProductReviews.js
+  Line 374:6:  React Hook useEffect has missing dependencies: 'checkCanReview' and 'fetchReviews'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+src/components/VideoConsultation/VideoConsultation.js
+  Line 1:46:  'useCallback' is defined but never used  no-unused-vars
+  Line 5:3:   'Maximize2' is defined but never used    no-unused-vars
+  Line 5:14:  'Minimize2' is defined but never used    no-unused-vars
+  Line 5:25:  'Settings' is defined but never used     no-unused-vars
+  Line 7:33:  'ArrowLeft' is defined but never used    no-unused-vars
+
+src/components/Wallet/WalletComponents.js
+  Line 5:43:   'Phone' is defined but never used                                                                          no-unused-vars
+  Line 9:10:   'Toaster' is defined but never used                                                                        no-unused-vars
+  Line 105:6:  React Hook useEffect has a missing dependency: 'amount'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/components/ui/ConfirmDialog.js
+  Line 3:25:  'Loader2' is defined but never used  no-unused-vars
+  Line 3:34:  'X' is defined but never used        no-unused-vars
+
+src/contexts/AuthContext.js
+  Line 11:3:  'getIdToken' is defined but never used            no-unused-vars
+  Line 12:3:  'isFirebaseConfigured' is defined but never used  no-unused-vars
+  Line 13:3:  'setupRecaptcha' is defined but never used        no-unused-vars
+
+src/contexts/CartContext.js
+  Line 30:6:  React Hook useEffect has a missing dependency: 'fetchCart'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/contexts/PaymentContext.js
+  Line 2:8:  'api' is defined but never used  no-unused-vars
+
+src/lib/firebase.js
+  Line 18:3:  'PhoneAuthProvider' is defined but never used     no-unused-vars
+  Line 19:3:  'signInWithCredential' is defined but never used  no-unused-vars
+
+src/pages/AuthScreen.js
+  Line 3:82:    'Bell' is defined but never used                    no-unused-vars
+  Line 3:88:    'Sparkles' is defined but never used                no-unused-vars
+  Line 3:98:    'Building2' is defined but never used               no-unused-vars
+  Line 3:109:   'ShoppingCart' is defined but never used            no-unused-vars
+  Line 6:10:    'isFirebaseConfigured' is defined but never used    no-unused-vars
+  Line 308:61:  'initPhoneAuth' is assigned a value but never used  no-unused-vars
+
+src/pages/LandingPage.js
+  Line 5:28:     'Quote' is defined but never used                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  Line 5:62:     'MessageSquare' is defined but never used                                                                                                                                                                                                                                                                                                                          no-unused-vars
+  Line 507:7:    'fadeInUp' is assigned a value but never used                                                                                                                                                                                                                                                                                                                      no-unused-vars
+  Line 538:6:    React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                       react-hooks/exhaustive-deps
+  Line 1721:19:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1722:19:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1723:19:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1724:19:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1731:23:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1732:23:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1733:23:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1734:23:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1741:23:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1742:23:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1743:23:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+  Line 1744:23:  The href attribute requires a valid value to be accessible. Provide a valid, navigable address as the href value. If you cannot provide a valid href, but still need the element to resemble a link, use a button and change it with appropriate styles. Learn more: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/HEAD/docs/rules/anchor-is-valid.md  jsx-a11y/anchor-is-valid
+
+src/pages/MobileApp.js
+  Line 2:18:    'AnimatePresence' is defined but never used                                                                                             no-unused-vars
+  Line 27:10:   'ProfileCompletionScreen' is defined but never used                                                                                     no-unused-vars
+  Line 422:26:  'updateUser' is assigned a value but never used                                                                                         no-unused-vars
+  Line 427:44:  React Hook useMemo has a missing dependency: 'user'. Either include it or remove the dependency array                                   react-hooks/exhaustive-deps
+  Line 427:45:  React Hook useMemo has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+  Line 437:11:  'orderId' is assigned a value but never used                                                                                            no-unused-vars
+
+src/pages/dashboards/DevoteeDashboard.js
+  Line 1:38:     'useRef' is defined but never used                                                                                                     no-unused-vars
+  Line 2:18:     'AnimatePresence' is defined but never used                                                                                            no-unused-vars
+  Line 4:9:      'Sun' is defined but never used                                                                                                        no-unused-vars
+  Line 4:27:     'User' is defined but never used                                                                                                       no-unused-vars
+  Line 4:43:     'MapPin' is defined but never used                                                                                                     no-unused-vars
+  Line 5:9:      'BellRing' is defined but never used                                                                                                   no-unused-vars
+  Line 5:40:     'Package' is defined but never used                                                                                                    no-unused-vars
+  Line 5:57:     'Filter' is defined but never used                                                                                                     no-unused-vars
+  Line 6:30:     'Heart' is defined but never used                                                                                                      no-unused-vars
+  Line 6:37:     'Settings' is defined but never used                                                                                                   no-unused-vars
+  Line 6:47:     'LogOut' is defined but never used                                                                                                     no-unused-vars
+  Line 7:3:      'CheckCircle' is defined but never used                                                                                                no-unused-vars
+  Line 7:28:     'ArrowLeft' is defined but never used                                                                                                  no-unused-vars
+  Line 7:51:     'Menu' is defined but never used                                                                                                       no-unused-vars
+  Line 7:96:     'SkipForward' is defined but never used                                                                                                no-unused-vars
+  Line 7:109:    'SkipBack' is defined but never used                                                                                                   no-unused-vars
+  Line 8:11:     'MessageCircle' is defined but never used                                                                                              no-unused-vars
+  Line 8:26:     'Send' is defined but never used                                                                                                       no-unused-vars
+  Line 8:41:     'ImageIcon' is defined but never used                                                                                                  no-unused-vars
+  Line 8:52:     'Rss' is defined but never used                                                                                                        no-unused-vars
+  Line 8:72:     'Video' is defined but never used                                                                                                      no-unused-vars
+  Line 8:79:     'Wallet' is defined but never used                                                                                                     no-unused-vars
+  Line 8:87:     'Edit' is defined but never used                                                                                                       no-unused-vars
+  Line 8:100:    'Check' is defined but never used                                                                                                      no-unused-vars
+  Line 9:3:      'Mail' is defined but never used                                                                                                       no-unused-vars
+  Line 9:9:      'Phone' is defined but never used                                                                                                      no-unused-vars
+  Line 9:16:     'UserRoundCheck' is defined but never used                                                                                             no-unused-vars
+  Line 9:51:     'Mic' is defined but never used                                                                                                        no-unused-vars
+  Line 9:56:     'MicOff' is defined but never used                                                                                                     no-unused-vars
+  Line 9:64:     'VideoOff' is defined but never used                                                                                                   no-unused-vars
+  Line 9:74:     'PhoneOff' is defined but never used                                                                                                   no-unused-vars
+  Line 9:84:     'Users' is defined but never used                                                                                                      no-unused-vars
+  Line 9:91:     'AlertCircle' is defined but never used                                                                                                no-unused-vars
+  Line 13:10:    'useCart' is defined but never used                                                                                                    no-unused-vars
+  Line 17:10:    'WalletCard' is defined but never used                                                                                                 no-unused-vars
+  Line 17:22:    'RechargeModal' is defined but never used                                                                                              no-unused-vars
+  Line 17:37:    'TransactionHistory' is defined but never used                                                                                         no-unused-vars
+  Line 18:10:    'AstrologerList' is defined but never used                                                                                             no-unused-vars
+  Line 18:26:    'PreCallCheck' is defined but never used                                                                                               no-unused-vars
+  Line 18:40:    'VideoCallScreen' is defined but never used                                                                                            no-unused-vars
+  Line 19:8:     'AddressAutocomplete' is defined but never used                                                                                        no-unused-vars
+  Line 22:8:     'SmartPayment' is defined but never used                                                                                               no-unused-vars
+  Line 24:8:     'NotificationBell' is defined but never used                                                                                           no-unused-vars
+  Line 25:8:     'LanguageSelector' is defined but never used                                                                                           no-unused-vars
+  Line 28:3:     'useHMSActions' is defined but never used                                                                                              no-unused-vars
+  Line 29:3:     'useHMSStore' is defined but never used                                                                                                no-unused-vars
+  Line 30:3:     'selectIsConnectedToRoom' is defined but never used                                                                                    no-unused-vars
+  Line 31:3:     'selectLocalPeer' is defined but never used                                                                                            no-unused-vars
+  Line 32:3:     'selectPeers' is defined but never used                                                                                                no-unused-vars
+  Line 33:3:     'selectIsLocalAudioEnabled' is defined but never used                                                                                  no-unused-vars
+  Line 34:3:     'selectIsLocalVideoEnabled' is defined but never used                                                                                  no-unused-vars
+  Line 35:3:     'selectPeerScreenSharing' is defined but never used                                                                                    no-unused-vars
+  Line 36:3:     'selectVideoTrackByPeerID' is defined but never used                                                                                   no-unused-vars
+  Line 37:3:     'selectScreenShareByPeerID' is defined but never used                                                                                  no-unused-vars
+  Line 38:3:     'useVideo' is defined but never used                                                                                                   no-unused-vars
+  Line 39:3:     'useAVToggle' is defined but never used                                                                                                no-unused-vars
+  Line 40:3:     'HMSRoomProvider' is defined but never used                                                                                            no-unused-vars
+  Line 44:10:    'OmIcon' is defined but never used                                                                                                     no-unused-vars
+  Line 44:18:    'BellIcon3D' is defined but never used                                                                                                 no-unused-vars
+  Line 44:30:    'ZodiacIcon3D' is defined but never used                                                                                               no-unused-vars
+  Line 44:44:    'TempleIcon3D' is defined but never used                                                                                               no-unused-vars
+  Line 44:58:    'CartIcon3D' is defined but never used                                                                                                 no-unused-vars
+  Line 47:10:    'PostCard' is defined but never used                                                                                                   no-unused-vars
+  Line 50:10:    'ReviewModal' is defined but never used                                                                                                no-unused-vars
+  Line 56:22:    'TestimonialSection' is defined but never used                                                                                         no-unused-vars
+  Line 80:6:     React Hook useEffect has a missing dependency: 'langCodeMap'. Either include it or remove the dependency array                         react-hooks/exhaustive-deps
+  Line 146:6:    React Hook useEffect has a missing dependency: 'translateMantras'. Either include it or remove the dependency array                    react-hooks/exhaustive-deps
+  Line 218:6:    React Hook useEffect has a missing dependency: 'translateText'. Either include it or remove the dependency array                       react-hooks/exhaustive-deps
+  Line 555:6:    React Hook useEffect has a missing dependency: 'fetchAllMantras'. Either include it or remove the dependency array                     react-hooks/exhaustive-deps
+  Line 852:6:    React Hook useEffect has a missing dependency: 'audioElement'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 1050:6:   React Hook useEffect has a missing dependency: 'fetchLibrary'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 1229:6:   React Hook useEffect has missing dependencies: 'fetchProductDetail' and 'product'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 1451:11:  Imported JSX component default must be in PascalCase or SCREAMING_SNAKE_CASE                                                           react/jsx-pascal-case
+
+src/pages/dashboards/PriestDashboard.js
+  Line 4:27:  'Bell' is defined but never used    no-unused-vars
+  Line 5:17:  'Plus' is defined but never used    no-unused-vars
+  Line 6:52:  'Repeat' is defined but never used  no-unused-vars
+
+src/pages/dashboards/admin/components/SettingsTab.js
+  Line 3:84:   'CreditCard' is defined but never used  no-unused-vars
+  Line 3:114:  'ToggleLeft' is defined but never used  no-unused-vars
+
+src/pages/dashboards/astrologer/components/EarningsTab.js
+  Line 13:6:  React Hook useEffect has a missing dependency: 'loadReport'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/dashboards/astrologer/components/ProfileTab.js
+  Line 2:40:  'User' is defined but never used  no-unused-vars
+
+src/pages/dashboards/devotee/components/CalendarTab.js
+  Line 3:20:  'ChevronLeft' is defined but never used                                                                                no-unused-vars
+  Line 26:6:  React Hook useEffect has a missing dependency: 'fetchMonthPanchang'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/dashboards/devotee/components/ClassVideoRoom.js
+  Line 5:3:   'Hand' is defined but never used                          no-unused-vars
+  Line 5:9:   'Volume2' is defined but never used                       no-unused-vars
+  Line 5:18:  'VolumeX' is defined but never used                       no-unused-vars
+  Line 62:9:  'isConnected' is assigned a value but never used          no-unused-vars
+  Line 65:9:  'isLocalAudioEnabled' is assigned a value but never used  no-unused-vars
+  Line 66:9:  'isLocalVideoEnabled' is assigned a value but never used  no-unused-vars
+
+src/pages/dashboards/devotee/components/ClassesTab.js
+  Line 2:18:  'AnimatePresence' is defined but never used  no-unused-vars
+  Line 4:30:  'Users' is defined but never used            no-unused-vars
+  Line 4:37:  'Star' is defined but never used             no-unused-vars
+
+src/pages/dashboards/devotee/components/ConsultationTab.js
+  Line 2:18:  'Video' is defined but never used  no-unused-vars
+
+src/pages/dashboards/devotee/components/HomeTab.js
+  Line 34:6:  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/dashboards/devotee/components/MyActivityTab.js
+  Line 5:30:  'ChevronRight' is defined but never used  no-unused-vars
+  Line 5:44:  'Filter' is defined but never used        no-unused-vars
+
+src/pages/dashboards/devotee/components/Navigation.js
+  Line 4:80:  'Bell' is defined but never used  no-unused-vars
+
+src/pages/dashboards/devotee/components/PriestsTab.js
+  Line 5:3:    'Phone' is defined but never used                                                                                no-unused-vars
+  Line 5:10:   'Calendar' is defined but never used                                                                             no-unused-vars
+  Line 5:44:   'ChevronDown' is defined but never used                                                                          no-unused-vars
+  Line 21:10:  'userLocation' is assigned a value but never used                                                                no-unused-vars
+  Line 23:10:  'pujaTypes' is assigned a value but never used                                                                   no-unused-vars
+  Line 26:10:  'mathMuttOptions' is assigned a value but never used                                                             no-unused-vars
+  Line 51:6:   React Hook useEffect has a missing dependency: 'fetchPriests'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/dashboards/devotee/components/ProfileTab.js
+  Line 4:3:   'User' is defined but never used                 no-unused-vars
+  Line 4:9:   'Edit2' is defined but never used                no-unused-vars
+  Line 4:16:  'Save' is defined but never used                 no-unused-vars
+  Line 4:22:  'X' is defined but never used                    no-unused-vars
+  Line 4:42:  'Star' is defined but never used                 no-unused-vars
+  Line 4:48:  'MessageSquare' is defined but never used        no-unused-vars
+  Line 5:10:  'MapPin' is defined but never used               no-unused-vars
+  Line 5:18:  'Calendar' is defined but never used             no-unused-vars
+  Line 5:28:  'ChevronRight' is defined but never used         no-unused-vars
+  Line 5:42:  'Plus' is defined but never used                 no-unused-vars
+  Line 24:7:  'NAKSHATRAS' is assigned a value but never used  no-unused-vars
+  Line 33:7:  'GOTRAS' is assigned a value but never used      no-unused-vars
+
+src/pages/dashboards/devotee/components/ShopTab.js
+  Line 2:18:  'AnimatePresence' is defined but never used                                                                       no-unused-vars
+  Line 4:11:  'Filter' is defined but never used                                                                                no-unused-vars
+  Line 4:39:  'Minus' is defined but never used                                                                                 no-unused-vars
+  Line 4:58:  'ChevronRight' is defined but never used                                                                          no-unused-vars
+  Line 41:6:  React Hook useEffect has a missing dependency: 'fetchProducts'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/dashboards/devotee/components/TemplesTab.js
+  Line 5:39:  'ChevronDown' is defined but never used          no-unused-vars
+  Line 53:9:  'deityColor' is assigned a value but never used  no-unused-vars
+
+src/pages/dashboards/priest/components/BookingsTab.js
+  Line 2:55:  'Filter' is defined but never used  no-unused-vars
+
+src/pages/dashboards/priest/components/ClassesTab.js
+  Line 2:18:   'AnimatePresence' is defined but never used  no-unused-vars
+  Line 3:72:   'Square' is defined but never used           no-unused-vars
+  Line 3:80:   'Eye' is defined but never used              no-unused-vars
+  Line 3:93:   'DollarSign' is defined but never used       no-unused-vars
+  Line 3:105:  'MapPin' is defined but never used           no-unused-vars
+  Line 3:113:  'Building2' is defined but never used        no-unused-vars
+  Line 3:124:  'IndianRupee' is defined but never used      no-unused-vars
+
+src/pages/dashboards/priest/components/HomeTab.js
+  Line 2:81:  'Eye' is defined but never used                        no-unused-vars
+  Line 21:9:  'upcomingBookings' is assigned a value but never used  no-unused-vars
+
+src/pages/dashboards/priest/components/MiscTabs.js
+  Line 3:21:  'Moon' is defined but never used         no-unused-vars
+  Line 3:27:  'Sunrise' is defined but never used      no-unused-vars
+  Line 3:36:  'Sunset' is defined but never used       no-unused-vars
+  Line 3:44:  'IndianRupee' is defined but never used  no-unused-vars
+  Line 3:57:  'TrendingUp' is defined but never used   no-unused-vars
+  Line 3:69:  'Calendar' is defined but never used     no-unused-vars
+
+src/pages/dashboards/priest/components/ProfileTab.js
+  Line 2:10:   'User' is defined but never used                      no-unused-vars
+  Line 14:10:  'mathMuttOptions' is assigned a value but never used  no-unused-vars
+
+src/pages/dashboards/priest/components/ServicesTab.js
+  Line 2:18:  'AnimatePresence' is defined but never used  no-unused-vars
+  Line 3:53:  'IndianRupee' is defined but never used      no-unused-vars
+
+src/pages/dashboards/priest/components/StreamsTab.js
+  Line 1:38:  'useRef' is defined but never used           no-unused-vars
+  Line 2:18:  'AnimatePresence' is defined but never used  no-unused-vars
+  Line 3:63:  'Eye' is defined but never used              no-unused-vars
+  Line 3:68:  'Users' is defined but never used            no-unused-vars
+  Line 3:75:  'Clock' is defined but never used            no-unused-vars
+  Line 3:82:  'Calendar' is defined but never used         no-unused-vars
+
+src/pages/dashboards/shopowner/components/OrdersTab.js
+  Line 27:6:  React Hook useEffect has a missing dependency: 'fetchOrders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+File sizes after gzip:
+
+  477.21 kB  build/static/js/main.1428d7fa.js
+  14.74 kB   build/static/css/main.652cd082.css
+  8.43 kB    build/static/js/380.f28ccd17.chunk.js
+  3.84 kB    build/static/js/334.4ce04fed.chunk.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  yarn global add serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+**Code Architecture**:
 
 
-**Key Technical Concepts**
-- **React, FastAPI, MongoDB**: Core stack.
-- **Push Notifications**: Firebase Cloud Messaging (FCM) V1 API via  SDK on the backend and a new service worker () on the frontend.
-- **Deployment**: The user manually deploys the backend to Google Cloud Run and the frontend to Firebase Hosting. **This is a frequent point of failure.**
-- **Code Health**: A major effort was made to remove all  dependencies, making the code production-ready and independent.
+**Key Technical Concepts**:
+- React, FastAPI, MongoDB.
+- Modular Component Architecture.
+- WebRTC/Video: 100ms SDK.
+- Payments: Stripe (with webhook validation) & Razorpay (direct REST API via ).
 
-**key DB schema**
-- ****: New collection storing  for push notifications.
-- ****: New collection seeded with ~50 Math/Mutt affiliations for the priest profile.
+**key DB schema**:
+- : Stores active configurations (cancellation policy).
+- : Stores payment config (Razorpay keys, Platform fees, GST toggles, auto-confirm days).
 
-**changes in tech stack**
-- The  library has been completely removed.
-- The project now uses the official  Python SDK for payments.
-- The project now uses the official  Python SDK for backend push notifications.
+**changes in tech stack**:
+- **Python Razorpay SDK Removed**: The official  python package was causing Docker build failures on Google Cloud Run due to  missing. The agent uninstalled it and refactored backend Razorpay calls to use direct REST API via . **Do NOT reinstall the python  SDK.**
 
-**All files of reference**
--  (Root component for the mobile view, where the blank screen issue manifests).
--  (Firebase hosting config file; may require cache-control headers).
--  (Contains the new FCM v1 push notification logic).
--  (Contains the new incoming call UI and polling logic).
--  (Location of the recently fixed participant authorization bug).
+**All files of reference**:
+-  (Current focus for P0 bug)
+-  (Current focus for P0 bug)
+- 
+- 
+- 
 
 **Areas that need refactoring**:
-*(None - a major cleanup and refactoring was just completed)*.
+-  and : The OTP and New User Registration flow needs state transition auditing to prevent the blank screen crash.
 
-**key api endpoints**
-- : Stores a user's FCM device token.
-- : Polled by the astrologer dashboard to check for new calls.
-- : New endpoint to supply the Math/Mutt dropdown options.
+**key api endpoints**:
+- : Phone auth registration backend logic.
+- : Validates Razorpay payments.
+- : Confirms Stripe checkouts.
+- : Updates platform fees and payment keys.
 
-**Critical Info for New Agent**
-- **The user is blocked by a blank screen on their mobile device.** This is the highest priority issue. It is almost certainly a **caching problem** related to the service worker. Guide the user to clear their phone's browser cache for the app URL. If this fails, the next step is to add cache-busting headers to  and have them redeploy.
-- **The user controls all deployments.** Changes made in the Emergent environment are not live until the user pulls the code from GitHub and manually runs  and . Be extremely explicit about this workflow to avoid debugging stale code.
-- The user's goal is a **production-ready application**. All Emergent-specific code has been removed. The next logical steps are setting up CI/CD, preparing for the Play Store, and cleaning up test data.
+**Critical Info for New Agent**:
+- **Priority 1**: Immediately resolve the New User Phone/OTP Blank Screen bug. Investigate  and . This is a severe blocker since new users cannot enter the app.
+- **Razorpay Caveat**: The backend uses raw  to hit Razorpay APIs. Do not revert to the  Python SDK to avoid breaking the user's Cloud Run Docker builds.
+- **Deployment Handholding**: When giving the user deployment commands, use  for GCP and omit the  flag (Cloud Run respects the Dockerfile's 8080 default implicitly).
 
-**documents and test reports created in this job**
--  (Updated with a list of upcoming cleanup/deployment tasks).
--  (Service account key for Firebase Admin SDK).
+**documents and test reports created in this job**:
+- 
+- 
+- 
+- 
+- 
 
-**Last 10 User Messages and any pending HUMAN messages**
-1. **User:** Reports mobile redirect loop and blank screen after login with existing account.
-2. **User:** Reports the mobile app is now a total blank screen, can't even see the splash/login pages.
-3. **User:** Asks why there are two notification bell icons.
-4. **User:** Asks for the list of pending items.
-5. **User:** Asks where a specific Emergent dependency is used, then requests its removal.
-6. **User:** Asks to remove the Stripe wrapper dependency and replace it with the official SDK.
-7. **User:** Asks for test credentials for all user roles.
-8. **User:** Reports layout issues (empty space) and Stripe errors on the deployed app.
-9. **User:** Reports several 403 and 404 errors on deployed app for chat, priest earnings, and shop owner dashboard.
-10. **User:** Reports that after a call is initiated to an astrologer, the astrologer receives no notification.
-11. **User:** Provides a list of new bugs found during testing: non-clickable notifications, broken Math/Mutt multi-select, non-functional location auto-detect, and broken messaging after accepting a request.
+**Last 10 User Messages and any pending HUMAN messages**:
+1. User: asked for Razorpay integration with split logic/GST handling.
+2. User: asked about how refund works if payment splits immediately.
+3. User: requested platform fee and GST to be admin-configurable (GST disabled for now).
+4. User: requested deployment commands.
+5. User: struggled with Stripe Webhook setup in the Stripe dashboard.
+6. User: struggled with Cloud Run deployment errors.
+7. User: provided screenshot showing Razorpay SDK causing build failures on Cloud Run.
+8. User: provided screenshot showing UPI missing in Razorpay Test Mode UI.
+9. User: Okay that works now but when I share the link with people to open the app they see the blank screen as I already open app cuz of cache I can login but other users using for the first time is not able to get in seeing the blacnk sceen after entering the phone number and otp -> **PENDING (P0 Bug)**
 
-**Project Health Check:**
-- **Backend:** **Healthy.** All dependencies have been cleaned. The user must ensure all required environment variables (e.g., , ) are set in their Cloud Run service configuration.
-- **Frontend:** **Broken on Mobile Deployment.** The code is believed to be correct, but a stale version is being served due to an aggressive caching issue with the Firebase service worker.
+**Project Health Check**:
+- Frontend: BROKEN. New user registration via Phone OTP results in a blank screen.
+- Backend: Healthy.
 
-**3rd Party Integrations**
-- **Firebase Auth / Hosting / FCM V1 (Push Notifications)** — requires User API Key & Service Account JSON.
-- **MongoDB Atlas** — requires User API Key.
-- **100ms (Video Calling)** — requires User API Key.
-- **Stripe** — requires User API Key.
-- **Google Places API** — requires User API Key.
-- **Resend (Email)** — requires User API Key.
+**3rd Party Integrations**:
+- Firebase Auth / Hosting / FCM V1 — requires User API Key.
+- MongoDB Atlas — requires User API Key.
+- 100ms (Video Calling) — requires User API Key.
+- Stripe (Payments) — requires User API Key.
+- Razorpay (Payments) — requires User API Key.
+- Resend (Email) — requires User API Key.
 
-**Testing status**
-- **Testing agent used after significant changes**: NO
-- **Troubleshoot agent used after agent stuck in loop**: NO
-- **Test files created**: None
-- **Known regressions**:
-  - Blank screen on mobile deployment (caching issue).
-  - Google Sign-In on mobile is still reported as not working, possibly due to the caching issue.
+**Testing status**:
+- Testing agent used after significant changes: YES (Tested Cart, Notification Bell, Chat, Razorpay integrations).
+- Troubleshoot agent used after agent stuck in loop: NO.
+- Test files created: None.
+- Known regressions: New user onboarding / Phone Auth OTP returns a blank screen.
 
 **Credentials to test flow:**
-Test credentials for all major roles (Admin, Devotee, Priest, Astrologer, Shop Owner) were created and verified during the session.
-- **Devotee**:  / 
-- **Admin**:  / 
-- **Priest**:  / 
-- **Astrologer**:  / 
-- **Shop Owner**:  / 
+- Devotee:  / 
+- Admin:  / 
+- Priest:  / 
+- Astrologer:  / 
+- Shop Owner:  / 
 
-**What agent forgot to execute**
-The agent correctly diagnosed the final blank screen issue as a caching problem but opted to first instruct the user to manually clear their cache. A more proactive approach would have been to also immediately add cache-busting headers to  to provide a more permanent solution in parallel, saving a potential back-and-forth cycle.</analysis>
+**What agent forgot to execute**:
+The agent identified the correct files for the OTP Blank Screen bug (, ) but ran out of context before analyzing the root cause or proposing a fix. This is a severe blocker and needs to be solved immediately.</analysis>
