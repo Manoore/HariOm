@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toaster } from 'sonner';
 import ConsultationSettingsAdmin from '../../components/Admin/ConsultationSettingsAdmin';
 import SystemSettingsAdmin from '../../components/Admin/SystemSettingsAdmin';
+import NotificationBell from '../../components/NotificationBell';
 
 // Import all admin components from the modular components folder
 import {
@@ -71,9 +72,14 @@ export default function AdminDashboard() {
 
       {/* Header - Mobile Only */}
       {!isDesktop && (
-        <div className="px-4 pt-8 pb-6">
-          <p className="text-saffron-dark text-sm">Admin Dashboard</p>
-          <h1 className="font-cinzel text-2xl font-bold text-gray-800">{user?.name || 'Admin'}</h1>
+        <div className="sticky top-0 bg-white border-b border-orange-100 px-4 py-3 z-40">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-saffron-dark text-xs">Admin Dashboard</p>
+              <h1 className="font-cinzel text-lg font-bold text-gray-800">{user?.name || 'Admin'}</h1>
+            </div>
+            <NotificationBell />
+          </div>
         </div>
       )}
 
@@ -84,9 +90,7 @@ export default function AdminDashboard() {
             <p className="text-saffron-dark text-sm">Admin Dashboard</p>
             <h1 className="font-cinzel text-2xl font-bold text-gray-800">{user?.name || 'Admin'}</h1>
           </div>
-          <button className="w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center text-saffron hover:text-saffron-dark transition-colors">
-            <Bell className="w-5 h-5" />
-          </button>
+          <NotificationBell />
         </div>
       )}
 

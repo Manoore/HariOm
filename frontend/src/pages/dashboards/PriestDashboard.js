@@ -295,10 +295,7 @@ export default function PriestDashboard() {
           <header className="bg-gradient-to-r from-maroon to-maroon-light px-4 py-4 sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <div><h1 className="font-cinzel text-lg font-bold text-white">{currentTab?.label || 'Dashboard'}</h1><p className="text-white/70 text-xs">{user?.name}</p></div>
-              <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 relative">
-                <Bell className="w-5 h-5 text-white" />
-                {bookings.filter(b => b.status === 'pending').length > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">{bookings.filter(b => b.status === 'pending').length}</span>}
-              </button>
+              <NotificationBell />
             </div>
           </header>
           <div className="p-4">
@@ -324,10 +321,7 @@ export default function PriestDashboard() {
               </div>
             </button>
             <div className="flex items-center gap-2">
-              <button className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center relative">
-                <Bell className="w-4 h-4 text-white" />
-                {bookings.filter(b => b.status === 'pending').length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">{bookings.filter(b => b.status === 'pending').length}</span>}
-              </button>
+              <NotificationBell />
               <button onClick={logout} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center"><LogOut className="w-4 h-4 text-white" /></button>
             </div>
           </div>

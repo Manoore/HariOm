@@ -959,7 +959,7 @@ export function MyOrdersPage({ onBack, onViewOrder }) {
             >
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <p className="font-semibold text-gray-800">Order #{order.id?.slice(-8).toUpperCase()}</p>
+                  <p className="font-semibold text-gray-800">Order #{order.order_number || order.id?.slice(-8).toUpperCase()}</p>
                   <p className="text-sm text-gray-500">
                     {new Date(order.created_at).toLocaleDateString('en-IN', {
                       day: 'numeric',
@@ -1027,14 +1027,33 @@ export function OrderDetailPage({ orderId, onBack }) {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-700';
-      case 'shipped': return 'bg-blue-100 text-blue-700';
-      case 'paid': return 'bg-purple-100 text-purple-700';
-      case 'cancelled': return 'bg-red-100 text-red-700';
-      default: return 'bg-yellow-100 text-yellow-700';
-    }
+  const trackingSteps = [
+    { key: 'pending', label: 'Order Placed', icon: Package },
+    { key: 'paid', label: 'Payment Confirmed', icon: CreditCard },
+    { key: 'shipped', label: 'Shipped', icon: Truck },
+    { key: 'delivered', label: 'Delivered', icon: CheckCircle },
+  ];
+
+  const getStepStatus = (stepKey) => {
+    if (!order) return 'upcoming';
+    const statusOrder = ['pending', 'paid', 'shipped', 'delivered'];
+    const currentIdx = statusOrder.indexOf(order.status);
+    const stepIdx = statusOrder.indexOf(stepKey);
+    if (order.status === 'cancelled') return stepKey === 'pending' ? 'completed' : 'cancelled';
+    if (stepIdx <= currentIdx) return 'completed';
+    if (stepIdx === currentIdx + 1) return 'current';
+    return 'upcoming';
+  };
+
+  const getStepDate = (stepKey) => {
+    if (!order) return null;
+    if (stepKey === 'pending') return order.created_at;
+    if (stepKey === 'paid') return order.paid_at;
+    if (stepKey === 'shipped') return order.shipped_at;
+    if (stepKey === 'delivered') return order.delivered_at;
+    // Check status_history as fallback
+    const historyItem = order.status_history?.find(h => h.status === stepKey);
+    return historyItem?.timestamp || null;
   };
 
   if (loading) {
@@ -1061,7 +1080,7 @@ export function OrderDetailPage({ orderId, onBack }) {
     <div className="max-w-2xl mx-auto pb-24 lg:pb-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <button onClick={onBack} className="p-2 hover:bg-orange-50 rounded-full">
+        <button onClick={onBack} className="p-2 hover:bg-orange-50 rounded-full" data-testid="order-detail-back">
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </button>
         <div>
@@ -1078,15 +1097,82 @@ export function OrderDetailPage({ orderId, onBack }) {
         </div>
       </div>
 
-      {/* Status */}
-      <div className={`rounded-2xl p-4 mb-6 ${getStatusColor(order.status)}`}>
-        <div className="flex items-center gap-2">
-          {order.status === 'delivered' && <CheckCircle className="w-5 h-5" />}
-          {order.status === 'shipped' && <Truck className="w-5 h-5" />}
-          {order.status === 'paid' && <Package className="w-5 h-5" />}
-          {order.status === 'pending' && <Clock className="w-5 h-5" />}
-          <span className="font-medium capitalize">{order.status}</span>
+      {/* Order Tracking Timeline */}
+      <div className="bg-white rounded-2xl p-6 border border-orange-100 mb-6" data-testid="order-tracking">
+        <h2 className="font-medium text-maroon mb-5 flex items-center gap-2">
+          <Truck className="w-5 h-5" /> Order Tracking
+        </h2>
+        <div className="relative">
+          {trackingSteps.map((step, idx) => {
+            const status = getStepStatus(step.key);
+            const stepDate = getStepDate(step.key);
+            const StepIcon = step.icon;
+            const isLast = idx === trackingSteps.length - 1;
+            
+            return (
+              <div key={step.key} className="flex gap-4 relative" data-testid={`tracking-step-${step.key}`}>
+                {/* Vertical line */}
+                {!isLast && (
+                  <div className="absolute left-5 top-10 w-0.5 h-full -translate-x-1/2"
+                    style={{ 
+                      background: status === 'completed' ? '#E67E22' : '#E5E7EB'
+                    }}
+                  />
+                )}
+                {/* Step circle */}
+                <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  status === 'completed' ? 'bg-saffron text-white' :
+                  status === 'current' ? 'bg-orange-100 text-saffron border-2 border-saffron' :
+                  status === 'cancelled' ? 'bg-red-100 text-red-400' :
+                  'bg-gray-100 text-gray-400'
+                }`}>
+                  <StepIcon className="w-5 h-5" />
+                </div>
+                {/* Step content */}
+                <div className={`pb-6 ${isLast ? 'pb-0' : ''}`}>
+                  <p className={`font-medium text-sm ${
+                    status === 'completed' ? 'text-gray-800' :
+                    status === 'current' ? 'text-saffron' :
+                    'text-gray-400'
+                  }`}>
+                    {step.label}
+                    {status === 'completed' && <CheckCircle className="w-3.5 h-3.5 inline ml-1.5 text-green-500" />}
+                  </p>
+                  {stepDate && (
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {new Date(stepDate).toLocaleDateString('en-IN', {
+                        day: 'numeric', month: 'short', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                      })}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
+
+        {/* Cancelled Banner */}
+        {order.status === 'cancelled' && (
+          <div className="mt-4 bg-red-50 rounded-xl p-3 flex items-center gap-2">
+            <X className="w-5 h-5 text-red-500" />
+            <span className="text-sm font-medium text-red-700">This order has been cancelled</span>
+          </div>
+        )}
+
+        {/* Tracking Number */}
+        {order.tracking_number && (
+          <div className="mt-4 bg-blue-50 rounded-xl p-3">
+            <p className="text-xs text-blue-600 mb-1">Tracking Number</p>
+            <p className="font-medium text-blue-800">{order.tracking_number}</p>
+            {order.tracking_url && (
+              <a href={order.tracking_url} target="_blank" rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:underline mt-1 inline-block">
+                Track Shipment &rarr;
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Items */}
@@ -1104,7 +1190,7 @@ export function OrderDetailPage({ orderId, onBack }) {
               </div>
               <div className="flex-1">
                 <p className="font-medium">{item.name}</p>
-                <p className="text-sm text-gray-500">Qty: {item.quantity} × ₹{item.price}</p>
+                <p className="text-sm text-gray-500">Qty: {item.quantity} x ₹{item.price}</p>
               </div>
               <p className="font-semibold">₹{item.subtotal}</p>
             </div>

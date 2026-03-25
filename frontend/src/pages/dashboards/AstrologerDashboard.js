@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 import ChatTab from '../../components/Chat/ChatTab';
 import { VideoCallScreen } from '../../components/VideoConsultation/VideoConsultation';
+import NotificationBell from '../../components/NotificationBell';
 
 import { useIsDesktop } from './astrologer/components/shared';
 import { Sidebar } from './astrologer/components/Sidebar';
@@ -166,6 +167,7 @@ export default function AstrologerDashboard() {
                   <div className="w-8 h-4 bg-gray-200 rounded-full peer peer-checked:bg-green-500 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4"></div>
                 </label>
               </div>
+              <NotificationBell />
             </div>
           </div>
         </div>

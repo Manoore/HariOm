@@ -128,7 +128,16 @@ async def update_order_status(order_id: str, request: Request, user: dict = Depe
     
     await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
-        {"$set": {"status": new_status}}
+        {
+            "$set": {"status": new_status},
+            "$push": {
+                "status_history": {
+                    "status": new_status,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "note": f"Status updated to {new_status}"
+                }
+            }
+        }
     )
     
     # Deactivate chat when order is delivered or cancelled
@@ -146,6 +155,7 @@ async def get_user_orders(user: dict = Depends(get_current_user)):
     async for order in cursor:
         orders.append({
             "id": str(order["_id"]),
+            "order_number": str(order["_id"])[-8:].upper(),
             "items": order["items"],
             "total_amount": order["total_amount"],
             "shipping_address": order["shipping_address"],
@@ -199,6 +209,12 @@ async def get_order_details(order_id: str, user: dict = Depends(get_current_user
         "status": order.get("status"),
         "payment_method": order.get("payment_method"),
         "payment_status": order.get("payment_status"),
+        "status_history": order.get("status_history", []),
+        "paid_at": order.get("paid_at", "").isoformat() if order.get("paid_at") else None,
+        "shipped_at": order.get("shipped_at", "").isoformat() if order.get("shipped_at") else None,
+        "delivered_at": order.get("delivered_at", "").isoformat() if order.get("delivered_at") else None,
+        "tracking_number": order.get("tracking_number"),
+        "tracking_url": order.get("tracking_url"),
         "shops": shops,
         "created_at": order.get("created_at", datetime.now(timezone.utc)).isoformat()
     }
@@ -354,6 +370,9 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
         "payment_method": data.payment_method,
         "payment_status": "pending",
         "shop_ids": list(shop_shipping.keys()),
+        "status_history": [
+            {"status": "pending", "timestamp": datetime.now(timezone.utc).isoformat(), "note": "Order placed"}
+        ],
         "created_at": datetime.now(timezone.utc)
     }
     
@@ -446,6 +465,13 @@ async def confirm_payment(order_id: str, user: dict = Depends(get_current_user))
                 "payment_status": "paid",
                 "status": OrderStatus.PAID,
                 "paid_at": datetime.now(timezone.utc)
+            },
+            "$push": {
+                "status_history": {
+                    "status": "paid",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "note": "Payment confirmed"
+                }
             }
         }
     )
@@ -491,3 +517,74 @@ async def get_checkout_fees_taxes():
     """Get fees and taxes configuration for checkout (public endpoint)"""
     fees_config = await get_fees_and_taxes()
     return fees_config
+
+
+@router.post("/webhooks/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhook events for payment confirmation"""
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+
+    try:
+        if webhook_secret:
+            event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+        else:
+            import json as json_mod
+            event = json_mod.loads(payload)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        order_id = session.get("metadata", {}).get("order_id")
+
+        if order_id:
+            order = await orders_collection.find_one({"_id": ObjectId(order_id)})
+            if order and order.get("payment_status") != "paid":
+                await orders_collection.update_one(
+                    {"_id": ObjectId(order_id)},
+                    {
+                        "$set": {
+                            "payment_status": "paid",
+                            "status": OrderStatus.PAID,
+                            "paid_at": datetime.now(timezone.utc),
+                            "stripe_payment_intent": session.get("payment_intent")
+                        }
+                    }
+                )
+                for item in order["items"]:
+                    await products_collection.update_one(
+                        {"_id": ObjectId(item["product_id"])},
+                        {"$inc": {"stock": -item["quantity"]}}
+                    )
+                # Create chat rooms with shop owners
+                for shop_id in order.get("shop_ids", []):
+                    shop = await shops_collection.find_one({"_id": ObjectId(shop_id)})
+                    if shop:
+                        shop_owner = await users_collection.find_one({"_id": ObjectId(shop["owner_id"])})
+                        if shop_owner:
+                            shop_items_count = len([i for i in order["items"] if i.get("shop_id") == shop_id])
+                            context = f"Order #{order_id[-8:].upper()} - {shop_items_count} item(s)"
+                            await create_chat_room(
+                                room_type="order",
+                                reference_id=order_id,
+                                participant1_id=order["user_id"],
+                                participant1_name=order.get("user_name", "Customer"),
+                                participant2_id=str(shop_owner["_id"]),
+                                participant2_name=shop.get("name", shop_owner.get("name", "Shop")),
+                                context=context
+                            )
+
+    elif event["type"] == "checkout.session.expired":
+        session = event["data"]["object"]
+        order_id = session.get("metadata", {}).get("order_id")
+        if order_id:
+            await orders_collection.update_one(
+                {"_id": ObjectId(order_id)},
+                {"$set": {"payment_status": "expired", "status": "cancelled"}}
+            )
+
+    return {"status": "ok"}

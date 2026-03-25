@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Toaster } from 'sonner';
 import api from '../../lib/api';
 import ChatTab from '../../components/Chat/ChatTab';
+import NotificationBell from '../../components/NotificationBell';
 
 import { useIsDesktop } from './shopowner/components/shared';
 import { Sidebar } from './shopowner/components/Sidebar';
@@ -65,6 +66,18 @@ export default function ShopOwnerDashboard() {
       )}
       
       <div className={isDesktop ? 'ml-64' : ''}>
+        {/* Mobile Header */}
+        {!isDesktop && (
+          <div className="sticky top-0 bg-white border-b border-orange-100 px-4 py-3 z-40">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img src="/temple-logo.png" alt="Divine Logo" className="w-8 h-8 rounded-lg object-cover" />
+                <span className="font-cinzel text-lg font-bold text-maroon">DIVINE</span>
+              </div>
+              <NotificationBell />
+            </div>
+          </div>
+        )}
         {renderContent()}
       </div>
       
