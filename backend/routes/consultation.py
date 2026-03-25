@@ -32,16 +32,22 @@ async def get_public_puja_types():
     """Get all puja types - public endpoint"""
     cursor = puja_types_collection.find({}).sort("name", 1)
     puja_types = []
+    categories = {}
     async for puja in cursor:
-        puja_types.append({
+        item = {
             "id": str(puja["_id"]),
             "name": puja.get("name"),
             "description": puja.get("description"),
             "duration": puja.get("duration"),
             "base_price": puja.get("base_price", 0),
-            "category": puja.get("category", "general")
-        })
-    return {"puja_types": puja_types}
+            "category": puja.get("category", "General")
+        }
+        puja_types.append(item)
+        cat = item["category"]
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(item)
+    return {"puja_types": puja_types, "categories": categories}
 
 
 # ===================== ASTROLOGER ROUTES =====================
