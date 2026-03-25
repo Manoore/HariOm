@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Star, Loader2, Edit, Save, X, User } from 'lucide-react';
+import { Star, Loader2, Edit, Save, X, User, LogOut } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 export function ProfileTab({ profile, user, isDesktop, onUpdate }) {
+  const { logout } = useAuth();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     rate_per_minute: profile?.rate_per_minute || 10,
@@ -225,6 +227,18 @@ export function ProfileTab({ profile, user, isDesktop, onUpdate }) {
           )}
         </div>
       </div>
+
+      {/* Logout - visible on mobile */}
+      {!isDesktop && (
+        <button
+          onClick={logout}
+          className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-red-50 text-red-500 rounded-xl font-medium hover:bg-red-100 transition-colors"
+          data-testid="mobile-logout-btn"
+        >
+          <LogOut className="w-5 h-5" />
+          Logout
+        </button>
+      )}
     </div>
   );
 }

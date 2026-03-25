@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Store, Loader2, Save } from 'lucide-react';
+import { Store, Loader2, Save, LogOut } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 export function ShopProfileTab({ isDesktop }) {
+  const { logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -169,6 +171,18 @@ export function ShopProfileTab({ isDesktop }) {
             Save Changes
           </button>
         </div>
+
+        {/* Logout - visible on mobile */}
+        {!isDesktop && (
+          <button
+            onClick={logout}
+            className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-red-50 text-red-500 rounded-xl font-medium hover:bg-red-100 transition-colors"
+            data-testid="mobile-logout-btn"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
+        )}
       </div>
     </div>
   );
