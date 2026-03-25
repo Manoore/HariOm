@@ -27,7 +27,7 @@ export function CartSidebar({ isOpen, onClose, onCheckout }) {
   const fetchCartSummary = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/api/cart');
+      const res = await api.get('/api/cart/summary');
       setCartData(res.data);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -232,7 +232,7 @@ export function CheckoutPage({ onBack, onComplete }) {
 
   const fetchCartSummary = async () => {
     try {
-      const res = await api.get('/api/cart');
+      const res = await api.get('/api/cart/summary');
       setCartData(res.data);
     } catch (error) {
       toast.error('Failed to load cart');

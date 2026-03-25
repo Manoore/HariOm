@@ -13,7 +13,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pooja-marketplace-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://shop-flow-staging.preview.emergentagent.com')
 
 # Test accounts
 TEST_PRIEST_EMAIL = "pandit.sharma@divineapp.com"
