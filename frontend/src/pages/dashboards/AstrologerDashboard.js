@@ -11,6 +11,7 @@ import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 import ChatTab from '../../components/Chat/ChatTab';
+import { VideoCallScreen } from '../../components/VideoConsultation/VideoConsultation';
 
 // Custom hook for responsive design
 function useIsDesktop() {
@@ -736,6 +737,7 @@ export default function AstrologerDashboard() {
 
   // Incoming call state
   const [incomingCall, setIncomingCall] = useState(null);
+  const [activeCall, setActiveCall] = useState(null);
   const [callAudio] = useState(() => {
     try {
       const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ==');
@@ -770,8 +772,17 @@ export default function AstrologerDashboard() {
   const acceptCall = () => {
     if (!incomingCall) return;
     try { callAudio?.pause(); } catch {}
-    const callUrl = `/consultation/video/${incomingCall.room_id}?token=${encodeURIComponent(incomingCall.astrologer_token)}&callId=${incomingCall.call_id}&role=astrologer`;
-    window.location.href = callUrl;
+    // Set active call data for inline VideoCallScreen rendering
+    setActiveCall({
+      call_id: incomingCall.call_id,
+      room_id: incomingCall.room_id,
+      user_token: incomingCall.astrologer_token,
+      rate_per_minute: incomingCall.rate_per_minute || 15,
+      user_balance: 99999,
+      free_minutes: 0,
+      caller_name: incomingCall.caller_name,
+    });
+    setIncomingCall(null);
   };
 
   const declineCall = async () => {
@@ -794,6 +805,22 @@ export default function AstrologerDashboard() {
       toast.error('Failed to update availability');
     }
   };
+
+  // If in an active call, show full-screen video
+  if (activeCall) {
+    return (
+      <div className="fixed inset-0 z-50 bg-gray-900">
+        <VideoCallScreen
+          callData={activeCall}
+          onEndCall={(reason) => {
+            setActiveCall(null);
+            toast.success(reason === 'declined' ? 'Call declined' : 'Call ended');
+          }}
+          astrologerInfo={{ name: user?.name }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen bg-gradient-to-b from-purple-50 to-white ${isDesktop ? 'lg:pl-64' : ''}`}>
