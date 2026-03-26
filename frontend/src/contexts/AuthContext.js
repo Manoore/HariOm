@@ -38,6 +38,16 @@ export function AuthProvider({ children }) {
   // This prevents race conditions during Phone OTP and Google auth flows
   const manualAuthInProgress = useRef(false);
 
+  // Loading safety timeout — if loading is stuck for 15 seconds, force it to false
+  useEffect(() => {
+    if (!loading) return;
+    const timeout = setTimeout(() => {
+      console.warn('Auth loading timeout reached, forcing loading to false');
+      setLoading(false);
+    }, 15000);
+    return () => clearTimeout(timeout);
+  }, [loading]);
+
   useEffect(() => {
     let isMounted = true;
     
@@ -70,14 +80,32 @@ export function AuthProvider({ children }) {
               localStorage.setItem('divine_user', JSON.stringify(res.data.user));
               localStorage.removeItem('divine_pending_role');
               hasProcessedInitialState.current = true;
-              setLoading(false);
             }
           } catch (syncError) {
             console.error('Backend sync after redirect failed:', syncError);
+            // Even if backend sync fails, set a basic user so the app isn't stuck
+            if (isMounted) {
+              const fallbackUser = {
+                id: result.user.uid,
+                email: result.user.email,
+                name: result.user.displayName || 'User',
+                role: pendingRole || 'devotee',
+                firebase_uid: result.user.uid
+              };
+              setFirebaseUser(result.user);
+              setUser(fallbackUser);
+              localStorage.setItem('divine_user', JSON.stringify(fallbackUser));
+              hasProcessedInitialState.current = true;
+            }
           }
         }
       } catch (error) {
         console.error('Error checking redirect result:', error);
+      } finally {
+        // Always ensure loading ends after redirect check
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     
@@ -132,6 +160,7 @@ export function AuthProvider({ children }) {
             const existingUser = getInitialUser();
             if (!existingUser) {
               const fallbackUser = {
+                id: fbUser.uid,
                 email: fbUser.email || fbUser.phoneNumber,
                 name: fbUser.displayName || fbUser.phoneNumber || 'User',
                 phone: fbUser.phoneNumber,
@@ -262,6 +291,7 @@ export function AuthProvider({ children }) {
         } catch (syncError) {
           console.error('Backend sync failed:', syncError);
           const basicUser = {
+            id: result.user.uid,
             email: result.user.email,
             name: result.user.displayName || 'User',
             role: selectedRole || 'devotee',
@@ -368,6 +398,7 @@ export function AuthProvider({ children }) {
         } catch (syncError) {
           console.error('Backend sync failed:', syncError);
           const basicUser = {
+            id: result.user.uid,
             phone: result.user.phoneNumber,
             name: userData.name || result.user.phoneNumber,
             role: userData.role || 'devotee',

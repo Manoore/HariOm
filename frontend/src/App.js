@@ -4,6 +4,7 @@ import { CartProvider } from './contexts/CartContext';
 import { PaymentProvider } from './contexts/PaymentContext';
 import MobileApp from './pages/MobileApp';
 import InstallPWA from './components/InstallPWA';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import api from './lib/api';
 import { toast, Toaster } from 'sonner';
 import './App.css';
@@ -76,20 +77,50 @@ function App() {
         }
       }).catch(() => {});
     }
+    
+    // Global error handlers — prevent blank screens from unhandled errors
+    const handleError = (event) => {
+      console.error('Global error caught:', event.error || event.message);
+      // If a chunk fails to load (common on mobile), force reload once
+      if (event.message?.includes('Loading chunk') || event.message?.includes('ChunkLoadError')) {
+        const reloaded = sessionStorage.getItem('chunk_reload');
+        if (!reloaded) {
+          sessionStorage.setItem('chunk_reload', 'true');
+          window.location.reload();
+        }
+      }
+    };
+    
+    const handleRejection = (event) => {
+      console.error('Unhandled rejection:', event.reason);
+    };
+    
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+    
+    // Clear chunk reload flag after successful load
+    sessionStorage.removeItem('chunk_reload');
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
   }, []);
 
   return (
-    <AuthProvider>
-      <CartProvider>
-        <PaymentProvider>
-          <PaymentHandler>
-            <Toaster position="top-center" richColors />
-            <MobileApp />
-            <InstallPWA />
-          </PaymentHandler>
-        </PaymentProvider>
-      </CartProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <CartProvider>
+          <PaymentProvider>
+            <PaymentHandler>
+              <Toaster position="top-center" richColors />
+              <MobileApp />
+              <InstallPWA />
+            </PaymentHandler>
+          </PaymentProvider>
+        </CartProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

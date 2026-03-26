@@ -422,6 +422,7 @@ export default function MobileApp() {
   const [paymentRedirect, setPaymentRedirect] = useState(initialState.paymentRedirect);
   const { user, loading, updateUser } = useAuth();
   const isMobile = useIsMobile();
+  const showDebug = new URLSearchParams(window.location.search).get('debug') === '1';
 
   // Memoize the user role to prevent unnecessary re-renders
   const userRole = useMemo(() => user?.role, [user?.role]);
@@ -476,6 +477,15 @@ export default function MobileApp() {
       setShowDashboard(true);
     }
   }, [loading, isLoggedIn, paymentRedirect]);
+
+  // Auto-show dashboard on desktop when user becomes logged in
+  // This handles cases where auth completes via redirect/popup 
+  // but showDashboard wasn't set (e.g., Google redirect flow)
+  useEffect(() => {
+    if (!loading && isLoggedIn && !isMobile && !showDashboard) {
+      setShowDashboard(true);
+    }
+  }, [loading, isLoggedIn, isMobile, showDashboard]);
 
   // Handle get started from landing page
   const handleGetStarted = (mode = 'register') => {
@@ -582,8 +592,17 @@ export default function MobileApp() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" data-testid="mobile-app-root">
       {renderContent()}
+      {showDebug && (
+        <div style={{position:'fixed',bottom:0,left:0,right:0,background:'rgba(0,0,0,0.85)',color:'#0f0',fontSize:'11px',padding:'8px',zIndex:99999,fontFamily:'monospace',maxHeight:'30vh',overflow:'auto'}}>
+          <div>loading: {String(loading)} | loggedIn: {String(isLoggedIn)} | mobile: {String(isMobile)}</div>
+          <div>role: {userRole || 'null'} | showDash: {String(showDashboard)} | showAuth: {String(showAuth)}</div>
+          <div>user: {user ? JSON.stringify({id:user.id,email:user.email,name:user.name,role:user.role}).substring(0,120) : 'null'}</div>
+          <div>token: {localStorage.getItem('divine_token') ? 'SET' : 'NONE'} | cached: {localStorage.getItem('divine_user') ? 'SET' : 'NONE'}</div>
+          <button onClick={() => { localStorage.clear(); window.location.reload(); }} style={{color:'red',marginTop:'4px'}}>Clear All & Reload</button>
+        </div>
+      )}
     </div>
   );
 }
