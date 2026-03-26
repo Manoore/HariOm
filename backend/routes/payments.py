@@ -58,6 +58,7 @@ async def create_stripe_payment_intent(data: StripeIntentRequest, user: dict = D
         intent = stripe.PaymentIntent.create(
             amount=data.amount,
             currency=data.currency,
+            payment_method_types=["card"],
             metadata={
                 "user_id": str(user["_id"]),
                 **(data.metadata or {})

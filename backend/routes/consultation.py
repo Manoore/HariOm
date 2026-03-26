@@ -346,6 +346,7 @@ async def create_recharge_intent(request: Request, user: dict = Depends(get_curr
             intent = stripe.PaymentIntent.create(
                 amount=amount_paise,
                 currency="inr",
+                payment_method_types=["card"],
                 metadata={"user_id": user_id, "type": "wallet_recharge"}
             )
             result["client_secret"] = intent.client_secret

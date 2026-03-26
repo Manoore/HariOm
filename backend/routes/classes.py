@@ -266,6 +266,7 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
             payment_intent = stripe.PaymentIntent.create(
                 amount=int(total_amount * 100),
                 currency="inr",
+                payment_method_types=["card"],
                 metadata={
                     "type": "class_enrollment",
                     "class_id": class_id,
