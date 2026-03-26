@@ -1,133 +1,139 @@
 # Divine App - Product Requirements Document
 
 ## Original Problem Statement
-Build "Divine App," a digital platform connecting users with Hindu spiritual services. Features include priest booking, astrology services, a spiritual e-commerce store, devotional content (mantras, audio, video), and live video/voice consultations.
+Build "Divine App," a digital platform connecting users with Hindu spiritual services. Features include priest booking, astrology services, a spiritual e-commerce store, devotional content, and live video/voice consultations.
 
-## Core Architecture
-- **Frontend**: React + Tailwind CSS + Shadcn UI
-- **Backend**: FastAPI + Python
-- **Database**: MongoDB Atlas
-- **Integrations**: Firebase (Auth/Hosting/FCM), Stripe, 100ms (Video), Google Places API, Resend (Email)
+## Tech Stack
+- **Frontend**: React + TailwindCSS + Shadcn/UI + Framer Motion
+- **Backend**: FastAPI (Python)
+- **Database**: MongoDB
+- **Payments**: Stripe + Razorpay
+- **Video**: 100ms SDK
+- **Auth**: Firebase Auth / JWT
+- **Email**: Resend API
+- **Hosting**: Firebase Hosting + Google Cloud Run
 
-## User Roles
-- **Devotee** (devotee@divineapp.com / devotee123)
-- **Priest** (pandit.sharma@divineapp.com / priest123)
-- **Astrologer** (astro.joshi@divineapp.com / astro123)
-- **Shop Owner** (shop.poojamart@divineapp.com / shop123)
-- **Admin** (admin@divine.com / admin123)
+## User Personas
+- **Devotee**: End user booking services, shopping, viewing content
+- **Priest**: Service provider for pujas, ceremonies, consultations
+- **Astrologer**: Provides horoscope readings and consultations
+- **Shop Owner**: Sells spiritual products through marketplace
+- **Admin**: Platform management and configuration
 
-## Implemented Features
+## Core Features Implemented
 
-### Core Platform
-- Multi-role authentication (JWT + Firebase Google Auth)
-- Devotee, Priest, Astrologer, Shop Owner, Admin dashboards
-- In-app notification system + Firebase Push Notifications (FCM V1)
-- Mobile-responsive design with bottom nav + desktop sidebar
-
-### My Activity Tab (Mar 25, 2026)
-- Dedicated tab in sidebar (2nd position) and mobile bottom nav
-- **Bookings sub-tab**: Full list with status filters, cancel buttons, review buttons
-- **Orders sub-tab**: All store orders with item previews, delivery status
-- **Call History sub-tab**: Astrology consultation history
-
-### Priest Booking Notifications (Mar 25, 2026)
-- Priests receive in-app + email + push on new bookings and cancellations
-- Smart routing: only the other party gets notified on cancellation
-
-### Dashboard Refactoring (Mar 25, 2026) - COMPLETED
-- PriestDashboard: ~3200 → 377 lines + 10 components
-- AstrologerDashboard: 949 → 252 lines + 7 components
-- ShopOwnerDashboard: 1391 → 80 lines + 8 components
-
-### Priest Cancel Booking (Mar 25, 2026) - FIXED
-- Priest can now cancel confirmed bookings (Cancel button added)
-- Styled in-app confirm dialog replaces all browser window.confirm() across entire app
-
-### Styled Confirm Dialog (Mar 25, 2026) - COMPLETED
-- Reusable `useConfirmDialog` hook in `/components/ui/ConfirmDialog.js`
-- Replaces ALL window.confirm() calls in: StreamsTab, ServicesTab, ClassesTab, PostsTab, MiscTabs, ProductsTab, AdminManagementTab, PujaTypesTab, SubcastesTab, FeedbackTab, AudioLibraryTab, FeedTab, BookingsTab
-
-### Live Stream Reminders (Mar 25, 2026) - FIXED
-- When priest starts a stream, all users who set reminders get notified
-- Reminders cleaned up after notification sent
-
-### Other Features
-- Temples section (268 temples), Subcaste management (126 subcastes)
-- Stripe payments, E-commerce store, 100ms video calling
-- Chat system, Panchang calendar, Scriptures library
-
-## Bug Fixes (Mar 2026)
-1. Math/Mutt dropdown empty → Fixed
-2. Priest analytics 500 error → Fixed
-3. Puja Type dropdown empty → Fixed
-4. Astrologer redirect after call → Fixed
-5. Duplicate notification bell → Fixed
-6. Missing imports in priest components → Fixed
-7. Priest not receiving booking notifications → Fixed
-8. Priest can't cancel confirmed bookings → Fixed
-9. Browser confirm dialogs instead of app modals → Fixed
-10. Live stream reminders not notifying → Fixed
-11. **P0: Cart & Checkout flow broken → Fixed (Mar 25, 2026)**
-    - Root cause: CartSidebar and CheckoutPage called `/api/cart` instead of `/api/cart/summary`
-    - Fix: Changed both API calls in `CheckoutComponents.js` to use `/api/cart/summary`
-12. **Payment status always pending → Fixed (Mar 25, 2026)**
-    - Root cause: Stripe webhook missing from `orders_new.py` (existed in dead `orders.py`)
-    - Fix: Added `POST /api/webhooks/stripe` to `orders_new.py` with `checkout.session.completed` handler
-    - Added `status_history` tracking to all order creation/updates
-13. **Order tracking not visible → Fixed (Mar 25, 2026)**
-    - Added 4-step tracking timeline (Order Placed → Payment Confirmed → Shipped → Delivered)
-    - Shows dates, visual progress, tracking numbers, and cancelled status
-14. **Notification bell inconsistent on mobile → Fixed (Mar 25, 2026)**
-    - Added `NotificationBell` to: AstrologerDashboard mobile header, ShopOwnerDashboard mobile header, AdminDashboard mobile+desktop headers, PriestDashboard sticky nav bar + tablet header
-15. **P0: New User Blank Screen after Auth → Fixed (Mar 26, 2026)**
-    - Root cause: `Notification?.permission` in `usePushNotifications.js` throws ReferenceError on iOS Safari/Chrome because `Notification` global doesn't exist on iOS. Optional chaining doesn't prevent ReferenceError on undeclared variables.
-    - Fix: Changed all bare `Notification` references to `window.Notification` with proper existence checks in `usePushNotifications.js`
-    - Also added: `manualAuthInProgress` guard for auth race conditions, top-level ErrorBoundary in App.js, loading timeout, global error handlers, debug overlay (?debug=1)
-
-## Pending Issues (User Verification)
-- Safari Mobile blank screen (code-complete, needs Firebase deploy & user testing on iOS)
-- Mobile Google Sign-In (blocked by Safari fix)
-- GOOGLE_PLACES_API_KEY on Cloud Run
-- GitHub Actions APK build fails
-
-## Recently Completed (Mar 26, 2026)
-- P0: New user blank screen fixed (Notification ReferenceError on iOS)
-- Duplicate notification bell on Priest mobile removed
-- Bookings/Orders removed from HomeTab (kept in My Activity only)
-- View Details added to bookings and orders in My Activity
-- Order detail page accessible from My Activity tab
+### Authentication & User Management
+- Multi-role auth (Devotee, Priest, Astrologer, Shop Owner, Admin)
 - Astrologer & Shop Owner signups enabled
+- JWT-based authentication
 
-## Recent Additions (Mar 25, 2026)
-### Razorpay Integration
-- Dual payment gateway: Users can choose Razorpay (UPI/Net Banking) or Stripe (Cards) at checkout
-- Razorpay order creation via REST API (not SDK)
-- Payment verification with HMAC signature validation
-- Stripe webhook for reliable server-side payment confirmation
+### Priest Booking System
+- Browse & book priests for various services
+- Booking management with status tracking
+- Priest dashboard with analytics
 
-### Admin-Configurable Payment Settings
-- Platform Fee: Enable/disable, percentage or flat amount, configurable value
-- GST: Enable/disable toggle (disabled by default, per Indian ₹20L threshold)
-- When enabled: configurable percentage, GSTIN, GST on platform fee only option
-- Auto-Confirm Delivery: Configurable days (default 7)
-- Auto-Payout on Completion: Toggle for automatic provider payouts
-- Fee Preview: Shows breakdown for ₹1000 sample order
+### E-Commerce / Marketplace
+- Product catalog with categories
+- Cart & checkout with Stripe + Razorpay
+- **Order Status Lifecycle** (NEW - Feb 26, 2026):
+  - Status flow: pending → paid → received → accepted → processing → shipping → delivered
+  - Shop owners can progress orders through each status
+  - When marking "shipping": tracking link + delivery instructions input
+  - Devotees see 7-step tracking timeline with timestamps
+  - Status transition validation (prevents invalid jumps)
 
-### Payment Flow (Collect & Transfer Model)
-1. Customer pays → Full amount to platform (Razorpay or Stripe)
-2. Order delivered → Auto-confirmed after N days (admin-configurable)
-3. Auto-payout → Provider share transferred (minus platform fee + GST if enabled)
-4. Refunds/cancellations → Admin handles via dashboard
+### Astrology Services
+- Daily horoscope
+- Birth chart generation
+- Consultation booking
 
-## Upcoming Tasks
-- (P1) Razorpay Integration: Replace Stripe for UPI payouts
-- (P1) CI/CD Pipeline: GitHub Actions → Cloud Run + Firebase
-- (P1) Play Store TWA Setup
-- (P2) Production data cleanup
+### Devotional Content
+- Mantras, stotras, scriptures
+- Audio/video library
+- Festival calendar
+- Temple directory
 
-## Future/Backlog
-- Enable Astrologer & Shop Owner signups (multi-vendor)
-- Scheduled push notification reminders for Vedic classes
-- Phase 2 Live Streams (100ms HLS broadcasting)
-- Temple section enhancements (AI images, maps, nearby temples)
-- Provider Onboarding Guide
+### Video Consultations
+- 100ms SDK integration for live calls
+- Per-minute billing with wallet system
+
+### Notifications
+- Push notifications via Firebase FCM
+- In-app notification system
+- iOS Safari compatibility (ErrorBoundary fix)
+
+### Admin Dashboard
+- User/priest/shop management
+- System configuration (fees, taxes, signup toggles)
+- Cancellation/refund policy settings
+
+## What's Been Implemented (Latest Session - Feb 26, 2026)
+- [x] Shop Owner Order Status Lifecycle (received → accepted → processing → shipping → delivered)
+- [x] Tracking link + delivery instructions on shipping status
+- [x] Shop Owner OrdersTab UI with status filters, next-action buttons, shipping modal
+- [x] Devotee OrderDetailPage with 7-step tracking timeline
+- [x] Devotee MyOrdersPage with updated status badges
+- [x] Backend status transition validation
+- [x] All status references updated across codebase (shop dashboard, reviews, revenue queries)
+
+## P0/P1/P2 Backlog
+
+### P1 - In Progress Tasks
+1. **Order Status In-App Push Notifications** — Notify devotees when shop owner changes status
+2. **Shipping Email Notifications** — Email via Resend when status hits "shipping"
+3. **Delivery Photo Proof** — Shop owner uploads delivery photo, devotee acknowledges
+
+### P1 - Upcoming
+4. CI/CD Pipeline Setup (GitHub Actions)
+5. Play Store TWA Setup
+
+### P2 - Future
+6. Provider Payout Dashboard
+7. Scheduled push notification reminders for Vedic classes
+8. Phase 2 Live Streams (100ms HLS broadcasting)
+9. Temple section enhancements (AI images, maps, nearby)
+
+## Key API Endpoints
+- `PUT /api/orders/{id}/status` — Update order status (shop owner/admin)
+- `GET /api/orders/{id}` — Order detail with tracking info
+- `GET /api/orders` — User's orders list
+- `GET /api/shop/orders` — Shop owner's orders (with filters)
+- `POST /api/checkout` — Create order with payment
+- `POST /api/payment/confirm/{id}` — Confirm Stripe payment
+- `POST /api/razorpay/verify` — Verify Razorpay payment
+
+## Key DB Schema
+- `orders` collection: status, tracking_link, delivery_instructions, status_history[], received_at, accepted_at, shipped_at, delivered_at
+- `system_config`: signup settings, platform fees, taxes
+
+## Test Credentials
+- Devotee: `devotee@divineapp.com` / `devotee123`
+- Admin: `admin@divine.com` / `admin123`
+- Priest: `pandit.sharma@divineapp.com` / `priest123`
+- Astrologer: `astro.joshi@divineapp.com` / `astro123`
+- Shop Owner: `shop.poojamart@divineapp.com` / `shop123`
+
+## Code Architecture
+```
+/app/
+├── backend/
+│   ├── routes/
+│   │   ├── orders_new.py      # Order status lifecycle
+│   │   ├── shop.py            # Shop owner endpoints
+│   │   ├── admin_new.py
+│   │   ├── auth_new.py
+│   │   └── ...
+│   ├── models.py              # OrderStatus enum
+│   ├── server.py
+│   └── tests/
+│       └── test_order_status_lifecycle.py
+└── frontend/
+    └── src/
+        ├── components/
+        │   ├── Checkout/CheckoutComponents.js  # OrderDetailPage, MyOrdersPage
+        │   └── ErrorBoundary.js
+        └── pages/
+            └── dashboards/
+                ├── shopowner/components/OrdersTab.js  # Shop owner order management
+                └── devotee/components/MyActivityTab.js
+```
