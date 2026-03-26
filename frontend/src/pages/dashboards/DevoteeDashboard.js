@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { 
   Star, Sun, ShoppingBag, User, Calendar, MapPin,
   Bell, BellRing, ChevronRight, Clock, Package, Search, Filter,
@@ -14,31 +14,11 @@ import { useCart } from '../../contexts/CartContext';
 import { Toaster, toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import ChatTab from '../../components/Chat/ChatTab';
-import { WalletCard, RechargeModal, TransactionHistory } from '../../components/Wallet/WalletComponents';
 import { AstrologerList, PreCallCheck, VideoCallScreen } from '../../components/VideoConsultation/VideoConsultation';
-import AddressAutocomplete from '../../components/AddressAutocomplete';
 import { PriestDetailView, AstrologyTab } from '../../components/DevoteeDashboard';
 import ScripturesTab from '../../components/DevoteeDashboard/ScripturesTab';
-import SmartPayment from '../../components/PaymentComponents';
 import PushNotificationPrompt from '../../components/PushNotificationPrompt';
-import NotificationBell from '../../components/NotificationBell';
 import LanguageSelector from '../../components/LanguageSelector';
-// 100ms SDK imports for Class Video Room
-import {
-  useHMSActions,
-  useHMSStore,
-  selectIsConnectedToRoom,
-  selectLocalPeer,
-  selectPeers,
-  selectIsLocalAudioEnabled,
-  selectIsLocalVideoEnabled,
-  selectPeerScreenSharing,
-  selectVideoTrackByPeerID,
-  selectScreenShareByPeerID,
-  useVideo,
-  useAVToggle,
-  HMSRoomProvider
-} from '@100mslive/react-sdk';
 
 // Import shared components from modular files
 import { OmIcon, BellIcon3D, ZodiacIcon3D, TempleIcon3D, CartIcon3D, useIsDesktop } from './devotee/components/shared';

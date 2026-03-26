@@ -12,10 +12,15 @@ export class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
+    // Store error details for display
+    this.setState({ 
+      errorDetail: error?.message || error?.toString() || 'Unknown error',
+      errorStack: errorInfo?.componentStack?.substring(0, 300) || ''
+    });
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false, error: null, errorDetail: null, errorStack: null });
   };
 
   handleLogout = () => {
@@ -37,9 +42,17 @@ export class ErrorBoundary extends React.Component {
               </svg>
             </div>
             <h2 className="text-xl font-bold text-gray-800 mb-2">Something went wrong</h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <p className="text-gray-500 text-sm mb-4">
               We hit an unexpected issue. Please try again.
             </p>
+            {this.state.errorDetail && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-left">
+                <p className="text-red-700 text-xs font-mono break-all">{this.state.errorDetail}</p>
+                {this.state.errorStack && (
+                  <p className="text-red-400 text-[10px] font-mono mt-1 break-all">{this.state.errorStack}</p>
+                )}
+              </div>
+            )}
             <button
               onClick={this.handleRetry}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-xl py-3 font-semibold mb-3 transition-colors"
