@@ -90,6 +90,14 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - GOOGLE_PLACES_API_KEY on Cloud Run
 - GitHub Actions APK build fails
 
+## Recently Completed (Mar 26, 2026)
+- P0: New user blank screen fixed (Notification ReferenceError on iOS)
+- Duplicate notification bell on Priest mobile removed
+- Bookings/Orders removed from HomeTab (kept in My Activity only)
+- View Details added to bookings and orders in My Activity
+- Order detail page accessible from My Activity tab
+- Astrologer & Shop Owner signups enabled
+
 ## Recent Additions (Mar 25, 2026)
 ### Razorpay Integration
 - Dual payment gateway: Users can choose Razorpay (UPI/Net Banking) or Stripe (Cards) at checkout
