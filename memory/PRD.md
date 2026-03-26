@@ -79,9 +79,15 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
     - Shows dates, visual progress, tracking numbers, and cancelled status
 14. **Notification bell inconsistent on mobile → Fixed (Mar 25, 2026)**
     - Added `NotificationBell` to: AstrologerDashboard mobile header, ShopOwnerDashboard mobile header, AdminDashboard mobile+desktop headers, PriestDashboard sticky nav bar + tablet header
+15. **P0: New User Blank Screen after Auth → Fixed (Mar 26, 2026)**
+    - Root cause: Race condition — `onAuthStateChanged` fired during Phone OTP/Google auth, making double `firebase-sync` calls with incomplete data and overwriting valid user state
+    - Fix 1: Added `manualAuthInProgress` ref guard in `AuthContext.js` to prevent `onAuthStateChanged` from interfering during active auth flows
+    - Fix 2: Added `ErrorBoundary` component wrapping all dashboards in `MobileApp.js` to catch render crashes gracefully
+    - Fix 3: Fixed API interceptor in `api.js` — was aggressively clearing tokens on 401 from `/bookings` and `/orders` endpoints, potentially logging out new users mid-session
+    - Fix 4: Improved `onAuthStateChanged` handler to pass phone number and auth_type for phone users
 
 ## Pending Issues (User Verification)
-- Blank screen on mobile/Safari (code-complete, needs Firebase deploy)
+- Safari Mobile blank screen (code-complete, needs Firebase deploy & user testing on iOS)
 - Mobile Google Sign-In (blocked by Safari fix)
 - GOOGLE_PLACES_API_KEY on Cloud Run
 - GitHub Actions APK build fails
