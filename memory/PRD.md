@@ -55,7 +55,11 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - [x] Frontend: Cleaned orphaned mock code from WalletComponents.js
 - [x] Frontend: SmartPayment properly wired with onError, description props
 - [x] Codebase audit: No remaining mock payment patterns found
-- [x] All tests passed (14/14 backend, all frontend verified)
+- [x] Bug fix: Class enrollment payment now sends payment_confirmed:true to backend
+- [x] Bug fix: isEnrolled checks class_id properly, shows "Enrolled" badge
+- [x] Bug fix: "Already enrolled" returns clear error message
+- [x] Bug fix: Stripe API key explicitly set before PaymentIntent creation in classes.py
+- [x] All tests passed (iteration_45: 14/14 wallet, iteration_46: 9/9 class enrollment)
 
 ## P1/P2 Backlog
 
