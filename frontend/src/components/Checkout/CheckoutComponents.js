@@ -927,8 +927,11 @@ export function MyOrdersPage({ onBack, onViewOrder }) {
   const getStatusColor = (status) => {
     switch (status) {
       case 'delivered': return 'bg-green-100 text-green-700';
-      case 'shipped': return 'bg-blue-100 text-blue-700';
-      case 'paid': return 'bg-purple-100 text-purple-700';
+      case 'shipping': return 'bg-orange-100 text-orange-700';
+      case 'processing': return 'bg-purple-100 text-purple-700';
+      case 'accepted': return 'bg-cyan-100 text-cyan-700';
+      case 'received': return 'bg-blue-100 text-blue-700';
+      case 'paid': return 'bg-indigo-100 text-indigo-700';
       case 'cancelled': return 'bg-red-100 text-red-700';
       default: return 'bg-yellow-100 text-yellow-700';
     }
@@ -937,10 +940,26 @@ export function MyOrdersPage({ onBack, onViewOrder }) {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'delivered': return <CheckCircle className="w-4 h-4" />;
-      case 'shipped': return <Truck className="w-4 h-4" />;
+      case 'shipping': return <Truck className="w-4 h-4" />;
+      case 'processing': return <Clock className="w-4 h-4" />;
+      case 'accepted': return <CheckCircle className="w-4 h-4" />;
+      case 'received': return <Package className="w-4 h-4" />;
       case 'paid': return <Package className="w-4 h-4" />;
       case 'cancelled': return <X className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'paid': return 'Paid';
+      case 'received': return 'Received';
+      case 'accepted': return 'Accepted';
+      case 'processing': return 'Processing';
+      case 'shipping': return 'Shipped';
+      case 'delivered': return 'Delivered';
+      case 'cancelled': return 'Cancelled';
+      default: return status;
     }
   };
 
@@ -988,7 +1007,7 @@ export function MyOrdersPage({ onBack, onViewOrder }) {
                 </div>
                 <span className={`flex items-center gap-1 text-xs px-3 py-1 rounded-full ${getStatusColor(order.status)}`}>
                   {getStatusIcon(order.status)}
-                  {order.status}
+                  {getStatusLabel(order.status)}
                 </span>
               </div>
               
@@ -1048,15 +1067,19 @@ export function OrderDetailPage({ orderId, onBack }) {
   const trackingSteps = [
     { key: 'pending', label: 'Order Placed', icon: Package },
     { key: 'paid', label: 'Payment Confirmed', icon: CreditCard },
-    { key: 'shipped', label: 'Shipped', icon: Truck },
+    { key: 'received', label: 'Order Received', icon: Package },
+    { key: 'accepted', label: 'Order Accepted', icon: CheckCircle },
+    { key: 'processing', label: 'Processing', icon: Clock },
+    { key: 'shipping', label: 'Shipped', icon: Truck },
     { key: 'delivered', label: 'Delivered', icon: CheckCircle },
   ];
 
+  const STATUS_ORDER = ['pending', 'paid', 'received', 'accepted', 'processing', 'shipping', 'delivered'];
+
   const getStepStatus = (stepKey) => {
     if (!order) return 'upcoming';
-    const statusOrder = ['pending', 'paid', 'shipped', 'delivered'];
-    const currentIdx = statusOrder.indexOf(order.status);
-    const stepIdx = statusOrder.indexOf(stepKey);
+    const currentIdx = STATUS_ORDER.indexOf(order.status);
+    const stepIdx = STATUS_ORDER.indexOf(stepKey);
     if (order.status === 'cancelled') return stepKey === 'pending' ? 'completed' : 'cancelled';
     if (stepIdx <= currentIdx) return 'completed';
     if (stepIdx === currentIdx + 1) return 'current';
@@ -1067,9 +1090,10 @@ export function OrderDetailPage({ orderId, onBack }) {
     if (!order) return null;
     if (stepKey === 'pending') return order.created_at;
     if (stepKey === 'paid') return order.paid_at;
-    if (stepKey === 'shipped') return order.shipped_at;
+    if (stepKey === 'received') return order.received_at;
+    if (stepKey === 'accepted') return order.accepted_at;
+    if (stepKey === 'shipping') return order.shipped_at;
     if (stepKey === 'delivered') return order.delivered_at;
-    // Check status_history as fallback
     const historyItem = order.status_history?.find(h => h.status === stepKey);
     return historyItem?.timestamp || null;
   };
@@ -1178,8 +1202,26 @@ export function OrderDetailPage({ orderId, onBack }) {
           </div>
         )}
 
-        {/* Tracking Number */}
-        {order.tracking_number && (
+        {/* Tracking Link & Delivery Instructions */}
+        {order.tracking_link && (
+          <div className="mt-4 bg-blue-50 rounded-xl p-4" data-testid="tracking-info">
+            <p className="text-xs font-medium text-blue-700 mb-1.5">Tracking Link</p>
+            <a href={order.tracking_link} target="_blank" rel="noopener noreferrer"
+              className="text-sm text-blue-600 hover:underline break-all font-medium"
+              data-testid="tracking-link">
+              {order.tracking_link}
+            </a>
+          </div>
+        )}
+        {order.delivery_instructions && (
+          <div className={`${order.tracking_link ? 'mt-2' : 'mt-4'} bg-amber-50 rounded-xl p-4`} data-testid="delivery-instructions">
+            <p className="text-xs font-medium text-amber-700 mb-1">Delivery Instructions</p>
+            <p className="text-sm text-amber-800">{order.delivery_instructions}</p>
+          </div>
+        )}
+
+        {/* Legacy tracking number support */}
+        {order.tracking_number && !order.tracking_link && (
           <div className="mt-4 bg-blue-50 rounded-xl p-3">
             <p className="text-xs text-blue-600 mb-1">Tracking Number</p>
             <p className="font-medium text-blue-800">{order.tracking_number}</p>

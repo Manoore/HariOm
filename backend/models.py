@@ -20,7 +20,10 @@ class BookingStatus(str, Enum):
 class OrderStatus(str, Enum):
     PENDING = "pending"
     PAID = "paid"
-    SHIPPED = "shipped"
+    RECEIVED = "received"
+    ACCEPTED = "accepted"
+    PROCESSING = "processing"
+    SHIPPING = "shipping"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
 

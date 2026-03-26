@@ -106,8 +106,12 @@ export function DashboardTab({ isDesktop }) {
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                      order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                      order.status === 'paid' ? 'bg-purple-100 text-purple-700' :
+                      order.status === 'shipping' ? 'bg-orange-100 text-orange-700' :
+                      order.status === 'processing' ? 'bg-purple-100 text-purple-700' :
+                      order.status === 'accepted' ? 'bg-cyan-100 text-cyan-700' :
+                      order.status === 'received' ? 'bg-blue-100 text-blue-700' :
+                      order.status === 'paid' ? 'bg-indigo-100 text-indigo-700' :
+                      order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
                       'bg-yellow-100 text-yellow-700'
                     }`}>
                       {order.status}

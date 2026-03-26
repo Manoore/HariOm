@@ -424,9 +424,14 @@ function OrdersSection({ isDesktop, setParentTab, onViewOrder }) {
           <div className="flex items-center justify-between pt-3 border-t border-orange-50">
             <span className="font-semibold text-saffron">₹{Math.round(order.total_amount || order.total)}</span>
             <div className="flex items-center gap-2">
-              {order.status === 'shipped' && (
+              {order.status === 'shipping' && (
                 <div className="flex items-center gap-1 text-xs text-blue-600">
                   <Truck className="w-4 h-4" /> In transit
+                </div>
+              )}
+              {['processing', 'accepted', 'received'].includes(order.status) && (
+                <div className="flex items-center gap-1 text-xs text-purple-600">
+                  <Clock className="w-4 h-4" /> {order.status === 'received' ? 'Received' : order.status === 'accepted' ? 'Accepted' : 'Processing'}
                 </div>
               )}
               {order.status === 'delivered' && (

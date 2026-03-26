@@ -175,6 +175,8 @@ async def get_shop_orders(
             "status": order.get("status"),
             "payment_status": order.get("payment_status"),
             "payment_method": order.get("payment_method"),
+            "tracking_link": order.get("tracking_link"),
+            "delivery_instructions": order.get("delivery_instructions"),
             "created_at": order.get("created_at", datetime.now(timezone.utc)).isoformat()
         })
     
@@ -196,8 +198,8 @@ async def get_shop_dashboard(user: dict = Depends(require_role([UserRole.SHOP_OW
     # Get orders statistics
     all_orders = await orders_collection.count_documents({"shop_ids": shop_id})
     pending_orders = await orders_collection.count_documents({"shop_ids": shop_id, "status": "pending"})
-    processing_orders = await orders_collection.count_documents({"shop_ids": shop_id, "status": "paid"})
-    shipped_orders = await orders_collection.count_documents({"shop_ids": shop_id, "status": "shipped"})
+    processing_orders = await orders_collection.count_documents({"shop_ids": shop_id, "status": {"$in": ["paid", "received", "accepted", "processing"]}})
+    shipped_orders = await orders_collection.count_documents({"shop_ids": shop_id, "status": "shipping"})
     delivered_orders = await orders_collection.count_documents({"shop_ids": shop_id, "status": "delivered"})
     
     # Calculate revenue
@@ -207,7 +209,7 @@ async def get_shop_dashboard(user: dict = Depends(require_role([UserRole.SHOP_OW
     
     # Today's revenue
     today_pipeline = [
-        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "shipped", "delivered"]}, "created_at": {"$gte": start_of_today}}},
+        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "received", "accepted", "processing", "shipping", "delivered"]}, "created_at": {"$gte": start_of_today}}},
         {"$unwind": "$items"},
         {"$match": {"items.shop_id": shop_id}},
         {"$group": {"_id": None, "total": {"$sum": "$items.subtotal"}}}
@@ -217,7 +219,7 @@ async def get_shop_dashboard(user: dict = Depends(require_role([UserRole.SHOP_OW
     
     # Monthly revenue
     month_pipeline = [
-        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "shipped", "delivered"]}, "created_at": {"$gte": start_of_month}}},
+        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "received", "accepted", "processing", "shipping", "delivered"]}, "created_at": {"$gte": start_of_month}}},
         {"$unwind": "$items"},
         {"$match": {"items.shop_id": shop_id}},
         {"$group": {"_id": None, "total": {"$sum": "$items.subtotal"}}}
@@ -227,7 +229,7 @@ async def get_shop_dashboard(user: dict = Depends(require_role([UserRole.SHOP_OW
     
     # Total revenue
     total_pipeline = [
-        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "shipped", "delivered"]}}},
+        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "received", "accepted", "processing", "shipping", "delivered"]}}},
         {"$unwind": "$items"},
         {"$match": {"items.shop_id": shop_id}},
         {"$group": {"_id": None, "total": {"$sum": "$items.subtotal"}}}
@@ -253,7 +255,7 @@ async def get_shop_dashboard(user: dict = Depends(require_role([UserRole.SHOP_OW
     
     # Top selling products
     top_pipeline = [
-        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "shipped", "delivered"]}}},
+        {"$match": {"shop_ids": shop_id, "status": {"$in": ["paid", "received", "accepted", "processing", "shipping", "delivered"]}}},
         {"$unwind": "$items"},
         {"$match": {"items.shop_id": shop_id}},
         {"$group": {"_id": "$items.product_id", "name": {"$first": "$items.name"}, "sold": {"$sum": "$items.quantity"}, "revenue": {"$sum": "$items.subtotal"}}},

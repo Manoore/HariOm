@@ -37,7 +37,7 @@ async def create_review(product_id: str, request: Request, user: dict = Depends(
     purchased = await orders_collection.find_one({
         "user_id": user_id,
         "items.product_id": product_id,
-        "status": {"$in": ["paid", "shipped", "delivered"]}
+        "status": {"$in": ["paid", "received", "accepted", "processing", "shipping", "delivered"]}
     })
     
     if not purchased:
@@ -245,7 +245,7 @@ async def can_review_product(product_id: str, user: dict = Depends(get_current_u
     purchased = await orders_collection.find_one({
         "user_id": user_id,
         "items.product_id": product_id,
-        "status": {"$in": ["paid", "shipped", "delivered"]}
+        "status": {"$in": ["paid", "received", "accepted", "processing", "shipping", "delivered"]}
     })
     
     if not purchased:

@@ -122,19 +122,66 @@ async def update_order_status(order_id: str, request: Request, user: dict = Depe
     data = await request.json()
     new_status = data.get("status")
     
-    valid_statuses = ["pending", "paid", "shipped", "delivered", "cancelled"]
+    valid_statuses = ["pending", "paid", "received", "accepted", "processing", "shipping", "delivered", "cancelled"]
     if new_status not in valid_statuses:
         raise HTTPException(status_code=400, detail="Invalid status")
+    
+    # Validate status transitions
+    current_status = order.get("status", "pending")
+    allowed_transitions = {
+        "pending": ["paid", "cancelled"],
+        "paid": ["received", "cancelled"],
+        "received": ["accepted", "cancelled"],
+        "accepted": ["processing", "cancelled"],
+        "processing": ["shipping", "cancelled"],
+        "shipping": ["delivered"],
+        "delivered": [],
+        "cancelled": [],
+    }
+    
+    # Admin can skip transitions; shop owners must follow the flow
+    if not user.get("role") == UserRole.ADMIN:
+        if new_status not in allowed_transitions.get(current_status, []):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Cannot transition from '{current_status}' to '{new_status}'"
+            )
+    
+    # Build update fields
+    update_set = {"status": new_status}
+    now = datetime.now(timezone.utc)
+    
+    # Set timestamp fields for key statuses
+    if new_status == "received":
+        update_set["received_at"] = now
+    elif new_status == "accepted":
+        update_set["accepted_at"] = now
+    elif new_status == "shipping":
+        update_set["shipped_at"] = now
+        tracking_link = data.get("tracking_link", "").strip()
+        delivery_instructions = data.get("delivery_instructions", "").strip()
+        if tracking_link:
+            update_set["tracking_link"] = tracking_link
+        if delivery_instructions:
+            update_set["delivery_instructions"] = delivery_instructions
+    elif new_status == "delivered":
+        update_set["delivered_at"] = now
+    
+    # Build status history note
+    note = f"Status updated to {new_status}"
+    if new_status == "shipping" and data.get("tracking_link"):
+        note += f" | Tracking: {data['tracking_link']}"
     
     await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
         {
-            "$set": {"status": new_status},
+            "$set": update_set,
             "$push": {
                 "status_history": {
                     "status": new_status,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "note": f"Status updated to {new_status}"
+                    "timestamp": now.isoformat(),
+                    "note": note,
+                    "updated_by": str(user["_id"])
                 }
             }
         }
@@ -144,7 +191,7 @@ async def update_order_status(order_id: str, request: Request, user: dict = Depe
     if new_status in ["delivered", "cancelled"]:
         await deactivate_chat_room("order", order_id)
     
-    return {"message": "Order status updated"}
+    return {"message": "Order status updated", "status": new_status}
 
 
 @router.get("/orders")
@@ -162,6 +209,8 @@ async def get_user_orders(user: dict = Depends(get_current_user)):
             "status": order["status"],
             "payment_method": order["payment_method"],
             "payment_status": order["payment_status"],
+            "tracking_link": order.get("tracking_link"),
+            "delivery_instructions": order.get("delivery_instructions"),
             "created_at": order["created_at"].isoformat()
         })
     return {"orders": orders}
@@ -211,8 +260,12 @@ async def get_order_details(order_id: str, user: dict = Depends(get_current_user
         "payment_status": order.get("payment_status"),
         "status_history": order.get("status_history", []),
         "paid_at": order.get("paid_at", "").isoformat() if order.get("paid_at") else None,
+        "received_at": order.get("received_at", "").isoformat() if order.get("received_at") else None,
+        "accepted_at": order.get("accepted_at", "").isoformat() if order.get("accepted_at") else None,
         "shipped_at": order.get("shipped_at", "").isoformat() if order.get("shipped_at") else None,
         "delivered_at": order.get("delivered_at", "").isoformat() if order.get("delivered_at") else None,
+        "tracking_link": order.get("tracking_link"),
+        "delivery_instructions": order.get("delivery_instructions"),
         "tracking_number": order.get("tracking_number"),
         "tracking_url": order.get("tracking_url"),
         "shops": shops,
