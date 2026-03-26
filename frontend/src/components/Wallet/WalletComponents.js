@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../../lib/api';
 import { usePayment } from '../../contexts/PaymentContext';
+import { SmartPayment } from '../PaymentComponents';
 import { Toaster, toast } from 'sonner';
 
 // Wallet Balance Card Component
@@ -88,14 +89,15 @@ export function WalletCard({ onRecharge }) {
 // Recharge Modal Component
 export function RechargeModal({ isOpen, onClose, onSuccess }) {
   const [amount, setAmount] = useState(100);
-  const [loading, setLoading] = useState(false);
   const [minAmount, setMinAmount] = useState(100);
-  const { processPayment, paymentMethod } = usePayment();
+  const [showPayment, setShowPayment] = useState(false);
+  const [creatingIntent, setCreatingIntent] = useState(false);
+  const [paymentData, setPaymentData] = useState(null);
+  const { paymentMethod } = usePayment();
 
   const presetAmounts = [100, 200, 500, 1000];
 
   useEffect(() => {
-    // Load minimum recharge amount from settings
     api.get('/api/consultation/settings').then(res => {
       setMinAmount(res.data.min_recharge_amount);
       if (amount < res.data.min_recharge_amount) {
@@ -104,37 +106,43 @@ export function RechargeModal({ isOpen, onClose, onSuccess }) {
     }).catch(() => {});
   }, []);
 
-  const handleRecharge = async () => {
+  const handleProceedToPayment = async () => {
     if (amount < minAmount) {
       toast.error(`Minimum recharge amount is ₹${minAmount}`);
       return;
     }
-
-    setLoading(true);
+    setCreatingIntent(true);
     try {
-      // Process payment via Razorpay/Stripe based on location
-      const paymentResult = await processPayment(amount, {
-        type: 'wallet_recharge',
-        description: `Wallet Recharge - ₹${amount}`
-      });
-
-      if (paymentResult.success) {
-        // Add balance to wallet
-        const res = await api.post('/api/wallet/recharge', {
-          amount: amount,
-          payment_id: paymentResult.payment_id,
-          payment_method: paymentMethod
-        });
-
-        toast.success(`₹${amount} added to wallet!`);
-        onSuccess?.(res.data.wallet);
-        onClose();
-      }
+      const res = await api.post('/api/wallet/create-recharge-intent', { amount });
+      setPaymentData(res.data);
+      setShowPayment(true);
     } catch (error) {
-      toast.error(error.message || 'Payment failed');
+      toast.error(error.response?.data?.detail || 'Failed to initiate payment');
     } finally {
-      setLoading(false);
+      setCreatingIntent(false);
     }
+  };
+
+  const handlePaymentSuccess = async (paymentResult) => {
+    try {
+      const res = await api.post('/api/wallet/recharge', {
+        amount: amount,
+        payment_id: paymentResult.id || paymentResult.razorpay_payment_id,
+        payment_method: paymentMethod,
+        payment_intent_id: paymentData?.payment_intent_id,
+      });
+      toast.success(`₹${amount} added to wallet!`);
+      onSuccess?.(res.data.wallet);
+      handleClose();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to add balance');
+    }
+  };
+
+  const handleClose = () => {
+    setShowPayment(false);
+    setPaymentData(null);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -146,68 +154,90 @@ export function RechargeModal({ isOpen, onClose, onSuccess }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-        onClick={onClose}
+        onClick={handleClose}
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-white rounded-2xl p-6 w-full max-w-md"
+          className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
           onClick={e => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-800">Recharge Wallet</h2>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full">
+            <h2 className="text-xl font-bold text-gray-800">
+              {showPayment ? 'Complete Payment' : 'Recharge Wallet'}
+            </h2>
+            <button onClick={handleClose} className="p-1 hover:bg-gray-100 rounded-full">
               <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
 
-          {/* Preset Amounts */}
-          <div className="grid grid-cols-4 gap-2 mb-4">
-            {presetAmounts.map(preset => (
+          {!showPayment ? (
+            <>
+              {/* Preset Amounts */}
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                {presetAmounts.map(preset => (
+                  <button
+                    key={preset}
+                    onClick={() => setAmount(preset)}
+                    className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                      amount === preset
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    ₹{preset}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom Amount Input */}
+              <div className="mb-6">
+                <label className="text-sm text-gray-600 mb-1 block">Or enter custom amount</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">₹</span>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={e => setAmount(Math.max(minAmount, parseInt(e.target.value) || 0))}
+                    min={minAmount}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    data-testid="recharge-amount-input"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Minimum recharge: ₹{minAmount}</p>
+              </div>
+
+              {/* Proceed Button */}
               <button
-                key={preset}
-                onClick={() => setAmount(preset)}
-                className={`py-2 rounded-lg text-sm font-medium transition-colors ${
-                  amount === preset
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                onClick={handleProceedToPayment}
+                disabled={creatingIntent || amount < minAmount}
+                data-testid="recharge-proceed-btn"
+                className="w-full py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                ₹{preset}
+                {creatingIntent ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
+                ) : (
+                  <><CreditCard className="w-5 h-5" /> Pay ₹{amount}</>
+                )}
               </button>
-            ))}
-          </div>
-
-          {/* Custom Amount Input */}
-          <div className="mb-6">
-            <label className="text-sm text-gray-600 mb-1 block">Or enter custom amount</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">₹</span>
-              <input
-                type="number"
-                value={amount}
-                onChange={e => setAmount(Math.max(minAmount, parseInt(e.target.value) || 0))}
-                min={minAmount}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
-                data-testid="recharge-amount-input"
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Minimum recharge: ₹{minAmount}</p>
-          </div>
-
-          {/* Payment Method Info */}
-          <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 mb-6">
-            <CreditCard className="w-5 h-5 text-gray-500" />
-            <span className="text-sm text-gray-600">
-              Payment via {paymentMethod === 'razorpay' ? 'Razorpay' : 'Stripe'}
-            </span>
-          </div>
-
-          {/* Recharge Button */}
-          <button
-            onClick={handleRecharge}
-            disabled={loading || amount < minAmount}
+            </>
+          ) : (
+            /* Real Payment Gateway */
+            <SmartPayment
+              amount={amount}
+              clientSecret={paymentData?.client_secret}
+              razorpayOrderId={paymentData?.razorpay_order_id}
+              onSuccess={handlePaymentSuccess}
+              onCancel={() => setShowPayment(false)}
+              metadata={{ type: 'wallet_recharge' }}
+            />
+          )}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
             className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             data-testid="confirm-recharge-btn"
           >
