@@ -80,11 +80,9 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 14. **Notification bell inconsistent on mobile → Fixed (Mar 25, 2026)**
     - Added `NotificationBell` to: AstrologerDashboard mobile header, ShopOwnerDashboard mobile header, AdminDashboard mobile+desktop headers, PriestDashboard sticky nav bar + tablet header
 15. **P0: New User Blank Screen after Auth → Fixed (Mar 26, 2026)**
-    - Root cause: Race condition — `onAuthStateChanged` fired during Phone OTP/Google auth, making double `firebase-sync` calls with incomplete data and overwriting valid user state
-    - Fix 1: Added `manualAuthInProgress` ref guard in `AuthContext.js` to prevent `onAuthStateChanged` from interfering during active auth flows
-    - Fix 2: Added `ErrorBoundary` component wrapping all dashboards in `MobileApp.js` to catch render crashes gracefully
-    - Fix 3: Fixed API interceptor in `api.js` — was aggressively clearing tokens on 401 from `/bookings` and `/orders` endpoints, potentially logging out new users mid-session
-    - Fix 4: Improved `onAuthStateChanged` handler to pass phone number and auth_type for phone users
+    - Root cause: `Notification?.permission` in `usePushNotifications.js` throws ReferenceError on iOS Safari/Chrome because `Notification` global doesn't exist on iOS. Optional chaining doesn't prevent ReferenceError on undeclared variables.
+    - Fix: Changed all bare `Notification` references to `window.Notification` with proper existence checks in `usePushNotifications.js`
+    - Also added: `manualAuthInProgress` guard for auth race conditions, top-level ErrorBoundary in App.js, loading timeout, global error handlers, debug overlay (?debug=1)
 
 ## Pending Issues (User Verification)
 - Safari Mobile blank screen (code-complete, needs Firebase deploy & user testing on iOS)
