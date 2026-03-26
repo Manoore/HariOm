@@ -15,33 +15,42 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 
 ## Core Features Implemented
 
-### Authentication & User Management
-- Multi-role auth (Devotee, Priest, Astrologer, Shop Owner, Admin)
-- JWT-based authentication
-
 ### E-Commerce / Marketplace
 - Product catalog, cart, checkout with Stripe + Razorpay
 - Order Status Lifecycle: pending → paid → received → accepted → processing → shipping → delivered
 - Tracking link + delivery instructions on shipping
 - Delivery photo proof on delivered
-- In-app + push + email notifications on status changes
+- In-app + push + email notifications on all status changes
 
-### Scheduled Class Reminders (NEW - Feb 26, 2026)
+### Scheduled Class Reminders
 - User-configurable timing: 15 min, 30 min, 1 hour, 2 hours, 1 day before
-- Only enrolled students and class instructor can set reminders
-- In-app + push notification channels
+- Auto-enroll: 1-hour reminder auto-set on class enrollment
 - Background scheduler runs every 60 seconds
-- API: GET/POST/DELETE /api/class-reminders
-- Devotee UI: Bell icon dropdown on enrolled classes
-- Priest UI: "Remind me" dropdown on their class cards
+- Priests also get self-reminders
+
+### Provider Payout Dashboard (NEW - Feb 26, 2026)
+- **Shop Owner**: Revenue breakdown (Today/Week/Month/All Time), Fee Summary (Platform Fee + GST deductions), Net Earnings, Pending Payout, Transaction history
+- **Priest**: Enhanced earnings with income sources (Puja Bookings + Vedic Classes), 4 summary cards, transaction history
+- **Astrologer**: Existing earnings dashboard with consultation revenue
+- All dashboards show configurable platform fees (5%) and GST (18%)
 
 ### Other Features
+- Multi-role auth (Devotee, Priest, Astrologer, Shop Owner, Admin)
 - Priest booking system with status tracking
 - Astrology services (horoscope, birth chart, consultations)
 - Devotional content (mantras, stotras, festivals, temples)
 - Video consultations (100ms SDK, per-minute billing)
 - Admin dashboard (user management, system config)
-- ErrorBoundary for iOS Safari crash recovery
+
+## What's Been Implemented (Session - Feb 26, 2026)
+- [x] Shop Owner Order Status Lifecycle
+- [x] Order status notifications (in-app + push + email via Resend)
+- [x] Delivery photo proof upload & display
+- [x] Scheduled class reminders with configurable timing
+- [x] Auto-enroll reminder (1 hour default)
+- [x] Shop Owner Earnings & Payouts dashboard
+- [x] Enhanced Priest Earnings dashboard
+- [x] All features tested via testing agent (100% pass rate)
 
 ## P1/P2 Backlog
 
@@ -50,16 +59,8 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 2. Play Store TWA Setup
 
 ### P2 - Future
-3. Provider Payout Dashboard
-4. Phase 2 Live Streams (100ms HLS broadcasting)
-5. Temple section enhancements (AI images, maps, nearby temples)
-
-## Key API Endpoints
-- `PUT /api/orders/{id}/status` — Order status lifecycle
-- `GET /api/orders/{id}` — Order detail with tracking/delivery fields
-- `GET/POST/DELETE /api/class-reminders` — Class reminder CRUD
-- `GET /api/my-enrollments` — User's enrolled classes
-- `GET /api/notifications` — User's notification feed
+3. Phase 2 Live Streams (100ms HLS broadcasting)
+4. Temple section enhancements (AI images, maps, nearby temples)
 
 ## Test Credentials
 - Devotee: `devotee@divineapp.com` / `devotee123`
@@ -67,19 +68,3 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Priest: `pandit.sharma@divineapp.com` / `priest123`
 - Astrologer: `astro.joshi@divineapp.com` / `astro123`
 - Shop Owner: `shop.poojamart@divineapp.com` / `shop123`
-
-## Code Architecture
-```
-/app/backend/
-├── routes/classes.py              # Class reminder API endpoints
-├── routes/orders_new.py           # Order status + notifications
-├── services/
-│   ├── notification_service.py    # Email + In-App + Push (CLASS_REMINDER types)
-│   └── class_reminder_scheduler.py # Background scheduler (60s loop)
-├── database.py                    # class_reminders_collection
-└── server.py                      # Scheduler startup in lifespan
-
-/app/frontend/src/pages/dashboards/
-├── devotee/components/ClassesTab.js  # Enrolled class reminder UI
-└── priest/components/ClassesTab.js   # Priest self-reminder UI
-```
