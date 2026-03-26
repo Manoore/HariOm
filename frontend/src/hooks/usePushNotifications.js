@@ -7,7 +7,16 @@ import { toast } from 'sonner';
 const VAPID_KEY = process.env.REACT_APP_FIREBASE_VAPID_KEY;
 
 export function usePushNotifications() {
-  const [permission, setPermission] = useState(Notification?.permission || 'default');
+  // Use window.Notification to safely access — iOS Safari doesn't have Notification global
+  const getNotificationPermission = () => {
+    try {
+      return (typeof window !== 'undefined' && 'Notification' in window) 
+        ? window.Notification.permission 
+        : 'default';
+    } catch { return 'default'; }
+  };
+  
+  const [permission, setPermission] = useState(getNotificationPermission);
   const [fcmToken, setFcmToken] = useState(null);
   const [supported, setSupported] = useState(false);
 
@@ -16,7 +25,7 @@ export function usePushNotifications() {
     const checkSupport = () => {
       const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const hasNotification = 'Notification' in window;
+      const hasNotification = typeof window !== 'undefined' && 'Notification' in window;
       const hasSW = 'serviceWorker' in navigator;
       const hasPushManager = 'PushManager' in window;
       
@@ -24,8 +33,8 @@ export function usePushNotifications() {
     };
     
     setSupported(checkSupport());
-    if ('Notification' in window) {
-      setPermission(Notification.permission);
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPermission(window.Notification.permission);
     }
   }, []);
 
@@ -52,10 +61,10 @@ export function usePushNotifications() {
   }, [supported]);
 
   const requestPermission = useCallback(async () => {
-    if (!supported) return null;
+    if (!supported || !('Notification' in window)) return null;
 
     try {
-      const result = await Notification.requestPermission();
+      const result = await window.Notification.requestPermission();
       setPermission(result);
 
       if (result === 'granted') {
