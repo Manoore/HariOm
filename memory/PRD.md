@@ -7,7 +7,7 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - **Frontend**: React + TailwindCSS + Shadcn/UI + Framer Motion
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB
-- **Payments**: Stripe + Razorpay
+- **Payments**: Stripe + Razorpay (Real gateway integration, NO mocks)
 - **Video**: 100ms SDK
 - **Auth**: Firebase Auth / JWT
 - **Email**: Resend API
@@ -22,15 +22,22 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Delivery photo proof on delivered
 - In-app + push + email notifications on all status changes
 
+### Wallet Recharge (Real Payment Integration) ✅
+- `POST /api/wallet/create-recharge-intent` - Creates real Stripe PaymentIntent + Razorpay Order
+- `POST /api/wallet/recharge` - Verifies payment with gateway before adding balance
+- SmartPayment component with location-based gateway selection (Stripe/Razorpay)
+- Preset amounts (₹100, ₹200, ₹500, ₹1000) + custom amount input
+- All mock/fake payment flows removed
+
 ### Scheduled Class Reminders
 - User-configurable timing: 15 min, 30 min, 1 hour, 2 hours, 1 day before
 - Auto-enroll: 1-hour reminder auto-set on class enrollment
 - Background scheduler runs every 60 seconds
 - Priests also get self-reminders
 
-### Provider Payout Dashboard (NEW - Feb 26, 2026)
-- **Shop Owner**: Revenue breakdown (Today/Week/Month/All Time), Fee Summary (Platform Fee + GST deductions), Net Earnings, Pending Payout, Transaction history
-- **Priest**: Enhanced earnings with income sources (Puja Bookings + Vedic Classes), 4 summary cards, transaction history
+### Provider Payout Dashboard
+- **Shop Owner**: Revenue breakdown, Fee Summary, Net Earnings, Pending Payout, Transaction history
+- **Priest**: Enhanced earnings with income sources (Puja Bookings + Vedic Classes)
 - **Astrologer**: Existing earnings dashboard with consultation revenue
 - All dashboards show configurable platform fees (5%) and GST (18%)
 
@@ -42,15 +49,13 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Video consultations (100ms SDK, per-minute billing)
 - Admin dashboard (user management, system config)
 
-## What's Been Implemented (Session - Feb 26, 2026)
-- [x] Shop Owner Order Status Lifecycle
-- [x] Order status notifications (in-app + push + email via Resend)
-- [x] Delivery photo proof upload & display
-- [x] Scheduled class reminders with configurable timing
-- [x] Auto-enroll reminder (1 hour default)
-- [x] Shop Owner Earnings & Payouts dashboard
-- [x] Enhanced Priest Earnings dashboard
-- [x] All features tested via testing agent (100% pass rate)
+## What's Been Implemented (Session - Mar 26, 2026)
+- [x] Backend: POST /api/wallet/create-recharge-intent (real Stripe + Razorpay intent generation)
+- [x] Backend: POST /api/wallet/recharge (payment verification before balance addition)
+- [x] Frontend: Cleaned orphaned mock code from WalletComponents.js
+- [x] Frontend: SmartPayment properly wired with onError, description props
+- [x] Codebase audit: No remaining mock payment patterns found
+- [x] All tests passed (14/14 backend, all frontend verified)
 
 ## P1/P2 Backlog
 
@@ -64,7 +69,33 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 
 ## Test Credentials
 - Devotee: `devotee@divineapp.com` / `devotee123`
-- Admin: `admin@divineapp.com` / `admin123`
+- Admin: `admin@divine.com` / `admin123`
 - Priest: `pandit.sharma@divineapp.com` / `priest123`
 - Astrologer: `astro.joshi@divineapp.com` / `astro123`
 - Shop Owner: `shop.poojamart@divineapp.com` / `shop123`
+
+## Key API Endpoints
+- `POST /api/wallet/create-recharge-intent` - Creates Stripe + Razorpay payment intents
+- `POST /api/wallet/recharge` - Verifies & finalizes wallet top-up
+- `GET /api/wallet` - Get wallet balance
+- `GET /api/wallet/transactions` - Transaction history
+- `POST /api/payments/stripe/create-intent` - General Stripe intent
+- `POST /api/payments/razorpay/create-order` - General Razorpay order
+
+## Architecture
+```
+/app/
+├── backend/
+│   ├── routes/
+│   │   ├── consultation.py    # Wallet endpoints (create-recharge-intent, recharge)
+│   │   └── payments.py        # General Stripe/Razorpay intents
+│   ├── video_consultation.py  # Wallet balance functions
+│   └── system_config.py       # Payment credentials management
+└── frontend/
+    └── src/
+        ├── components/
+        │   ├── PaymentComponents.js       # SmartPayment, StripePayment, RazorpayPayment
+        │   └── Wallet/WalletComponents.js # WalletCard, RechargeModal, TransactionHistory
+        └── contexts/
+            └── PaymentContext.js           # Location-based payment method detection
+```
