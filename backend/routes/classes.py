@@ -135,7 +135,7 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
     
     enrollments = cls.get("enrollments", [])
     if str(user["_id"]) in enrollments:
-        raise HTTPException(status_code=400, detail="Already enrolled in this class")
+        raise HTTPException(status_code=400, detail="You are already enrolled in this class")
     
     available_slots = cls.get("available_slots", cls.get("max_students", 50) - cls.get("enrolled_count", 0))
     if available_slots <= 0:
@@ -246,7 +246,7 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
         try:
             base_price = cls.get("price", 0)
             
-            from system_config import get_fees_and_taxes, calculate_fees_and_taxes
+            from system_config import get_fees_and_taxes, calculate_fees_and_taxes, get_stripe_credentials
             fees_config = await get_fees_and_taxes()
             fees_calc = calculate_fees_and_taxes(base_price, fees_config)
             
@@ -257,6 +257,11 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
             tax_label = fees_calc["tax_label"]
             
             total_amount = base_price + platform_fee + gst_amount
+            
+            stripe_creds = await get_stripe_credentials()
+            stripe.api_key = stripe_creds["secret_key"]
+            if not stripe.api_key:
+                raise HTTPException(status_code=500, detail="Payment gateway not configured")
             
             payment_intent = stripe.PaymentIntent.create(
                 amount=int(total_amount * 100),

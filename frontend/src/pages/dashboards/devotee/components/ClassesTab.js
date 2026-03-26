@@ -600,7 +600,12 @@ function ClassesTab({ isDesktop }) {
         fetchMyEnrollments();
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to enroll');
+      const detail = error.response?.data?.detail || '';
+      if (detail.toLowerCase().includes('already enrolled')) {
+        toast.error('You are already enrolled in this class.');
+      } else {
+        toast.error(detail || 'Failed to enroll');
+      }
     } finally {
       setEnrolling(null);
     }
@@ -609,6 +614,7 @@ function ClassesTab({ isDesktop }) {
   const handlePaymentSuccess = async (paymentData) => {
     try {
       await api.post(`/api/classes/${paymentModal.classId}/enroll`, {
+        payment_confirmed: true,
         payment_intent_id: paymentData.payment_id || paymentModal.paymentIntentId
       });
       toast.success('Payment successful! You are now enrolled.');
@@ -616,7 +622,7 @@ function ClassesTab({ isDesktop }) {
       fetchClasses();
       fetchMyEnrollments();
     } catch (error) {
-      toast.error('Enrollment failed after payment. Please contact support.');
+      toast.error(error.response?.data?.detail || 'Enrollment failed after payment. Please contact support.');
     }
   };
 
@@ -641,7 +647,7 @@ function ClassesTab({ isDesktop }) {
   };
 
   const isEnrolled = (classId) => {
-    return myEnrollments.some(e => e.id === classId);
+    return myEnrollments.some(e => e.class_id === classId || e.id === classId);
   };
 
   return (
