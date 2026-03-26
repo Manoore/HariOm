@@ -146,10 +146,8 @@ export default function AstrologerDashboard() {
         <div className="sticky top-0 bg-white border-b border-purple-100 px-4 py-3 z-40">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Star className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-purple-900">DIVINE</span>
+              <img src="/temple-logo.png" alt="Divine Logo" className="w-8 h-8 rounded-lg object-cover" />
+              <span className="font-cinzel font-bold text-purple-900">DIVINE</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1">

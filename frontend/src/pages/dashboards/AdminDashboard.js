@@ -74,9 +74,12 @@ export default function AdminDashboard() {
       {!isDesktop && (
         <div className="sticky top-0 bg-white border-b border-orange-100 px-4 py-3 z-40">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-saffron-dark text-xs">Admin Dashboard</p>
-              <h1 className="font-cinzel text-lg font-bold text-gray-800">{user?.name || 'Admin'}</h1>
+            <div className="flex items-center gap-2">
+              <img src="/temple-logo.png" alt="Divine Logo" className="w-8 h-8 rounded-lg object-cover" />
+              <div>
+                <p className="text-saffron-dark text-xs">Admin Dashboard</p>
+                <h1 className="font-cinzel text-lg font-bold text-gray-800">{user?.name || 'Admin'}</h1>
+              </div>
             </div>
             <NotificationBell />
           </div>

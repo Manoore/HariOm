@@ -25,7 +25,7 @@ export function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2" data-testid="logo-link">
-            <span className="text-3xl">🙏</span>
+            <img src="/temple-logo.png" alt="Divine Logo" className="w-9 h-9 rounded-lg object-cover" />
             <span className="font-cinzel text-xl font-bold text-maroon">Divine</span>
           </Link>
 

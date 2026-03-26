@@ -4,7 +4,7 @@ import {
   ShoppingBag, Loader2, X, Check, Truck, Clock, 
   CheckCircle, XCircle, ChevronRight, PackageCheck, 
   PackageOpen, Settings, Link2, FileText, ArrowRight,
-  Camera, Image as ImageIcon, Upload
+  Camera
 } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';

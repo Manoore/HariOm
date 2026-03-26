@@ -47,13 +47,23 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : 'px-4'}`}>
       {/* Header */}
       <div className="pt-4 pb-6 flex items-start justify-between">
-        <div>
-          <p className="text-gray-500 text-sm">{t('dashboard.namaste')},</p>
-          <button onClick={() => setActiveTab('profile')} className="text-left hover:opacity-80 transition-opacity" data-testid="home-user-name">
-            <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon hover:text-saffron transition-colors">
-              {user?.name || 'Devotee'}
-            </h1>
-          </button>
+        <div className="flex items-center gap-3">
+          {!isDesktop && (
+            <img 
+              src="/temple-logo.png" 
+              alt="Divine Logo" 
+              className="w-10 h-10 rounded-lg object-cover"
+              style={{ filter: 'drop-shadow(0 0 2px rgba(255,153,51,0.3))' }}
+            />
+          )}
+          <div>
+            <p className="text-gray-500 text-sm">{t('dashboard.namaste')},</p>
+            <button onClick={() => setActiveTab('profile')} className="text-left hover:opacity-80 transition-opacity" data-testid="home-user-name">
+              <h1 className="font-cinzel text-2xl lg:text-3xl font-bold text-maroon hover:text-saffron transition-colors">
+                {user?.name || 'Devotee'}
+              </h1>
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <LanguageSelector className="text-gray-700" />

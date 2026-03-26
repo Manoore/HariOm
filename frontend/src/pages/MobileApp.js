@@ -302,38 +302,17 @@ function SplashScreen({ onComplete }) {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="relative z-10"
       >
-        {/* Diya/Lamp Icon */}
+        {/* Om Logo */}
         <div className="w-32 h-32 mx-auto mb-6 relative">
-          <svg viewBox="0 0 100 100" className="w-full h-full">
-            {/* Lamp base */}
-            <ellipse cx="50" cy="85" rx="30" ry="8" fill="#B8860B" />
-            <path d="M30 85 Q30 70 35 60 L65 60 Q70 70 70 85" fill="#FFD700" />
-            {/* Lamp body */}
-            <ellipse cx="50" cy="60" rx="18" ry="6" fill="#FFD700" />
-            {/* Flame */}
-            <motion.path 
-              d="M50 55 Q45 40 50 25 Q55 40 50 55" 
-              fill="#FF9933"
-              animate={{ 
-                d: [
-                  "M50 55 Q45 40 50 25 Q55 40 50 55",
-                  "M50 55 Q44 38 50 22 Q56 38 50 55",
-                  "M50 55 Q45 40 50 25 Q55 40 50 55"
-                ]
-              }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            />
-            <motion.ellipse 
-              cx="50" cy="30" rx="4" ry="6" 
-              fill="#FFEB3B"
-              animate={{ opacity: [1, 0.7, 1] }}
-              transition={{ duration: 0.8, repeat: Infinity }}
-            />
-          </svg>
-          
+          <img 
+            src="/temple-logo.png" 
+            alt="Divine Om Logo" 
+            className="w-32 h-32 rounded-2xl object-cover"
+            style={{ filter: 'drop-shadow(0 0 15px rgba(255,153,51,0.5))' }}
+          />
           {/* Glow effect */}
           <motion.div 
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-20 bg-orange-400/30 rounded-full blur-xl"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-orange-400/30 rounded-full blur-xl -z-10"
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
           />

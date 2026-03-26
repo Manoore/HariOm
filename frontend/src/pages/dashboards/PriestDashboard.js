@@ -283,9 +283,7 @@ export default function PriestDashboard() {
       <div className="hidden md:flex lg:hidden">
         <aside className="w-20 min-h-screen bg-white border-r border-orange-100 fixed left-0 top-0 bottom-0 z-20 flex flex-col">
           <button onClick={() => handleTabChange('profile')} className="bg-gradient-to-r from-maroon to-maroon-light p-3 flex justify-center hover:opacity-90 cursor-pointer">
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
-              {priestProfile?.profile_photo ? <img src={priestProfile.profile_photo} alt="Profile" className="w-full h-full object-cover" /> : <span className="text-lg font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>}
-            </div>
+            <img src="/temple-logo.png" alt="Divine Logo" className="w-12 h-12 rounded-lg object-cover" style={{ filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.5))' }} />
           </button>
           <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
             {allTabs.map((tab) => (
@@ -317,16 +315,14 @@ export default function PriestDashboard() {
       <div className="md:hidden pb-20">
         <div className="bg-gradient-to-r from-maroon to-maroon-light px-4 pt-6 pb-4">
           <div className="flex items-center justify-between">
-            <button onClick={() => handleTabChange('profile')} className="flex items-center gap-3 text-left hover:opacity-90 cursor-pointer">
-              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-gold">
-                {priestProfile?.profile_photo ? <img src={priestProfile.profile_photo} alt="Profile" className="w-full h-full object-cover" /> : <span className="text-xl font-bold text-white">{user?.name?.charAt(0) || 'P'}</span>}
-              </div>
+            <div className="flex items-center gap-3">
+              <img src="/temple-logo.png" alt="Divine Logo" className="w-10 h-10 rounded-lg object-cover" style={{ filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.5))' }} />
               <div>
                 <p className="text-white/70 text-xs">Namaste,</p>
                 <h1 className="font-cinzel text-base font-bold text-white">{user?.name || 'Pandit Ji'}</h1>
                 <div className="mt-1 inline-flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full"><Star className="w-3 h-3 text-gold" /><span className="text-[10px] font-medium text-white capitalize">{user?.role || 'Priest'}</span></div>
               </div>
-            </button>
+            </div>
             <div className="flex items-center gap-2">
               <NotificationBell />
               <button onClick={logout} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center"><LogOut className="w-4 h-4 text-white" /></button>
