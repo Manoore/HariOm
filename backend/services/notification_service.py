@@ -76,6 +76,8 @@ class NotificationType(str, Enum):
     ORDER_STATUS_UPDATED = "order_status_updated"
     ORDER_SHIPPED = "order_shipped"
     ORDER_DELIVERED = "order_delivered"
+    CLASS_REMINDER = "class_reminder"
+    PRIEST_CLASS_REMINDER = "priest_class_reminder"
 
 
 # Notification titles and icons for in-app display
@@ -94,6 +96,8 @@ NOTIFICATION_CONFIG = {
     NotificationType.ORDER_STATUS_UPDATED: {"title": "Order Update", "icon": "package"},
     NotificationType.ORDER_SHIPPED: {"title": "Order Shipped", "icon": "truck"},
     NotificationType.ORDER_DELIVERED: {"title": "Order Delivered", "icon": "check-circle"},
+    NotificationType.CLASS_REMINDER: {"title": "Class Reminder", "icon": "book-open"},
+    NotificationType.PRIEST_CLASS_REMINDER: {"title": "Class Starting Soon", "icon": "book-open"},
 }
 
 # In-app notification messages (short versions)
@@ -110,6 +114,8 @@ INAPP_MESSAGES = {
     NotificationType.ORDER_STATUS_UPDATED: "Your order #{order_number} has been updated to: {status_label}.",
     NotificationType.ORDER_SHIPPED: "Your order #{order_number} has been shipped! {tracking_info}",
     NotificationType.ORDER_DELIVERED: "Your order #{order_number} has been delivered! {delivery_note}",
+    NotificationType.CLASS_REMINDER: "Your class \"{class_name}\" with {teacher_name} starts in {time_until}. Get ready!",
+    NotificationType.PRIEST_CLASS_REMINDER: "Your class \"{class_name}\" starts in {time_until}. {enrolled_count} student(s) enrolled.",
 }
 
 
@@ -691,3 +697,13 @@ async def notify_order_shipped(user_id: str, order_data: dict):
 async def notify_order_delivered(user_id: str, order_data: dict):
     """Send email + in-app + push when order is delivered"""
     return await send_notification(user_id, NotificationType.ORDER_DELIVERED, order_data)
+
+
+async def notify_class_reminder(user_id: str, class_data: dict):
+    """Send in-app + push reminder for upcoming class (student)"""
+    return await send_notification(user_id, NotificationType.CLASS_REMINDER, class_data)
+
+
+async def notify_priest_class_reminder(user_id: str, class_data: dict):
+    """Send in-app + push reminder for upcoming class (priest/instructor)"""
+    return await send_notification(user_id, NotificationType.PRIEST_CLASS_REMINDER, class_data)

@@ -74,6 +74,9 @@ notification_logs_collection = db["notification_logs"]
 user_notifications_collection = db["user_notifications"]
 fcm_tokens_collection = db["fcm_tokens"]
 
+# Class Reminders Collection
+class_reminders_collection = db["class_reminders"]
+
 # Collections - Devotional Content
 deities_collection = devotional_db["deities"]
 mantras_collection = devotional_db["mantras"]
@@ -128,6 +131,9 @@ async def init_db():
     # Notification logs index
     await notification_logs_collection.create_index([("user_id", 1), ("created_at", -1)])
     await notification_logs_collection.create_index([("notification_type", 1), ("created_at", -1)])
+    # Class reminders indexes
+    await class_reminders_collection.create_index([("user_id", 1), ("class_id", 1)], unique=True)
+    await class_reminders_collection.create_index([("enabled", 1), ("class_id", 1)])
     # Scripture indexes (Dharmic Data)
     await scriptures_collection.create_index("scripture_id", unique=True)
     await scriptures_collection.create_index("category")

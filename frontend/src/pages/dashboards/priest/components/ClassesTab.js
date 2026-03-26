@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit, Trash2, Users, Clock, BookOpen, X, Loader2, Play, Square, Eye, Repeat, DollarSign, MapPin, Building2, IndianRupee, MessageCircle, Video, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Clock, BookOpen, X, Loader2, Play, Square, Eye, Repeat, DollarSign, MapPin, Building2, IndianRupee, MessageCircle, Video, Save, Bell, BellOff, ChevronDown, CheckCircle } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
 import { SCHEDULE_FREQUENCIES, DAYS } from './shared';
@@ -16,11 +16,67 @@ function ClassesTab({ classes, onRefresh }) {
   const [joiningClass, setJoiningClass] = useState(null);
   const { confirm, ConfirmDialog } = useConfirmDialog();
 
+  // Priest self-reminder state
+  const [priestReminders, setPriestReminders] = useState({});
+  const [reminderOptions, setReminderOptions] = useState([]);
+  const [reminderOpen, setReminderOpen] = useState(null);
+  const [settingReminder, setSettingReminder] = useState(null);
+
   useEffect(() => {
     if (activeView === 'requests') {
       fetchClassRequests();
     }
   }, [activeView]);
+
+  useEffect(() => {
+    fetchPriestReminders();
+  }, []);
+
+  const fetchPriestReminders = async () => {
+    try {
+      const res = await api.get('/api/class-reminders');
+      const map = {};
+      (res.data.reminders || []).forEach(r => { map[r.class_id] = r.remind_before_minutes; });
+      setPriestReminders(map);
+      setReminderOptions(res.data.options || [
+        { value: 15, label: '15 min before' },
+        { value: 30, label: '30 min before' },
+        { value: 60, label: '1 hour before' },
+        { value: 120, label: '2 hours before' },
+        { value: 1440, label: '1 day before' },
+      ]);
+    } catch (error) {
+      console.error('Error fetching priest reminders:', error);
+    }
+  };
+
+  const setPriestReminder = async (classId, minutes) => {
+    setSettingReminder(classId);
+    try {
+      await api.post('/api/class-reminders', { class_id: classId, remind_before_minutes: minutes });
+      setPriestReminders(prev => ({ ...prev, [classId]: minutes }));
+      toast.success('Reminder set!');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to set reminder');
+    } finally {
+      setSettingReminder(null);
+      setReminderOpen(null);
+    }
+  };
+
+  const removePriestReminder = async (classId) => {
+    setSettingReminder(classId);
+    try {
+      await api.delete(`/api/class-reminders/${classId}`);
+      setPriestReminders(prev => { const c = { ...prev }; delete c[classId]; return c; });
+      toast.success('Reminder removed');
+    } catch (error) {
+      toast.error('Failed to remove reminder');
+    } finally {
+      setSettingReminder(null);
+      setReminderOpen(null);
+    }
+  };
 
   const fetchClassRequests = async () => {
     setLoadingRequests(true);
@@ -266,6 +322,66 @@ function ClassesTab({ classes, onRefresh }) {
                   )}
                 </div>
               )}
+
+              {/* Priest Self-Reminder */}
+              <div className="relative mt-2">
+                <button
+                  onClick={() => setReminderOpen(reminderOpen === cls.id ? null : cls.id)}
+                  disabled={settingReminder === cls.id}
+                  data-testid={`priest-reminder-btn-${cls.id}`}
+                  className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full transition-all ${
+                    priestReminders[cls.id] !== undefined
+                      ? 'bg-saffron/10 text-saffron border border-saffron/30'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                >
+                  {settingReminder === cls.id ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : priestReminders[cls.id] !== undefined ? (
+                    <Bell className="w-3 h-3" />
+                  ) : (
+                    <BellOff className="w-3 h-3" />
+                  )}
+                  {priestReminders[cls.id] !== undefined
+                    ? reminderOptions.find(o => o.value === priestReminders[cls.id])?.label || 'Reminder set'
+                    : 'Remind me'}
+                  <ChevronDown className="w-2.5 h-2.5" />
+                </button>
+                <AnimatePresence>
+                  {reminderOpen === cls.id && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute left-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-20 min-w-[180px]"
+                    >
+                      {reminderOptions.map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setPriestReminder(cls.id, opt.value)}
+                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-orange-50 ${
+                            priestReminders[cls.id] === opt.value ? 'text-saffron font-medium bg-orange-50' : 'text-gray-700'
+                          }`}
+                        >
+                          {opt.label}
+                          {priestReminders[cls.id] === opt.value && <CheckCircle className="w-3 h-3 inline ml-1.5" />}
+                        </button>
+                      ))}
+                      {priestReminders[cls.id] !== undefined && (
+                        <>
+                          <div className="border-t border-gray-100 my-0.5" />
+                          <button
+                            onClick={() => removePriestReminder(cls.id)}
+                            className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-red-50"
+                          >
+                            Remove Reminder
+                          </button>
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* Room Actions - Only for PAID classes */}
               {(cls.enrolled_count || 0) > 0 && !(cls.is_free || cls.price === 0) && (

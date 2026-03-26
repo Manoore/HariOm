@@ -88,7 +88,20 @@ except ImportError:
 async def lifespan(app: FastAPI):
     await init_db()
     await seed_initial_data()
+    # Start the class reminder scheduler
+    try:
+        from services.class_reminder_scheduler import start_reminder_scheduler
+        start_reminder_scheduler()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Failed to start reminder scheduler: {e}")
     yield
+    # Stop scheduler on shutdown
+    try:
+        from services.class_reminder_scheduler import stop_reminder_scheduler
+        stop_reminder_scheduler()
+    except Exception:
+        pass
 
 app = FastAPI(title="Divine App API", version="1.0.0", lifespan=lifespan)
 

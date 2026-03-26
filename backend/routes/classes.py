@@ -13,14 +13,17 @@ import stripe
 from database import (
     priest_classes_collection, priests_collection, users_collection,
     priest_streams_collection, class_requests_collection, class_enrollments_collection,
-    stream_reminders_collection
+    stream_reminders_collection, class_reminders_collection
 )
 from auth import get_current_user, require_role
 from models import UserRole
 
 # Import notification service
 try:
-    from services.notification_service import notify_class_enrolled, notify_payment_success
+    from services.notification_service import (
+        notify_class_enrolled, notify_payment_success,
+        notify_class_reminder, notify_priest_class_reminder
+    )
     NOTIFICATIONS_ENABLED = True
 except ImportError:
     NOTIFICATIONS_ENABLED = False
@@ -558,6 +561,92 @@ async def delete_class_request(request_id: str, user: dict = Depends(get_current
     
     await class_requests_collection.delete_one({"_id": ObjectId(request_id)})
     return {"message": "Class request deleted successfully"}
+
+
+# ===================== CLASS REMINDERS =====================
+
+REMINDER_OPTIONS = [
+    {"value": 15, "label": "15 minutes before"},
+    {"value": 30, "label": "30 minutes before"},
+    {"value": 60, "label": "1 hour before"},
+    {"value": 120, "label": "2 hours before"},
+    {"value": 1440, "label": "1 day before"},
+]
+
+
+@router.get("/class-reminders")
+async def get_class_reminders(user: dict = Depends(get_current_user)):
+    """Get all class reminders for the current user"""
+    cursor = class_reminders_collection.find({"user_id": str(user["_id"])})
+    reminders = []
+    async for r in cursor:
+        reminders.append({
+            "class_id": r["class_id"],
+            "remind_before_minutes": r["remind_before_minutes"],
+            "enabled": r.get("enabled", True),
+            "created_at": safe_isoformat(r.get("created_at")),
+        })
+    return {"reminders": reminders, "options": REMINDER_OPTIONS}
+
+
+@router.post("/class-reminders")
+async def set_class_reminder(request: Request, user: dict = Depends(get_current_user)):
+    """Set or update a class reminder"""
+    data = await request.json()
+    class_id = data.get("class_id")
+    remind_before_minutes = data.get("remind_before_minutes", 60)
+
+    if not class_id:
+        raise HTTPException(status_code=400, detail="class_id is required")
+
+    valid_minutes = [opt["value"] for opt in REMINDER_OPTIONS]
+    if remind_before_minutes not in valid_minutes:
+        raise HTTPException(status_code=400, detail=f"remind_before_minutes must be one of {valid_minutes}")
+
+    cls = await priest_classes_collection.find_one({"_id": ObjectId(class_id)})
+    if not cls:
+        raise HTTPException(status_code=404, detail="Class not found")
+
+    # Check if user is enrolled or is the priest
+    user_id = str(user["_id"])
+    is_enrolled = user_id in cls.get("enrollments", [])
+    priest = await priests_collection.find_one({"user_id": user_id})
+    is_priest = priest and cls.get("priest_id") == str(priest["_id"])
+
+    if not is_enrolled and not is_priest:
+        raise HTTPException(status_code=403, detail="You must be enrolled in the class or be the instructor")
+
+    role = "priest" if is_priest else "student"
+
+    await class_reminders_collection.update_one(
+        {"user_id": user_id, "class_id": class_id},
+        {"$set": {
+            "user_id": user_id,
+            "class_id": class_id,
+            "remind_before_minutes": remind_before_minutes,
+            "enabled": True,
+            "role": role,
+            "last_sent_for": None,
+            "updated_at": datetime.now(timezone.utc),
+        }, "$setOnInsert": {
+            "created_at": datetime.now(timezone.utc),
+        }},
+        upsert=True
+    )
+    label = next((o["label"] for o in REMINDER_OPTIONS if o["value"] == remind_before_minutes), f"{remind_before_minutes} min before")
+    return {"message": f"Reminder set: {label}", "remind_before_minutes": remind_before_minutes}
+
+
+@router.delete("/class-reminders/{class_id}")
+async def remove_class_reminder(class_id: str, user: dict = Depends(get_current_user)):
+    """Remove a class reminder"""
+    result = await class_reminders_collection.delete_one({
+        "user_id": str(user["_id"]),
+        "class_id": class_id
+    })
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Reminder not found")
+    return {"message": "Reminder removed"}
 
 
 # ===================== STREAM REMINDERS =====================
