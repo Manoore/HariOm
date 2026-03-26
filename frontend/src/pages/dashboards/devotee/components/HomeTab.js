@@ -1,33 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Star, Calendar, ChevronRight, Package, Loader2, X, CheckCircle
-} from 'lucide-react';
+import { Star, Calendar, ChevronRight, Loader2 } from 'lucide-react';
 import api from '../../../../lib/api';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import LanguageSelector from '../../../../components/LanguageSelector';
 import { BellIcon3D, ZodiacIcon3D, CartIcon3D, TempleIcon3D } from './shared';
 import { PostCard } from './FeedTab';
-import { ReviewModal } from './ReviewModal';
 
 export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [priests, setPriests] = useState([]);
   const [festivals, setFestivals] = useState([]);
-  const [bookings, setBookings] = useState([]);
-  const [orders, setOrders] = useState([]);
   const [horoscope, setHoroscope] = useState(null);
   const [priestPosts, setPriestPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewBooking, setReviewBooking] = useState(null);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancelBooking, setCancelBooking] = useState(null);
-  const [cancelLoading, setCancelLoading] = useState(false);
-  const [cancellationPreview, setCancellationPreview] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -38,8 +26,6 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       const requests = [
         api.get('/api/priests?limit=3'),
         api.get('/api/festivals/upcoming?limit=3'),
-        api.get('/api/bookings'),
-        api.get('/api/orders'),
         api.get('/api/posts/feed?limit=5')
       ];
       if (user?.nakshatra || user?.date_of_birth) {
@@ -48,47 +34,12 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       const results = await Promise.all(requests);
       setPriests(results[0].data.priests || []);
       setFestivals(results[1].data.festivals || []);
-      setBookings((results[2].data.bookings || []).slice(0, 3));
-      setOrders((results[3].data.orders || []).slice(0, 3));
-      setPriestPosts(results[4].data.posts || []);
-      if (results[5]) setHoroscope(results[5].data);
+      setPriestPosts(results[2].data.posts || []);
+      if (results[3]) setHoroscope(results[3].data);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchCancellationPreview = async (bookingId) => {
-    try {
-      const res = await api.get(`/api/bookings/${bookingId}/cancellation-preview`);
-      setCancellationPreview(res.data);
-    } catch (error) {
-      console.error('Failed to get cancellation preview:', error);
-      setCancellationPreview(null);
-    }
-  };
-
-  const openCancelModal = async (booking) => {
-    setCancelBooking(booking);
-    setShowCancelModal(true);
-    await fetchCancellationPreview(booking.id);
-  };
-
-  const handleCancelBooking = async (reason = '') => {
-    if (!cancelBooking) return;
-    setCancelLoading(true);
-    try {
-      const res = await api.post(`/api/bookings/${cancelBooking.id}/cancel`, { reason });
-      toast.success(`Booking cancelled. ${res.data.refund_amount > 0 ? `Refund of ₹${res.data.refund_amount} will be processed.` : ''}`);
-      setShowCancelModal(false);
-      setCancelBooking(null);
-      setCancellationPreview(null);
-      fetchData();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to cancel booking');
-    } finally {
-      setCancelLoading(false);
     }
   };
 
@@ -257,161 +208,6 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
               <PostCard key={post.id} post={post} />
             ))}
           </div>
-        </div>
-      )}
-
-      {/* My Bookings & My Orders Row */}
-      <div className={`${isDesktop ? 'grid grid-cols-2 gap-8' : ''} mt-4`}>
-        {/* My Bookings */}
-        <div className="mb-6 lg:mb-0">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="font-cinzel text-lg font-semibold text-maroon">My Bookings</h2>
-          </div>
-          {bookings.length === 0 ? (
-            <div className="bg-white rounded-2xl p-6 text-center border border-orange-50">
-              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">No bookings yet</p>
-              <button onClick={() => setActiveTab('priests')} className="mt-3 text-saffron text-sm font-medium hover:underline">Book a Priest</button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {bookings.map((booking) => (
-                <div key={booking.id} className="bg-white rounded-xl p-4 border border-orange-50 shadow-sm">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold text-gray-800">{booking.service_name}</p>
-                      <p className="text-sm text-gray-500">{booking.priest_name}</p>
-                      {(booking.booking_date || booking.scheduled_date) && (
-                        <p className="text-xs text-gray-400 mt-1">{new Date(booking.booking_date || booking.scheduled_date).toLocaleDateString()}</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                        booking.status === 'completed' ? 'bg-blue-100 text-blue-700' :
-                        booking.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
-                      }`}>{booking.status}</span>
-                      {booking.status === 'completed' && !booking.has_review && (
-                        <button
-                          onClick={() => { setReviewBooking(booking); setShowReviewModal(true); }}
-                          className="text-xs text-saffron hover:underline flex items-center gap-1"
-                          data-testid={`write-review-${booking.id}`}
-                        >
-                          <Star className="w-3 h-3" /> Write Review
-                        </button>
-                      )}
-                      {booking.has_review && (
-                        <span className="text-xs text-green-600 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Reviewed</span>
-                      )}
-                      {(booking.status === 'pending' || booking.status === 'confirmed') && (
-                        <button
-                          onClick={() => openCancelModal(booking)}
-                          className="text-xs text-red-500 hover:underline flex items-center gap-1"
-                          data-testid={`cancel-booking-${booking.id}`}
-                        >
-                          <X className="w-3 h-3" /> Cancel
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* My Orders */}
-        <div className="mb-6 lg:mb-0">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="font-cinzel text-lg font-semibold text-maroon">My Orders</h2>
-          </div>
-          {orders.length === 0 ? (
-            <div className="bg-white rounded-2xl p-6 text-center border border-orange-50">
-              <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">No orders yet</p>
-              <button onClick={() => setActiveTab('shop')} className="mt-3 text-saffron text-sm font-medium hover:underline">Visit Pooja Store</button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {orders.map((order) => (
-                <div key={order.id} className="bg-white rounded-xl p-4 border border-orange-50 shadow-sm">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        <Package className="w-5 h-5 text-saffron" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800">Order #{order.id?.slice(-6)}</p>
-                        <p className="text-sm text-gray-500">₹{order.total_amount}</p>
-                      </div>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                      order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                      order.status === 'processing' ? 'bg-purple-100 text-purple-700' : 'bg-yellow-100 text-yellow-700'
-                    }`}>{order.status}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Review Modal */}
-      {showReviewModal && reviewBooking && (
-        <ReviewModal
-          booking={reviewBooking}
-          onClose={() => { setShowReviewModal(false); setReviewBooking(null); }}
-          onSuccess={() => { setShowReviewModal(false); setReviewBooking(null); fetchData(); toast.success('Review submitted successfully!'); }}
-        />
-      )}
-
-      {/* Cancel Booking Modal */}
-      {showCancelModal && cancelBooking && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl max-w-md w-full p-6">
-            <h3 className="font-cinzel text-xl font-bold text-maroon mb-2">Cancel Booking</h3>
-            <p className="text-gray-600 mb-4">Are you sure you want to cancel <strong>{cancelBooking.service_name}</strong> with {cancelBooking.priest_name}?</p>
-            {cancellationPreview ? (
-              <div className={`rounded-xl p-4 mb-4 ${
-                cancellationPreview.refund_percentage === 100 ? 'bg-green-50 border border-green-200' :
-                cancellationPreview.refund_percentage === 50 ? 'bg-yellow-50 border border-yellow-200' : 'bg-red-50 border border-red-200'
-              }`}>
-                <p className="font-semibold text-gray-800 mb-2">Refund Policy</p>
-                <p className={`text-sm ${
-                  cancellationPreview.refund_percentage === 100 ? 'text-green-700' :
-                  cancellationPreview.refund_percentage === 50 ? 'text-yellow-700' : 'text-red-700'
-                }`}>{cancellationPreview.policy_message}</p>
-                <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
-                  <span className="text-gray-600">Booking Amount</span>
-                  <span className="font-medium">₹{cancellationPreview.booking_price}</span>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-gray-600">Refund Amount</span>
-                  <span className={`font-bold ${cancellationPreview.refund_amount > 0 ? 'text-green-600' : 'text-red-600'}`}>₹{cancellationPreview.refund_amount}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex justify-center py-4"><Loader2 className="w-6 h-6 animate-spin text-saffron" /></div>
-            )}
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setShowCancelModal(false); setCancelBooking(null); setCancellationPreview(null); }}
-                className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition-colors"
-                disabled={cancelLoading}
-              >Keep Booking</button>
-              <button
-                onClick={() => handleCancelBooking()}
-                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
-                disabled={cancelLoading}
-              >
-                {cancelLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                Confirm Cancel
-              </button>
-            </div>
-          </motion.div>
         </div>
       )}
     </div>

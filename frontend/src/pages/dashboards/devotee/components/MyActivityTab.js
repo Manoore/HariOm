@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, Package, Phone, Loader2, Star, X, 
-  CheckCircle, Clock, Truck, ChevronRight, Filter
+  CheckCircle, Clock, Truck, ChevronRight, Filter, Eye
 } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
@@ -14,7 +14,7 @@ const SUB_TABS = [
   { id: 'calls', label: 'Call History', icon: Phone },
 ];
 
-export function MyActivityTab({ isDesktop, setActiveTab: setParentTab, setSelectedPriest }) {
+export function MyActivityTab({ isDesktop, setActiveTab: setParentTab, setSelectedPriest, onViewOrder }) {
   const [subTab, setSubTab] = useState('bookings');
 
   return (
@@ -47,7 +47,7 @@ export function MyActivityTab({ isDesktop, setActiveTab: setParentTab, setSelect
         <BookingsSection isDesktop={isDesktop} setParentTab={setParentTab} setSelectedPriest={setSelectedPriest} />
       )}
       {subTab === 'orders' && (
-        <OrdersSection isDesktop={isDesktop} setParentTab={setParentTab} />
+        <OrdersSection isDesktop={isDesktop} setParentTab={setParentTab} onViewOrder={onViewOrder} />
       )}
       {subTab === 'calls' && (
         <CallHistorySection isDesktop={isDesktop} />
@@ -66,6 +66,7 @@ function BookingsSection({ isDesktop, setParentTab }) {
   const [cancelBooking, setCancelBooking] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancellationPreview, setCancellationPreview] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   useEffect(() => { fetchBookings(); }, []);
 
@@ -167,6 +168,13 @@ function BookingsSection({ isDesktop, setParentTab }) {
               <div className="flex items-center justify-between pt-3 border-t border-orange-50">
                 <span className="font-semibold text-saffron">₹{booking.price}</span>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedBooking(booking)}
+                    className="text-xs bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full font-medium hover:bg-gray-100 flex items-center gap-1"
+                    data-testid={`view-booking-${booking.id}`}
+                  >
+                    <Eye className="w-3 h-3" /> Details
+                  </button>
                   {booking.status === 'completed' && !booking.has_review && (
                     <button
                       onClick={() => { setReviewBooking(booking); setShowReviewModal(true); }}
@@ -203,6 +211,84 @@ function BookingsSection({ isDesktop, setParentTab }) {
           onSuccess={() => { setShowReviewModal(false); setReviewBooking(null); fetchBookings(); toast.success('Review submitted!'); }}
         />
       )}
+
+      {/* Booking Detail Modal */}
+      <AnimatePresence>
+        {selectedBooking && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center"
+            onClick={() => setSelectedBooking(null)}
+          >
+            <motion.div
+              initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }}
+              className="bg-white rounded-t-2xl sm:rounded-2xl max-w-md w-full p-6 max-h-[85vh] overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-cinzel text-lg font-bold text-maroon">Booking Details</h3>
+                <button onClick={() => setSelectedBooking(null)} className="p-1 hover:bg-gray-100 rounded-full">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">Service</span>
+                  <span className="font-semibold text-gray-800">{selectedBooking.service_name}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">Priest</span>
+                  <span className="text-gray-800">{selectedBooking.priest_name}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">Status</span>
+                  <StatusBadge status={selectedBooking.status} />
+                </div>
+                {(selectedBooking.booking_date || selectedBooking.scheduled_date) && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Date</span>
+                    <span className="text-gray-800">{new Date(selectedBooking.booking_date || selectedBooking.scheduled_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                  </div>
+                )}
+                {selectedBooking.booking_time && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Time</span>
+                    <span className="text-gray-800">{selectedBooking.booking_time}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">Amount</span>
+                  <span className="font-bold text-saffron text-lg">₹{selectedBooking.price}</span>
+                </div>
+                {selectedBooking.address && (
+                  <div className="flex justify-between items-start">
+                    <span className="text-sm text-gray-500">Address</span>
+                    <span className="text-gray-800 text-right max-w-[60%]">{selectedBooking.address}</span>
+                  </div>
+                )}
+                {selectedBooking.notes && (
+                  <div className="pt-3 border-t border-orange-50">
+                    <span className="text-sm text-gray-500 block mb-1">Notes</span>
+                    <p className="text-gray-700 text-sm">{selectedBooking.notes}</p>
+                  </div>
+                )}
+                {selectedBooking.payment_status && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Payment</span>
+                    <span className={`text-sm font-medium ${selectedBooking.payment_status === 'paid' ? 'text-green-600' : 'text-yellow-600'}`}>
+                      {selectedBooking.payment_status}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedBooking(null)}
+                className="w-full mt-6 py-3 bg-saffron text-white rounded-xl font-semibold hover:bg-saffron/90 transition-colors"
+              >Close</button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Cancel Modal */}
       <AnimatePresence>
@@ -265,7 +351,7 @@ function BookingsSection({ isDesktop, setParentTab }) {
 }
 
 // ==================== ORDERS SECTION ====================
-function OrdersSection({ isDesktop, setParentTab }) {
+function OrdersSection({ isDesktop, setParentTab, onViewOrder }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -337,16 +423,25 @@ function OrdersSection({ isDesktop, setParentTab }) {
 
           <div className="flex items-center justify-between pt-3 border-t border-orange-50">
             <span className="font-semibold text-saffron">₹{Math.round(order.total_amount || order.total)}</span>
-            {order.status === 'shipped' && (
-              <div className="flex items-center gap-1 text-xs text-blue-600">
-                <Truck className="w-4 h-4" /> In transit
-              </div>
-            )}
-            {order.status === 'delivered' && (
-              <div className="flex items-center gap-1 text-xs text-green-600">
-                <CheckCircle className="w-4 h-4" /> Delivered
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {order.status === 'shipped' && (
+                <div className="flex items-center gap-1 text-xs text-blue-600">
+                  <Truck className="w-4 h-4" /> In transit
+                </div>
+              )}
+              {order.status === 'delivered' && (
+                <div className="flex items-center gap-1 text-xs text-green-600">
+                  <CheckCircle className="w-4 h-4" /> Delivered
+                </div>
+              )}
+              <button
+                onClick={() => onViewOrder?.(order.id)}
+                className="text-xs bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full font-medium hover:bg-gray-100 flex items-center gap-1"
+                data-testid={`view-order-${order.id}`}
+              >
+                <Eye className="w-3 h-3" /> Details
+              </button>
+            </div>
           </div>
         </motion.div>
       ))}

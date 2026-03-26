@@ -315,8 +315,8 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   // Signup settings from admin
   const [signupSettings, setSignupSettings] = useState({
     enable_priest_signup: true,
-    enable_astrologer_signup: false,
-    enable_shop_owner_signup: false
+    enable_astrologer_signup: true,
+    enable_shop_owner_signup: true
   });
   
   // Fetch signup settings

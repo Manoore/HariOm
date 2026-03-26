@@ -31,8 +31,8 @@ async def get_signup_settings():
         return {
             "settings": {
                 "enable_priest_signup": True,
-                "enable_astrologer_signup": False,
-                "enable_shop_owner_signup": False
+                "enable_astrologer_signup": True,
+                "enable_shop_owner_signup": True
             }
         }
     return {"settings": settings.get("value", {})}

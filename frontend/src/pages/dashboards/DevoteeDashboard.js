@@ -36,6 +36,7 @@ import { ProfileTab } from './devotee/components/ProfileTab';
 import { ClassesTab, TestimonialSection } from './devotee/components/ClassesTab';
 import { TemplesTab } from './devotee/components/TemplesTab';
 import { MyActivityTab } from './devotee/components/MyActivityTab';
+import { OrderDetailPage } from '../../components/Checkout/CheckoutComponents';
 
 // Mantras & Shlokas Tab Content
 function MantrasTab({ isDesktop }) {
@@ -1446,6 +1447,7 @@ export default function DevoteeDashboard() {
   const [activeTab, setActiveTab] = useState('home');
   const [selectedPriest, setSelectedPriest] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [orderIdForDetail, setOrderIdForDetail] = useState(null);
   const { user } = useAuth();
   const isDesktop = useIsDesktop();
 
@@ -1492,7 +1494,7 @@ export default function DevoteeDashboard() {
           <HomeTab setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} isDesktop={isDesktop} />
         )}
         {activeTab === 'activity' && (
-          <MyActivityTab isDesktop={isDesktop} setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} />
+          <MyActivityTab isDesktop={isDesktop} setActiveTab={setActiveTab} setSelectedPriest={setSelectedPriest} onViewOrder={(orderId) => { setOrderIdForDetail(orderId); setActiveTab('order-detail'); }} />
         )}
         {activeTab === 'messages' && (
           <>
@@ -1572,6 +1574,14 @@ export default function DevoteeDashboard() {
           <>
             {!isDesktop && <MobileHeader title="My Profile" onBack={() => setActiveTab('home')} />}
             <ProfileTab isDesktop={isDesktop} />
+          </>
+        )}
+        {activeTab === 'order-detail' && orderIdForDetail && (
+          <>
+            {!isDesktop && <MobileHeader title="Order Details" onBack={() => setActiveTab('activity')} />}
+            <div className={`${isDesktop ? 'p-6 max-w-3xl mx-auto' : 'p-4 pb-24'}`}>
+              <OrderDetailPage orderId={orderIdForDetail} onBack={() => setActiveTab('activity')} />
+            </div>
           </>
         )}
       </div>
