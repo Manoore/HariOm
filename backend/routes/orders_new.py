@@ -116,7 +116,7 @@ async def update_order_status(order_id: str, request: Request, user: dict = Depe
             is_shop_owner = True
             break
     
-    if not is_shop_owner and user.get("role") != UserRole.ADMIN:
+    if not is_shop_owner and user.get("role") not in [UserRole.ADMIN, UserRole.SUPER_ADMIN]:
         raise HTTPException(status_code=403, detail="Not authorized")
     
     data = await request.json()
@@ -140,7 +140,7 @@ async def update_order_status(order_id: str, request: Request, user: dict = Depe
     }
     
     # Admin can skip transitions; shop owners must follow the flow
-    if not user.get("role") == UserRole.ADMIN:
+    if user.get("role") not in [UserRole.ADMIN, UserRole.SUPER_ADMIN]:
         if new_status not in allowed_transitions.get(current_status, []):
             raise HTTPException(
                 status_code=400, 
@@ -166,11 +166,16 @@ async def update_order_status(order_id: str, request: Request, user: dict = Depe
             update_set["delivery_instructions"] = delivery_instructions
     elif new_status == "delivered":
         update_set["delivered_at"] = now
+        delivery_photo_url = data.get("delivery_photo_url", "").strip()
+        if delivery_photo_url:
+            update_set["delivery_photo_url"] = delivery_photo_url
     
     # Build status history note
     note = f"Status updated to {new_status}"
     if new_status == "shipping" and data.get("tracking_link"):
         note += f" | Tracking: {data['tracking_link']}"
+    if new_status == "delivered" and data.get("delivery_photo_url"):
+        note += " | Delivery photo attached"
     
     await orders_collection.update_one(
         {"_id": ObjectId(order_id)},
@@ -190,6 +195,85 @@ async def update_order_status(order_id: str, request: Request, user: dict = Depe
     # Deactivate chat when order is delivered or cancelled
     if new_status in ["delivered", "cancelled"]:
         await deactivate_chat_room("order", order_id)
+    
+    # === Send notifications to devotee ===
+    try:
+        from services.notification_service import (
+            notify_order_status_updated, notify_order_shipped, notify_order_delivered
+        )
+        
+        devotee_user_id = order.get("user_id")
+        order_number = str(order["_id"])[-8:].upper()
+        item_summary = ", ".join([f"{i.get('name', 'Item')} x{i.get('quantity', 1)}" for i in order.get("items", [])[:3]])
+        if len(order.get("items", [])) > 3:
+            item_summary += f" +{len(order['items']) - 3} more"
+        total_amount = order.get("total_amount", 0)
+        
+        STATUS_LABELS = {
+            "received": "Received by Shop",
+            "accepted": "Accepted",
+            "processing": "Being Processed",
+            "shipping": "Shipped",
+            "delivered": "Delivered",
+            "cancelled": "Cancelled",
+        }
+        
+        if new_status == "shipping":
+            # Shipping: send email + in-app + push with tracking info
+            tracking_link = data.get("tracking_link", "").strip()
+            delivery_instr = data.get("delivery_instructions", "").strip()
+            
+            tracking_info = f"Track here: {tracking_link}" if tracking_link else "Tracking info will be updated soon."
+            tracking_section = ""
+            if tracking_link:
+                tracking_section = f'''
+                <div style="background: #E8F4FD; padding: 15px; border-radius: 10px; margin: 15px 0;">
+                    <p style="margin: 0 0 5px; color: #0c5460; font-weight: bold;">Track Your Order</p>
+                    <a href="{tracking_link}" style="color: #007bff; word-break: break-all;">{tracking_link}</a>
+                </div>'''
+            instructions_section = ""
+            if delivery_instr:
+                instructions_section = f'''
+                <div style="background: #FFF3CD; padding: 15px; border-radius: 10px; margin: 15px 0;">
+                    <p style="margin: 0 0 5px; color: #856404; font-weight: bold;">Delivery Instructions</p>
+                    <p style="margin: 0; color: #856404;">{delivery_instr}</p>
+                </div>'''
+            
+            await notify_order_shipped(devotee_user_id, {
+                "order_number": order_number,
+                "item_summary": item_summary,
+                "total_amount": str(total_amount),
+                "tracking_info": tracking_info,
+                "tracking_section": tracking_section,
+                "instructions_section": instructions_section,
+            })
+        elif new_status == "delivered":
+            # Delivered: send email + in-app + push
+            photo_url = data.get("delivery_photo_url", "").strip()
+            photo_section = ""
+            if photo_url:
+                photo_section = f'''
+                <div style="margin: 15px 0; text-align: center;">
+                    <p style="color: #155724; font-weight: bold; margin-bottom: 10px;">Delivery Photo</p>
+                    <img src="{photo_url}" alt="Delivery Photo" style="max-width: 100%; border-radius: 10px; border: 2px solid #28a745;" />
+                </div>'''
+            
+            await notify_order_delivered(devotee_user_id, {
+                "order_number": order_number,
+                "item_summary": item_summary,
+                "delivery_note": "Please check your items and leave a review!" if not photo_url else "Delivery photo is attached.",
+                "photo_section": photo_section,
+            })
+        elif new_status in STATUS_LABELS:
+            # Generic status update: in-app + push (no email)
+            await notify_order_status_updated(devotee_user_id, {
+                "order_number": order_number,
+                "status_label": STATUS_LABELS[new_status],
+            })
+    except Exception as e:
+        # Don't fail the status update if notification fails
+        import logging
+        logging.getLogger(__name__).error(f"Failed to send order notification: {e}")
     
     return {"message": "Order status updated", "status": new_status}
 
@@ -266,6 +350,7 @@ async def get_order_details(order_id: str, user: dict = Depends(get_current_user
         "delivered_at": order.get("delivered_at", "").isoformat() if order.get("delivered_at") else None,
         "tracking_link": order.get("tracking_link"),
         "delivery_instructions": order.get("delivery_instructions"),
+        "delivery_photo_url": order.get("delivery_photo_url"),
         "tracking_number": order.get("tracking_number"),
         "tracking_url": order.get("tracking_url"),
         "shops": shops,

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShoppingBag, Loader2, X, Check, Truck, Clock, 
   CheckCircle, XCircle, ChevronRight, PackageCheck, 
-  PackageOpen, Settings, Link2, FileText, ArrowRight
+  PackageOpen, Settings, Link2, FileText, ArrowRight,
+  Camera, Image as ImageIcon, Upload
 } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
@@ -47,6 +48,11 @@ export function OrdersTab({ isDesktop }) {
   const [trackingLink, setTrackingLink] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [deliveryModal, setDeliveryModal] = useState(false);
+  const [deliveryPhoto, setDeliveryPhoto] = useState(null);
+  const [deliveryPhotoPreview, setDeliveryPhotoPreview] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef(null);
 
   useEffect(() => {
     fetchOrders();
@@ -90,8 +96,57 @@ export function OrdersTab({ isDesktop }) {
       setTrackingLink(order.tracking_link || '');
       setDeliveryInstructions(order.delivery_instructions || '');
       setShippingModal(true);
+    } else if (next.key === 'delivered') {
+      setSelectedOrder(order);
+      setDeliveryPhoto(null);
+      setDeliveryPhotoPreview('');
+      setDeliveryModal(true);
     } else {
       updateStatus(order.id, next.key);
+    }
+  };
+
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Photo must be under 5MB');
+      return;
+    }
+    setDeliveryPhoto(file);
+    setDeliveryPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleDeliverySubmit = async () => {
+    if (!selectedOrder) return;
+    setUpdating(true);
+    try {
+      let photoUrl = '';
+      if (deliveryPhoto) {
+        setUploadingPhoto(true);
+        const formData = new FormData();
+        formData.append('file', deliveryPhoto);
+        const uploadRes = await api.post('/api/upload/image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        photoUrl = uploadRes.data.url;
+        setUploadingPhoto(false);
+      }
+      await api.put(`/api/orders/${selectedOrder.id}/status`, {
+        status: 'delivered',
+        delivery_photo_url: photoUrl,
+      });
+      toast.success('Order marked as delivered!');
+      fetchOrders();
+      setSelectedOrder(null);
+      setDeliveryModal(false);
+      setDeliveryPhoto(null);
+      setDeliveryPhotoPreview('');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to update status');
+    } finally {
+      setUpdating(false);
+      setUploadingPhoto(false);
     }
   };
 
@@ -342,6 +397,104 @@ export function OrdersTab({ isDesktop }) {
                 >
                   {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
                   Confirm Shipment
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delivery Photo Modal */}
+      <AnimatePresence>
+        {deliveryModal && selectedOrder && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => { setDeliveryModal(false); setSelectedOrder(null); }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+              data-testid="delivery-modal"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-cinzel text-lg font-semibold text-maroon">
+                  Mark Delivered #{selectedOrder.order_number}
+                </h2>
+                <button onClick={() => { setDeliveryModal(false); setSelectedOrder(null); }} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Upload a delivery photo as proof (optional but recommended).
+                </p>
+
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoSelect}
+                  className="hidden"
+                  data-testid="delivery-photo-file-input"
+                />
+
+                {deliveryPhotoPreview ? (
+                  <div className="relative">
+                    <img
+                      src={deliveryPhotoPreview}
+                      alt="Delivery preview"
+                      className="w-full h-48 object-cover rounded-xl border-2 border-green-200"
+                    />
+                    <button
+                      onClick={() => { setDeliveryPhoto(null); setDeliveryPhotoPreview(''); }}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => photoInputRef.current?.click()}
+                    data-testid="upload-delivery-photo-btn"
+                    className="w-full py-8 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center gap-2 text-gray-500 hover:border-saffron hover:text-saffron transition-colors"
+                  >
+                    <Camera className="w-8 h-8" />
+                    <span className="text-sm font-medium">Take/Upload Delivery Photo</span>
+                    <span className="text-xs text-gray-400">JPEG, PNG up to 5MB</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => { setDeliveryModal(false); setSelectedOrder(null); }}
+                  className="flex-1 py-3 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeliverySubmit}
+                  disabled={updating}
+                  data-testid="confirm-delivery-btn"
+                  className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                >
+                  {updating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {uploadingPhoto ? 'Uploading...' : 'Updating...'}
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" /> Confirm Delivered
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>

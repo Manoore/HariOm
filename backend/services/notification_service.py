@@ -72,6 +72,10 @@ class NotificationType(str, Enum):
     PAYMENT_FAILED = "payment_failed"
     REFUND_INITIATED = "refund_initiated"
     REFUND_COMPLETED = "refund_completed"
+    # Order status notifications
+    ORDER_STATUS_UPDATED = "order_status_updated"
+    ORDER_SHIPPED = "order_shipped"
+    ORDER_DELIVERED = "order_delivered"
 
 
 # Notification titles and icons for in-app display
@@ -87,6 +91,9 @@ NOTIFICATION_CONFIG = {
     NotificationType.PAYMENT_FAILED: {"title": "Payment Failed", "icon": "alert-circle"},
     NotificationType.REFUND_INITIATED: {"title": "Refund Initiated", "icon": "refresh-cw"},
     NotificationType.REFUND_COMPLETED: {"title": "Refund Completed", "icon": "check"},
+    NotificationType.ORDER_STATUS_UPDATED: {"title": "Order Update", "icon": "package"},
+    NotificationType.ORDER_SHIPPED: {"title": "Order Shipped", "icon": "truck"},
+    NotificationType.ORDER_DELIVERED: {"title": "Order Delivered", "icon": "check-circle"},
 }
 
 # In-app notification messages (short versions)
@@ -100,6 +107,9 @@ INAPP_MESSAGES = {
     NotificationType.CLASS_ENROLLED: "You're enrolled in {class_name} by {teacher_name}. Schedule: {schedule}",
     NotificationType.PAYMENT_SUCCESS: "Payment of ₹{amount} successful for {description}.",
     NotificationType.REFUND_INITIATED: "Refund of ₹{refund_amount} has been initiated. Will be credited in 5-7 days.",
+    NotificationType.ORDER_STATUS_UPDATED: "Your order #{order_number} has been updated to: {status_label}.",
+    NotificationType.ORDER_SHIPPED: "Your order #{order_number} has been shipped! {tracking_info}",
+    NotificationType.ORDER_DELIVERED: "Your order #{order_number} has been delivered! {delivery_note}",
 }
 
 
@@ -316,7 +326,61 @@ EMAIL_TEMPLATES = {
             </div>
         </div>
         """
-    }
+    },
+    NotificationType.ORDER_SHIPPED: {
+        "subject": "Your Order Has Been Shipped! - Divine App",
+        "template": """
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #E67E22, #F39C12); border-radius: 10px;">
+                <h1 style="color: white; margin: 0;">Your Order is On Its Way!</h1>
+            </div>
+            <div style="padding: 30px; background: #FFF9F5; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #8B4513;">Namaste {user_name}!</h2>
+                <p style="color: #333; line-height: 1.6;">Great news! Your order has been shipped and is on its way to you.</p>
+                
+                <div style="background: white; padding: 20px; border-radius: 10px; border-left: 4px solid #E67E22; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>Order Number:</strong> #{order_number}</p>
+                    <p style="margin: 5px 0;"><strong>Items:</strong> {item_summary}</p>
+                    <p style="margin: 5px 0;"><strong>Total Amount:</strong> ₹{total_amount}</p>
+                </div>
+                
+                {tracking_section}
+                
+                {instructions_section}
+                
+                <p style="color: #666; font-size: 14px; margin-top: 20px;">You can track your order status anytime in the Divine App under My Orders.</p>
+                
+                <p style="color: #8B4513; margin-top: 30px;">Om Shanti! May your sacred items reach you safely.</p>
+            </div>
+        </div>
+        """
+    },
+    NotificationType.ORDER_DELIVERED: {
+        "subject": "Your Order Has Been Delivered! - Divine App",
+        "template": """
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #28a745, #20c997); border-radius: 10px;">
+                <h1 style="color: white; margin: 0;">Order Delivered!</h1>
+            </div>
+            <div style="padding: 30px; background: #F0FFF4; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #155724;">Namaste {user_name}!</h2>
+                <p style="color: #333; line-height: 1.6;">Your order has been delivered successfully.</p>
+                
+                <div style="background: white; padding: 20px; border-radius: 10px; border-left: 4px solid #28a745; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>Order Number:</strong> #{order_number}</p>
+                    <p style="margin: 5px 0;"><strong>Items:</strong> {item_summary}</p>
+                </div>
+                
+                {photo_section}
+                
+                <p style="color: #155724; font-weight: bold; margin-top: 20px;">Please review the products if you are satisfied!</p>
+                <p style="color: #666; font-size: 14px;">Your feedback helps other devotees find quality spiritual items.</p>
+                
+                <p style="color: #155724; margin-top: 30px;">Shubh Aashirwad!</p>
+            </div>
+        </div>
+        """
+    },
 }
 
 
@@ -612,3 +676,18 @@ async def notify_priest_new_booking(priest_user_id: str, booking_data: dict):
 async def notify_priest_booking_cancelled(priest_user_id: str, booking_data: dict):
     """Send notification to priest when a booking is cancelled"""
     return await send_notification(priest_user_id, NotificationType.PRIEST_BOOKING_CANCELLED, booking_data)
+
+
+async def notify_order_status_updated(user_id: str, order_data: dict):
+    """Send in-app + push notification when order status changes"""
+    return await send_notification(user_id, NotificationType.ORDER_STATUS_UPDATED, order_data)
+
+
+async def notify_order_shipped(user_id: str, order_data: dict):
+    """Send email + in-app + push when order is shipped with tracking info"""
+    return await send_notification(user_id, NotificationType.ORDER_SHIPPED, order_data)
+
+
+async def notify_order_delivered(user_id: str, order_data: dict):
+    """Send email + in-app + push when order is delivered"""
+    return await send_notification(user_id, NotificationType.ORDER_DELIVERED, order_data)

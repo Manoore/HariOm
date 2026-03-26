@@ -1233,6 +1233,19 @@ export function OrderDetailPage({ orderId, onBack }) {
             )}
           </div>
         )}
+
+        {/* Delivery Photo */}
+        {order.delivery_photo_url && (
+          <div className="mt-4 bg-green-50 rounded-xl p-4" data-testid="delivery-photo-section">
+            <p className="text-xs font-medium text-green-700 mb-2">Delivery Photo</p>
+            <img
+              src={order.delivery_photo_url}
+              alt="Delivery proof"
+              className="w-full max-h-64 object-cover rounded-xl border-2 border-green-200"
+              data-testid="delivery-photo-img"
+            />
+          </div>
+        )}
       </div>
 
       {/* Items */}
