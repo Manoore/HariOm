@@ -319,19 +319,141 @@ async def get_transactions(skip: int = 0, limit: int = 50, user: dict = Depends(
     return {"transactions": transactions}
 
 
-@router.post("/wallet/recharge")
-async def recharge_wallet(request: Request, user: dict = Depends(get_current_user)):
-    """Add balance to wallet after successful payment"""
+@router.post("/wallet/create-recharge-intent")
+async def create_recharge_intent(request: Request, user: dict = Depends(get_current_user)):
+    """Create Stripe + Razorpay payment intents for wallet recharge"""
+    import stripe
+    import razorpay
+    from system_config import get_stripe_credentials, get_razorpay_credentials
+    from database import payment_transactions_collection
+
     data = await request.json()
     amount = data.get("amount", 0)
-    payment_id = data.get("payment_id")
-    payment_method = data.get("payment_method", "razorpay")
-    
+
     settings = await get_system_settings()
     if amount < settings["min_recharge_amount"]:
         raise HTTPException(status_code=400, detail=f"Minimum recharge amount is ₹{settings['min_recharge_amount']}")
-    
-    wallet = await add_wallet_balance(str(user["_id"]), amount, payment_id, payment_method)
+
+    user_id = str(user["_id"])
+    amount_paise = int(amount * 100)
+    result = {}
+
+    # Create Stripe payment intent
+    try:
+        stripe_creds = await get_stripe_credentials()
+        stripe.api_key = stripe_creds["secret_key"]
+        if stripe.api_key:
+            intent = stripe.PaymentIntent.create(
+                amount=amount_paise,
+                currency="inr",
+                metadata={"user_id": user_id, "type": "wallet_recharge"}
+            )
+            result["client_secret"] = intent.client_secret
+            result["payment_intent_id"] = intent.id
+    except Exception as e:
+        print(f"Stripe intent creation failed: {e}")
+
+    # Create Razorpay order
+    try:
+        rz_creds = await get_razorpay_credentials()
+        if rz_creds["key_id"] and rz_creds["key_secret"]:
+            rz_client = razorpay.Client(auth=(rz_creds["key_id"], rz_creds["key_secret"]))
+            order = rz_client.order.create(data={
+                "amount": amount_paise,
+                "currency": "INR",
+                "notes": {"user_id": user_id, "type": "wallet_recharge"}
+            })
+            result["razorpay_order_id"] = order["id"]
+            result["razorpay_key"] = rz_creds["key_id"]
+    except Exception as e:
+        print(f"Razorpay order creation failed: {e}")
+
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to create payment intent with any gateway")
+
+    # Store pending recharge record
+    await payment_transactions_collection.insert_one({
+        "user_id": user_id,
+        "amount": amount,
+        "currency": "INR",
+        "payment_intent_id": result.get("payment_intent_id"),
+        "razorpay_order_id": result.get("razorpay_order_id"),
+        "payment_type": "wallet_recharge",
+        "payment_status": "pending",
+        "created_at": datetime.now(timezone.utc)
+    })
+
+    result["amount"] = amount
+    return result
+
+
+@router.post("/wallet/recharge")
+async def recharge_wallet(request: Request, user: dict = Depends(get_current_user)):
+    """Verify payment and add balance to wallet"""
+    import stripe
+    import razorpay
+    from system_config import get_stripe_credentials, get_razorpay_credentials
+    from database import payment_transactions_collection
+
+    data = await request.json()
+    amount = data.get("amount", 0)
+    payment_method = data.get("payment_method", "razorpay")
+    payment_id = data.get("payment_id")
+    payment_intent_id = data.get("payment_intent_id")
+
+    settings = await get_system_settings()
+    if amount < settings["min_recharge_amount"]:
+        raise HTTPException(status_code=400, detail=f"Minimum recharge amount is ₹{settings['min_recharge_amount']}")
+
+    verified = False
+
+    # Verify Stripe payment
+    if payment_method == "stripe" and payment_intent_id:
+        try:
+            stripe_creds = await get_stripe_credentials()
+            stripe.api_key = stripe_creds["secret_key"]
+            intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+            if intent.status == "succeeded":
+                verified = True
+                payment_id = payment_id or payment_intent_id
+        except Exception as e:
+            print(f"Stripe verification failed: {e}")
+
+    # Verify Razorpay payment
+    if payment_method == "razorpay" and payment_id:
+        try:
+            rz_creds = await get_razorpay_credentials()
+            rz_client = razorpay.Client(auth=(rz_creds["key_id"], rz_creds["key_secret"]))
+            payment = rz_client.payment.fetch(payment_id)
+            if payment.get("status") == "captured":
+                verified = True
+        except Exception as e:
+            print(f"Razorpay verification failed: {e}")
+
+    if not verified:
+        raise HTTPException(status_code=400, detail="Payment verification failed. Please contact support.")
+
+    # Update transaction record
+    query = {}
+    if payment_intent_id:
+        query["payment_intent_id"] = payment_intent_id
+    elif payment_id:
+        query["user_id"] = str(user["_id"]), 
+        query["payment_type"] = "wallet_recharge"
+        query["payment_status"] = "pending"
+
+    if query:
+        await payment_transactions_collection.update_one(
+            query,
+            {"$set": {
+                "payment_status": "completed",
+                "payment_id": payment_id,
+                "payment_method": payment_method,
+                "verified_at": datetime.now(timezone.utc)
+            }}
+        )
+
+    wallet = await add_wallet_balance(str(user["_id"]), amount, payment_id or "verified", payment_method)
     return {"message": "Wallet recharged successfully", "wallet": wallet}
 
 

@@ -127,8 +127,8 @@ export function RechargeModal({ isOpen, onClose, onSuccess }) {
     try {
       const res = await api.post('/api/wallet/recharge', {
         amount: amount,
-        payment_id: paymentResult.id || paymentResult.razorpay_payment_id,
-        payment_method: paymentMethod,
+        payment_id: paymentResult.payment_id || paymentResult.order_id,
+        payment_method: paymentResult.method || paymentMethod,
         payment_intent_id: paymentData?.payment_intent_id,
       });
       toast.success(`₹${amount} added to wallet!`);
@@ -227,32 +227,12 @@ export function RechargeModal({ isOpen, onClose, onSuccess }) {
             <SmartPayment
               amount={amount}
               clientSecret={paymentData?.client_secret}
-              razorpayOrderId={paymentData?.razorpay_order_id}
               onSuccess={handlePaymentSuccess}
-              onCancel={() => setShowPayment(false)}
+              onError={(err) => toast.error(err)}
+              description="Wallet Recharge"
               metadata={{ type: 'wallet_recharge' }}
             />
           )}
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
-            className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            data-testid="confirm-recharge-btn"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Plus className="w-5 h-5" />
-                Add ₹{amount}
-              </>
-            )}
-          </button>
         </motion.div>
       </motion.div>
     </AnimatePresence>
