@@ -12,19 +12,7 @@ import { toast } from 'sonner';
 // Import separate components
 import { ClassVideoRoom } from './ClassVideoRoom';
 import { TestimonialSection } from './TestimonialSection';
-
-// SmartPayment component placeholder (actual implementation in main codebase)
-const SmartPayment = ({ amount, onSuccess, onCancel, metadata }) => {
-  return (
-    <div className="text-center py-8">
-      <p className="text-gray-600">Processing payment of ₹{amount}...</p>
-      <div className="flex gap-4 justify-center mt-4">
-        <button onClick={onCancel} className="px-4 py-2 bg-gray-200 rounded-lg">Cancel</button>
-        <button onClick={() => onSuccess({ id: 'mock_payment' })} className="px-4 py-2 bg-saffron text-white rounded-lg">Pay Now</button>
-      </div>
-    </div>
-  );
-};
+import { SmartPayment } from '../../../../components/PaymentComponents';
 
 // Class Request Form Component
 function ClassRequestForm({ 
