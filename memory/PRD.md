@@ -12,154 +12,74 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - **Auth**: Firebase Auth / JWT
 - **Email**: Resend API
 - **Push**: Firebase Cloud Messaging (FCM V1)
-- **Hosting**: Firebase Hosting + Google Cloud Run
-
-## User Personas
-- **Devotee**: End user booking services, shopping, viewing content
-- **Priest**: Service provider for pujas, ceremonies, consultations
-- **Astrologer**: Provides horoscope readings and consultations
-- **Shop Owner**: Sells spiritual products through marketplace
-- **Admin/Super Admin**: Platform management and configuration
 
 ## Core Features Implemented
 
 ### Authentication & User Management
 - Multi-role auth (Devotee, Priest, Astrologer, Shop Owner, Admin)
-- Astrologer & Shop Owner signups enabled
 - JWT-based authentication
 
-### Priest Booking System
-- Browse & book priests for various services
-- Booking management with status tracking
-- Priest dashboard with analytics
-
 ### E-Commerce / Marketplace
-- Product catalog with categories
-- Cart & checkout with Stripe + Razorpay
-- **Order Status Lifecycle**:
-  - Status flow: pending → paid → received → accepted → processing → shipping → delivered
-  - Shop owners progress orders through each status
-  - When marking "shipping": tracking link + delivery instructions input
-  - When marking "delivered": delivery photo proof upload (optional)
-  - Devotees see 7-step tracking timeline with timestamps
-  - Status transition validation (prevents invalid jumps)
-  - Admin (super_admin) can skip transitions
+- Product catalog, cart, checkout with Stripe + Razorpay
+- Order Status Lifecycle: pending → paid → received → accepted → processing → shipping → delivered
+- Tracking link + delivery instructions on shipping
+- Delivery photo proof on delivered
+- In-app + push + email notifications on status changes
 
-### Order Notifications System (NEW - Feb 26, 2026)
-- **In-App Notifications**: Every status change creates a notification in the devotee's notification feed
-  - Types: order_status_updated, order_shipped, order_delivered
-- **Email Notifications via Resend**:
-  - Shipping email with tracking link, delivery instructions, item summary
-  - Delivered email with delivery photo (if uploaded)
-  - Beautiful HTML templates matching Divine App branding
-- **Push Notifications**: FCM V1 push to all registered devices
-- All notification channels fire simultaneously (in-app + email + push)
+### Scheduled Class Reminders (NEW - Feb 26, 2026)
+- User-configurable timing: 15 min, 30 min, 1 hour, 2 hours, 1 day before
+- Only enrolled students and class instructor can set reminders
+- In-app + push notification channels
+- Background scheduler runs every 60 seconds
+- API: GET/POST/DELETE /api/class-reminders
+- Devotee UI: Bell icon dropdown on enrolled classes
+- Priest UI: "Remind me" dropdown on their class cards
 
-### Delivery Photo Proof (NEW - Feb 26, 2026)
-- Shop owner uploads delivery photo via `/api/upload/image`
-- Photo URL saved to order document (`delivery_photo_url`)
-- Devotee sees delivery photo in OrderDetailPage
-- Photo included in delivery confirmation email
+### Other Features
+- Priest booking system with status tracking
+- Astrology services (horoscope, birth chart, consultations)
+- Devotional content (mantras, stotras, festivals, temples)
+- Video consultations (100ms SDK, per-minute billing)
+- Admin dashboard (user management, system config)
+- ErrorBoundary for iOS Safari crash recovery
 
-### Astrology Services
-- Daily horoscope
-- Birth chart generation
-- Consultation booking
-
-### Devotional Content
-- Mantras, stotras, scriptures
-- Audio/video library
-- Festival calendar
-- Temple directory
-
-### Video Consultations
-- 100ms SDK integration for live calls
-- Per-minute billing with wallet system
-
-### Admin Dashboard
-- User/priest/shop management
-- System configuration (fees, taxes, signup toggles)
-- Cancellation/refund policy settings
-
-## What's Been Implemented (Session - Feb 26, 2026)
-- [x] Shop Owner Order Status Lifecycle (received → accepted → processing → shipping → delivered)
-- [x] Tracking link + delivery instructions on shipping status
-- [x] In-app notifications for all order status changes
-- [x] Shipping email with tracking info via Resend
-- [x] Delivery email with photo proof via Resend
-- [x] Delivery photo upload + display for delivered orders
-- [x] Shop Owner OrdersTab with shipping modal, delivery photo modal
-- [x] Devotee OrderDetailPage with 7-step timeline, tracking info, delivery photo
-- [x] Backend status transition validation with admin override
-- [x] All status references updated across codebase
-
-## P0/P1/P2 Backlog
+## P1/P2 Backlog
 
 ### P1 - Upcoming
 1. CI/CD Pipeline Setup (GitHub Actions → Cloud Run + Firebase)
-2. Play Store TWA Setup (Trusted Web Activity Android App Bundle)
+2. Play Store TWA Setup
 
 ### P2 - Future
-3. Provider Payout Dashboard (earnings & payout history)
-4. Scheduled push notification reminders for Vedic classes
-5. Phase 2 Live Streams (100ms HLS broadcasting)
-6. Temple section enhancements (AI images, maps, nearby temples)
+3. Provider Payout Dashboard
+4. Phase 2 Live Streams (100ms HLS broadcasting)
+5. Temple section enhancements (AI images, maps, nearby temples)
 
 ## Key API Endpoints
-- `PUT /api/orders/{id}/status` — Update order status with optional tracking_link, delivery_instructions, delivery_photo_url
-- `GET /api/orders/{id}` — Order detail with all tracking/delivery fields
-- `GET /api/orders` — User's orders list
-- `GET /api/shop/orders` — Shop owner's orders (with filters)
-- `GET /api/notifications` — User's notification feed (includes order notifications)
-- `POST /api/upload/image` — Upload image, returns URL
-- `POST /api/checkout` — Create order with payment
-- `POST /api/payment/confirm/{id}` — Confirm Stripe payment
-- `POST /api/razorpay/verify` — Verify Razorpay payment
-
-## Key DB Schema
-- `orders`: status, tracking_link, delivery_instructions, delivery_photo_url, status_history[], received_at, accepted_at, shipped_at, delivered_at
-- `notification_logs`: user_id, type, title, message, icon, is_read, data, created_at (also used for email send logs with is_log=True)
-- `fcm_tokens`: user_id, token, active
-- `system_config`: signup settings, platform fees, taxes
-
-## Notification Types
-- `order_status_updated` — In-app + push (received, accepted, processing, cancelled)
-- `order_shipped` — In-app + push + email with tracking
-- `order_delivered` — In-app + push + email with delivery photo
+- `PUT /api/orders/{id}/status` — Order status lifecycle
+- `GET /api/orders/{id}` — Order detail with tracking/delivery fields
+- `GET/POST/DELETE /api/class-reminders` — Class reminder CRUD
+- `GET /api/my-enrollments` — User's enrolled classes
+- `GET /api/notifications` — User's notification feed
 
 ## Test Credentials
 - Devotee: `devotee@divineapp.com` / `devotee123`
-- Admin: `admin@divineapp.com` / `admin123` (role: super_admin)
+- Admin: `admin@divineapp.com` / `admin123`
 - Priest: `pandit.sharma@divineapp.com` / `priest123`
 - Astrologer: `astro.joshi@divineapp.com` / `astro123`
 - Shop Owner: `shop.poojamart@divineapp.com` / `shop123`
 
 ## Code Architecture
 ```
-/app/
-├── backend/
-│   ├── routes/
-│   │   ├── orders_new.py        # Order status lifecycle + notifications
-│   │   ├── shop.py              # Shop owner endpoints
-│   │   ├── notifications.py     # Notification CRUD API
-│   │   ├── uploads.py           # File upload (images, videos)
-│   │   ├── admin_new.py
-│   │   ├── auth_new.py
-│   │   └── ...
-│   ├── services/
-│   │   └── notification_service.py  # Email (Resend) + In-App + Push (FCM)
-│   ├── models.py                    # OrderStatus enum (8 statuses)
-│   ├── server.py
-│   └── tests/
-│       ├── test_order_status_lifecycle.py
-│       └── test_order_notifications.py
-└── frontend/
-    └── src/
-        ├── components/
-        │   ├── Checkout/CheckoutComponents.js  # OrderDetailPage with delivery photo
-        │   └── ErrorBoundary.js
-        └── pages/
-            └── dashboards/
-                ├── shopowner/components/OrdersTab.js  # Shipping + Delivery modals
-                └── devotee/components/MyActivityTab.js
+/app/backend/
+├── routes/classes.py              # Class reminder API endpoints
+├── routes/orders_new.py           # Order status + notifications
+├── services/
+│   ├── notification_service.py    # Email + In-App + Push (CLASS_REMINDER types)
+│   └── class_reminder_scheduler.py # Background scheduler (60s loop)
+├── database.py                    # class_reminders_collection
+└── server.py                      # Scheduler startup in lifespan
+
+/app/frontend/src/pages/dashboards/
+├── devotee/components/ClassesTab.js  # Enrolled class reminder UI
+└── priest/components/ClassesTab.js   # Priest self-reminder UI
 ```

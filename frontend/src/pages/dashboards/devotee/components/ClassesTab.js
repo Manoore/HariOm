@@ -639,6 +639,10 @@ function ClassesTab({ isDesktop }) {
   const formatDate = (dateStr) => {
     if (!dateStr) return 'TBD';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      // Handle time-only strings like "10:00"
+      return dateStr;
+    }
     return date.toLocaleDateString('en-IN', { 
       weekday: 'short', 
       day: 'numeric', 
