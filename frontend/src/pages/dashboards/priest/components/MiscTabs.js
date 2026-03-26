@@ -298,23 +298,96 @@ function PanchangTab({ panchang, festivals }) {
 }
 
 function EarningsTab({ earnings, analytics }) {
+  const totalEarnings = earnings?.total_earnings || analytics?.stats?.total_earnings || 0;
+  const monthlyEarnings = earnings?.monthly_earnings || analytics?.stats?.monthly_earnings || 0;
+  const classEarnings = earnings?.class_earnings || 0;
+  const pendingPayouts = earnings?.pending_payouts || 0;
+  const bookingEarnings = totalEarnings - classEarnings;
+
   return (
-    <div className="space-y-4">
-      <h2 className="font-cinzel text-lg font-semibold text-maroon">Earnings</h2>
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white"><p className="text-sm opacity-80">Total</p><p className="text-2xl font-bold">₹{earnings?.total_earnings || analytics?.stats?.total_earnings || 0}</p></div>
-        <div className="bg-gradient-to-br from-saffron to-orange-500 rounded-xl p-4 text-white"><p className="text-sm opacity-80">This Month</p><p className="text-2xl font-bold">₹{earnings?.monthly_earnings || analytics?.stats?.monthly_earnings || 0}</p></div>
-        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white"><p className="text-sm opacity-80">Pending</p><p className="text-2xl font-bold">₹{earnings?.pending_payouts || 0}</p></div>
+    <div className="space-y-6" data-testid="priest-earnings-tab">
+      <div>
+        <h2 className="font-cinzel text-2xl font-bold text-maroon">Earnings & Payouts</h2>
+        <p className="text-gray-500 text-sm">Track your bookings, class income, and payouts</p>
       </div>
-      <div className="bg-white rounded-xl p-4"><h3 className="font-semibold mb-4">Recent Transactions</h3>
-        {(!earnings?.transactions || earnings.transactions.length === 0) ? <p className="text-center text-gray-400 py-8">No transactions</p> : (
-          <div className="space-y-2">{earnings.transactions.slice(0,10).map((t,i) => (
-            <div key={i} className="flex justify-between p-3 border border-gray-100 rounded-xl">
-              <div><p className="font-medium">{t.description}</p><p className="text-xs text-gray-400">{t.date}</p></div>
-              <p className="font-bold text-green-600">+₹{t.amount}</p>
+
+      {/* Summary Cards */}
+      <div className="grid md:grid-cols-4 grid-cols-2 gap-4">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-4 text-white">
+          <p className="text-sm opacity-80">Net Earnings</p>
+          <p className="text-2xl font-bold">₹{totalEarnings.toLocaleString()}</p>
+        </div>
+        <div className="bg-gradient-to-br from-saffron to-orange-500 rounded-2xl p-4 text-white">
+          <p className="text-sm opacity-80">This Month</p>
+          <p className="text-2xl font-bold">₹{monthlyEarnings.toLocaleString()}</p>
+        </div>
+        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 text-white">
+          <p className="text-sm opacity-80">Pending Payout</p>
+          <p className="text-2xl font-bold">₹{pendingPayouts.toLocaleString()}</p>
+        </div>
+        <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl p-4 text-white">
+          <p className="text-sm opacity-80">Class Income</p>
+          <p className="text-2xl font-bold">₹{classEarnings.toLocaleString()}</p>
+        </div>
+      </div>
+
+      {/* Income Sources */}
+      <div className="bg-white rounded-2xl p-6 border border-orange-100">
+        <h3 className="font-cinzel text-lg font-semibold text-maroon mb-4">Income Sources</h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-saffron/10 rounded-xl flex items-center justify-center text-saffron text-lg">🙏</div>
+              <div>
+                <p className="font-medium text-gray-800">Puja Bookings</p>
+                <p className="text-xs text-gray-500">Completed ceremonies & consultations</p>
+              </div>
             </div>
-          ))}</div>
+            <p className="font-bold text-green-600 text-lg">₹{bookingEarnings.toLocaleString()}</p>
+          </div>
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 text-lg">📚</div>
+              <div>
+                <p className="font-medium text-gray-800">Vedic Classes</p>
+                <p className="text-xs text-gray-500">Student enrollment fees</p>
+              </div>
+            </div>
+            <p className="font-bold text-purple-600 text-lg">₹{classEarnings.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Transactions */}
+      <div className="bg-white rounded-2xl p-6 border border-orange-100">
+        <h3 className="font-cinzel text-lg font-semibold text-maroon mb-4">Recent Transactions</h3>
+        {(!earnings?.transactions || earnings.transactions.length === 0) ? (
+          <p className="text-center text-gray-400 py-8">No transactions yet</p>
+        ) : (
+          <div className="space-y-3">
+            {earnings.transactions.slice(0, 15).map((t, i) => (
+              <div key={i} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    t.type === 'class' ? 'bg-purple-50 text-purple-600' : 'bg-green-50 text-green-600'
+                  }`}>
+                    {t.type === 'class' ? '📚' : '🙏'}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-800">{t.service_name || t.description || 'Service'}</p>
+                    <p className="text-xs text-gray-500">
+                      {t.date ? new Date(t.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                    </p>
+                  </div>
+                </div>
+                <p className="font-bold text-green-600">+₹{t.amount}</p>
+              </div>
+            ))}
+          </div>
         )}
+        <p className="text-xs text-gray-400 mt-4">
+          Payouts are processed after service completion. Contact support for payout queries.
+        </p>
       </div>
     </div>
   );

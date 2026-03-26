@@ -1,12 +1,12 @@
 import React from 'react';
-import { Package, ShoppingBag, MessageSquare, Store } from 'lucide-react';
+import { Package, ShoppingBag, MessageSquare, Store, DollarSign } from 'lucide-react';
 import { OmIcon } from './shared';
 
 export function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
   const tabs = [
     { id: 'home', icon: OmIcon, label: 'Home' },
-    { id: 'products', icon: Package, label: 'Products' },
     { id: 'orders', icon: ShoppingBag, label: 'Orders' },
+    { id: 'earnings', icon: DollarSign, label: 'Earnings' },
     { id: 'messages', icon: MessageSquare, label: 'Chat', badge: unreadMessages },
     { id: 'profile', icon: Store, label: 'Shop' },
   ];

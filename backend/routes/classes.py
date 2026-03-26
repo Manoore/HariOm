@@ -162,6 +162,24 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
             "enrolled_at": datetime.now(timezone.utc)
         })
         
+        # Auto-set 1-hour reminder for the enrolled student
+        try:
+            await class_reminders_collection.update_one(
+                {"user_id": str(user["_id"]), "class_id": class_id},
+                {"$set": {
+                    "user_id": str(user["_id"]),
+                    "class_id": class_id,
+                    "remind_before_minutes": 60,
+                    "enabled": True,
+                    "role": "student",
+                    "last_sent_for": None,
+                    "updated_at": datetime.now(timezone.utc),
+                }, "$setOnInsert": {"created_at": datetime.now(timezone.utc)}},
+                upsert=True
+            )
+        except Exception:
+            pass
+        
         return {"message": "Successfully enrolled in free class", "class_id": class_id, "is_free": True}
     
     # Check if this is a payment confirmation callback
@@ -188,6 +206,24 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
             "status": "completed",
             "enrolled_at": datetime.now(timezone.utc)
         })
+        
+        # Auto-set 1-hour reminder for the enrolled student
+        try:
+            await class_reminders_collection.update_one(
+                {"user_id": str(user["_id"]), "class_id": class_id},
+                {"$set": {
+                    "user_id": str(user["_id"]),
+                    "class_id": class_id,
+                    "remind_before_minutes": 60,
+                    "enabled": True,
+                    "role": "student",
+                    "last_sent_for": None,
+                    "updated_at": datetime.now(timezone.utc),
+                }, "$setOnInsert": {"created_at": datetime.now(timezone.utc)}},
+                upsert=True
+            )
+        except Exception:
+            pass
         
         if NOTIFICATIONS_ENABLED:
             try:

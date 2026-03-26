@@ -6,3 +6,4 @@ export { ProductsTab } from './ProductsTab';
 export { OrdersTab } from './OrdersTab';
 export { InventoryTab } from './InventoryTab';
 export { ShopProfileTab } from './ShopProfileTab';
+export { EarningsTab } from './EarningsTab';

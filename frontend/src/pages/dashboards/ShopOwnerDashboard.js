@@ -13,6 +13,7 @@ import { ProductsTab } from './shopowner/components/ProductsTab';
 import { OrdersTab } from './shopowner/components/OrdersTab';
 import { InventoryTab } from './shopowner/components/InventoryTab';
 import { ShopProfileTab } from './shopowner/components/ShopProfileTab';
+import { EarningsTab } from './shopowner/components/EarningsTab';
 
 export default function ShopOwnerDashboard() {
   const { user } = useAuth();
@@ -41,6 +42,8 @@ export default function ShopOwnerDashboard() {
         return <ProductsTab isDesktop={isDesktop} />;
       case 'orders':
         return <OrdersTab isDesktop={isDesktop} />;
+      case 'earnings':
+        return <EarningsTab isDesktop={isDesktop} />;
       case 'inventory':
         return <InventoryTab isDesktop={isDesktop} />;
       case 'messages':

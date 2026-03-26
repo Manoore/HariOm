@@ -3,7 +3,7 @@ Shop Owner Routes
 Handles shop registration, products, orders, inventory, and profile management
 """
 from fastapi import APIRouter, HTTPException, Depends, Request
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from bson import ObjectId
 
@@ -279,6 +279,91 @@ async def get_shop_dashboard(user: dict = Depends(require_role([UserRole.SHOP_OW
         },
         "recent_orders": recent_orders,
         "top_products": [{"id": p["_id"], "name": p["name"], "sold": p["sold"], "revenue": p["revenue"]} for p in top_products]
+    }
+
+
+@router.get("/earnings")
+async def get_shop_earnings(user: dict = Depends(require_role([UserRole.SHOP_OWNER]))):
+    """Get shop earnings summary with payout breakdown"""
+    shop = await shops_collection.find_one({"owner_id": str(user["_id"])})
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    
+    shop_id = str(shop["_id"])
+    now = datetime.now(timezone.utc)
+    start_of_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    start_of_week = now - timedelta(days=now.weekday())
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    paid_statuses = ["paid", "received", "accepted", "processing", "shipping", "delivered"]
+    
+    # Helper to aggregate shop revenue for a period
+    async def get_revenue(date_filter=None):
+        match = {"shop_ids": shop_id, "status": {"$in": paid_statuses}}
+        if date_filter:
+            match["created_at"] = date_filter
+        pipeline = [
+            {"$match": match},
+            {"$unwind": "$items"},
+            {"$match": {"items.shop_id": shop_id}},
+            {"$group": {"_id": None, "total": {"$sum": "$items.subtotal"}, "count": {"$sum": 1}}}
+        ]
+        result = await orders_collection.aggregate(pipeline).to_list(1)
+        return (result[0]["total"], result[0]["count"]) if result else (0, 0)
+    
+    total_rev, total_count = await get_revenue()
+    today_rev, today_count = await get_revenue({"$gte": start_of_today})
+    week_rev, week_count = await get_revenue({"$gte": start_of_week})
+    month_rev, month_count = await get_revenue({"$gte": start_of_month})
+    
+    # Platform fee calculation (configurable, default 5%)
+    from system_config import get_config_value
+    platform_fee_pct = float(await get_config_value("platform_fee_percentage", 5)) / 100
+    gst_pct = float(await get_config_value("gst_percentage", 18)) / 100
+    
+    platform_fee = round(total_rev * platform_fee_pct, 2)
+    gst_on_fee = round(platform_fee * gst_pct, 2)
+    net_earnings = round(total_rev - platform_fee - gst_on_fee, 2)
+    pending_payout = net_earnings  # placeholder until payout integration
+    
+    # Recent completed orders as transactions
+    cursor = orders_collection.find(
+        {"shop_ids": shop_id, "status": {"$in": paid_statuses}}
+    ).sort("created_at", -1).limit(20)
+    
+    transactions = []
+    async for order in cursor:
+        shop_items = [item for item in order["items"] if item.get("shop_id") == shop_id]
+        order_total = sum(item.get("subtotal", 0) for item in shop_items)
+        fee = round(order_total * platform_fee_pct, 2)
+        transactions.append({
+            "id": str(order["_id"]),
+            "order_number": str(order["_id"])[-8:].upper(),
+            "amount": order_total,
+            "platform_fee": fee,
+            "net_amount": round(order_total - fee, 2),
+            "status": order.get("status"),
+            "items_count": len(shop_items),
+            "date": order.get("created_at", now).isoformat(),
+        })
+    
+    return {
+        "total_revenue": total_rev,
+        "today_revenue": today_rev,
+        "week_revenue": week_rev,
+        "month_revenue": month_rev,
+        "total_orders": total_count,
+        "today_orders": today_count,
+        "week_orders": week_count,
+        "month_orders": month_count,
+        "platform_fee": platform_fee,
+        "platform_fee_pct": platform_fee_pct * 100,
+        "gst_on_fee": gst_on_fee,
+        "gst_pct": gst_pct * 100,
+        "net_earnings": net_earnings,
+        "pending_payout": pending_payout,
+        "transactions": transactions,
     }
 
 @router.put("/products/{product_id}")

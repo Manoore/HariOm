@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, ShoppingBag, BarChart3, MessageSquare, Store, LogOut } from 'lucide-react';
+import { Package, ShoppingBag, BarChart3, MessageSquare, Store, LogOut, DollarSign } from 'lucide-react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { OmIcon } from './shared';
 
@@ -10,6 +10,7 @@ export function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
     { id: 'home', icon: OmIcon, label: 'Dashboard' },
     { id: 'products', icon: Package, label: 'Products' },
     { id: 'orders', icon: ShoppingBag, label: 'Orders' },
+    { id: 'earnings', icon: DollarSign, label: 'Earnings' },
     { id: 'inventory', icon: BarChart3, label: 'Inventory' },
     { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages },
     { id: 'profile', icon: Store, label: 'Shop Profile' },
