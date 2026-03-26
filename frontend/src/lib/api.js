@@ -23,13 +23,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Only clear auth on actual auth endpoints, not on all 401s
       const url = error.config?.url || '';
-      if (url.includes('/auth/') || url.includes('/admin/') || url.includes('/bookings') || url.includes('/orders')) {
-        console.log('Auth error on protected route, clearing session');
+      // Only clear auth on explicit auth endpoints, NOT on data endpoints
+      // New users may hit 401 on data endpoints briefly during auth setup
+      if (url.includes('/auth/me') || url.includes('/auth/login')) {
+        console.log('Auth error on auth route, clearing session');
         localStorage.removeItem('divine_token');
         localStorage.removeItem('divine_user');
-        // Don't redirect, let the app handle the auth state
       }
     }
     return Promise.reject(error);

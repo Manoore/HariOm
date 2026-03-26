@@ -8,6 +8,7 @@ import AstrologerDashboard from './dashboards/AstrologerDashboard';
 import PriestDashboard from './dashboards/PriestDashboard';
 import AdminDashboard from './dashboards/AdminDashboard';
 import ShopOwnerDashboard from './dashboards/ShopOwnerDashboard';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Loader2, User, Phone, MapPin, Calendar, Star, ChevronRight } from 'lucide-react';
 import api from '../lib/api';
 import { Toaster, toast } from 'sonner';
@@ -526,7 +527,11 @@ export default function MobileApp() {
         return <AuthScreen key="auth" />;
       }
 
-      return <DashboardComponent key={`dashboard-${userRole}`} />;
+      return (
+        <ErrorBoundary key={`eb-${userRole}`}>
+          <DashboardComponent key={`dashboard-${userRole}`} />
+        </ErrorBoundary>
+      );
     }
 
     // Desktop/Web flow - Always show landing page first unless user explicitly wants dashboard
@@ -541,7 +546,11 @@ export default function MobileApp() {
     // IMPORTANT: Check if user is logged in AND wants dashboard FIRST
     // This ensures navigation to dashboard after successful login
     if (isLoggedIn && showDashboard && DashboardComponent) {
-      return <DashboardComponent key={`dashboard-${userRole}`} />;
+      return (
+        <ErrorBoundary key={`eb-${userRole}`}>
+          <DashboardComponent key={`dashboard-${userRole}`} />
+        </ErrorBoundary>
+      );
     }
 
     // If returning from payment but not logged in, show auth screen

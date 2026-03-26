@@ -34,6 +34,9 @@ export function AuthProvider({ children }) {
   const [firebaseUser, setFirebaseUser] = useState(null);
   const authListenerActive = useRef(true);
   const hasProcessedInitialState = useRef(false);
+  // Guard flag: when true, onAuthStateChanged should NOT process user
+  // This prevents race conditions during Phone OTP and Google auth flows
+  const manualAuthInProgress = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -83,13 +86,23 @@ export function AuthProvider({ children }) {
     const unsubscribe = onFirebaseAuthStateChanged(async (fbUser) => {
       if (!isMounted || !authListenerActive.current) return;
       
+      // CRITICAL: Skip processing if a manual auth flow (Phone OTP or Google)
+      // is currently in progress. The manual flow handles user state itself.
+      if (manualAuthInProgress.current) {
+        console.log('Manual auth in progress, skipping onAuthStateChanged');
+        if (fbUser) {
+          setFirebaseUser(fbUser);
+        }
+        return;
+      }
+      
       // Skip if already processed AND no firebase user change
       if (hasProcessedInitialState.current && !fbUser) {
         console.log('Already processed initial state, ignoring null state');
         return;
       }
       
-      console.log('Processing auth state:', fbUser ? fbUser.email : 'null');
+      console.log('Processing auth state:', fbUser ? (fbUser.email || fbUser.phoneNumber) : 'null');
       
       if (fbUser) {
         hasProcessedInitialState.current = true;
@@ -100,9 +113,11 @@ export function AuthProvider({ children }) {
           
           const res = await api.post('/api/auth/firebase-sync', {
             firebase_uid: fbUser.uid,
-            email: fbUser.email,
-            name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
-            photo_url: fbUser.photoURL
+            email: fbUser.email || fbUser.phoneNumber,
+            name: fbUser.displayName || fbUser.email?.split('@')[0] || fbUser.phoneNumber || 'User',
+            photo_url: fbUser.photoURL,
+            phone: fbUser.phoneNumber || undefined,
+            auth_type: fbUser.phoneNumber ? 'phone' : undefined
           });
           
           if (isMounted) {
@@ -113,15 +128,20 @@ export function AuthProvider({ children }) {
         } catch (error) {
           console.error('Sync error:', error);
           if (isMounted) {
-            const fallbackUser = {
-              email: fbUser.email,
-              name: fbUser.displayName || 'User',
-              role: 'devotee',
-              firebase_uid: fbUser.uid
-            };
-            setFirebaseUser(fbUser);
-            setUser(fallbackUser);
-            localStorage.setItem('divine_user', JSON.stringify(fallbackUser));
+            // Only set fallback if we don't already have a valid user
+            const existingUser = getInitialUser();
+            if (!existingUser) {
+              const fallbackUser = {
+                email: fbUser.email || fbUser.phoneNumber,
+                name: fbUser.displayName || fbUser.phoneNumber || 'User',
+                phone: fbUser.phoneNumber,
+                role: 'devotee',
+                firebase_uid: fbUser.uid
+              };
+              setFirebaseUser(fbUser);
+              setUser(fallbackUser);
+              localStorage.setItem('divine_user', JSON.stringify(fallbackUser));
+            }
           }
         }
       } else {
@@ -201,6 +221,9 @@ export function AuthProvider({ children }) {
     try {
       console.log('Starting Google Sign-In...', selectedRole ? `with role: ${selectedRole}` : '');
       
+      // Set guard to prevent onAuthStateChanged from interfering
+      manualAuthInProgress.current = true;
+      
       // Store selected role for redirect flow (mobile)
       if (selectedRole) {
         localStorage.setItem('divine_pending_role', selectedRole);
@@ -212,6 +235,7 @@ export function AuthProvider({ children }) {
       // by checkGoogleRedirectResult after page reload
       if (!result) {
         console.log('Redirect flow initiated (mobile), waiting for redirect...');
+        manualAuthInProgress.current = false;
         return { user: null, redirecting: true };
       }
       
@@ -240,7 +264,7 @@ export function AuthProvider({ children }) {
           const basicUser = {
             email: result.user.email,
             name: result.user.displayName || 'User',
-            role: 'devotee',
+            role: selectedRole || 'devotee',
             firebase_uid: result.user.uid
           };
           setFirebaseUser(result.user);
@@ -252,9 +276,12 @@ export function AuthProvider({ children }) {
       }
       
       setLoading(false);
+      // Release guard after user state is fully set
+      manualAuthInProgress.current = false;
       return { user: result.user };
     } catch (error) {
       console.error('Google sign in error:', error.code, error.message);
+      manualAuthInProgress.current = false;
       throw error;
     }
   };
@@ -314,6 +341,9 @@ export function AuthProvider({ children }) {
   // Verify OTP and sign in with phone
   const verifyOTPAndSignIn = async (otp, userData = {}) => {
     try {
+      // Set guard to prevent onAuthStateChanged from interfering
+      manualAuthInProgress.current = true;
+      
       const result = await verifyPhoneOTP(otp);
       
       if (result.user) {
@@ -351,9 +381,12 @@ export function AuthProvider({ children }) {
       }
       
       setLoading(false);
+      // Release guard after user state is fully set
+      manualAuthInProgress.current = false;
       return { user: result.user };
     } catch (error) {
       console.error('OTP verification error:', error);
+      manualAuthInProgress.current = false;
       throw error;
     }
   };
