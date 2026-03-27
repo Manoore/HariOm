@@ -49,7 +49,7 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Video consultations (100ms SDK, per-minute billing)
 - Admin dashboard (user management, system config)
 
-## What's Been Implemented (Session - Mar 26, 2026)
+## What's Been Implemented (Session - Mar 26-27, 2026)
 - [x] Backend: POST /api/wallet/create-recharge-intent (real Stripe + Razorpay intent generation)
 - [x] Backend: POST /api/wallet/recharge (payment verification before balance addition)
 - [x] Frontend: Cleaned orphaned mock code from WalletComponents.js
@@ -59,7 +59,9 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - [x] Bug fix: isEnrolled checks class_id properly, shows "Enrolled" badge
 - [x] Bug fix: "Already enrolled" returns clear error message
 - [x] Bug fix: Stripe API key explicitly set before PaymentIntent creation in classes.py
-- [x] All tests passed (iteration_45: 14/14 wallet, iteration_46: 9/9 class enrollment)
+- [x] Bug fix: Added payment_method_types=["card"] to all Stripe PaymentIntent.create calls (prevents redirect errors)
+- [x] Admin Payments Dashboard: Revenue summary, by-type breakdown, gateway split, pending payouts, transactions table with filters
+- [x] All tests passed (iteration_45: wallet, iteration_46: class enrollment, iteration_47: payments dashboard)
 
 ## P1/P2 Backlog
 
