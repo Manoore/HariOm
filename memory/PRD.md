@@ -7,7 +7,7 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - **Frontend**: React + TailwindCSS + Shadcn/UI + Framer Motion
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB
-- **Payments**: Stripe + Razorpay (Real gateway integration, NO mocks)
+- **Payments**: Razorpay (sole active gateway). Stripe kept as placeholder for future international expansion.
 - **Video**: 100ms SDK
 - **Auth**: Firebase Auth / JWT
 - **Email**: Resend API
