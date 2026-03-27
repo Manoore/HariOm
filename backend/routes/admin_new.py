@@ -14,7 +14,8 @@ from database import (
     products_collection, bookings_collection, orders_collection,
     puja_types_collection, audio_library_collection, shops_collection,
     user_notifications_collection, system_config_collection, system_settings_collection,
-    payment_transactions_collection, wallet_transactions_collection, class_enrollments_collection
+    payment_transactions_collection, wallet_transactions_collection, class_enrollments_collection,
+    payouts_collection, refunds_collection
 )
 from models import UserRole
 from auth import require_role, get_password_hash, verify_password
@@ -1167,4 +1168,435 @@ async def get_payment_transactions(
         })
 
     return {"transactions": transactions, "total": total, "skip": skip, "limit": limit}
+
+
+# ===================== PHASE 2: PROVIDER PAYOUT MANAGEMENT =====================
+
+@router.get("/payouts/split-config")
+async def get_split_config(user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Get platform fee split configuration per provider type"""
+    config = await system_config_collection.find_one({"key": "payout_split_config"})
+    if not config:
+        default = {
+            "priest": {"platform_fee_pct": 5, "gst_pct": 18},
+            "shop_owner": {"platform_fee_pct": 5, "gst_pct": 18},
+            "astrologer": {"platform_fee_pct": 5, "gst_pct": 18},
+        }
+        await system_config_collection.insert_one({"key": "payout_split_config", "value": default})
+        return default
+    return config["value"]
+
+
+@router.put("/payouts/split-config")
+async def update_split_config(request: Request, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Update platform fee split configuration per provider type"""
+    data = await request.json()
+    for role_key in ["priest", "shop_owner", "astrologer"]:
+        if role_key in data:
+            pct = data[role_key].get("platform_fee_pct")
+            if pct is not None and not (0 <= pct <= 50):
+                raise HTTPException(status_code=400, detail=f"Platform fee for {role_key} must be 0-50%")
+
+    await system_config_collection.update_one(
+        {"key": "payout_split_config"},
+        {"$set": {"key": "payout_split_config", "value": data, "updated_at": datetime.now(timezone.utc)}},
+        upsert=True
+    )
+    return {"message": "Split configuration updated"}
+
+
+@router.get("/payouts/pending")
+async def get_pending_payouts(user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Get all providers with pending earnings"""
+    config = await system_config_collection.find_one({"key": "payout_split_config"})
+    split_config = config["value"] if config else {
+        "priest": {"platform_fee_pct": 5}, "shop_owner": {"platform_fee_pct": 5}, "astrologer": {"platform_fee_pct": 5}
+    }
+
+    paid_statuses = ["paid", "received", "accepted", "processing", "shipping", "delivered"]
+    providers = []
+
+    # --- Shop Owners ---
+    shop_pipeline = [
+        {"$match": {"status": {"$in": paid_statuses}}},
+        {"$unwind": "$items"},
+        {"$group": {"_id": "$items.shop_id", "gross": {"$sum": "$items.subtotal"}, "order_count": {"$sum": 1}}}
+    ]
+    shop_agg = await orders_collection.aggregate(shop_pipeline).to_list(100)
+
+    for s in shop_agg:
+        shop = await shops_collection.find_one({"_id": ObjectId(s["_id"])}) if s["_id"] else None
+        owner = None
+        if shop:
+            owner = await users_collection.find_one({"_id": ObjectId(shop["owner_id"])}) if shop.get("owner_id") else None
+
+        fee_pct = split_config.get("shop_owner", {}).get("platform_fee_pct", 5) / 100
+        gross = s["gross"]
+        platform_fee = round(gross * fee_pct, 2)
+        net = round(gross - platform_fee, 2)
+
+        already_paid = 0
+        paid_cursor = payouts_collection.find({"provider_id": s["_id"], "provider_type": "shop_owner", "status": "completed"})
+        async for p in paid_cursor:
+            already_paid += p.get("amount", 0)
+
+        pending = round(max(0, net - already_paid), 2)
+        if pending <= 0:
+            continue
+
+        providers.append({
+            "provider_id": s["_id"],
+            "provider_type": "shop_owner",
+            "name": shop.get("name", "Unknown Shop") if shop else "Unknown",
+            "owner_name": owner.get("name", "Unknown") if owner else "Unknown",
+            "email": owner.get("email", "") if owner else "",
+            "gross_earnings": gross,
+            "platform_fee_pct": fee_pct * 100,
+            "platform_fee": platform_fee,
+            "net_earnings": net,
+            "already_paid": already_paid,
+            "pending_amount": pending,
+            "transaction_count": s["order_count"],
+        })
+
+    # --- Priests ---
+    priest_pipeline = [
+        {"$match": {"status": "completed", "price": {"$exists": True}}},
+        {"$group": {"_id": "$priest_id", "gross": {"$sum": "$price"}, "booking_count": {"$sum": 1}}}
+    ]
+    priest_agg = await bookings_collection.aggregate(priest_pipeline).to_list(100)
+
+    for pr in priest_agg:
+        priest = await priests_collection.find_one({"user_id": pr["_id"]}) if pr["_id"] else None
+        priest_user = None
+        if pr["_id"]:
+            try:
+                priest_user = await users_collection.find_one({"_id": ObjectId(pr["_id"])})
+            except Exception:
+                pass
+
+        fee_pct = split_config.get("priest", {}).get("platform_fee_pct", 5) / 100
+        gross = pr["gross"]
+        platform_fee = round(gross * fee_pct, 2)
+        net = round(gross - platform_fee, 2)
+
+        already_paid = 0
+        paid_cursor = payouts_collection.find({"provider_id": pr["_id"], "provider_type": "priest", "status": "completed"})
+        async for p in paid_cursor:
+            already_paid += p.get("amount", 0)
+
+        pending = round(max(0, net - already_paid), 2)
+        if pending <= 0:
+            continue
+
+        providers.append({
+            "provider_id": pr["_id"],
+            "provider_type": "priest",
+            "name": priest.get("name", "Unknown") if priest else (priest_user.get("name", "Unknown") if priest_user else "Unknown"),
+            "owner_name": priest_user.get("name", "Unknown") if priest_user else "Unknown",
+            "email": priest_user.get("email", "") if priest_user else "",
+            "gross_earnings": gross,
+            "platform_fee_pct": fee_pct * 100,
+            "platform_fee": platform_fee,
+            "net_earnings": net,
+            "already_paid": already_paid,
+            "pending_amount": pending,
+            "transaction_count": pr["booking_count"],
+        })
+
+    # --- Astrologers (from consultation calls) ---
+    from database import consultation_calls_collection
+    astro_pipeline = [
+        {"$match": {"status": "completed", "total_amount": {"$gt": 0}}},
+        {"$group": {"_id": "$astrologer_id", "gross": {"$sum": "$total_amount"}, "call_count": {"$sum": 1}}}
+    ]
+    astro_agg = await consultation_calls_collection.aggregate(astro_pipeline).to_list(100)
+
+    for a in astro_agg:
+        astro_user = None
+        if a["_id"]:
+            try:
+                astro_user = await users_collection.find_one({"_id": ObjectId(a["_id"])})
+            except Exception:
+                pass
+
+        fee_pct = split_config.get("astrologer", {}).get("platform_fee_pct", 5) / 100
+        gross = a["gross"]
+        platform_fee = round(gross * fee_pct, 2)
+        net = round(gross - platform_fee, 2)
+
+        already_paid = 0
+        paid_cursor = payouts_collection.find({"provider_id": a["_id"], "provider_type": "astrologer", "status": "completed"})
+        async for p in paid_cursor:
+            already_paid += p.get("amount", 0)
+
+        pending = round(max(0, net - already_paid), 2)
+        if pending <= 0:
+            continue
+
+        providers.append({
+            "provider_id": a["_id"],
+            "provider_type": "astrologer",
+            "name": astro_user.get("name", "Unknown") if astro_user else "Unknown",
+            "owner_name": astro_user.get("name", "Unknown") if astro_user else "Unknown",
+            "email": astro_user.get("email", "") if astro_user else "",
+            "gross_earnings": gross,
+            "platform_fee_pct": fee_pct * 100,
+            "platform_fee": platform_fee,
+            "net_earnings": net,
+            "already_paid": already_paid,
+            "pending_amount": pending,
+            "transaction_count": a["call_count"],
+        })
+
+    providers.sort(key=lambda x: x["pending_amount"], reverse=True)
+    total_pending = sum(p["pending_amount"] for p in providers)
+
+    return {"providers": providers, "total_pending": round(total_pending, 2), "count": len(providers)}
+
+
+@router.post("/payouts/record")
+async def record_payout(request: Request, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Record a manual payout to a provider"""
+    data = await request.json()
+    provider_id = data.get("provider_id")
+    provider_type = data.get("provider_type")
+    amount = data.get("amount", 0)
+    reference = data.get("reference", "")
+    payment_mode = data.get("payment_mode", "bank_transfer")
+    notes = data.get("notes", "")
+
+    if not provider_id or not provider_type or amount <= 0:
+        raise HTTPException(status_code=400, detail="Provider ID, type, and amount > 0 are required")
+
+    payout = {
+        "provider_id": provider_id,
+        "provider_type": provider_type,
+        "amount": amount,
+        "reference": reference,
+        "payment_mode": payment_mode,
+        "notes": notes,
+        "status": "completed",
+        "recorded_by": str(user["_id"]),
+        "recorded_by_name": user.get("name", "Admin"),
+        "created_at": datetime.now(timezone.utc),
+    }
+    result = await payouts_collection.insert_one(payout)
+
+    return {"message": f"Payout of ₹{amount} recorded", "payout_id": str(result.inserted_id)}
+
+
+@router.get("/payouts/history")
+async def get_payout_history(
+    skip: int = 0, limit: int = 50,
+    provider_type: str = None,
+    user: dict = Depends(require_role([UserRole.ADMIN]))
+):
+    """Get completed payout history"""
+    query = {}
+    if provider_type:
+        query["provider_type"] = provider_type
+
+    cursor = payouts_collection.find(query).sort("created_at", -1).skip(skip).limit(limit)
+    total = await payouts_collection.count_documents(query)
+
+    payouts = []
+    async for p in cursor:
+        payouts.append({
+            "id": str(p["_id"]),
+            "provider_id": p.get("provider_id"),
+            "provider_type": p.get("provider_type"),
+            "amount": p.get("amount", 0),
+            "reference": p.get("reference", ""),
+            "payment_mode": p.get("payment_mode", ""),
+            "notes": p.get("notes", ""),
+            "status": p.get("status", "completed"),
+            "recorded_by_name": p.get("recorded_by_name", "Admin"),
+            "created_at": p.get("created_at").isoformat() if p.get("created_at") else None,
+        })
+
+    return {"payouts": payouts, "total": total}
+
+
+# ===================== PHASE 3: REFUND MANAGEMENT =====================
+
+@router.get("/refunds/eligible")
+async def get_refundable_transactions(user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Get orders/bookings eligible for refund"""
+    eligible = []
+
+    # Orders with payment completed (not already refunded)
+    refunded_order_ids = set()
+    async for r in refunds_collection.find({"source_type": "order", "status": "completed"}):
+        refunded_order_ids.add(r.get("source_id"))
+
+    paid_statuses = ["paid", "received", "accepted", "processing"]
+    cursor = orders_collection.find({"status": {"$in": paid_statuses}}).sort("created_at", -1).limit(100)
+    async for order in cursor:
+        oid = str(order["_id"])
+        if oid in refunded_order_ids:
+            continue
+        buyer = None
+        if order.get("user_id"):
+            try:
+                buyer = await users_collection.find_one({"_id": ObjectId(order["user_id"])})
+            except Exception:
+                pass
+        eligible.append({
+            "id": oid,
+            "source_type": "order",
+            "user_name": buyer.get("name", "Unknown") if buyer else "Unknown",
+            "user_email": buyer.get("email", "") if buyer else "",
+            "amount": order.get("total_amount", 0),
+            "original_status": order.get("status"),
+            "payment_intent_id": order.get("payment_intent_id") or order.get("stripe_session_id"),
+            "payment_method": order.get("payment_method", "stripe"),
+            "created_at": order.get("created_at").isoformat() if order.get("created_at") else None,
+            "description": f"Order #{oid[:8]}",
+        })
+
+    # Bookings with payment (completed bookings that can be refunded)
+    refunded_booking_ids = set()
+    async for r in refunds_collection.find({"source_type": "booking", "status": "completed"}):
+        refunded_booking_ids.add(r.get("source_id"))
+
+    booking_cursor = bookings_collection.find({"status": {"$in": ["confirmed", "completed"]}, "price": {"$gt": 0}}).sort("created_at", -1).limit(100)
+    async for bk in booking_cursor:
+        bid = str(bk["_id"])
+        if bid in refunded_booking_ids:
+            continue
+        buyer = None
+        if bk.get("user_id"):
+            try:
+                buyer = await users_collection.find_one({"_id": ObjectId(bk["user_id"])})
+            except Exception:
+                pass
+        eligible.append({
+            "id": bid,
+            "source_type": "booking",
+            "user_name": buyer.get("name", "Unknown") if buyer else "Unknown",
+            "user_email": buyer.get("email", "") if buyer else "",
+            "amount": bk.get("price", 0),
+            "original_status": bk.get("status"),
+            "payment_intent_id": bk.get("payment_intent_id"),
+            "payment_method": bk.get("payment_method", "stripe"),
+            "created_at": bk.get("created_at").isoformat() if bk.get("created_at") else None,
+            "description": f"Booking - {bk.get('puja_type', 'Puja')}",
+        })
+
+    return {"eligible": eligible, "count": len(eligible)}
+
+
+@router.post("/refunds/process")
+async def process_refund(request: Request, user: dict = Depends(require_role([UserRole.ADMIN]))):
+    """Process a refund via Stripe or Razorpay"""
+    import stripe
+    import razorpay
+    from system_config import get_stripe_credentials, get_razorpay_credentials
+
+    data = await request.json()
+    source_id = data.get("source_id")
+    source_type = data.get("source_type")
+    refund_amount = data.get("refund_amount")
+    reason = data.get("reason", "requested_by_customer")
+    payment_method = data.get("payment_method", "stripe")
+    payment_intent_id = data.get("payment_intent_id")
+
+    if not source_id or not source_type or not refund_amount or refund_amount <= 0:
+        raise HTTPException(status_code=400, detail="source_id, source_type, and refund_amount > 0 required")
+
+    # Check not already refunded
+    existing = await refunds_collection.find_one({"source_id": source_id, "status": "completed"})
+    if existing:
+        raise HTTPException(status_code=400, detail="This transaction has already been refunded")
+
+    refund_result = None
+    gateway_refund_id = None
+
+    # Process via Stripe
+    if payment_method == "stripe" and payment_intent_id:
+        try:
+            stripe_creds = await get_stripe_credentials()
+            stripe.api_key = stripe_creds["secret_key"]
+            refund_result = stripe.Refund.create(
+                payment_intent=payment_intent_id,
+                amount=int(refund_amount * 100),
+                reason=reason if reason in ["duplicate", "fraudulent", "requested_by_customer"] else "requested_by_customer"
+            )
+            gateway_refund_id = refund_result.id
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Stripe refund failed: {str(e)}")
+
+    # Process via Razorpay
+    elif payment_method == "razorpay" and payment_intent_id:
+        try:
+            rz_creds = await get_razorpay_credentials()
+            rz_client = razorpay.Client(auth=(rz_creds["key_id"], rz_creds["key_secret"]))
+            refund_result = rz_client.payment.refund(payment_intent_id, {
+                "amount": int(refund_amount * 100),
+                "notes": {"reason": reason, "source_id": source_id}
+            })
+            gateway_refund_id = refund_result.get("id")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Razorpay refund failed: {str(e)}")
+
+    else:
+        # Manual refund (no gateway)
+        gateway_refund_id = f"manual_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+
+    # Record refund
+    refund_record = {
+        "source_id": source_id,
+        "source_type": source_type,
+        "refund_amount": refund_amount,
+        "reason": reason,
+        "payment_method": payment_method,
+        "payment_intent_id": payment_intent_id,
+        "gateway_refund_id": gateway_refund_id,
+        "status": "completed",
+        "processed_by": str(user["_id"]),
+        "processed_by_name": user.get("name", "Admin"),
+        "created_at": datetime.now(timezone.utc),
+    }
+    result = await refunds_collection.insert_one(refund_record)
+
+    # Update source status
+    if source_type == "order":
+        await orders_collection.update_one({"_id": ObjectId(source_id)}, {"$set": {"status": "refunded", "refunded_at": datetime.now(timezone.utc)}})
+    elif source_type == "booking":
+        await bookings_collection.update_one({"_id": ObjectId(source_id)}, {"$set": {"status": "refunded", "refunded_at": datetime.now(timezone.utc)}})
+
+    return {"message": f"Refund of ₹{refund_amount} processed successfully", "refund_id": str(result.inserted_id), "gateway_refund_id": gateway_refund_id}
+
+
+@router.get("/refunds/history")
+async def get_refund_history(
+    skip: int = 0, limit: int = 50,
+    source_type: str = None,
+    user: dict = Depends(require_role([UserRole.ADMIN]))
+):
+    """Get refund history"""
+    query = {}
+    if source_type:
+        query["source_type"] = source_type
+
+    cursor = refunds_collection.find(query).sort("created_at", -1).skip(skip).limit(limit)
+    total = await refunds_collection.count_documents(query)
+
+    refunds = []
+    async for r in cursor:
+        refunds.append({
+            "id": str(r["_id"]),
+            "source_id": r.get("source_id"),
+            "source_type": r.get("source_type"),
+            "refund_amount": r.get("refund_amount", 0),
+            "reason": r.get("reason", ""),
+            "payment_method": r.get("payment_method", ""),
+            "gateway_refund_id": r.get("gateway_refund_id", ""),
+            "status": r.get("status", "completed"),
+            "processed_by_name": r.get("processed_by_name", "Admin"),
+            "created_at": r.get("created_at").isoformat() if r.get("created_at") else None,
+        })
+
+    return {"refunds": refunds, "total": total}
 

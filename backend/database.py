@@ -53,6 +53,10 @@ system_config_collection = db["system_config"]
 # Product Reviews Collection
 product_reviews_collection = db["product_reviews"]
 
+# Payouts & Refunds Collections
+payouts_collection = db["payouts"]
+refunds_collection = db["refunds"]
+
 # Service Reviews Collection (for Priests and Astrologers)
 service_reviews_collection = db["service_reviews"]
 
