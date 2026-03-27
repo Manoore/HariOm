@@ -61,7 +61,9 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - [x] Bug fix: Stripe API key explicitly set before PaymentIntent creation in classes.py
 - [x] Bug fix: Added payment_method_types=["card"] to all Stripe PaymentIntent.create calls (prevents redirect errors)
 - [x] Admin Payments Dashboard: Revenue summary, by-type breakdown, gateway split, pending payouts, transactions table with filters
-- [x] All tests passed (iteration_45: wallet, iteration_46: class enrollment, iteration_47: payments dashboard)
+- [x] Phase 2 - Provider Payout Management: Configurable split % (per priest/shop_owner/astrologer), pending payouts with Mark Paid flow, payout history
+- [x] Phase 3 - Refund Management: Eligible refunds list (orders + bookings), real Stripe/Razorpay refund processing, refund history
+- [x] All tests passed (iteration_45: wallet, iteration_46: class enrollment, iteration_47: payments dashboard, iteration_48: payouts + refunds 29/29)
 
 ## P1/P2 Backlog
 
