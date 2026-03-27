@@ -34,7 +34,7 @@ class CheckoutData(BaseModel):
     shipping_city: str
     shipping_phone: str
     shipping_name: str
-    payment_method: str = "stripe"
+    payment_method: str = "razorpay"  # Razorpay is the sole active gateway. Stripe placeholder removed.
     notes: Optional[str] = None
 
 
@@ -470,7 +470,8 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
     result = await orders_collection.insert_one(order_dict)
     order_id = str(result.inserted_id)
     
-    frontend_url = os.environ.get("FRONTEND_URL", "https://divine-104d4.web.app")
+    # Note: frontend_url was used for Stripe redirect. Kept for future reference.
+    # frontend_url = os.environ.get("FRONTEND_URL", "https://divine-104d4.web.app")
     
     # ==================== RAZORPAY FLOW ====================
     if data.payment_method == "razorpay":
@@ -531,77 +532,9 @@ async def create_checkout(data: CheckoutData, user: dict = Depends(get_current_u
             await orders_collection.delete_one({"_id": ObjectId(order_id)})
             raise HTTPException(status_code=500, detail=f"Razorpay order creation failed: {str(e)}")
     
-    # ==================== STRIPE FLOW ====================
-    stripe_line_items = []
-    for item in items:
-        stripe_line_items.append({
-            "price_data": {
-                "currency": "inr",
-                "product_data": {
-                    "name": item["name"],
-                    "images": [item["image"]] if item.get("image") else [],
-                },
-                "unit_amount": int(item["price"] * 100),
-            },
-            "quantity": item["quantity"],
-        })
-    
-    if total_shipping > 0:
-        stripe_line_items.append({
-            "price_data": {"currency": "inr", "product_data": {"name": "Shipping"}, "unit_amount": int(total_shipping * 100)},
-            "quantity": 1,
-        })
-    if platform_fee > 0:
-        stripe_line_items.append({
-            "price_data": {"currency": "inr", "product_data": {"name": "Platform Fee"}, "unit_amount": int(platform_fee * 100)},
-            "quantity": 1,
-        })
-    if tax_amount > 0:
-        stripe_line_items.append({
-            "price_data": {"currency": "inr", "product_data": {"name": f"{tax_label} ({tax_percentage}%)"}, "unit_amount": int(tax_amount * 100)},
-            "quantity": 1,
-        })
-    
-    try:
-        stripe_creds = await get_stripe_credentials()
-        stripe.api_key = stripe_creds["secret_key"]
-        
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            line_items=stripe_line_items,
-            mode="payment",
-            success_url=f"{frontend_url}?payment=success&order_id={order_id}",
-            cancel_url=f"{frontend_url}?payment=cancelled&order_id={order_id}",
-            metadata={"order_id": order_id, "user_id": str(user["_id"])},
-            **({'customer_email': user.get("email")} if user.get("email") and '@' in str(user.get("email", "")) else {}),
-        )
-        
-        await orders_collection.update_one(
-            {"_id": ObjectId(order_id)},
-            {"$set": {"stripe_session_id": checkout_session.id}}
-        )
-        
-        await cart_collection.delete_one({"user_id": str(user["_id"])})
-        
-        return {
-            "message": "Checkout session created",
-            "order_id": order_id,
-            "order_number": order_id[-8:].upper(),
-            "subtotal": subtotal,
-            "shipping": total_shipping,
-            "platform_fee": platform_fee,
-            "tax_amount": tax_amount,
-            "tax_label": tax_label,
-            "tax_percentage": tax_percentage,
-            "total": total_amount,
-            "payment_method": "stripe",
-            "checkout_url": checkout_session.url,
-            "session_id": checkout_session.id
-        }
-        
-    except stripe.error.StripeError as e:
-        await orders_collection.delete_one({"_id": ObjectId(order_id)})
-        raise HTTPException(status_code=500, detail=f"Payment processing failed: {str(e)}")
+    # Note: Stripe checkout flow removed. Razorpay is the sole active gateway.
+    # If payment_method is not razorpay, default to razorpay anyway
+    raise HTTPException(status_code=400, detail="Only Razorpay payments are supported. Please use payment_method='razorpay'.")
 
 
 @router.post("/payment/confirm/{order_id}")

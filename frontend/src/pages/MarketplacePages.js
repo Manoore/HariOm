@@ -201,7 +201,7 @@ export function CartPage() {
       const orderRes = await api.post('/api/orders', {
         items: cart.items.map(item => ({ product_id: item.product_id, quantity: item.quantity })),
         shipping_address: shippingAddress,
-        payment_method: 'stripe'
+        payment_method: 'razorpay'
       });
 
       // Create payment session
@@ -210,7 +210,7 @@ export function CartPage() {
         currency: 'INR',
         payment_type: 'order',
         reference_id: orderRes.data.order_id,
-        payment_method: 'stripe'
+        payment_method: 'razorpay'
       });
 
       // Redirect to Stripe

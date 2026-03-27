@@ -398,22 +398,9 @@ export function CheckoutPage({ onBack, onComplete }) {
         return;
       }
       
-      // ==================== STRIPE FLOW ====================
-      const stripeUrl = res.data.checkout_url || res.data.url;
-      if (stripeUrl) {
-        toast.success('Redirecting to payment...');
-        localStorage.setItem('pending_order', JSON.stringify({
-          order_id: res.data.order_id || res.data.id,
-          order_number: res.data.order_number,
-          total: res.data.total || totals.total
-        }));
-        if (refreshCart) refreshCart();
-        window.location.href = stripeUrl;
-      } else {
-        toast.success('Order placed successfully!');
-        if (refreshCart) refreshCart();
-        onComplete(res.data);
-      }
+      // Note: Stripe flow removed. All payments go through Razorpay.
+      toast.error('Payment gateway error. Please try again.');
+      setSubmitting(false);
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error(error.response?.data?.detail || 'Failed to place order');
@@ -611,48 +598,19 @@ export function CheckoutPage({ onBack, onComplete }) {
               </h2>
               
               <div className="space-y-4">
-                <button
-                  onClick={() => setFormData({...formData, payment_method: 'stripe'})}
-                  className={`w-full p-4 rounded-xl border-2 text-left flex items-center gap-4 transition-all ${
-                    formData.payment_method === 'stripe' 
-                      ? 'border-saffron bg-orange-50' 
-                      : 'border-gray-200 hover:border-orange-200'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    formData.payment_method === 'stripe' ? 'bg-saffron' : 'bg-gray-100'
-                  }`}>
-                    <CreditCard className={`w-6 h-6 ${formData.payment_method === 'stripe' ? 'text-white' : 'text-gray-500'}`} />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800">Credit/Debit Card</p>
-                    <p className="text-sm text-gray-500">Pay securely with Stripe</p>
-                  </div>
-                  {formData.payment_method === 'stripe' && (
-                    <CheckCircle className="w-6 h-6 text-saffron ml-auto" />
-                  )}
-                </button>
-                
+                {/* Razorpay — sole active payment gateway */}
                 <button
                   onClick={() => setFormData({...formData, payment_method: 'razorpay'})}
-                  className={`w-full p-4 rounded-xl border-2 text-left flex items-center gap-4 transition-all ${
-                    formData.payment_method === 'razorpay' 
-                      ? 'border-saffron bg-orange-50' 
-                      : 'border-gray-200 hover:border-orange-200'
-                  }`}
+                  className="w-full p-4 rounded-xl border-2 border-saffron bg-orange-50 text-left flex items-center gap-4 transition-all"
                 >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    formData.payment_method === 'razorpay' ? 'bg-saffron' : 'bg-gray-100'
-                  }`}>
-                    <CreditCard className={`w-6 h-6 ${formData.payment_method === 'razorpay' ? 'text-white' : 'text-gray-500'}`} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-saffron">
+                    <CreditCard className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800">UPI / Net Banking</p>
-                    <p className="text-sm text-gray-500">Pay with Razorpay (India)</p>
+                    <p className="font-medium text-gray-800">UPI / Cards / Net Banking</p>
+                    <p className="text-sm text-gray-500">Pay securely with Razorpay</p>
                   </div>
-                  {formData.payment_method === 'razorpay' && (
-                    <CheckCircle className="w-6 h-6 text-saffron ml-auto" />
-                  )}
+                  <CheckCircle className="w-6 h-6 text-saffron ml-auto" />
                 </button>
               </div>
               
@@ -707,7 +665,7 @@ export function CheckoutPage({ onBack, onComplete }) {
                   </button>
                 </div>
                 <p className="font-medium">
-                  {formData.payment_method === 'stripe' ? 'Credit/Debit Card (Stripe)' : 'UPI/Net Banking (Razorpay)'}
+                  {'UPI / Cards / Net Banking (Razorpay)'}
                 </p>
               </div>
               

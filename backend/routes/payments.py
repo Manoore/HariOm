@@ -1,6 +1,7 @@
 """
 Payment Routes
-Handles Stripe and Razorpay payment integrations
+Handles Razorpay payment integration (primary gateway).
+Stripe endpoints kept as placeholder for future international expansion.
 """
 from fastapi import APIRouter, HTTPException, Depends, Request
 from datetime import datetime, timezone

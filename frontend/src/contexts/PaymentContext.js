@@ -1,49 +1,19 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const PaymentContext = createContext(null);
 
 export function PaymentProvider({ children }) {
-  const [paymentMethod, setPaymentMethod] = useState(null); // 'stripe' or 'razorpay'
-  const [country, setCountry] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    detectLocation();
-  }, []);
-
-  const detectLocation = async () => {
-    try {
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
-      
-      const userCountry = data.country_code || 'US';
-      setCountry(userCountry);
-      
-      if (userCountry === 'IN') {
-        setPaymentMethod('razorpay');
-      } else {
-        setPaymentMethod('stripe');
-      }
-    } catch (error) {
-      console.error('Location detection failed:', error);
-      setPaymentMethod('stripe');
-      setCountry('US');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const setManualPaymentMethod = (method) => {
-    setPaymentMethod(method);
-  };
+  // Razorpay is the sole active payment gateway
+  // Stripe support kept as placeholder for future international expansion
+  const [paymentMethod] = useState('razorpay');
 
   return (
     <PaymentContext.Provider value={{ 
       paymentMethod, 
-      country, 
-      loading,
-      setManualPaymentMethod,
-      isIndia: country === 'IN'
+      country: 'IN',
+      loading: false,
+      setManualPaymentMethod: () => {},
+      isIndia: true
     }}>
       {children}
     </PaymentContext.Provider>

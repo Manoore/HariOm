@@ -188,7 +188,21 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
     except:
         data = {}
     
-    if data.get("payment_confirmed") and data.get("payment_intent_id"):
+    if data.get("payment_confirmed") and data.get("payment_id"):
+        # Verify Razorpay payment before enrollment
+        import razorpay
+        from system_config import get_razorpay_credentials
+        try:
+            rz_creds = await get_razorpay_credentials()
+            rz_client = razorpay.Client(auth=(rz_creds["key_id"], rz_creds["key_secret"]))
+            payment = rz_client.payment.fetch(data["payment_id"])
+            if payment.get("status") != "captured":
+                raise HTTPException(status_code=400, detail="Payment not verified")
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Payment verification failed: {str(e)}")
+
         await priest_classes_collection.update_one(
             {"_id": ObjectId(class_id)},
             {
@@ -202,7 +216,8 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
             "class_id": class_id,
             "priest_id": cls["priest_id"],
             "amount": cls.get("price", 0),
-            "payment_intent_id": data.get("payment_intent_id"),
+            "payment_id": data.get("payment_id"),
+            "payment_method": "razorpay",
             "status": "completed",
             "enrolled_at": datetime.now(timezone.utc)
         })
@@ -246,7 +261,8 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
         try:
             base_price = cls.get("price", 0)
             
-            from system_config import get_fees_and_taxes, calculate_fees_and_taxes, get_stripe_credentials
+            from system_config import get_fees_and_taxes, calculate_fees_and_taxes, get_razorpay_credentials
+            import razorpay
             fees_config = await get_fees_and_taxes()
             fees_calc = calculate_fees_and_taxes(base_price, fees_config)
             
@@ -258,25 +274,22 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
             
             total_amount = base_price + platform_fee + gst_amount
             
-            stripe_creds = await get_stripe_credentials()
-            stripe.api_key = stripe_creds["secret_key"]
-            if not stripe.api_key:
+            # Create Razorpay order (Stripe removed from active flow)
+            rz_creds = await get_razorpay_credentials()
+            if not rz_creds["key_id"] or not rz_creds["key_secret"]:
                 raise HTTPException(status_code=500, detail="Payment gateway not configured")
             
-            payment_intent = stripe.PaymentIntent.create(
-                amount=int(total_amount * 100),
-                currency="inr",
-                payment_method_types=["card"],
-                metadata={
+            rz_client = razorpay.Client(auth=(rz_creds["key_id"], rz_creds["key_secret"]))
+            rz_order = rz_client.order.create(data={
+                "amount": int(total_amount * 100),
+                "currency": "INR",
+                "notes": {
                     "type": "class_enrollment",
                     "class_id": class_id,
                     "user_id": str(user["_id"]),
                     "priest_id": cls["priest_id"],
-                    "base_price": str(base_price),
-                    "platform_fee": str(platform_fee),
-                    "gst": str(gst_amount)
                 }
-            )
+            })
             
             return {
                 "message": "Payment required for this class",
@@ -292,8 +305,8 @@ async def enroll_in_class(class_id: str, request: Request, user: dict = Depends(
                     "total": total_amount
                 },
                 "price": total_amount,
-                "client_secret": payment_intent.client_secret,
-                "payment_intent_id": payment_intent.id
+                "razorpay_order_id": rz_order["id"],
+                "razorpay_key": rz_creds["key_id"]
             }
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Payment processing error: {str(e)}")

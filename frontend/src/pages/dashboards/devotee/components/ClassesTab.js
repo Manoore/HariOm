@@ -592,7 +592,9 @@ function ClassesTab({ isDesktop }) {
           price: res.data.price,
           priceBreakdown: res.data.price_breakdown,
           clientSecret: res.data.client_secret,
-          paymentIntentId: res.data.payment_intent_id
+          paymentIntentId: res.data.payment_intent_id,
+          razorpayOrderId: res.data.razorpay_order_id,
+          razorpayKey: res.data.razorpay_key
         });
       } else {
         toast.success('Successfully enrolled in class!');
@@ -615,7 +617,7 @@ function ClassesTab({ isDesktop }) {
     try {
       await api.post(`/api/classes/${paymentModal.classId}/enroll`, {
         payment_confirmed: true,
-        payment_intent_id: paymentData.payment_id || paymentModal.paymentIntentId
+        payment_id: paymentData.payment_id
       });
       toast.success('Payment successful! You are now enrolled.');
       setPaymentModal(null);
