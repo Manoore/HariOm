@@ -5,6 +5,7 @@ export { UsersTab } from './UsersTab';
 export { PriestsTab } from './PriestsTab';
 export { ProductsTab } from './ProductsTab';
 export { BookingsTab } from './BookingsTab';
+export { PaymentsTab } from './PaymentsTab';
 export { VideoLibraryTab } from './VideoLibraryTab';
 export { ApprovalsTab } from './ApprovalsTab';
 export { PujaTypesTab } from './PujaTypesTab';

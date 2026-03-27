@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Users, Settings, LogOut, CheckCircle, UserCheck, Package, 
-  Calendar, BookOpen, Music, Play, MessageSquare, Video, Key, User, Menu, X, ShoppingBag, FileText
+  Calendar, BookOpen, Music, Play, MessageSquare, Video, Key, User, Menu, X, ShoppingBag, FileText, CreditCard
 } from 'lucide-react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { OmIcon } from './shared';
@@ -18,6 +18,7 @@ export function AdminSidebar({ activeTab, setActiveTab, user }) {
     { id: 'priests', icon: UserCheck, label: 'Priests' },
     { id: 'products', icon: Package, label: 'Products' },
     { id: 'bookings', icon: Calendar, label: 'Bookings' },
+    { id: 'payments', icon: CreditCard, label: 'Payments' },
     { id: 'puja-types', icon: BookOpen, label: 'Puja Types' },
     { id: 'subcastes', icon: BookOpen, label: 'Subcastes' },
     { id: 'audio-library', icon: Music, label: 'Audio Library' },
@@ -105,6 +106,7 @@ export function AdminBottomNav({ activeTab, setActiveTab }) {
   const moreTabs = [
     { id: 'products', icon: Package, label: 'Products' },
     { id: 'bookings', icon: Calendar, label: 'Bookings' },
+    { id: 'payments', icon: CreditCard, label: 'Payments' },
     { id: 'orders', icon: ShoppingBag, label: 'Orders' },
     { id: 'content', icon: FileText, label: 'Content' },
     { id: 'system', icon: Settings, label: 'Settings' },

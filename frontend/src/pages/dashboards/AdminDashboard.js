@@ -16,6 +16,7 @@ import {
   PriestsTab,
   ProductsTab,
   BookingsTab,
+  PaymentsTab,
   VideoLibraryTab,
   ApprovalsTab,
   PujaTypesTab,
@@ -104,6 +105,7 @@ export default function AdminDashboard() {
       {activeTab === 'priests' && <PriestsTab priests={priests} isDesktop={isDesktop} loading={loading} />}
       {activeTab === 'products' && <ProductsTab products={products} isDesktop={isDesktop} loading={loading} />}
       {activeTab === 'bookings' && <BookingsTab bookings={bookings} isDesktop={isDesktop} loading={loading} />}
+      {activeTab === 'payments' && <PaymentsTab isDesktop={isDesktop} />}
       {activeTab === 'puja-types' && <PujaTypesTab isDesktop={isDesktop} />}
       {activeTab === 'subcastes' && <SubcastesTab isDesktop={isDesktop} />}
       {activeTab === 'audio-library' && <AudioLibraryTab isDesktop={isDesktop} />}
