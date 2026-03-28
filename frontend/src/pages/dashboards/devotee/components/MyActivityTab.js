@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, Package, Phone, Loader2, Star, X, 
-  CheckCircle, Clock, Truck, ChevronRight, Filter, Eye
+  CheckCircle, Clock, Truck, ChevronRight, Filter, Eye, IndianRupee, Wallet, BookOpen, ArrowUpRight, ArrowDownLeft
 } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ const SUB_TABS = [
   { id: 'bookings', label: 'Bookings', icon: Calendar },
   { id: 'orders', label: 'Orders', icon: Package },
   { id: 'calls', label: 'Call History', icon: Phone },
+  { id: 'transactions', label: 'Transactions', icon: IndianRupee },
 ];
 
 export function MyActivityTab({ isDesktop, setActiveTab: setParentTab, setSelectedPriest, onViewOrder }) {
@@ -51,6 +52,9 @@ export function MyActivityTab({ isDesktop, setActiveTab: setParentTab, setSelect
       )}
       {subTab === 'calls' && (
         <CallHistorySection isDesktop={isDesktop} />
+      )}
+      {subTab === 'transactions' && (
+        <TransactionsSection isDesktop={isDesktop} />
       )}
     </div>
   );
@@ -564,6 +568,117 @@ function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction }) {
           {actionLabel}
         </button>
       )}
+    </div>
+  );
+}
+
+
+// ==================== TRANSACTIONS SECTION ====================
+const TXN_TYPE_CONFIG = {
+  order: { icon: Package, color: 'text-green-600', bg: 'bg-green-50', label: 'Order' },
+  booking: { icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50', label: 'Booking' },
+  consultation: { icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', label: 'Call' },
+  wallet_recharge: { icon: Wallet, color: 'text-saffron', bg: 'bg-orange-50', label: 'Recharge' },
+  class: { icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-50', label: 'Class' },
+};
+
+const TXN_STATUS_COLORS = {
+  completed: 'text-green-600', delivered: 'text-green-600', paid: 'text-green-600',
+  confirmed: 'text-blue-600', processing: 'text-blue-600', shipping: 'text-blue-600',
+  pending: 'text-yellow-600', cancelled: 'text-red-600', refunded: 'text-red-600',
+};
+
+function TransactionsSection({ isDesktop }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+
+  useEffect(() => { fetchTransactions(); }, []);
+
+  const fetchTransactions = async () => {
+    try {
+      const res = await api.get('/api/my-transactions?limit=200');
+      setData(res.data);
+    } catch {
+      toast.error('Failed to load transactions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-saffron" /></div>;
+
+  const txns = (data?.transactions || []).filter(t => filter === 'all' || t.type === filter);
+
+  return (
+    <div>
+      {/* Summary Cards */}
+      <div className={`grid ${isDesktop ? 'grid-cols-3' : 'grid-cols-3'} gap-3 mb-4`}>
+        <div className="bg-white rounded-xl p-3 shadow-sm border border-orange-100 text-center">
+          <ArrowUpRight className="w-4 h-4 text-red-500 mx-auto mb-1" />
+          <p className="text-xs text-gray-500">Total Spent</p>
+          <p className="text-base font-bold text-gray-800">₹{(data?.total_spent || 0).toLocaleString('en-IN')}</p>
+        </div>
+        <div className="bg-white rounded-xl p-3 shadow-sm border border-orange-100 text-center">
+          <ArrowDownLeft className="w-4 h-4 text-green-500 mx-auto mb-1" />
+          <p className="text-xs text-gray-500">Recharged</p>
+          <p className="text-base font-bold text-gray-800">₹{(data?.total_recharged || 0).toLocaleString('en-IN')}</p>
+        </div>
+        <div className="bg-white rounded-xl p-3 shadow-sm border border-orange-100 text-center">
+          <IndianRupee className="w-4 h-4 text-saffron mx-auto mb-1" />
+          <p className="text-xs text-gray-500">Total Txns</p>
+          <p className="text-base font-bold text-gray-800">{data?.total || 0}</p>
+        </div>
+      </div>
+
+      {/* Filter Pills */}
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
+        {[
+          { id: 'all', label: 'All' },
+          { id: 'order', label: 'Orders' },
+          { id: 'booking', label: 'Bookings' },
+          { id: 'consultation', label: 'Calls' },
+          { id: 'class', label: 'Classes' },
+          { id: 'wallet_recharge', label: 'Recharges' },
+        ].map(f => (
+          <button key={f.id} onClick={() => setFilter(f.id)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filter === f.id ? 'bg-saffron text-white' : 'bg-gray-100 text-gray-600'}`}
+            data-testid={`txn-filter-${f.id}`}
+          >{f.label}</button>
+        ))}
+      </div>
+
+      {/* Transaction List */}
+      <div className="space-y-2">
+        {txns.length === 0 ? (
+          <div className="text-center py-12 text-gray-400">
+            <IndianRupee className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p className="text-sm">No transactions found</p>
+          </div>
+        ) : txns.map((txn, i) => {
+          const config = TXN_TYPE_CONFIG[txn.type] || TXN_TYPE_CONFIG.order;
+          const TxnIcon = config.icon;
+          const isRecharge = txn.type === 'wallet_recharge';
+          return (
+            <div key={i} className="bg-white rounded-xl p-3 shadow-sm border border-orange-100 flex items-center gap-3" data-testid={`txn-item-${i}`}>
+              <div className={`w-10 h-10 ${config.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                <TxnIcon className={`w-5 h-5 ${config.color}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate">{txn.label}</p>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className={TXN_STATUS_COLORS[txn.status] || 'text-gray-500'}>{txn.status}</span>
+                  <span>|</span>
+                  <span>{txn.date ? new Date(txn.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}</span>
+                </div>
+              </div>
+              <span className={`text-sm font-bold ${isRecharge ? 'text-green-600' : 'text-gray-800'}`}>
+                {isRecharge ? '+' : '-'}₹{(txn.amount || 0).toLocaleString('en-IN')}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

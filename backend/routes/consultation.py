@@ -319,6 +319,109 @@ async def get_transactions(skip: int = 0, limit: int = 50, user: dict = Depends(
     return {"transactions": transactions}
 
 
+@router.get("/my-transactions")
+async def get_my_transactions(skip: int = 0, limit: int = 50, user: dict = Depends(get_current_user)):
+    """Get unified transaction/spending history across all categories"""
+    from database import (
+        orders_collection, bookings_collection, wallet_transactions_collection,
+        consultation_calls_collection, class_enrollments_collection
+    )
+    user_id = str(user["_id"])
+    all_txns = []
+
+    # Orders
+    order_cursor = orders_collection.find(
+        {"user_id": user_id, "status": {"$nin": ["cancelled", "draft"]}},
+        {"_id": 0, "total_amount": 1, "status": 1, "created_at": 1, "items": 1}
+    ).sort("created_at", -1).limit(100)
+    async for o in order_cursor:
+        item_names = ", ".join(i.get("name", "") for i in (o.get("items") or [])[:2])
+        if len(o.get("items", [])) > 2:
+            item_names += f" +{len(o['items']) - 2} more"
+        all_txns.append({
+            "type": "order",
+            "label": f"Order: {item_names}" if item_names else "Product Order",
+            "amount": o.get("total_amount", 0),
+            "status": o.get("status", "pending"),
+            "date": o.get("created_at"),
+        })
+
+    # Bookings
+    bk_cursor = bookings_collection.find(
+        {"user_id": user_id},
+        {"_id": 0, "price": 1, "status": 1, "created_at": 1, "puja_type": 1, "priest_name": 1}
+    ).sort("created_at", -1).limit(100)
+    async for b in bk_cursor:
+        all_txns.append({
+            "type": "booking",
+            "label": f"Puja: {b.get('puja_type', 'Booking')}" + (f" by {b.get('priest_name', '')}" if b.get('priest_name') else ""),
+            "amount": b.get("price", 0),
+            "status": b.get("status", "pending"),
+            "date": b.get("created_at"),
+        })
+
+    # Consultation Calls
+    call_cursor = consultation_calls_collection.find(
+        {"user_id": user_id, "total_amount": {"$gt": 0}},
+        {"_id": 0, "total_amount": 1, "status": 1, "created_at": 1, "duration_minutes": 1}
+    ).sort("created_at", -1).limit(100)
+    async for c in call_cursor:
+        all_txns.append({
+            "type": "consultation",
+            "label": f"Astrology Call ({c.get('duration_minutes', 0)} min)",
+            "amount": c.get("total_amount", 0),
+            "status": c.get("status", "completed"),
+            "date": c.get("created_at"),
+        })
+
+    # Wallet Recharges
+    wt_cursor = wallet_transactions_collection.find(
+        {"user_id": user_id, "type": "credit"},
+        {"_id": 0, "amount": 1, "created_at": 1, "payment_method": 1}
+    ).sort("created_at", -1).limit(100)
+    async for w in wt_cursor:
+        all_txns.append({
+            "type": "wallet_recharge",
+            "label": f"Wallet Recharge ({w.get('payment_method', 'razorpay')})",
+            "amount": w.get("amount", 0),
+            "status": "completed",
+            "date": w.get("created_at"),
+        })
+
+    # Class Enrollments
+    ce_cursor = class_enrollments_collection.find(
+        {"user_id": user_id, "amount": {"$gt": 0}},
+        {"_id": 0, "amount": 1, "status": 1, "created_at": 1, "class_title": 1}
+    ).sort("created_at", -1).limit(100)
+    async for ce in ce_cursor:
+        all_txns.append({
+            "type": "class",
+            "label": f"Class: {ce.get('class_title', 'Vedic Class')}",
+            "amount": ce.get("amount", 0),
+            "status": ce.get("status", "completed"),
+            "date": ce.get("created_at"),
+        })
+
+    # Sort all by date descending
+    fallback_date = datetime(2000, 1, 1, tzinfo=timezone.utc)
+    all_txns.sort(key=lambda x: x.get("date").replace(tzinfo=timezone.utc) if x.get("date") and x["date"].tzinfo is None else (x.get("date") or fallback_date), reverse=True)
+
+    # Convert dates to ISO strings
+    for t in all_txns:
+        if t.get("date"):
+            t["date"] = t["date"].isoformat()
+
+    total_spent = sum(t["amount"] for t in all_txns if t["type"] != "wallet_recharge")
+    total_recharged = sum(t["amount"] for t in all_txns if t["type"] == "wallet_recharge")
+
+    return {
+        "transactions": all_txns[skip:skip + limit],
+        "total": len(all_txns),
+        "total_spent": round(total_spent, 2),
+        "total_recharged": round(total_recharged, 2),
+    }
+
+
 @router.post("/wallet/create-recharge-intent")
 async def create_recharge_intent(request: Request, user: dict = Depends(get_current_user)):
     """Create Razorpay order for wallet recharge"""
