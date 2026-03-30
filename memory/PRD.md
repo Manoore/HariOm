@@ -16,17 +16,17 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 ## Core Features Implemented
 
 ### E-Commerce / Marketplace
-- Product catalog, cart, checkout with Stripe + Razorpay
-- Order Status Lifecycle: pending → paid → received → accepted → processing → shipping → delivered
+- Product catalog, cart, checkout with Razorpay
+- Order Status Lifecycle: pending -> paid -> received -> accepted -> processing -> shipping -> delivered
 - Tracking link + delivery instructions on shipping
 - Delivery photo proof on delivered
 - In-app + push + email notifications on all status changes
 
-### Wallet Recharge (Real Payment Integration) ✅
-- `POST /api/wallet/create-recharge-intent` - Creates real Stripe PaymentIntent + Razorpay Order
+### Wallet Recharge (Real Payment Integration)
+- `POST /api/wallet/create-recharge-intent` - Creates real Razorpay Order
 - `POST /api/wallet/recharge` - Verifies payment with gateway before adding balance
-- SmartPayment component with location-based gateway selection (Stripe/Razorpay)
-- Preset amounts (₹100, ₹200, ₹500, ₹1000) + custom amount input
+- SmartPayment component (Razorpay only)
+- Preset amounts + custom amount input
 - All mock/fake payment flows removed
 
 ### Scheduled Class Reminders
@@ -39,44 +39,54 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - **Shop Owner**: Revenue breakdown, Fee Summary, Net Earnings, Pending Payout, Transaction history
 - **Priest**: Enhanced earnings with income sources (Puja Bookings + Vedic Classes)
 - **Astrologer**: Existing earnings dashboard with consultation revenue
-- All dashboards show configurable platform fees (5%) and GST (18%)
+- All dashboards show configurable platform fees and GST
+
+### Admin Payments Dashboard
+- Revenue summary, by-type breakdown, gateway split
+- Configurable provider split % (per priest/shop_owner/astrologer)
+- Pending payouts with Mark Paid flow, payout history
+- Refund management: eligible refunds, real gateway refund processing, refund history
+
+### Priest Booking Flow
+- Devotee selects service -> creates booking -> Razorpay payment modal
+- `POST /api/bookings/{id}/confirm-payment` verifies payment then confirms booking
+- Notifications sent to priest/devotee ONLY after payment confirmed
+- Priest can Accept/Complete/Cancel with in-app confirmation dialogs (no page refresh)
+
+### Reviews System
+- Service reviews: `/api/bookings/{id}/review` (stores in service_reviews_collection)
+- Product reviews: `/api/products/{id}/reviews` (stores in product_reviews_collection)
+- Priest detail page shows reviews via `/api/providers/{provider_id}/reviews`
 
 ### Other Features
 - Multi-role auth (Devotee, Priest, Astrologer, Shop Owner, Admin)
-- Priest booking system with status tracking
 - Astrology services (horoscope, birth chart, consultations)
 - Devotional content (mantras, stotras, festivals, temples)
 - Video consultations (100ms SDK, per-minute billing)
 - Admin dashboard (user management, system config)
+- In-app ConfirmDialog for all confirmation actions (no browser dialogs)
 
-## What's Been Implemented (Session - Mar 26-27, 2026)
-- [x] Backend: POST /api/wallet/create-recharge-intent (real Stripe + Razorpay intent generation)
-- [x] Backend: POST /api/wallet/recharge (payment verification before balance addition)
-- [x] Frontend: Cleaned orphaned mock code from WalletComponents.js
-- [x] Frontend: SmartPayment properly wired with onError, description props
-- [x] Codebase audit: No remaining mock payment patterns found
-- [x] Bug fix: Class enrollment payment now sends payment_confirmed:true to backend
-- [x] Bug fix: isEnrolled checks class_id properly, shows "Enrolled" badge
-- [x] Bug fix: "Already enrolled" returns clear error message
-- [x] Bug fix: Stripe API key explicitly set before PaymentIntent creation in classes.py
-- [x] Bug fix: Added payment_method_types=["card"] to all Stripe PaymentIntent.create calls (prevents redirect errors)
-- [x] Admin Payments Dashboard: Revenue summary, by-type breakdown, gateway split, pending payouts, transactions table with filters
-- [x] Phase 2 - Provider Payout Management: Configurable split % (per priest/shop_owner/astrologer), pending payouts with Mark Paid flow, payout history
-- [x] Phase 3 - Refund Management: Eligible refunds list (orders + bookings), real Stripe/Razorpay refund processing, refund history
-- [x] Bug fix: Priest booking now shows Razorpay payment modal instead of directly confirming (fixed in both PriestPages.js and PriestDetailView.js)
-- [x] Backend: POST /api/bookings/{id}/confirm-payment endpoint verifies Razorpay payment before confirming booking
-- [x] Devotee Transactions tab in My Activity showing unified spending history
-- [x] All tests passed (iteration_45-49)
+## What's Been Implemented (Session - Mar 30, 2026)
+- [x] Bug fix: Priest reviews now display on priest detail page (fixed API endpoint: /api/providers/{id}/reviews)
+- [x] Bug fix: ReviewModal sends review_text field matching backend expectation
+- [x] Bug fix: Priest booking Accept/Decline/Complete no longer causes page refresh (silentRefresh)
+- [x] Bug fix: Per-booking loading states in BookingsTab and HomeTab
+- [x] Bug fix: All booking actions use in-app ConfirmDialog (Accept, Decline, Complete, Cancel)
+- [x] Bug fix: ProductReviews delete uses useConfirmDialog instead of window.confirm
+- [x] Bug fix: Priest booking notifications moved to post-payment (confirm-payment endpoint)
+- [x] Bug fix: ObjectId validation added to confirm-payment endpoint
+- [x] All tests passed (iteration_50: 100% backend, 100% frontend)
 
 ## P1/P2 Backlog
 
 ### P1 - Upcoming
-1. CI/CD Pipeline Setup (GitHub Actions → Cloud Run + Firebase)
+1. CI/CD Pipeline Setup (GitHub Actions -> Cloud Run + Firebase)
 2. Play Store TWA Setup
 
 ### P2 - Future
-3. Phase 2 Live Streams (100ms HLS broadcasting)
-4. Temple section enhancements (AI images, maps, nearby temples)
+3. Automated Payouts via RazorpayX
+4. Phase 2 Live Streams (100ms HLS broadcasting)
+5. Temple section enhancements (AI images, maps, nearby temples)
 
 ## Test Credentials
 - Devotee: `devotee@divineapp.com` / `devotee123`
@@ -86,27 +96,44 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Shop Owner: `shop.poojamart@divineapp.com` / `shop123`
 
 ## Key API Endpoints
-- `POST /api/wallet/create-recharge-intent` - Creates Stripe + Razorpay payment intents
+- `POST /api/wallet/create-recharge-intent` - Creates Razorpay payment intent
 - `POST /api/wallet/recharge` - Verifies & finalizes wallet top-up
 - `GET /api/wallet` - Get wallet balance
-- `GET /api/wallet/transactions` - Transaction history
-- `POST /api/payments/stripe/create-intent` - General Stripe intent
-- `POST /api/payments/razorpay/create-order` - General Razorpay order
+- `POST /api/bookings` - Create booking + generate Razorpay order
+- `POST /api/bookings/{id}/confirm-payment` - Verify payment + confirm booking + send notifications
+- `PUT /api/bookings/{id}/status` - Update booking status (priest)
+- `POST /api/bookings/{id}/review` - Submit service review
+- `GET /api/providers/{id}/reviews` - Get provider reviews
+- `GET /api/admin/payments/dashboard` - Admin payments overview
+- `GET /api/admin/payouts/pending` - Pending provider payouts
+- `GET /api/my-transactions` - Devotee unified transaction history
 
 ## Architecture
 ```
 /app/
 ├── backend/
 │   ├── routes/
-│   │   ├── consultation.py    # Wallet endpoints (create-recharge-intent, recharge)
-│   │   └── payments.py        # General Stripe/Razorpay intents
-│   ├── video_consultation.py  # Wallet balance functions
-│   └── system_config.py       # Payment credentials management
+│   │   ├── admin_new.py         # Admin Payments, Payouts, Refunds
+│   │   ├── bookings_new.py      # Booking CRUD + payment confirmation + notifications
+│   │   ├── consultation.py      # Wallet, Reviews, Providers
+│   │   ├── classes.py           # Razorpay integrated
+│   │   ├── orders_new.py        # Razorpay integrated
+│   │   └── reviews.py           # Product reviews
+│   ├── services/
+│   │   └── notification_service.py  # Email, Push, In-app notifications
+│   └── system_config.py         # Admin-configurable settings
 └── frontend/
     └── src/
         ├── components/
-        │   ├── PaymentComponents.js       # SmartPayment, StripePayment, RazorpayPayment
-        │   └── Wallet/WalletComponents.js # WalletCard, RechargeModal, TransactionHistory
+        │   ├── PaymentComponents.js  # SmartPayment (Razorpay only)
+        │   ├── ui/ConfirmDialog.js   # In-app confirmation modal
+        │   ├── Reviews/ProductReviews.js
+        │   └── DevoteeDashboard/PriestDetailView.js
+        ├── pages/dashboards/
+        │   ├── PriestDashboard.js  # silentRefresh for booking updates
+        │   ├── priest/components/BookingsTab.js  # Per-booking loading
+        │   ├── admin/components/PaymentsTab.js
+        │   └── devotee/components/ReviewModal.js
         └── contexts/
-            └── PaymentContext.js           # Location-based payment method detection
+            └── PaymentContext.js
 ```
