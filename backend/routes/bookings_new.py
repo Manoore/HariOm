@@ -264,10 +264,11 @@ async def confirm_booking_payment(booking_id: str, request: Request, user: dict 
             print(f"Post-payment notification error (non-blocking): {e}")
     
     # Create chat room between devotee and priest after payment
+    chat_room_id = None
     try:
         if devotee and priest_user:
             context = f"{booking.get('service_name', 'Pooja')} on {date_str}"
-            await create_chat_room(
+            chat_room_id = await create_chat_room(
                 room_type="booking",
                 reference_id=booking_id,
                 participant1_id=str(devotee["_id"]),
@@ -276,10 +277,15 @@ async def confirm_booking_payment(booking_id: str, request: Request, user: dict 
                 participant2_name=priest_user.get("name", "Priest"),
                 context=context
             )
+            print(f"Chat room created: {chat_room_id} for booking {booking_id}")
     except Exception as e:
         print(f"Chat room creation error (non-blocking): {e}")
     
-    return {"message": "Payment verified. Booking confirmed!", "booking_id": booking_id}
+    return {
+        "message": "Payment verified. Booking confirmed!", 
+        "booking_id": booking_id,
+        "chat_room_id": chat_room_id
+    }
 
 
 @router.get("/bookings")

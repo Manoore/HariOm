@@ -254,10 +254,10 @@ export function PriestDetailPage() {
 
   const handlePaymentSuccess = async (paymentData) => {
     try {
-      await api.post(`/api/bookings/${paymentModal.bookingId}/confirm-payment`, {
+      const res = await api.post(`/api/bookings/${paymentModal.bookingId}/confirm-payment`, {
         payment_id: paymentData.payment_id,
       });
-      toast.success('Payment successful! Booking confirmed.');
+      toast.success('Payment successful! Booking confirmed. You can now chat with your priest in Messages.');
       setPaymentModal(null);
       navigate('/dashboard');
     } catch (error) {
