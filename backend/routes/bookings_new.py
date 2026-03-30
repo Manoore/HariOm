@@ -138,35 +138,7 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
     result = await bookings_collection.insert_one(booking_dict)
     booking_id = str(result.inserted_id)
     
-    # Send notification to devotee
-    if NOTIFICATIONS_ENABLED:
-        try:
-            booking_date_str = data.booking_date.strftime("%B %d, %Y at %I:%M %p") if hasattr(data.booking_date, 'strftime') else str(data.booking_date)
-            await notify_booking_created(str(user["_id"]), {
-                "service_name": data.service_name,
-                "priest_name": priest_user["name"] if priest_user else "Unknown",
-                "booking_date": booking_date_str,
-                "amount": service["price"],
-                "booking_id": booking_id[:8].upper()
-            })
-        except Exception:
-            pass
-    
-    # Send notification to priest (in-app + email + push)
-    if NOTIFICATIONS_ENABLED and priest.get("user_id"):
-        try:
-            booking_date_str = data.booking_date.strftime("%B %d, %Y at %I:%M %p") if hasattr(data.booking_date, 'strftime') else str(data.booking_date)
-            await notify_priest_new_booking(priest["user_id"], {
-                "devotee_name": user.get("name", "A devotee"),
-                "service_name": data.service_name,
-                "booking_date": booking_date_str,
-                "amount": service["price"],
-                "booking_id": booking_id[:8].upper()
-            })
-        except Exception:
-            pass
-    
-    # Create Razorpay order for payment
+    # Create Razorpay order for payment (notifications sent AFTER payment confirmation)
     price = service["price"]
     if price and price > 0:
         try:
