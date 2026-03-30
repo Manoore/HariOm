@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../../lib/api';
 import { toast } from 'sonner';
+import { useConfirmDialog } from '../ui/ConfirmDialog';
 
 // Star Rating Component
 export function StarRating({ rating, setRating, size = "md", readonly = false }) {
@@ -367,6 +368,7 @@ export function ProductReviews({ productId, productName }) {
   const [canReview, setCanReview] = useState(false);
   const [showWriteReview, setShowWriteReview] = useState(false);
   const [sortBy, setSortBy] = useState('recent');
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   useEffect(() => {
     fetchReviews();
@@ -397,7 +399,14 @@ export function ProductReviews({ productId, productName }) {
   };
 
   const handleDeleteReview = async (reviewId) => {
-    if (!window.confirm('Delete this review?')) return;
+    const ok = await confirm({
+      title: 'Delete Review?',
+      message: 'Are you sure you want to delete this review? This cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Keep',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/reviews/${reviewId}`);
       toast.success('Review deleted');
@@ -409,6 +418,7 @@ export function ProductReviews({ productId, productName }) {
 
   return (
     <div className="space-y-6">
+      <ConfirmDialog />
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="font-cinzel text-xl font-semibold text-maroon">Customer Reviews</h2>

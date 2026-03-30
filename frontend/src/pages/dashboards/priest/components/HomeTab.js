@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sun, Send, Heart, MessageCircle, CalendarDays, AlertCircle, BarChart3, Eye } from 'lucide-react';
 import { BookingCard } from './BookingsTab';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 // ==================== STAT CARD ====================
 function StatCard({ icon: Icon, value, label, highlight }) {
@@ -21,6 +22,7 @@ function HomeTab({ analytics, bookings, panchang, festivals, posts, updateStatus
   const upcomingBookings = bookings.filter(b => b.status === 'confirmed');
   const todayFestivals = festivals.slice(0, 3);
   const recentPosts = posts.slice(0, 3);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const getPanchangValue = (value, fallback = '') => {
     if (!value) return fallback;
@@ -31,6 +33,7 @@ function HomeTab({ analytics, bookings, panchang, festivals, posts, updateStatus
 
   return (
     <div className="space-y-4 md:space-y-6">
+      <ConfirmDialog />
       {/* Mobile Stats */}
       <div className="md:hidden grid grid-cols-4 gap-2">
         <div className="bg-white rounded-xl p-2 text-center shadow-sm">
@@ -132,7 +135,7 @@ function HomeTab({ analytics, bookings, panchang, festivals, posts, updateStatus
           </h2>
           <div className="space-y-3">
             {pendingBookings.slice(0, 3).map((booking) => (
-              <BookingCard key={booking.id} booking={booking} onUpdateStatus={updateStatus} compact />
+              <BookingCard key={booking.id} booking={booking} onUpdateStatus={updateStatus} compact confirm={confirm} />
             ))}
           </div>
         </div>

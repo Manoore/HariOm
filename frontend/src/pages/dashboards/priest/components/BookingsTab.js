@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { User, Clock, CheckCircle, XCircle, Calendar, Filter } from 'lucide-react';
+import { User, Clock, CheckCircle, XCircle, Calendar, Loader2 } from 'lucide-react';
 import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 
 // ==================== BOOKING CARD ====================
 function BookingCard({ booking, onUpdateStatus, compact = false, confirm }) {
+  const [loadingAction, setLoadingAction] = useState(null);
+
   const statusColors = {
     pending: 'bg-yellow-100 text-yellow-700',
     confirmed: 'bg-blue-100 text-blue-700',
@@ -11,22 +13,46 @@ function BookingCard({ booking, onUpdateStatus, compact = false, confirm }) {
     cancelled: 'bg-red-100 text-red-700',
   };
 
-  const handleCancel = async (bookingId) => {
-    if (confirm) {
-      const ok = await confirm({
+  const handleAction = async (bookingId, status) => {
+    const configs = {
+      confirmed: {
+        title: 'Accept Booking?',
+        message: `Accept "${booking.service_name}" from ${booking.user_name}? The devotee will be notified.`,
+        confirmLabel: 'Accept',
+        cancelLabel: 'Not Now',
+      },
+      completed: {
+        title: 'Mark as Completed?',
+        message: `Mark "${booking.service_name}" with ${booking.user_name} as completed?`,
+        confirmLabel: 'Yes, Complete',
+        cancelLabel: 'Not Yet',
+      },
+      cancelled: {
         title: 'Cancel Booking?',
         message: `Cancel "${booking.service_name}" with ${booking.user_name}? The devotee will be notified.`,
         confirmLabel: 'Yes, Cancel',
         cancelLabel: 'Keep Booking',
-        variant: 'danger'
-      });
+        variant: 'danger',
+      },
+    };
+
+    if (confirm && configs[status]) {
+      const ok = await confirm(configs[status]);
       if (!ok) return;
     }
-    onUpdateStatus(bookingId, 'cancelled');
+
+    setLoadingAction(status);
+    try {
+      await onUpdateStatus(bookingId, status);
+    } finally {
+      setLoadingAction(null);
+    }
   };
 
+  const isLoading = loadingAction !== null;
+
   return (
-    <div className={`border border-orange-100 rounded-xl ${compact ? 'p-3' : 'p-4'}`}>
+    <div className={`border border-orange-100 rounded-xl ${compact ? 'p-3' : 'p-4'}`} data-testid={`booking-card-${booking.id}`}>
       <div className="flex justify-between items-start mb-2">
         <div>
           <p className={`font-semibold text-gray-800 ${compact ? 'text-sm' : ''}`}>{booking.service_name}</p>
@@ -50,18 +76,20 @@ function BookingCard({ booking, onUpdateStatus, compact = false, confirm }) {
       {booking.status === 'pending' && (
         <div className="flex gap-2 mt-2">
           <button
-            onClick={() => onUpdateStatus(booking.id, 'confirmed')}
-            className="flex-1 bg-green-500 text-white rounded-lg py-1.5 text-xs flex items-center justify-center gap-1"
+            onClick={() => handleAction(booking.id, 'confirmed')}
+            disabled={isLoading}
+            className="flex-1 bg-green-500 text-white rounded-lg py-1.5 text-xs flex items-center justify-center gap-1 disabled:opacity-50 hover:bg-green-600 transition-colors"
             data-testid={`accept-booking-${booking.id}`}
           >
-            <CheckCircle className="w-3 h-3" /> Accept
+            {loadingAction === 'confirmed' ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />} Accept
           </button>
           <button
-            onClick={() => handleCancel(booking.id)}
-            className="flex-1 bg-red-500 text-white rounded-lg py-1.5 text-xs flex items-center justify-center gap-1"
+            onClick={() => handleAction(booking.id, 'cancelled')}
+            disabled={isLoading}
+            className="flex-1 bg-red-500 text-white rounded-lg py-1.5 text-xs flex items-center justify-center gap-1 disabled:opacity-50 hover:bg-red-600 transition-colors"
             data-testid={`decline-booking-${booking.id}`}
           >
-            <XCircle className="w-3 h-3" /> Decline
+            {loadingAction === 'cancelled' ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />} Decline
           </button>
         </div>
       )}
@@ -69,18 +97,20 @@ function BookingCard({ booking, onUpdateStatus, compact = false, confirm }) {
       {booking.status === 'confirmed' && (
         <div className="flex gap-2 mt-2">
           <button
-            onClick={() => onUpdateStatus(booking.id, 'completed')}
-            className="flex-1 bg-saffron text-white rounded-lg py-1.5 text-xs"
+            onClick={() => handleAction(booking.id, 'completed')}
+            disabled={isLoading}
+            className="flex-1 bg-saffron text-white rounded-lg py-1.5 text-xs disabled:opacity-50 flex items-center justify-center gap-1 hover:bg-saffron-dark transition-colors"
             data-testid={`complete-booking-${booking.id}`}
           >
-            Mark Completed
+            {loadingAction === 'completed' ? <Loader2 className="w-3 h-3 animate-spin" /> : null} Mark Completed
           </button>
           <button
-            onClick={() => handleCancel(booking.id)}
-            className="flex-1 bg-red-50 text-red-500 border border-red-200 rounded-lg py-1.5 text-xs flex items-center justify-center gap-1"
+            onClick={() => handleAction(booking.id, 'cancelled')}
+            disabled={isLoading}
+            className="flex-1 bg-red-50 text-red-500 border border-red-200 rounded-lg py-1.5 text-xs flex items-center justify-center gap-1 disabled:opacity-50 hover:bg-red-100 transition-colors"
             data-testid={`cancel-booking-${booking.id}`}
           >
-            <XCircle className="w-3 h-3" /> Cancel
+            {loadingAction === 'cancelled' ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />} Cancel
           </button>
         </div>
       )}

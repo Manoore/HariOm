@@ -153,8 +153,18 @@ export default function PriestDashboard() {
   };
 
   const updateBookingStatus = async (bookingId, status) => {
-    try { await api.put(`/api/bookings/${bookingId}/status?status=${status}`); toast.success('Booking updated!'); fetchDashboardData(); }
-    catch { toast.error('Failed to update booking'); }
+    try {
+      await api.put(`/api/bookings/${bookingId}/status?status=${status}`);
+      const statusMessages = {
+        confirmed: 'Booking accepted successfully!',
+        completed: 'Booking marked as completed!',
+        cancelled: 'Booking cancelled.',
+      };
+      toast.success(statusMessages[status] || 'Booking updated!');
+      silentRefresh();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to update booking');
+    }
   };
 
   const renderContent = () => {

@@ -21,9 +21,15 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await api.get(`/api/priests/${priest.id}/reviews`);
-        setReviews(res.data.reviews || []);
-        setRatingSummary(res.data.rating_summary);
+        const res = await api.get(`/api/providers/${priest.id}/reviews`);
+        // Map backend fields to frontend expected fields
+        const mapped = (res.data.reviews || []).map(r => ({
+          ...r,
+          comment: r.review_text || r.comment || '',
+          service_name: r.service_type || r.service_name || '',
+        }));
+        setReviews(mapped);
+        setRatingSummary(res.data.rating_summary || { distribution: {} });
       } catch (error) {
         console.error('Failed to fetch reviews:', error);
       } finally {

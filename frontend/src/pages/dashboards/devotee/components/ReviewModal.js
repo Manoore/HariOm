@@ -17,7 +17,7 @@ export function ReviewModal({ booking, onClose, onSuccess }) {
     }
     setSubmitting(true);
     try {
-      await api.post(`/api/bookings/${booking.id}/review`, { rating, comment });
+      await api.post(`/api/bookings/${booking.id}/review`, { rating, review_text: comment });
       onSuccess();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to submit review');

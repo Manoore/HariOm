@@ -199,7 +199,13 @@ async def confirm_booking_payment(booking_id: str, request: Request, user: dict 
     if not payment_id:
         raise HTTPException(status_code=400, detail="Payment ID required")
     
-    booking = await bookings_collection.find_one({"_id": ObjectId(booking_id), "user_id": str(user["_id"])})
+    # Validate ObjectId format
+    try:
+        booking_oid = ObjectId(booking_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid booking ID format")
+    
+    booking = await bookings_collection.find_one({"_id": booking_oid, "user_id": str(user["_id"])})
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
     
@@ -217,7 +223,7 @@ async def confirm_booking_payment(booking_id: str, request: Request, user: dict 
     
     # Update booking to confirmed
     await bookings_collection.update_one(
-        {"_id": ObjectId(booking_id)},
+        {"_id": booking_oid},
         {"$set": {
             "status": "confirmed",
             "payment_id": payment_id,
@@ -225,6 +231,35 @@ async def confirm_booking_payment(booking_id: str, request: Request, user: dict 
             "paid_at": datetime.now(timezone.utc),
         }}
     )
+    
+    # Send notifications AFTER successful payment
+    if NOTIFICATIONS_ENABLED:
+        try:
+            # Fetch priest details for notifications
+            priest_doc = await priests_collection.find_one({"_id": ObjectId(booking["priest_id"])})
+            priest_user = await users_collection.find_one({"_id": ObjectId(priest_doc["user_id"])}) if priest_doc else None
+            devotee = await users_collection.find_one({"_id": ObjectId(booking["user_id"])})
+            
+            booking_date = booking.get("booking_date")
+            date_str = booking_date.strftime("%B %d, %Y") if hasattr(booking_date, 'strftime') else str(booking_date)
+            
+            # Notify the devotee that booking is confirmed
+            await notify_booking_confirmed(booking["user_id"], {
+                "service_name": booking.get("service_name", "Puja"),
+                "priest_name": priest_user.get("name", "Priest") if priest_user else "Priest",
+                "booking_date": date_str
+            })
+            
+            # Notify the priest about the new paid booking
+            if priest_doc and priest_doc.get("user_id"):
+                await notify_priest_new_booking(priest_doc["user_id"], {
+                    "devotee_name": devotee.get("name", "A devotee") if devotee else "A devotee",
+                    "service_name": booking.get("service_name", "Puja"),
+                    "booking_date": date_str,
+                    "amount": booking.get("price", 0)
+                })
+        except Exception as e:
+            print(f"Post-payment notification error (non-blocking): {e}")
     
     return {"message": "Payment verified. Booking confirmed!", "booking_id": booking_id}
 
