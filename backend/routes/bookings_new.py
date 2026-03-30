@@ -136,6 +136,7 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
     }
     
     result = await bookings_collection.insert_one(booking_dict)
+    booking_id = str(result.inserted_id)
     
     # Send notification to devotee
     if NOTIFICATIONS_ENABLED:
@@ -146,7 +147,7 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
                 "priest_name": priest_user["name"] if priest_user else "Unknown",
                 "booking_date": booking_date_str,
                 "amount": service["price"],
-                "booking_id": str(result.inserted_id)[:8].upper()
+                "booking_id": booking_id[:8].upper()
             })
         except Exception:
             pass
@@ -160,16 +161,101 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
                 "service_name": data.service_name,
                 "booking_date": booking_date_str,
                 "amount": service["price"],
-                "booking_id": str(result.inserted_id)[:8].upper()
+                "booking_id": booking_id[:8].upper()
             })
         except Exception:
             pass
     
+    # Create Razorpay order for payment
+    price = service["price"]
+    if price and price > 0:
+        try:
+            import razorpay
+            from system_config import get_razorpay_credentials, get_fees_and_taxes, calculate_fees_and_taxes
+            
+            fees_config = await get_fees_and_taxes()
+            fees_calc = calculate_fees_and_taxes(price, fees_config)
+            platform_fee = fees_calc["platform_fee"]
+            gst_amount = fees_calc["tax_amount"]
+            total_amount = price + platform_fee + gst_amount
+            
+            rz_creds = await get_razorpay_credentials()
+            rz_client = razorpay.Client(auth=(rz_creds["key_id"], rz_creds["key_secret"]))
+            rz_order = rz_client.order.create(data={
+                "amount": int(total_amount * 100),
+                "currency": "INR",
+                "notes": {"type": "puja_booking", "booking_id": booking_id, "user_id": str(user["_id"])}
+            })
+            
+            return {
+                "message": "Booking created. Please complete payment.",
+                "booking_id": booking_id,
+                "requires_payment": True,
+                "price": price,
+                "price_breakdown": {
+                    "base_price": price,
+                    "platform_fee": platform_fee,
+                    "platform_fee_percent": fees_config["platform_fee"]["value"] if fees_config["platform_fee"]["enabled"] else 0,
+                    "gst": gst_amount,
+                    "gst_percent": fees_calc["tax_percentage"],
+                    "tax_label": fees_calc["tax_label"],
+                    "total": total_amount,
+                },
+                "razorpay_order_id": rz_order["id"],
+                "razorpay_key": rz_creds["key_id"],
+            }
+        except Exception as e:
+            print(f"Razorpay order creation for booking failed: {e}")
+    
     return {
         "message": "Booking created",
-        "booking_id": str(result.inserted_id),
+        "booking_id": booking_id,
+        "requires_payment": False,
         "price": service["price"]
     }
+
+
+@router.post("/bookings/{booking_id}/confirm-payment")
+async def confirm_booking_payment(booking_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """Verify Razorpay payment and confirm booking"""
+    import razorpay
+    from system_config import get_razorpay_credentials
+    
+    data = await request.json()
+    payment_id = data.get("payment_id")
+    
+    if not payment_id:
+        raise HTTPException(status_code=400, detail="Payment ID required")
+    
+    booking = await bookings_collection.find_one({"_id": ObjectId(booking_id), "user_id": str(user["_id"])})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Verify Razorpay payment
+    try:
+        rz_creds = await get_razorpay_credentials()
+        rz_client = razorpay.Client(auth=(rz_creds["key_id"], rz_creds["key_secret"]))
+        payment = rz_client.payment.fetch(payment_id)
+        if payment.get("status") != "captured":
+            raise HTTPException(status_code=400, detail="Payment not verified")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Payment verification failed: {str(e)}")
+    
+    # Update booking to confirmed
+    await bookings_collection.update_one(
+        {"_id": ObjectId(booking_id)},
+        {"$set": {
+            "status": "confirmed",
+            "payment_id": payment_id,
+            "payment_method": "razorpay",
+            "paid_at": datetime.now(timezone.utc),
+        }}
+    )
+    
+    return {"message": "Payment verified. Booking confirmed!", "booking_id": booking_id}
+
 
 @router.get("/bookings")
 async def get_user_bookings(user: dict = Depends(get_current_user)):

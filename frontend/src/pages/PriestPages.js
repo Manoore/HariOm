@@ -9,6 +9,7 @@ import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 import AddressAutocomplete from '../components/AddressAutocomplete';
+import SmartPayment from '../components/PaymentComponents';
 
 export function PriestsListPage() {
   const [priests, setPriests] = useState([]);
@@ -204,6 +205,8 @@ export function PriestDetailPage() {
     }
   };
 
+  const [paymentModal, setPaymentModal] = useState(null);
+
   const handleBooking = async () => {
     if (!user) {
       toast.error('Please login to book');
@@ -229,12 +232,36 @@ export function PriestDetailPage() {
         address: bookingType === 'home_visit' ? address : null,
         notes
       });
-      toast.success('Booking created! Proceed to payment.');
-      navigate('/dashboard');
+      
+      if (res.data.requires_payment) {
+        setPaymentModal({
+          bookingId: res.data.booking_id,
+          serviceName: selectedService.name,
+          price: res.data.price,
+          priceBreakdown: res.data.price_breakdown,
+          totalAmount: res.data.price_breakdown?.total || res.data.price,
+        });
+      } else {
+        toast.success('Booking created successfully!');
+        navigate('/dashboard');
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Booking failed');
     } finally {
       setBookingLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentData) => {
+    try {
+      await api.post(`/api/bookings/${paymentModal.bookingId}/confirm-payment`, {
+        payment_id: paymentData.payment_id,
+      });
+      toast.success('Payment successful! Booking confirmed.');
+      setPaymentModal(null);
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Payment confirmation failed');
     }
   };
 
@@ -453,6 +480,37 @@ export function PriestDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {paymentModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setPaymentModal(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()} data-testid="booking-payment-modal">
+            <h3 className="font-cinzel text-lg font-semibold text-gray-800 mb-1">Complete Payment</h3>
+            <p className="text-sm text-gray-500 mb-4">{paymentModal.serviceName}</p>
+            
+            {paymentModal.priceBreakdown && (
+              <div className="bg-orange-50 rounded-xl p-4 mb-4 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-gray-600">Service Fee</span><span className="font-medium">₹{paymentModal.priceBreakdown.base_price}</span></div>
+                {paymentModal.priceBreakdown.platform_fee > 0 && (
+                  <div className="flex justify-between"><span className="text-gray-600">Platform Fee ({paymentModal.priceBreakdown.platform_fee_percent}%)</span><span>₹{paymentModal.priceBreakdown.platform_fee}</span></div>
+                )}
+                {paymentModal.priceBreakdown.gst > 0 && (
+                  <div className="flex justify-between"><span className="text-gray-600">{paymentModal.priceBreakdown.tax_label} ({paymentModal.priceBreakdown.gst_percent}%)</span><span>₹{paymentModal.priceBreakdown.gst.toFixed(2)}</span></div>
+                )}
+                <div className="flex justify-between pt-2 border-t border-orange-200 font-bold"><span>Total</span><span className="text-lg text-maroon">₹{paymentModal.totalAmount?.toFixed(2)}</span></div>
+              </div>
+            )}
+
+            <SmartPayment
+              amount={paymentModal.totalAmount}
+              onSuccess={handlePaymentSuccess}
+              onError={(err) => toast.error(err)}
+              description={`Puja Booking: ${paymentModal.serviceName}`}
+              metadata={{ type: 'puja_booking', booking_id: paymentModal.bookingId }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

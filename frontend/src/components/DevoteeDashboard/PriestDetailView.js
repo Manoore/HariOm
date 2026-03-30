@@ -4,6 +4,7 @@ import { Star, ChevronRight, Clock, Loader2, MessageSquare, MapPin, Award, Landm
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
+import SmartPayment from '../PaymentComponents';
 
 function PriestDetailView({ priest, onBack, isDesktop }) {
   const { user } = useAuth();
@@ -13,6 +14,7 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [ratingSummary, setRatingSummary] = useState(null);
+  const [paymentModal, setPaymentModal] = useState(null);
   const [showAllReviews, setShowAllReviews] = useState(false);
 
   // Fetch reviews for this priest
@@ -38,14 +40,25 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
     }
     setLoading(true);
     try {
-      await api.post('/api/bookings', {
+      const res = await api.post('/api/bookings', {
         priest_id: priest.id,
         service_name: selectedService.name,
         booking_date: new Date(bookingDate).toISOString(),
         booking_type: 'online'
       });
-      toast.success('Booking created successfully!');
-      onBack();
+
+      if (res.data.requires_payment) {
+        setPaymentModal({
+          bookingId: res.data.booking_id,
+          serviceName: selectedService.name,
+          price: res.data.price,
+          priceBreakdown: res.data.price_breakdown,
+          totalAmount: res.data.price_breakdown?.total || res.data.price,
+        });
+      } else {
+        toast.success('Booking created successfully!');
+        onBack();
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Booking failed');
     } finally {
@@ -53,7 +66,21 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
     }
   };
 
+  const handlePaymentSuccess = async (paymentData) => {
+    try {
+      await api.post(`/api/bookings/${paymentModal.bookingId}/confirm-payment`, {
+        payment_id: paymentData.payment_id,
+      });
+      toast.success('Payment successful! Booking confirmed.');
+      setPaymentModal(null);
+      onBack();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Payment confirmation failed');
+    }
+  };
+
   return (
+    <>
     <div className={`pb-24 lg:pb-8 ${isDesktop ? 'px-8' : ''}`}>
       {/* Header with back button */}
       <div className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 px-4 py-3 border-b border-orange-50">
@@ -328,6 +355,35 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
         </div>
       </div>
     </div>
+
+    {paymentModal && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setPaymentModal(null)}>
+        <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()} data-testid="booking-payment-modal">
+          <h3 className="font-cinzel text-lg font-semibold text-gray-800 mb-1">Complete Payment</h3>
+          <p className="text-sm text-gray-500 mb-4">{paymentModal.serviceName}</p>
+          {paymentModal.priceBreakdown && (
+            <div className="bg-orange-50 rounded-xl p-4 mb-4 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-gray-600">Service Fee</span><span className="font-medium">₹{paymentModal.priceBreakdown.base_price}</span></div>
+              {paymentModal.priceBreakdown.platform_fee > 0 && (
+                <div className="flex justify-between"><span className="text-gray-600">Platform Fee ({paymentModal.priceBreakdown.platform_fee_percent}%)</span><span>₹{paymentModal.priceBreakdown.platform_fee}</span></div>
+              )}
+              {paymentModal.priceBreakdown.gst > 0 && (
+                <div className="flex justify-between"><span className="text-gray-600">{paymentModal.priceBreakdown.tax_label} ({paymentModal.priceBreakdown.gst_percent}%)</span><span>₹{paymentModal.priceBreakdown.gst.toFixed(2)}</span></div>
+              )}
+              <div className="flex justify-between pt-2 border-t border-orange-200 font-bold"><span>Total</span><span className="text-lg text-maroon">₹{paymentModal.totalAmount?.toFixed(2)}</span></div>
+            </div>
+          )}
+          <SmartPayment
+            amount={paymentModal.totalAmount}
+            onSuccess={handlePaymentSuccess}
+            onError={(err) => toast.error(err)}
+            description={`Puja Booking: ${paymentModal.serviceName}`}
+            metadata={{ type: 'puja_booking', booking_id: paymentModal.bookingId }}
+          />
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
