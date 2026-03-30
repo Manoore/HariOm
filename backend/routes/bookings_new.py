@@ -58,15 +58,17 @@ async def get_cancellation_refund(hours_until_booking: float) -> int:
     
     return 0
 
-# Helper function to create chat room (imported from main module)
+# Helper function to create chat room (compatible with chat.py schema)
 async def create_chat_room(room_type: str, reference_id: str, participant1_id: str, 
                           participant1_name: str, participant2_id: str, 
                           participant2_name: str, context: str = None):
     """Create a chat room for booking communication"""
-    # Check if room already exists
+    # Check if room already exists (check both field names for compat)
     existing = await chat_rooms_collection.find_one({
-        "type": room_type,
-        "reference_id": reference_id
+        "$or": [
+            {"booking_id": reference_id},
+            {"reference_id": reference_id}
+        ]
     })
     
     if existing:
@@ -74,15 +76,19 @@ async def create_chat_room(room_type: str, reference_id: str, participant1_id: s
     
     room = {
         "type": room_type,
+        "booking_id": reference_id if room_type == "booking" else None,
+        "order_id": reference_id if room_type == "order" else None,
         "reference_id": reference_id,
-        "participants": [
-            {"user_id": participant1_id, "name": participant1_name},
-            {"user_id": participant2_id, "name": participant2_name}
-        ],
+        "participants": [participant1_id, participant2_id],
+        "participant_details": {
+            participant1_id: {"name": participant1_name, "role": "devotee"},
+            participant2_id: {"name": participant2_name, "role": "priest" if room_type == "booking" else "shop_owner"}
+        },
         "context": context,
         "is_active": True,
         "created_at": datetime.now(timezone.utc),
-        "last_message_at": datetime.now(timezone.utc)
+        "last_message_at": datetime.now(timezone.utc),
+        "unread_count": {participant1_id: 0, participant2_id: 0}
     }
     
     result = await chat_rooms_collection.insert_one(room)
@@ -91,7 +97,7 @@ async def create_chat_room(room_type: str, reference_id: str, participant1_id: s
 async def deactivate_chat_room(room_type: str, reference_id: str):
     """Deactivate a chat room"""
     await chat_rooms_collection.update_one(
-        {"type": room_type, "reference_id": reference_id},
+        {"$or": [{"booking_id": reference_id}, {"reference_id": reference_id}]},
         {"$set": {"is_active": False}}
     )
 
@@ -232,25 +238,21 @@ async def confirm_booking_payment(booking_id: str, request: Request, user: dict 
         }}
     )
     
+    # Fetch priest & devotee details (used for notifications + chat room)
+    priest_doc = await priests_collection.find_one({"_id": ObjectId(booking["priest_id"])})
+    priest_user = await users_collection.find_one({"_id": ObjectId(priest_doc["user_id"])}) if priest_doc else None
+    devotee = await users_collection.find_one({"_id": ObjectId(booking["user_id"])})
+    booking_date = booking.get("booking_date")
+    date_str = booking_date.strftime("%B %d, %Y") if hasattr(booking_date, 'strftime') else str(booking_date)
+    
     # Send notifications AFTER successful payment
     if NOTIFICATIONS_ENABLED:
         try:
-            # Fetch priest details for notifications
-            priest_doc = await priests_collection.find_one({"_id": ObjectId(booking["priest_id"])})
-            priest_user = await users_collection.find_one({"_id": ObjectId(priest_doc["user_id"])}) if priest_doc else None
-            devotee = await users_collection.find_one({"_id": ObjectId(booking["user_id"])})
-            
-            booking_date = booking.get("booking_date")
-            date_str = booking_date.strftime("%B %d, %Y") if hasattr(booking_date, 'strftime') else str(booking_date)
-            
-            # Notify the devotee that booking is confirmed
             await notify_booking_confirmed(booking["user_id"], {
                 "service_name": booking.get("service_name", "Puja"),
                 "priest_name": priest_user.get("name", "Priest") if priest_user else "Priest",
                 "booking_date": date_str
             })
-            
-            # Notify the priest about the new paid booking
             if priest_doc and priest_doc.get("user_id"):
                 await notify_priest_new_booking(priest_doc["user_id"], {
                     "devotee_name": devotee.get("name", "A devotee") if devotee else "A devotee",
@@ -260,6 +262,22 @@ async def confirm_booking_payment(booking_id: str, request: Request, user: dict 
                 })
         except Exception as e:
             print(f"Post-payment notification error (non-blocking): {e}")
+    
+    # Create chat room between devotee and priest after payment
+    try:
+        if devotee and priest_user:
+            context = f"{booking.get('service_name', 'Pooja')} on {date_str}"
+            await create_chat_room(
+                room_type="booking",
+                reference_id=booking_id,
+                participant1_id=str(devotee["_id"]),
+                participant1_name=devotee.get("name", "Devotee"),
+                participant2_id=str(priest_user["_id"]),
+                participant2_name=priest_user.get("name", "Priest"),
+                context=context
+            )
+    except Exception as e:
+        print(f"Chat room creation error (non-blocking): {e}")
     
     return {"message": "Payment verified. Booking confirmed!", "booking_id": booking_id}
 

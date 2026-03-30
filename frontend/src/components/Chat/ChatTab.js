@@ -148,6 +148,26 @@ export function ChatRoom({ room, onBack, isDesktop }) {
     loadMessages();
   }, [room.id]);
 
+  // Poll for new messages every 3 seconds (since WebSocket may not be available)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get(`/api/chat/rooms/${room.id}/messages`);
+        const newMessages = res.data.messages || [];
+        setMessages(prev => {
+          if (newMessages.length !== prev.length) {
+            scrollToBottom();
+            return newMessages;
+          }
+          return prev;
+        });
+      } catch (err) {
+        // silent fail for polling
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [room.id]);
+
   // Setup WebSocket connection
   useEffect(() => {
     if (!room.id || !token) return;

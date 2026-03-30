@@ -159,8 +159,9 @@ async def get_chat_rooms(user: dict = Depends(get_current_user)):
         chat_expiry_reason = None
         
         # Check booking status and expiry
-        if room.get("booking_id"):
-            booking = await bookings_collection.find_one({"_id": ObjectId(room["booking_id"])})
+        if room.get("booking_id") or room.get("reference_id"):
+            bid = room.get("booking_id") or room.get("reference_id")
+            booking = await bookings_collection.find_one({"_id": ObjectId(bid)})
             if booking:
                 if booking.get("status") == "cancelled":
                     is_active = False
@@ -243,8 +244,8 @@ async def get_chat_rooms(user: dict = Depends(get_current_user)):
             "id": str(room["_id"]),
             "type": room.get("type", "booking"),
             "reference_id": room.get("reference_id"),
-            "booking_id": room.get("booking_id") or room.get("reference_id") if room.get("type") == "booking" else None,
-            "order_id": room.get("order_id") or room.get("reference_id") if room.get("type") == "order" else None,
+            "booking_id": room.get("booking_id") or (room.get("reference_id") if room.get("type") == "booking" else None),
+            "order_id": room.get("order_id") or (room.get("reference_id") if room.get("type") == "order" else None),
             "context": room.get("context", ""),
             "is_active": is_active,
             "chat_expired": chat_expired,

@@ -7,7 +7,7 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - **Frontend**: React + TailwindCSS + Shadcn/UI + Framer Motion
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB
-- **Payments**: Razorpay (sole active gateway). Stripe kept as placeholder for future international expansion.
+- **Payments**: Razorpay (sole active gateway)
 - **Video**: 100ms SDK
 - **Auth**: Firebase Auth / JWT
 - **Email**: Resend API
@@ -15,67 +15,50 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 
 ## Core Features Implemented
 
-### E-Commerce / Marketplace
-- Product catalog, cart, checkout with Razorpay
-- Order Status Lifecycle: pending -> paid -> received -> accepted -> processing -> shipping -> delivered
-- Tracking link + delivery instructions on shipping
-- Delivery photo proof on delivered
-- In-app + push + email notifications on all status changes
+### Priest Booking Flow
+- Devotee selects service -> creates booking -> Razorpay payment modal
+- `POST /api/bookings/{id}/confirm-payment` verifies payment, confirms booking, sends notifications, creates chat room
+- Priest can Accept/Complete/Cancel with in-app confirmation dialogs (no page refresh)
+- Chat room auto-created between devotee and priest after successful payment
 
-### Wallet Recharge (Real Payment Integration)
-- `POST /api/wallet/create-recharge-intent` - Creates real Razorpay Order
-- `POST /api/wallet/recharge` - Verifies payment with gateway before adding balance
-- SmartPayment component (Razorpay only)
-- Preset amounts + custom amount input
-- All mock/fake payment flows removed
+### Chat/Messaging System
+- Real-time messaging via REST API with 3-second polling
+- Chat rooms auto-created on booking payment confirmation
+- Support for text and image messages
+- Unread count tracking, read receipts
+- Chat expiry: 5 days after booking completion, instant on cancellation
+- Admin can reactivate expired chats
 
-### Scheduled Class Reminders
-- User-configurable timing: 15 min, 30 min, 1 hour, 2 hours, 1 day before
-- Auto-enroll: 1-hour reminder auto-set on class enrollment
-- Background scheduler runs every 60 seconds
-- Priests also get self-reminders
+### Reviews System
+- Service reviews: `/api/bookings/{id}/review` (stores `review_text` field)
+- Product reviews: `/api/products/{id}/reviews`
+- Priest detail page shows reviews via `/api/providers/{provider_id}/reviews`
 
-### Provider Payout Dashboard
-- **Shop Owner**: Revenue breakdown, Fee Summary, Net Earnings, Pending Payout, Transaction history
-- **Priest**: Enhanced earnings with income sources (Puja Bookings + Vedic Classes)
-- **Astrologer**: Existing earnings dashboard with consultation revenue
-- All dashboards show configurable platform fees and GST
+### Wallet Recharge (Real Payment)
+- `POST /api/wallet/create-recharge-intent` - Creates Razorpay Order
+- `POST /api/wallet/recharge` - Verifies payment before adding balance
 
 ### Admin Payments Dashboard
 - Revenue summary, by-type breakdown, gateway split
-- Configurable provider split % (per priest/shop_owner/astrologer)
-- Pending payouts with Mark Paid flow, payout history
-- Refund management: eligible refunds, real gateway refund processing, refund history
+- Configurable provider split % (Platform Fee, GST per provider type)
+- Pending payouts with Mark Paid flow
+- Refund management
 
-### Priest Booking Flow
-- Devotee selects service -> creates booking -> Razorpay payment modal
-- `POST /api/bookings/{id}/confirm-payment` verifies payment then confirms booking
-- Notifications sent to priest/devotee ONLY after payment confirmed
-- Priest can Accept/Complete/Cancel with in-app confirmation dialogs (no page refresh)
-
-### Reviews System
-- Service reviews: `/api/bookings/{id}/review` (stores in service_reviews_collection)
-- Product reviews: `/api/products/{id}/reviews` (stores in product_reviews_collection)
-- Priest detail page shows reviews via `/api/providers/{provider_id}/reviews`
-
-### Other Features
-- Multi-role auth (Devotee, Priest, Astrologer, Shop Owner, Admin)
-- Astrology services (horoscope, birth chart, consultations)
-- Devotional content (mantras, stotras, festivals, temples)
-- Video consultations (100ms SDK, per-minute billing)
-- Admin dashboard (user management, system config)
-- In-app ConfirmDialog for all confirmation actions (no browser dialogs)
+### UI/UX
+- All confirmation/error messages use in-app components (sonner toasts, useConfirmDialog)
+- No browser-native dialogs (window.alert/confirm) anywhere
+- Per-action loading states (no full page refreshes)
 
 ## What's Been Implemented (Session - Mar 30, 2026)
-- [x] Bug fix: Priest reviews now display on priest detail page (fixed API endpoint: /api/providers/{id}/reviews)
-- [x] Bug fix: ReviewModal sends review_text field matching backend expectation
-- [x] Bug fix: Priest booking Accept/Decline/Complete no longer causes page refresh (silentRefresh)
-- [x] Bug fix: Per-booking loading states in BookingsTab and HomeTab
-- [x] Bug fix: All booking actions use in-app ConfirmDialog (Accept, Decline, Complete, Cancel)
-- [x] Bug fix: ProductReviews delete uses useConfirmDialog instead of window.confirm
-- [x] Bug fix: Priest booking notifications moved to post-payment (confirm-payment endpoint)
-- [x] Bug fix: ObjectId validation added to confirm-payment endpoint
-- [x] All tests passed (iteration_50: 100% backend, 100% frontend)
+- [x] Reviews display fix: Frontend calls `/api/providers/{id}/reviews` + field name alignment
+- [x] Priest booking confirm without page refresh (silentRefresh + per-booking loading)
+- [x] All booking actions use in-app ConfirmDialog
+- [x] ProductReviews delete uses useConfirmDialog
+- [x] Priest booking notifications moved to post-payment endpoint
+- [x] Chat room auto-creation on booking payment confirmation
+- [x] Chat schema unification (booking_id + reference_id + string participants)
+- [x] Message polling (3s interval) for real-time chat without WebSocket
+- [x] Backward-compatible chat room queries (reference_id OR booking_id)
 
 ## P1/P2 Backlog
 
@@ -85,8 +68,9 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 
 ### P2 - Future
 3. Automated Payouts via RazorpayX
-4. Phase 2 Live Streams (100ms HLS broadcasting)
-5. Temple section enhancements (AI images, maps, nearby temples)
+4. WebSocket endpoint for chat (replace polling with real-time)
+5. Phase 2 Live Streams (100ms HLS broadcasting)
+6. Temple section enhancements (AI images, maps, nearby temples)
 
 ## Test Credentials
 - Devotee: `devotee@divineapp.com` / `devotee123`
@@ -96,44 +80,38 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Shop Owner: `shop.poojamart@divineapp.com` / `shop123`
 
 ## Key API Endpoints
-- `POST /api/wallet/create-recharge-intent` - Creates Razorpay payment intent
-- `POST /api/wallet/recharge` - Verifies & finalizes wallet top-up
-- `GET /api/wallet` - Get wallet balance
-- `POST /api/bookings` - Create booking + generate Razorpay order
-- `POST /api/bookings/{id}/confirm-payment` - Verify payment + confirm booking + send notifications
-- `PUT /api/bookings/{id}/status` - Update booking status (priest)
-- `POST /api/bookings/{id}/review` - Submit service review
+- `POST /api/bookings` - Create booking + Razorpay order
+- `POST /api/bookings/{id}/confirm-payment` - Verify payment + confirm + notify + create chat
+- `PUT /api/bookings/{id}/status` - Update status (priest)
+- `POST /api/bookings/{id}/review` - Submit review (review_text field)
 - `GET /api/providers/{id}/reviews` - Get provider reviews
-- `GET /api/admin/payments/dashboard` - Admin payments overview
-- `GET /api/admin/payouts/pending` - Pending provider payouts
-- `GET /api/my-transactions` - Devotee unified transaction history
+- `GET /api/chat/rooms` - Get user's chat rooms
+- `GET /api/chat/rooms/{id}/messages` - Get messages (also used for polling)
+- `POST /api/chat/rooms/{id}/messages` - Send message
+- `GET /api/chat/unread-count` - Total unread count
 
 ## Architecture
 ```
 /app/
 ├── backend/
 │   ├── routes/
-│   │   ├── admin_new.py         # Admin Payments, Payouts, Refunds
-│   │   ├── bookings_new.py      # Booking CRUD + payment confirmation + notifications
+│   │   ├── bookings_new.py      # Booking + payment confirm + chat room creation
+│   │   ├── chat.py              # Chat rooms, messages, REST API
 │   │   ├── consultation.py      # Wallet, Reviews, Providers
-│   │   ├── classes.py           # Razorpay integrated
-│   │   ├── orders_new.py        # Razorpay integrated
-│   │   └── reviews.py           # Product reviews
-│   ├── services/
-│   │   └── notification_service.py  # Email, Push, In-app notifications
-│   └── system_config.py         # Admin-configurable settings
+│   │   ├── admin_new.py         # Admin Payments, Payouts, Refunds
+│   │   ├── classes.py           # Vedic classes
+│   │   └── orders_new.py        # E-commerce orders
+│   └── services/
+│       └── notification_service.py
 └── frontend/
     └── src/
         ├── components/
-        │   ├── PaymentComponents.js  # SmartPayment (Razorpay only)
-        │   ├── ui/ConfirmDialog.js   # In-app confirmation modal
+        │   ├── Chat/ChatTab.js          # Chat UI with 3s polling
+        │   ├── PaymentComponents.js     # Razorpay checkout
+        │   ├── ui/ConfirmDialog.js      # In-app confirm modal
         │   ├── Reviews/ProductReviews.js
         │   └── DevoteeDashboard/PriestDetailView.js
-        ├── pages/dashboards/
-        │   ├── PriestDashboard.js  # silentRefresh for booking updates
-        │   ├── priest/components/BookingsTab.js  # Per-booking loading
-        │   ├── admin/components/PaymentsTab.js
-        │   └── devotee/components/ReviewModal.js
-        └── contexts/
-            └── PaymentContext.js
+        └── pages/dashboards/
+            ├── PriestDashboard.js        # silentRefresh
+            └── priest/components/BookingsTab.js  # Per-booking loading
 ```
