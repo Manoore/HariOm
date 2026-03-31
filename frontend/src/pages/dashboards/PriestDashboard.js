@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, LogOut, Star, Bell, Loader2, BookOpen,
   Video, Users, Plus, IndianRupee, Image, MessageSquare, Sun,
-  AlertCircle, Menu, Send, ChevronLeft, Briefcase, Repeat
+  AlertCircle, Menu, Send, ChevronLeft, Briefcase, Repeat, Clock
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,6 +20,7 @@ import { ClassesTab } from './priest/components/ClassesTab';
 import { ServicesTab } from './priest/components/ServicesTab';
 import { ReviewsTab, PortfolioTab, PanchangTab, EarningsTab } from './priest/components/MiscTabs';
 import { StreamsTab } from './priest/components/StreamsTab';
+import AvailabilityTab from './priest/components/AvailabilityTab';
 
 // Tab configurations
 const mainTabs = [
@@ -32,6 +33,7 @@ const mainTabs = [
 
 const moreTabs = [
   { id: 'services', label: 'Services', icon: Briefcase },
+  { id: 'availability', label: 'Availability', icon: Clock },
   { id: 'reviews', label: 'Reviews', icon: Star },
   { id: 'portfolio', label: 'Portfolio', icon: Image },
   { id: 'panchang', label: 'Panchang', icon: Sun },
@@ -175,6 +177,7 @@ export default function PriestDashboard() {
       case 'profile': return <ProfileTab profile={priestProfile} user={user} onRefresh={silentRefresh} />;
       case 'bookings': return <BookingsTab bookings={bookings} updateStatus={updateBookingStatus} />;
       case 'services': return <ServicesTab services={services} onRefresh={silentRefresh} />;
+      case 'availability': return <AvailabilityTab />;
       case 'reviews': return <ReviewsTab reviews={reviews} />;
       case 'portfolio': return <PortfolioTab portfolio={portfolio} onRefresh={silentRefresh} />;
       case 'panchang': return <PanchangTab panchang={panchang} festivals={festivals} />;

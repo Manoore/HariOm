@@ -91,6 +91,8 @@ class BookingCreate(BaseModel):
     service_name: str
     booking_date: datetime
     booking_type: str = "online"  # online or home_visit
+    slot_start: Optional[str] = None  # e.g. "09:00"
+    slot_end: Optional[str] = None    # e.g. "10:00"
     address: Optional[str] = None
     notes: Optional[str] = None
 

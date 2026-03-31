@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
 import AddressAutocomplete from '../components/AddressAutocomplete';
 import SmartPayment from '../components/PaymentComponents';
+import SlotPicker from '../components/Booking/SlotPicker';
 
 export function PriestsListPage() {
   const [priests, setPriests] = useState([]);
@@ -183,6 +184,8 @@ export function PriestDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
   const [bookingDate, setBookingDate] = useState('');
+  const [slotStart, setSlotStart] = useState('');
+  const [slotEnd, setSlotEnd] = useState('');
   const [bookingType, setBookingType] = useState('online');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
@@ -214,7 +217,7 @@ export function PriestDetailPage() {
       return;
     }
     if (!selectedService || !bookingDate) {
-      toast.error('Please select a service and date');
+      toast.error('Please select a service and time slot');
       return;
     }
     if (bookingType === 'home_visit' && !address) {
@@ -227,8 +230,10 @@ export function PriestDetailPage() {
       const res = await api.post('/api/bookings', {
         priest_id: id,
         service_name: selectedService.name,
-        booking_date: new Date(bookingDate).toISOString(),
+        booking_date: bookingDate,
         booking_type: bookingType,
+        slot_start: slotStart || null,
+        slot_end: slotEnd || null,
         address: bookingType === 'home_visit' ? address : null,
         notes
       });
@@ -409,17 +414,14 @@ export function PriestDetailPage() {
               )}
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date & Time</label>
-                  <input
-                    type="datetime-local"
-                    value={bookingDate}
-                    onChange={(e) => setBookingDate(e.target.value)}
-                    className="input-field"
-                    min={new Date().toISOString().slice(0, 16)}
-                    data-testid="booking-date"
-                  />
-                </div>
+                <SlotPicker
+                  priestId={id}
+                  onSelectSlot={(slotData) => {
+                    setBookingDate(slotData.datetime);
+                    setSlotStart(slotData.slot_start);
+                    setSlotEnd(slotData.slot_end);
+                  }}
+                />
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Booking Type</label>

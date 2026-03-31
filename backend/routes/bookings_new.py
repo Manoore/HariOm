@@ -4,13 +4,14 @@ Contains all booking-related endpoints for the Divine App.
 Includes: create booking, get bookings, update status
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request
-from datetime import datetime, timezone
+from fastapi import APIRouter, HTTPException, Depends, Request, Query
+from datetime import datetime, timezone, timedelta
 from bson import ObjectId
 
 from database import (
     users_collection, priests_collection, bookings_collection,
-    priest_services_collection, chat_rooms_collection, system_settings_collection
+    priest_services_collection, chat_rooms_collection, system_settings_collection,
+    priest_availability_collection
 )
 from models import BookingCreate, BookingStatus, UserRole
 from auth import get_current_user, require_role
@@ -101,6 +102,126 @@ async def deactivate_chat_room(room_type: str, reference_id: str):
         {"$set": {"is_active": False}}
     )
 
+# ===================== AVAILABILITY & SLOT ENDPOINTS =====================
+
+DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+def generate_time_slots(start_str: str, end_str: str, duration_minutes: int):
+    """Generate time slots between start and end with given duration"""
+    slots = []
+    start_h, start_m = map(int, start_str.split(":"))
+    end_h, end_m = map(int, end_str.split(":"))
+    current = start_h * 60 + start_m
+    end_total = end_h * 60 + end_m
+    while current + duration_minutes <= end_total:
+        slot_start = f"{current // 60:02d}:{current % 60:02d}"
+        slot_end_min = current + duration_minutes
+        slot_end = f"{slot_end_min // 60:02d}:{slot_end_min % 60:02d}"
+        slots.append({"start": slot_start, "end": slot_end})
+        current += duration_minutes
+    return slots
+
+
+@router.get("/priests/{priest_id}/available-slots")
+async def get_available_slots(priest_id: str, date: str = Query(..., description="Date in YYYY-MM-DD format")):
+    """Get available booking slots for a priest on a given date"""
+    # Validate priest ID format
+    try:
+        priest_oid = ObjectId(priest_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid priest ID format")
+    
+    # Validate priest exists
+    priest = await priests_collection.find_one({"_id": priest_oid})
+    if not priest:
+        raise HTTPException(status_code=404, detail="Priest not found")
+    
+    # Parse date
+    try:
+        target_date = datetime.strptime(date, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    day_name = target_date.strftime("%A")  # e.g. "Monday"
+    
+    # Get priest availability settings
+    availability = await priest_availability_collection.find_one({"priest_id": priest_id})
+    
+    if not availability:
+        # Default: Mon-Sat 9AM-6PM, 60min slots
+        if day_name == "Sunday":
+            return {"date": date, "day": day_name, "slots": [], "message": "Priest is not available on Sundays"}
+        default_slots = generate_time_slots("09:00", "18:00", 60)
+    else:
+        # Check if date is blocked
+        blocked_dates = availability.get("blocked_dates", [])
+        if date in blocked_dates:
+            return {"date": date, "day": day_name, "slots": [], "message": "Priest is not available on this date"}
+        
+        # Get schedule for this day of week
+        schedule = availability.get("weekly_schedule", [])
+        day_schedule = [s for s in schedule if s.get("day") == day_name and s.get("enabled", True)]
+        
+        if not day_schedule:
+            # Also check online_slots for backward compat
+            online_slots = availability.get("online_slots", [])
+            day_schedule = [s for s in online_slots if s.get("day") == day_name]
+        
+        if not day_schedule:
+            return {"date": date, "day": day_name, "slots": [], "message": f"Priest is not available on {day_name}s"}
+        
+        duration = availability.get("default_duration", 60)
+        default_slots = []
+        for sched in day_schedule:
+            start = sched.get("start", "09:00")
+            end = sched.get("end", "18:00")
+            default_slots.extend(generate_time_slots(start, end, duration))
+    
+    # Get existing bookings for this date (exclude cancelled)
+    date_start = target_date.replace(hour=0, minute=0, second=0)
+    date_end = target_date.replace(hour=23, minute=59, second=59)
+    
+    booked_cursor = bookings_collection.find({
+        "priest_id": priest_id,
+        "status": {"$nin": ["cancelled"]},
+        "booking_date": {"$gte": date_start, "$lte": date_end}
+    })
+    
+    booked_times = set()
+    async for booking in booked_cursor:
+        bd = booking.get("booking_date")
+        if bd:
+            # Mark the slot that contains this booking time
+            if isinstance(bd, datetime):
+                booked_time = f"{bd.hour:02d}:{bd.minute:02d}"
+                booked_times.add(booked_time)
+                # Also mark the slot_start if present
+                if booking.get("slot_start"):
+                    booked_times.add(booking["slot_start"])
+    
+    # Filter out booked slots and past slots
+    now = datetime.now(timezone.utc)
+    available_slots = []
+    for slot in default_slots:
+        if slot["start"] in booked_times:
+            continue
+        # If today, skip past time slots
+        if target_date.date() == now.date():
+            slot_h, slot_m = map(int, slot["start"].split(":"))
+            slot_time = now.replace(hour=slot_h, minute=slot_m, second=0, microsecond=0, tzinfo=None)
+            if slot_time <= now.replace(tzinfo=None):
+                continue
+        available_slots.append(slot)
+    
+    return {
+        "date": date,
+        "day": day_name,
+        "slots": available_slots,
+        "total_slots": len(default_slots),
+        "available_count": len(available_slots)
+    }
+
+
 # ===================== DEVOTEE BOOKING ENDPOINTS =====================
 
 @router.post("/bookings")
@@ -125,6 +246,33 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
     if not service:
         raise HTTPException(status_code=400, detail="Service not found")
     
+    # Slot conflict check — prevent double booking
+    booking_dt = data.booking_date
+    slot_start_str = data.slot_start if hasattr(data, 'slot_start') and data.slot_start else None
+    
+    if slot_start_str:
+        # Check if this exact slot is already taken
+        slot_date = booking_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+        slot_end_date = slot_date + timedelta(days=1)
+        
+        conflict = await bookings_collection.find_one({
+            "priest_id": data.priest_id,
+            "status": {"$nin": ["cancelled"]},
+            "booking_date": {"$gte": slot_date, "$lt": slot_end_date},
+            "slot_start": slot_start_str
+        })
+        if conflict:
+            raise HTTPException(status_code=409, detail="This time slot is no longer available. Please choose another slot.")
+    else:
+        # Fallback: check by exact booking_date time
+        conflict = await bookings_collection.find_one({
+            "priest_id": data.priest_id,
+            "status": {"$nin": ["cancelled"]},
+            "booking_date": booking_dt
+        })
+        if conflict:
+            raise HTTPException(status_code=409, detail="This time slot is already booked. Please choose a different time.")
+    
     priest_user = await users_collection.find_one({"_id": ObjectId(priest["user_id"])})
     
     booking_dict = {
@@ -135,6 +283,8 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
         "price": service["price"],
         "booking_date": data.booking_date,
         "booking_type": data.booking_type,
+        "slot_start": data.slot_start if hasattr(data, 'slot_start') and data.slot_start else None,
+        "slot_end": data.slot_end if hasattr(data, 'slot_end') and data.slot_end else None,
         "status": BookingStatus.PENDING,
         "address": data.address,
         "notes": data.notes,

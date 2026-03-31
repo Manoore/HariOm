@@ -5,11 +5,14 @@ import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 import SmartPayment from '../PaymentComponents';
+import SlotPicker from '../Booking/SlotPicker';
 
 function PriestDetailView({ priest, onBack, isDesktop }) {
   const { user } = useAuth();
   const [selectedService, setSelectedService] = useState(null);
   const [bookingDate, setBookingDate] = useState('');
+  const [slotStart, setSlotStart] = useState('');
+  const [slotEnd, setSlotEnd] = useState('');
   const [loading, setLoading] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -41,7 +44,7 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
 
   const handleBook = async () => {
     if (!selectedService || !bookingDate) {
-      toast.error('Please select service and date');
+      toast.error('Please select a service and time slot');
       return;
     }
     setLoading(true);
@@ -49,8 +52,10 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
       const res = await api.post('/api/bookings', {
         priest_id: priest.id,
         service_name: selectedService.name,
-        booking_date: new Date(bookingDate).toISOString(),
-        booking_type: 'online'
+        booking_date: bookingDate,
+        booking_type: 'online',
+        slot_start: slotStart || null,
+        slot_end: slotEnd || null,
       });
 
       if (res.data.requires_payment) {
@@ -340,13 +345,13 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
                 <p className="text-saffron font-bold text-xl">₹{selectedService.price}</p>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Date & Time</label>
-                <input
-                  type="datetime-local"
-                  value={bookingDate}
-                  onChange={(e) => setBookingDate(e.target.value)}
-                  className="w-full border border-orange-200 rounded-xl px-4 py-3 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none"
-                  min={new Date().toISOString().slice(0, 16)}
+                <SlotPicker
+                  priestId={priest.id}
+                  onSelectSlot={(slotData) => {
+                    setBookingDate(slotData.datetime);
+                    setSlotStart(slotData.slot_start);
+                    setSlotEnd(slotData.slot_end);
+                  }}
                 />
               </div>
               <button
