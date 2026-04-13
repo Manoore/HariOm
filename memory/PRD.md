@@ -15,61 +15,52 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 
 ## Core Features
 
+### Puja Samagri (Items) List
+- Priest adds samagri items per service (name, quantity, optional flag)
+- Items stored on service and copied to booking when created
+- Devotee sees samagri on priest detail page when selecting a service
+- Devotee sees expandable samagri in booking cards on dashboard
+- Priest service cards show samagri item count badge
+
 ### Priest Availability & Slot Booking
-- Priest sets weekly schedule (Mon-Sun, enable/disable days, start/end times)
-- Configurable slot duration (30min, 45min, 1hr, 90min, 2hrs)
-- Block specific dates (holidays, personal leave)
-- `GET /api/priests/{id}/available-slots?date=YYYY-MM-DD` — returns available time slots
-- Booked slots auto-filtered from available list
-- Real-time conflict prevention (409 error on double-booking)
-- Default: Mon-Sat 9AM-6PM, 60min slots
+- Weekly schedule (Mon-Sun, enable/disable, start/end times)
+- Configurable slot duration (30/45/60/90/120 min)
+- Block specific dates
+- `GET /api/priests/{id}/available-slots?date=YYYY-MM-DD`
+- Booked slots auto-filtered, double-booking prevented (409)
 
 ### Priest Booking Flow
-- Devotee selects service -> picks date from 14-day calendar -> picks time slot
-- Only available (unbooked) slots shown
-- Creates booking + Razorpay payment modal
-- `POST /api/bookings/{id}/confirm-payment` verifies payment, confirms booking, creates chat room, sends notifications
-- Priest can Accept/Complete/Cancel with in-app dialogs (no page refresh)
+- Select service -> see samagri list -> pick date -> pick time slot
+- Razorpay payment -> confirm-payment -> chat room created -> notifications sent
+- In-app confirmation dialogs, no page refreshes
 
-### Chat/Messaging System
-- Chat rooms auto-created on booking payment confirmation
-- 3-second message polling for real-time updates
-- Text and image messages, unread tracking, read receipts
-- Chat expiry: 5 days after booking completion
-
-### Reviews System
-- Service reviews via `/api/bookings/{id}/review`
-- Product reviews via `/api/products/{id}/reviews`
-- Priest detail page shows reviews via `/api/providers/{provider_id}/reviews`
+### Chat/Messaging
+- Auto-created on booking payment, 3s polling, text/image messages
 
 ### Wallet, Payments, Admin
-- Razorpay-only wallet recharge with real intent generation
-- Admin Payments Dashboard (Revenue, Payouts, Refunds)
-- Configurable provider splits (Platform Fee %, GST %)
-- Devotee My Activity tab with unified transaction history
+- Razorpay wallet recharge with real intent generation
+- Admin Dashboard (Revenue, Payouts, Refunds, configurable splits)
 
-### Other Features
-- Multi-role auth (Devotee, Priest, Astrologer, Shop Owner, Admin)
-- Astrology services, Devotional content, Video consultations
-- E-commerce store with order lifecycle
-- In-app ConfirmDialog for all confirmation actions
+## Session Log
 
-## Session Log (Mar 31, 2026)
-- [x] Priest Availability Management — weekly schedule, slot duration, blocked dates
-- [x] SlotPicker component for devotee booking flow (14-day calendar + time grid)
+### Apr 13, 2026
+- [x] Puja Samagri feature — priest adds items per service, devotee sees them
+- [x] Samagri editor in ServiceModal (add/remove items with name, qty, optional)
+- [x] Samagri display on priest detail page (devotee side)
+- [x] Expandable samagri in booking cards on devotee dashboard
+- [x] All tests passed (iteration_52: 10/10 backend, 100% frontend)
+
+### Mar 31, 2026
+- [x] Priest Availability Management — schedule, slot duration, blocked dates
+- [x] SlotPicker component for booking (14-day calendar + time grid)
 - [x] Conflict prevention — double-booking returns 409
-- [x] Available slots API filters booked slots automatically
-- [x] AvailabilityTab added to Priest Dashboard
-- [x] Updated PriestPages.js and PriestDetailView.js with SlotPicker
-- [x] All tests passed (iteration_51: 100% backend 14/14, 100% frontend)
+- [x] All tests passed (iteration_51: 14/14 backend, 100% frontend)
 
-## Previous Session (Mar 30, 2026)
-- [x] Reviews display fix (endpoint + field alignment)
-- [x] Priest booking confirm without page refresh
-- [x] All booking actions use in-app ConfirmDialog
-- [x] Chat room auto-creation on payment confirmation
-- [x] Message polling for real-time chat
-- [x] Notifications moved to post-payment
+### Mar 30, 2026
+- [x] Reviews display fix, booking confirm without page refresh
+- [x] In-app ConfirmDialog everywhere, notifications post-payment
+- [x] Chat room creation on payment, message polling
+- [x] All tests passed (iteration_50)
 
 ## P1/P2 Backlog
 ### P1 — Upcoming
@@ -78,46 +69,40 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 
 ### P2 — Future
 3. Automated Payouts via RazorpayX
-4. WebSocket endpoint for chat (replace polling)
+4. WebSocket for real-time chat
 5. Phase 2 Live Streams (100ms HLS)
-6. Temple section enhancements (AI images, maps)
+6. Temple section enhancements
 
 ## Test Credentials
 - Devotee: `devotee@divineapp.com` / `devotee123`
-- Admin: `admin@divine.com` / `admin123`
 - Priest: `pandit.sharma@divineapp.com` / `priest123`
-- Astrologer: `astro.joshi@divineapp.com` / `astro123`
-- Shop Owner: `shop.poojamart@divineapp.com` / `shop123`
+- Admin: `admin@divine.com` / `admin123`
 
 ## Key API Endpoints
-- `GET /api/priests/{id}/available-slots?date=YYYY-MM-DD` — Available time slots
-- `POST /api/bookings` — Create booking (with slot_start/slot_end)
-- `POST /api/bookings/{id}/confirm-payment` — Verify + confirm + chat + notify
-- `GET/POST /api/priest/availability` — Manage priest schedule
-- `GET /api/chat/rooms` / `POST /api/chat/rooms/{id}/messages` — Chat
-- `GET /api/my-transactions` — Devotee transaction history
-- `GET /api/admin/payments/dashboard` — Admin payments overview
+- `GET /api/priests/{id}/available-slots?date=YYYY-MM-DD`
+- `POST /api/bookings` (with slot_start, slot_end, saves samagri_list)
+- `POST /api/bookings/{id}/confirm-payment`
+- `GET/POST /api/priest/services` (with samagri_list)
+- `PUT /api/priest/services/{id}` (update samagri_list)
+- `GET/POST /api/priest/availability`
 
 ## Architecture
 ```
 /app/
-├── backend/
-│   ├── routes/
-│   │   ├── bookings_new.py      # Availability slots + Booking + Conflict check
-│   │   ├── priest_dashboard.py  # Priest availability CRUD
-│   │   ├── chat.py              # Chat rooms + messages
-│   │   ├── consultation.py      # Wallet, Reviews, Providers
-│   │   └── admin_new.py         # Admin Payments, Payouts, Refunds
-│   └── models.py                # BookingCreate with slot_start/slot_end
-└── frontend/
-    └── src/
-        ├── components/
-        │   ├── Booking/SlotPicker.js   # Date + time slot picker
-        │   ├── Chat/ChatTab.js         # Chat with polling
-        │   └── PaymentComponents.js    # Razorpay checkout
-        └── pages/dashboards/
-            ├── PriestDashboard.js
-            └── priest/components/
-                ├── AvailabilityTab.js  # Schedule + duration + blocked dates
-                └── BookingsTab.js      # Per-booking loading + confirm dialogs
+├── backend/routes/
+│   ├── bookings_new.py     # Availability + Booking + Samagri + Conflict
+│   ├── priest_dashboard.py # Service CRUD with samagri_list
+│   ├── priests_new.py      # Public priest detail with samagri
+│   ├── chat.py             # Chat rooms + messages
+│   └── admin_new.py        # Admin Payments
+└── frontend/src/
+    ├── components/
+    │   ├── Booking/SlotPicker.js
+    │   └── DevoteeDashboard/PriestDetailView.js (samagri display)
+    └── pages/
+        ├── PriestPages.js (samagri display)
+        ├── DashboardPage.js (expandable samagri in bookings)
+        └── dashboards/priest/components/
+            ├── ServicesTab.js (samagri editor)
+            └── AvailabilityTab.js
 ```
