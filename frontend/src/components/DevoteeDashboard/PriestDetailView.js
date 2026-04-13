@@ -199,6 +199,25 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
                   <Clock className="w-3 h-3" />
                   {service.duration_minutes} mins
                 </div>
+
+                {/* Samagri List - show when selected */}
+                {selectedService?.name === service.name && service.samagri_list?.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-orange-200">
+                    <p className="text-xs font-semibold text-maroon mb-2 flex items-center gap-1">
+                      Items needed for this puja:
+                    </p>
+                    <div className="space-y-1">
+                      {service.samagri_list.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-saffron flex-shrink-0" />
+                          <span className="text-gray-700">{item.name}</span>
+                          {item.quantity && <span className="text-gray-400">({item.quantity})</span>}
+                          {item.optional && <span className="text-blue-400 italic">optional</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </button>
             ))}
           </div>

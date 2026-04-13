@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit, Trash2, Loader2, X, Briefcase, IndianRupee, Clock, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, X, Briefcase, IndianRupee, Clock, Save, ShoppingBag } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
 import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
@@ -74,6 +74,9 @@ function ServicesTab({ services, onRefresh }) {
               <div className="flex gap-3 mt-2 text-sm">
                 <span><Clock className="w-3 h-3 inline" /> {s.duration_minutes}min</span>
                 <span className="text-saffron font-medium">₹{s.price}</span>
+                {s.samagri_list?.length > 0 && (
+                  <span className="text-orange-600"><ShoppingBag className="w-3 h-3 inline" /> {s.samagri_list.length} items</span>
+                )}
               </div>
             </div>
           ))}
@@ -95,6 +98,8 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
   const [form, setForm] = useState({
     name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100, puja_type_id: '', custom_puja_name: '', location_type: 'online', temple_name: ''
   });
+  const [samagriList, setSamagriList] = useState([]);
+  const [newItem, setNewItem] = useState({ name: '', quantity: '', optional: false });
   const [saving, setSaving] = useState(false);
   const [pujaTypes, setPujaTypes] = useState([]);
   const [pujaCategories, setPujaCategories] = useState({});
@@ -134,9 +139,11 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
         location_type: editData.location_type || 'online',
         temple_name: editData.temple_name || ''
       });
+      setSamagriList(editData.samagri_list || []);
       setShowCustomInput(isCustom && editData.name);
     } else {
       setForm({ name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100, puja_type_id: '', custom_puja_name: '', location_type: 'online', temple_name: '' });
+      setSamagriList([]);
       setShowCustomInput(false);
     }
   }, [editData, isOpen]);
@@ -164,7 +171,8 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
     try {
       const submitData = {
         ...form,
-        name: serviceName
+        name: serviceName,
+        samagri_list: samagriList
       };
       if (editData) {
         await api.put(`/api/priest/services/${editData.id}`, submitData);
@@ -274,6 +282,79 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
                 onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })} 
                 className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-saffron/50" 
               />
+            </div>
+          </div>
+
+          {/* Samagri / Puja Items List */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4 text-saffron" /> Puja Samagri (Items Needed)
+            </label>
+            <p className="text-xs text-gray-400 mb-3">Add items the devotee needs to arrange for this puja</p>
+            
+            {/* Existing items */}
+            {samagriList.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {samagriList.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 bg-orange-50 rounded-lg px-3 py-2">
+                    <span className="flex-1 text-sm text-gray-800">{item.name}</span>
+                    {item.quantity && <span className="text-xs text-gray-500 bg-white px-2 py-0.5 rounded">{item.quantity}</span>}
+                    {item.optional && <span className="text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded">Optional</span>}
+                    <button
+                      type="button"
+                      onClick={() => setSamagriList(prev => prev.filter((_, i) => i !== idx))}
+                      className="p-1 hover:bg-red-100 rounded"
+                    >
+                      <X className="w-3 h-3 text-red-500" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Add new item */}
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Item name (e.g., Coconut)"
+                  value={newItem.name}
+                  onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                  data-testid="samagri-item-name"
+                />
+              </div>
+              <div className="w-24">
+                <input
+                  type="text"
+                  placeholder="Qty"
+                  value={newItem.quantity}
+                  onChange={e => setNewItem({ ...newItem, quantity: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-saffron/50"
+                  data-testid="samagri-item-qty"
+                />
+              </div>
+              <label className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={newItem.optional}
+                  onChange={e => setNewItem({ ...newItem, optional: e.target.checked })}
+                  className="accent-saffron"
+                />
+                Optional
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!newItem.name.trim()) return;
+                  setSamagriList(prev => [...prev, { name: newItem.name.trim(), quantity: newItem.quantity.trim(), optional: newItem.optional }]);
+                  setNewItem({ name: '', quantity: '', optional: false });
+                }}
+                className="bg-saffron text-white px-3 py-2 rounded-lg text-sm hover:bg-saffron/90"
+                data-testid="add-samagri-item"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
             </div>
           </div>
 

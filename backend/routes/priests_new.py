@@ -100,7 +100,8 @@ async def get_priests(
                 "description": svc.get("description", ""),
                 "price": svc.get("price", 0),
                 "duration": svc.get("duration", ""),
-                "category": svc.get("category", "general")
+                "category": svc.get("category", "general"),
+                "samagri_list": svc.get("samagri_list", [])
             })
         
         # Fallback to embedded services
@@ -150,7 +151,8 @@ async def get_priest(priest_id: str):
             "description": svc.get("description", ""),
             "price": svc.get("price", 0),
             "duration": svc.get("duration", ""),
-            "category": svc.get("category", "general")
+            "category": svc.get("category", "general"),
+            "samagri_list": svc.get("samagri_list", [])
         })
     
     if not services and priest.get("services"):

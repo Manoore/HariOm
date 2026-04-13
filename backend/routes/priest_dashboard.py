@@ -700,7 +700,8 @@ async def get_priest_services(user: dict = Depends(require_role([UserRole.PRIEST
             "duration": svc.get("duration", ""),
             "category": svc.get("category", "general"),
             "location_type": svc.get("location_type", "online"),
-            "temple_name": svc.get("temple_name", "")
+            "temple_name": svc.get("temple_name", ""),
+            "samagri_list": svc.get("samagri_list", [])
         })
     return {"services": services}
 
@@ -720,6 +721,7 @@ async def add_priest_service(request: Request, user: dict = Depends(require_role
         "category": data.get("category", "general"),
         "location_type": data.get("location_type", "online"),
         "temple_name": data.get("temple_name", ""),
+        "samagri_list": data.get("samagri_list", []),
         "created_at": datetime.now(timezone.utc)
     }
     
@@ -738,7 +740,7 @@ async def update_priest_service(service_id: str, request: Request, user: dict = 
     
     data = await request.json()
     update_data = {k: v for k, v in data.items() if k in [
-        "name", "description", "price", "duration", "category", "location_type", "temple_name"
+        "name", "description", "price", "duration", "category", "location_type", "temple_name", "samagri_list"
     ]}
     
     await priest_services_collection.update_one(

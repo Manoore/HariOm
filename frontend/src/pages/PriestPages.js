@@ -388,6 +388,23 @@ export function PriestDetailPage() {
                         {service.category}
                       </span>
                     </div>
+
+                    {/* Samagri List - show when selected */}
+                    {selectedService?.name === service.name && service.samagri_list?.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-orange-200">
+                        <p className="text-sm font-semibold text-maroon mb-2">Items needed for this puja:</p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {service.samagri_list.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-sm">
+                              <span className="w-1.5 h-1.5 rounded-full bg-saffron flex-shrink-0" />
+                              <span className="text-gray-700">{item.name}</span>
+                              {item.quantity && <span className="text-gray-400 text-xs">({item.quantity})</span>}
+                              {item.optional && <span className="text-blue-400 text-xs italic">optional</span>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

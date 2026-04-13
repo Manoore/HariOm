@@ -188,17 +188,36 @@ function DevoteeDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {bookings.slice(0, 5).map((booking) => (
-                      <div key={booking.id} className="flex items-center gap-4 p-3 bg-orange-50 rounded-xl">
-                        <div className="w-12 h-12 bg-saffron rounded-full flex items-center justify-center text-white font-cinzel">
-                          {booking.priest_name?.charAt(0)}
+                      <div key={booking.id} className="p-3 bg-orange-50 rounded-xl">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-saffron rounded-full flex items-center justify-center text-white font-cinzel flex-shrink-0">
+                            {booking.priest_name?.charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-800 truncate">{booking.service_name}</p>
+                            <p className="text-sm text-gray-500">{booking.priest_name}</p>
+                            {booking.slot_start && (
+                              <p className="text-xs text-gray-400">{new Date(booking.booking_date).toLocaleDateString('en-IN', {day:'numeric',month:'short'})} at {booking.slot_start}</p>
+                            )}
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(booking.status)}`}>
+                            {booking.status}
+                          </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-800 truncate">{booking.service_name}</p>
-                          <p className="text-sm text-gray-500">{booking.priest_name}</p>
-                        </div>
-                        <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(booking.status)}`}>
-                          {booking.status}
-                        </span>
+                        {booking.samagri_list?.length > 0 && (
+                          <details className="mt-2 ml-16">
+                            <summary className="text-xs text-saffron cursor-pointer font-medium">Samagri List ({booking.samagri_list.length} items)</summary>
+                            <div className="mt-1.5 space-y-1 pl-2 border-l-2 border-orange-200">
+                              {booking.samagri_list.map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
+                                  <span className="w-1 h-1 rounded-full bg-saffron" />
+                                  {item.name} {item.quantity && <span className="text-gray-400">({item.quantity})</span>}
+                                  {item.optional && <span className="text-blue-400 italic">optional</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        )}
                       </div>
                     ))}
                   </div>

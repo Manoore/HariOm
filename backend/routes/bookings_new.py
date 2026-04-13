@@ -236,7 +236,11 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
     services_cursor = priest_services_collection.find({"priest_id": data.priest_id})
     async for svc in services_cursor:
         if svc.get("name") == data.service_name:
-            service = {"name": svc["name"], "price": svc.get("price", 0)}
+            service = {
+                "name": svc["name"], 
+                "price": svc.get("price", 0),
+                "samagri_list": svc.get("samagri_list", [])
+            }
             break
     
     # Fallback to embedded services
@@ -285,6 +289,7 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
         "booking_type": data.booking_type,
         "slot_start": data.slot_start if hasattr(data, 'slot_start') and data.slot_start else None,
         "slot_end": data.slot_end if hasattr(data, 'slot_end') and data.slot_end else None,
+        "samagri_list": service.get("samagri_list", []),
         "status": BookingStatus.PENDING,
         "address": data.address,
         "notes": data.notes,
@@ -456,6 +461,9 @@ async def get_user_bookings(user: dict = Depends(get_current_user)):
             "status": booking["status"],
             "address": booking.get("address"),
             "notes": booking.get("notes"),
+            "slot_start": booking.get("slot_start"),
+            "slot_end": booking.get("slot_end"),
+            "samagri_list": booking.get("samagri_list", []),
             "created_at": booking["created_at"].isoformat()
         })
     
@@ -486,6 +494,9 @@ async def get_priest_bookings(user: dict = Depends(require_role([UserRole.PRIEST
             "status": booking["status"],
             "address": booking.get("address"),
             "notes": booking.get("notes"),
+            "slot_start": booking.get("slot_start"),
+            "slot_end": booking.get("slot_end"),
+            "samagri_list": booking.get("samagri_list", []),
             "created_at": booking["created_at"].isoformat()
         })
     
