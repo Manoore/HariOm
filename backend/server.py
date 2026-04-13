@@ -427,7 +427,7 @@ async def websocket_chat(websocket: WebSocket, room_id: str):
     
     try:
         import jwt as pyjwt
-        SECRET_KEY = "divine-app-secret-key-change-in-production"
+        from auth import SECRET_KEY
         payload = pyjwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         user_id = payload.get("sub")
         if not user_id:
