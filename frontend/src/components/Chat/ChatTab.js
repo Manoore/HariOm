@@ -139,6 +139,7 @@ export function ChatRoom({ room, onBack, isDesktop }) {
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [typing, setTyping] = useState(null);
+  const [wsConnected, setWsConnected] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const wsRef = useRef(null);
@@ -148,8 +149,9 @@ export function ChatRoom({ room, onBack, isDesktop }) {
     loadMessages();
   }, [room.id]);
 
-  // Poll for new messages every 3 seconds (since WebSocket may not be available)
+  // Poll for new messages ONLY when WebSocket is not connected (fallback)
   useEffect(() => {
+    if (wsConnected) return; // Skip polling when WS is active
     const interval = setInterval(async () => {
       try {
         const res = await api.get(`/api/chat/rooms/${room.id}/messages`);
@@ -166,50 +168,73 @@ export function ChatRoom({ room, onBack, isDesktop }) {
       }
     }, 3000);
     return () => clearInterval(interval);
-  }, [room.id]);
+  }, [room.id, wsConnected]);
 
   // Setup WebSocket connection
   useEffect(() => {
     if (!room.id || !token) return;
 
-    const wsUrl = process.env.REACT_APP_BACKEND_URL?.replace('https://', 'wss://').replace('http://', 'ws://');
-    const ws = new WebSocket(`${wsUrl}/ws/chat/${room.id}?token=${token}`);
-    
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-    };
+    let reconnectTimer = null;
+    let ws = null;
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+    const connect = () => {
+      const wsUrl = process.env.REACT_APP_BACKEND_URL?.replace('https://', 'wss://').replace('http://', 'ws://');
+      ws = new WebSocket(`${wsUrl}/ws/chat/${room.id}?token=${token}`);
       
-      if (data.type === 'new_message') {
-        setMessages(prev => [...prev, data.message]);
-        scrollToBottom();
+      ws.onopen = () => {
+        console.log('Chat WebSocket connected');
+        setWsConnected(true);
+        // Mark messages as read
+        ws.send(JSON.stringify({ type: 'read' }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
         
-        // Mark as read if from other user
-        if (data.message.sender_id !== user?.id) {
-          ws.send(JSON.stringify({ type: 'read' }));
+        if (data.type === 'new_message') {
+          setMessages(prev => {
+            // Avoid duplicates
+            if (prev.some(m => m.id === data.message.id)) return prev;
+            return [...prev, data.message];
+          });
+          scrollToBottom();
+          
+          // Mark as read if from other user
+          if (data.message.sender_id !== user?.id) {
+            ws.send(JSON.stringify({ type: 'read' }));
+          }
+        } else if (data.type === 'typing') {
+          if (data.user_id !== user?.id) {
+            setTyping(data.user_name);
+            setTimeout(() => setTyping(null), 3000);
+          }
         }
-      } else if (data.type === 'typing') {
-        if (data.user_id !== user?.id) {
-          setTyping(data.user_name);
-          setTimeout(() => setTyping(null), 3000);
-        }
-      }
+      };
+
+      ws.onerror = () => {
+        console.log('Chat WebSocket error, falling back to polling');
+      };
+
+      ws.onclose = () => {
+        setWsConnected(false);
+        // Auto-reconnect after 5 seconds
+        reconnectTimer = setTimeout(() => {
+          if (wsRef.current === ws) {
+            connect();
+          }
+        }, 5000);
+      };
+
+      wsRef.current = ws;
     };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket closed');
-    };
-
-    wsRef.current = ws;
+    connect();
 
     return () => {
-      ws.close();
+      clearTimeout(reconnectTimer);
+      if (ws) ws.close();
+      wsRef.current = null;
+      setWsConnected(false);
     };
   }, [room.id, token, user?.id]);
 
@@ -264,10 +289,10 @@ export function ChatRoom({ room, onBack, isDesktop }) {
 
     setSending(true);
     try {
-      // Try WebSocket first
       if (wsRef.current?.readyState === WebSocket.OPEN) {
+        // Send via WebSocket (server saves to DB and broadcasts)
         wsRef.current.send(JSON.stringify({
-          type: 'message',
+          type: 'new_message',
           content: newMessage,
           image_url: imageUrl
         }));
@@ -342,8 +367,16 @@ export function ChatRoom({ room, onBack, isDesktop }) {
           <h3 className="font-semibold text-gray-800 truncate">
             {room.other_participant?.name || 'Unknown'}
           </h3>
-          <p className="text-xs text-gray-500 truncate">
-            {room.context || (room.type === 'booking' ? 'Booking Chat' : 'Order Chat')}
+          <p className="text-xs truncate">
+            {typing ? (
+              <span className="text-green-500 animate-pulse">{typing} is typing...</span>
+            ) : wsConnected ? (
+              <span className="text-green-500 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block" /> Online
+              </span>
+            ) : (
+              <span className="text-gray-500">{room.context || (room.type === 'booking' ? 'Booking Chat' : 'Order Chat')}</span>
+            )}
           </p>
         </div>
 

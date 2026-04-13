@@ -25,7 +25,7 @@ from database import (
     product_reviews_collection, feedback_collection, testimonials_collection,
     puja_types_collection, service_reviews_collection, audio_library_collection,
     stream_reminders_collection, user_notifications_collection, class_requests_collection,
-    math_mutt_collection,
+    math_mutt_collection, chat_rooms_collection, chat_messages_collection,
     scriptures_collection, scripture_verses_collection, video_library_collection
 )
 from models import (
@@ -415,6 +415,120 @@ from database import priest_classes_collection, priest_availability_collection, 
 # Horoscope/Astrology routes moved to routes/astrology.py
 
 # Consultation, Wallet, System Config routes moved to routes/consultation.py
+
+# WebSocket for Real-time Chat
+@app.websocket("/ws/chat/{room_id}")
+async def websocket_chat(websocket: WebSocket, room_id: str):
+    """WebSocket for real-time chat messaging"""
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4001)
+        return
+    
+    try:
+        import jwt as pyjwt
+        SECRET_KEY = "divine-app-secret-key-change-in-production"
+        payload = pyjwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("sub")
+        if not user_id:
+            await websocket.close(code=4001)
+            return
+    except Exception:
+        await websocket.close(code=4001)
+        return
+    
+    # Verify room exists and user is a participant
+    room = await chat_rooms_collection.find_one({"_id": ObjectId(room_id)})
+    if not room:
+        await websocket.close(code=4004)
+        return
+    
+    from routes.chat import is_participant, get_other_participant_id
+    if not is_participant(user_id, room.get("participants", [])):
+        await websocket.close(code=4003)
+        return
+    
+    # Get user info
+    ws_user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    user_name = ws_user.get("name", "User") if ws_user else "User"
+    
+    # Connect
+    await chat_manager.connect(websocket, room_id)
+    
+    try:
+        while True:
+            data = await websocket.receive_json()
+            msg_type = data.get("type", "")
+            
+            if msg_type == "new_message":
+                content = data.get("content", "")
+                image_url = data.get("image_url", "")
+                
+                if not content and not image_url:
+                    continue
+                
+                # Save message to DB
+                message_data = {
+                    "room_id": room_id,
+                    "sender_id": user_id,
+                    "sender_name": user_name,
+                    "content": content,
+                    "image_url": image_url,
+                    "created_at": datetime.now(timezone.utc),
+                    "read_by": [user_id]
+                }
+                result = await chat_messages_collection.insert_one(message_data)
+                
+                # Update room last_message_at and unread count
+                other_id = get_other_participant_id(user_id, room.get("participants", []))
+                if other_id:
+                    await chat_rooms_collection.update_one(
+                        {"_id": ObjectId(room_id)},
+                        {
+                            "$set": {"last_message_at": datetime.now(timezone.utc)},
+                            "$inc": {f"unread_count.{other_id}": 1}
+                        }
+                    )
+                
+                # Broadcast to all connections in this room
+                broadcast = {
+                    "type": "new_message",
+                    "message": {
+                        "id": str(result.inserted_id),
+                        "sender_id": user_id,
+                        "sender_name": user_name,
+                        "content": content,
+                        "image_url": image_url,
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+                await chat_manager.broadcast_to_room(room_id, broadcast)
+            
+            elif msg_type == "typing":
+                # Broadcast typing indicator
+                await chat_manager.broadcast_to_room(room_id, {
+                    "type": "typing",
+                    "user_id": user_id,
+                    "user_name": user_name
+                })
+            
+            elif msg_type == "read":
+                # Mark messages as read
+                await chat_messages_collection.update_many(
+                    {"room_id": room_id, "read_by": {"$ne": user_id}},
+                    {"$addToSet": {"read_by": user_id}}
+                )
+                await chat_rooms_collection.update_one(
+                    {"_id": ObjectId(room_id)},
+                    {"$set": {f"unread_count.{user_id}": 0}}
+                )
+    
+    except WebSocketDisconnect:
+        chat_manager.disconnect(websocket, room_id)
+    except Exception as e:
+        print(f"WebSocket chat error: {e}")
+        chat_manager.disconnect(websocket, room_id)
+
 
 # WebSocket for Real-time Billing Updates
 active_call_connections: dict = {}  # call_id -> list of websockets
