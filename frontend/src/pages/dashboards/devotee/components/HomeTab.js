@@ -76,7 +76,7 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-5 text-white shadow-lg">
             <div className="flex items-start justify-between mb-3">
               <div>
-                <h2 className="font-cinzel text-lg font-semibold">Today's Horoscope</h2>
+                <h2 className="font-cinzel text-lg font-semibold">{t('astrology.horoscope.todaysHoroscope')}</h2>
                 <p className="text-white/80 text-sm">
                   {horoscope.user_sign_name} ({horoscope.user_sign_hindi})
                   {horoscope.user_nakshatra && ` • ${horoscope.user_nakshatra}`}
@@ -113,10 +113,10 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
                 <Star className="w-6 h-6 text-saffron" />
               </div>
               <div>
-                <h3 className="font-cinzel text-maroon font-semibold mb-1">Get Your Daily Horoscope</h3>
-                <p className="text-gray-600 text-sm mb-3">Complete your profile with your date of birth or nakshatra to receive personalized horoscope predictions.</p>
+                <h3 className="font-cinzel text-maroon font-semibold mb-1">{t('astrology.horoscope.todaysHoroscope')}</h3>
+                <p className="text-gray-600 text-sm mb-3">{t('landing.hero.subtitle')}</p>
                 <button onClick={() => setActiveTab('profile')} className="text-sm text-saffron font-medium hover:underline flex items-center gap-1">
-                  Complete Profile <ChevronRight className="w-4 h-4" />
+                  {t('profile.edit')} <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -127,10 +127,10 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       {/* Quick Actions with 3D Icons */}
       <div className={`grid ${isDesktop ? 'grid-cols-4 gap-6' : 'grid-cols-4 gap-3'} mb-8`}>
         {[
-          { Icon: BellIcon3D, label: 'Priests', tab: 'priests' },
-          { Icon: ZodiacIcon3D, label: 'Horoscope', tab: 'astrology' },
-          { Icon: CartIcon3D, label: 'Shop', tab: 'shop' },
-          { Icon: TempleIcon3D, label: 'Temples', tab: 'temples' },
+          { Icon: BellIcon3D, label: t('nav.priests'), tab: 'priests' },
+          { Icon: ZodiacIcon3D, label: t('nav.astrology'), tab: 'astrology' },
+          { Icon: CartIcon3D, label: t('nav.store'), tab: 'shop' },
+          { Icon: TempleIcon3D, label: t('nav.temples'), tab: 'temples' },
         ].map((item) => (
           <button
             key={item.label}
@@ -148,8 +148,8 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
         {/* Upcoming Festivals */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="font-cinzel text-lg font-semibold text-maroon">Upcoming Festivals</h2>
-            <button onClick={() => setActiveTab('calendar')} className="text-saffron text-sm">View all</button>
+            <h2 className="font-cinzel text-lg font-semibold text-maroon">{t('festivals.upcoming')}</h2>
+            <button onClick={() => setActiveTab('calendar')} className="text-saffron text-sm">{t('common.viewAll')}</button>
           </div>
           <div className={`${isDesktop ? 'grid grid-cols-1 gap-3' : 'flex gap-3 overflow-x-auto pb-2 -mx-4 px-4'} scrollbar-hide`}>
             {festivals.map((festival, idx) => (
@@ -173,8 +173,8 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
         {/* Featured Priests */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="font-cinzel text-lg font-semibold text-maroon">Featured Priests</h2>
-            <button onClick={() => setActiveTab('priests')} className="text-saffron text-sm">See all</button>
+            <h2 className="font-cinzel text-lg font-semibold text-maroon">{t('nav.priests')}</h2>
+            <button onClick={() => setActiveTab('priests')} className="text-saffron text-sm">{t('common.viewAll')}</button>
           </div>
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-saffron animate-spin" /></div>
@@ -210,8 +210,8 @@ export function HomeTab({ setActiveTab, setSelectedPriest, isDesktop }) {
       {priestPosts.length > 0 && (
         <div className="mb-6">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="font-cinzel text-lg font-semibold text-maroon">Spiritual Updates</h2>
-            <button onClick={() => setActiveTab('feed')} className="text-saffron text-sm">View all</button>
+            <h2 className="font-cinzel text-lg font-semibold text-maroon">{t('nav.home')}</h2>
+            <button onClick={() => setActiveTab('feed')} className="text-saffron text-sm">{t('common.viewAll')}</button>
           </div>
           <div className="space-y-4">
             {priestPosts.slice(0, 3).map((post) => (

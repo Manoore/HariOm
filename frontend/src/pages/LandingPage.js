@@ -596,11 +596,11 @@ export default function LandingPage({ onGetStarted }) {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">
-              <a href="#features" className="text-gray-700 hover:text-saffron transition-colors font-medium">Features</a>
-              <a href="#services" className="text-gray-700 hover:text-saffron transition-colors font-medium">Services</a>
-              <a href="#priests" className="text-gray-700 hover:text-saffron transition-colors font-medium">Priests</a>
-              <a href="#marketplace" className="text-gray-700 hover:text-saffron transition-colors font-medium">Marketplace</a>
-              <a href="#contact" className="text-gray-700 hover:text-saffron transition-colors font-medium">Contact</a>
+              <a href="#features" className="text-gray-700 hover:text-saffron transition-colors font-medium">{t('landing.features.priests.title')}</a>
+              <a href="#services" className="text-gray-700 hover:text-saffron transition-colors font-medium">{t('priest.profile.services')}</a>
+              <a href="#priests" className="text-gray-700 hover:text-saffron transition-colors font-medium">{t('nav.priests')}</a>
+              <a href="#marketplace" className="text-gray-700 hover:text-saffron transition-colors font-medium">{t('nav.store')}</a>
+              <a href="#contact" className="text-gray-700 hover:text-saffron transition-colors font-medium">{t('footer.contact')}</a>
             </div>
 
             {/* CTA Buttons */}
