@@ -9,6 +9,7 @@ import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { Toaster, toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export function MarketplacePage() {
   const [products, setProducts] = useState([]);
@@ -19,6 +20,7 @@ export function MarketplacePage() {
   const { user } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchData();
@@ -69,10 +71,10 @@ export function MarketplacePage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mb-2">
-            Pooja Marketplace
+            {t('store.title')}
           </h1>
           <p className="text-gray-600">
-            Quality pooja items delivered to your doorstep
+            {t('store.subtitle')}
           </p>
         </motion.div>
 
@@ -86,7 +88,7 @@ export function MarketplacePage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="input-field pl-12"
-                placeholder="Search products..."
+                placeholder={t('common.search') + '...'}
                 data-testid="search-products"
               />
             </div>
@@ -97,7 +99,7 @@ export function MarketplacePage() {
                 className="input-field"
                 data-testid="filter-category"
               >
-                <option value="">All Categories</option>
+                <option value="">{t('store.categories')}</option>
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -162,7 +164,7 @@ export function MarketplacePage() {
         {!loading && products.length === 0 && (
           <div className="text-center py-20">
             <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">No products found</p>
+            <p className="text-gray-500 mb-4">{t('common.noResults')}</p>
             <button 
               onClick={() => { setSearch(''); setSelectedCategory(''); }}
               className="btn-secondary"
@@ -180,6 +182,7 @@ export function CartPage() {
   const { cart, updateCartItem, clearCart, loading } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [shippingAddress, setShippingAddress] = useState('');
   const [showCheckout, setShowCheckout] = useState(false);
@@ -244,7 +247,7 @@ export function CartPage() {
           ) : cart.items.length === 0 ? (
             <div className="card p-12 text-center">
               <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="font-cinzel text-xl text-gray-600 mb-2">Your cart is empty</h3>
+              <h3 className="font-cinzel text-xl text-gray-600 mb-2">{t('store.emptyCart')}</h3>
               <p className="text-gray-500 mb-6">Add some products to get started</p>
               <Link to="/marketplace" className="btn-primary inline-flex items-center gap-2">
                 Browse Products <ArrowRight className="w-5 h-5" />

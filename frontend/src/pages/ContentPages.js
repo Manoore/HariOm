@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Star, Search, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 
 export function FestivalsPage() {
   const [festivals, setFestivals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchFestivals();
@@ -41,10 +43,10 @@ export function FestivalsPage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mb-2">
-            Festival Calendar 2025
+            {t('festivals.title')}
           </h1>
           <p className="text-gray-600">
-            Never miss an auspicious occasion with our Hindu festival calendar
+            {t('festivals.subtitle')}
           </p>
         </motion.div>
 
@@ -102,6 +104,7 @@ export function TemplesPage() {
   const [temples, setTemples] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchTemples();
@@ -130,10 +133,10 @@ export function TemplesPage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mb-2">
-            Temple Directory
+            {t('nav.temples')}
           </h1>
           <p className="text-gray-600">
-            Explore sacred temples across India
+            {t('landing.features.priests.desc')}
           </p>
         </motion.div>
 
@@ -146,7 +149,7 @@ export function TemplesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="input-field pl-12"
-              placeholder="Search by city..."
+              placeholder={t('common.search') + '...'}
               data-testid="search-temples"
             />
           </div>
@@ -190,7 +193,7 @@ export function TemplesPage() {
 
         {!loading && temples.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-gray-500">No temples found</p>
+            <p className="text-gray-500">{t('common.noResults')}</p>
           </div>
         )}
       </div>

@@ -4,11 +4,15 @@ import { Star, ChevronRight, Clock, Loader2, MessageSquare, MapPin, Award, Landm
 import api from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { useAutoTranslate } from '../../hooks/useAutoTranslate';
 import SmartPayment from '../PaymentComponents';
 import SlotPicker from '../Booking/SlotPicker';
 
 function PriestDetailView({ priest, onBack, isDesktop }) {
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const translatedBio = useAutoTranslate(priest.bio);
   const [selectedService, setSelectedService] = useState(null);
   const [bookingDate, setBookingDate] = useState('');
   const [slotStart, setSlotStart] = useState('');
@@ -97,7 +101,7 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
       <div className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 px-4 py-3 border-b border-orange-50">
         <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-maroon">
           <ChevronRight className="w-5 h-5 rotate-180" />
-          <span>Back to Priests</span>
+          <span>{t('common.back')}</span>
         </button>
       </div>
 
@@ -112,9 +116,9 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
               <h1 className="font-cinzel text-xl lg:text-2xl font-bold text-maroon">{priest.user_name}</h1>
               <div className={`flex items-center ${isDesktop ? '' : 'justify-center'} gap-2 mt-2`}>
                 <Star className="w-4 h-4 text-gold fill-gold" />
-                <span className="text-gray-600">{priest.rating} ({priest.total_reviews} reviews)</span>
+                <span className="text-gray-600">{priest.rating} ({priest.total_reviews} {t('priest.profile.reviews')})</span>
               </div>
-              <p className="text-gray-500 text-sm mt-2">{priest.experience_years} years experience</p>
+              <p className="text-gray-500 text-sm mt-2">{t('priest.card.experience', { years: priest.experience_years })}</p>
               <div className={`flex flex-wrap ${isDesktop ? '' : 'justify-center'} gap-2 mt-3`}>
                 {priest.specializations?.map((s, i) => (
                   <span key={i} className="text-xs bg-orange-100 text-saffron-dark px-3 py-1 rounded-full">
@@ -127,8 +131,8 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
 
           {/* Bio */}
           <div className="bg-orange-50 rounded-2xl p-4 mb-6">
-            <h3 className="font-semibold text-gray-800 mb-2">About</h3>
-            <p className="text-gray-600 text-sm">{priest.bio}</p>
+            <h3 className="font-semibold text-gray-800 mb-2">{t('priest.profile.about')}</h3>
+            <p className="text-gray-600 text-sm">{translatedBio}</p>
           </div>
 
           {/* Priest Details: Subcaste, Math/Mutt, Temple, Work Locations */}
@@ -178,7 +182,7 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
           )}
 
           {/* Services */}
-          <h2 className="font-cinzel text-lg font-semibold text-maroon mb-3">Services</h2>
+          <h2 className="font-cinzel text-lg font-semibold text-maroon mb-3">{t('priest.profile.services')}</h2>
           <div className={`${isDesktop ? 'grid grid-cols-2 gap-4' : 'space-y-3'} mb-6`}>
             {priest.services?.map((service, i) => (
               <button
@@ -249,7 +253,7 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-cinzel text-lg font-semibold text-maroon">
-                Reviews ({priest.total_reviews || 0})
+                {t('priest.profile.reviews')} ({priest.total_reviews || 0})
               </h2>
               {reviews.length > 3 && (
                 <button
@@ -316,7 +320,7 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
             ) : reviews.length === 0 ? (
               <div className="text-center py-8 bg-gray-50 rounded-2xl">
                 <MessageSquare className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-500">No reviews yet</p>
+                <p className="text-gray-500">{t('common.noResults')}</p>
                 <p className="text-xs text-gray-400">Be the first to review after your booking!</p>
               </div>
             ) : (
@@ -380,7 +384,7 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
               animate={{ opacity: 1, y: 0 }}
               className={`bg-white rounded-2xl p-6 border border-orange-100 ${isDesktop ? 'sticky top-20' : 'mb-6'}`}
             >
-              <h3 className="font-cinzel text-lg font-semibold text-maroon mb-4">Book Service</h3>
+              <h3 className="font-cinzel text-lg font-semibold text-maroon mb-4">{t('priest.booking.selectService')}</h3>
               <div className="bg-orange-50 rounded-xl p-4 mb-4">
                 <p className="text-sm text-gray-600">Selected Service</p>
                 <p className="font-semibold text-gray-800">{selectedService.name}</p>
@@ -401,7 +405,7 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
                 disabled={loading}
                 className="w-full bg-saffron hover:bg-saffron-dark text-white rounded-full py-4 font-semibold flex items-center justify-center gap-2 transition-colors"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Confirm Booking</>}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{t('priest.booking.confirmBooking')}</>}
               </button>
             </motion.div>
           )}

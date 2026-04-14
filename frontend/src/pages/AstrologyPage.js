@@ -7,6 +7,7 @@ import {
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 const ZODIAC_ICONS = {
   Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋',
@@ -28,6 +29,7 @@ export default function AstrologyPage() {
     place_of_birth: ''
   });
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchZodiacSigns();
@@ -94,7 +96,7 @@ export default function AstrologyPage() {
               <span className="text-cosmic-text/80 text-sm">Cosmic Insights</span>
             </div>
             <h1 className="font-cinzel text-4xl md:text-5xl font-bold text-white mb-4">
-              Astrology & Horoscope
+              {t('astrology.title')}
             </h1>
             <p className="text-cosmic-text/70 max-w-2xl mx-auto">
               Discover your daily predictions, generate your birth chart, and explore the cosmic influences on your life
@@ -126,7 +128,7 @@ export default function AstrologyPage() {
             }`}
             data-testid="tab-birthchart"
           >
-            Birth Chart
+            {t('astrology.kundali.title')}
           </button>
         </div>
 

@@ -7,12 +7,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { useTranslation } from 'react-i18next';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const { user, logout } = useAuth();
   const { cartCount } = useCart();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -32,19 +34,19 @@ export function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             <Link to="/priests" className="text-gray-700 hover:text-saffron transition-colors font-medium" data-testid="nav-priests">
-              Book Priests
+              {t('nav.priests')}
             </Link>
             <Link to="/astrology" className="text-gray-700 hover:text-saffron transition-colors font-medium" data-testid="nav-astrology">
-              Astrology
+              {t('nav.astrology')}
             </Link>
             <Link to="/marketplace" className="text-gray-700 hover:text-saffron transition-colors font-medium" data-testid="nav-marketplace">
-              Marketplace
+              {t('nav.store')}
             </Link>
             <Link to="/festivals" className="text-gray-700 hover:text-saffron transition-colors font-medium" data-testid="nav-festivals">
-              Festivals
+              {t('nav.festivals')}
             </Link>
             <Link to="/temples" className="text-gray-700 hover:text-saffron transition-colors font-medium" data-testid="nav-temples">
-              Temples
+              {t('nav.temples')}
             </Link>
           </div>
 
@@ -73,15 +75,15 @@ export function Navbar() {
                   <div className="p-2">
                     <Link to="/dashboard" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-orange-50 text-gray-700" data-testid="dashboard-link">
                       <User className="w-4 h-4" />
-                      Dashboard
+                      {t('nav.dashboard')}
                     </Link>
                     <Link to="/profile" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-orange-50 text-gray-700" data-testid="profile-link">
                       <Settings className="w-4 h-4" />
-                      Settings
+                      {t('nav.settings')}
                     </Link>
                     <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600" data-testid="logout-button">
                       <LogOut className="w-4 h-4" />
-                      Logout
+                      {t('nav.logout')}
                     </button>
                   </div>
                 </div>
@@ -89,10 +91,10 @@ export function Navbar() {
             ) : (
               <div className="flex items-center gap-2">
                 <Link to="/login" className="px-4 py-2 text-gray-700 hover:text-saffron font-medium" data-testid="login-link">
-                  Login
+                  {t('auth.login')}
                 </Link>
                 <Link to="/register" className="btn-primary text-sm px-4 py-2" data-testid="register-link">
-                  Sign Up
+                  {t('auth.register')}
                 </Link>
               </div>
             )}
@@ -114,19 +116,19 @@ export function Navbar() {
         >
           <div className="px-4 py-4 space-y-2">
             <Link to="/priests" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg hover:bg-orange-50 font-medium">
-              Book Priests
+              {t('nav.priests')}
             </Link>
             <Link to="/astrology" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg hover:bg-orange-50 font-medium">
-              Astrology
+              {t('nav.astrology')}
             </Link>
             <Link to="/marketplace" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg hover:bg-orange-50 font-medium">
-              Marketplace
+              {t('nav.store')}
             </Link>
             <Link to="/festivals" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg hover:bg-orange-50 font-medium">
-              Festivals
+              {t('nav.festivals')}
             </Link>
             <Link to="/temples" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg hover:bg-orange-50 font-medium">
-              Temples
+              {t('nav.temples')}
             </Link>
           </div>
         </motion.div>
@@ -138,25 +140,26 @@ export function Navbar() {
 export function BottomNav() {
   const { user } = useAuth();
   const { cartCount } = useCart();
+  const { t } = useTranslation();
 
   return (
     <div className="bottom-nav">
       <div className="flex justify-around items-center">
         <Link to="/" className="flex flex-col items-center gap-1 text-gray-600 hover:text-saffron" data-testid="bottom-nav-home">
           <Home className="w-5 h-5" />
-          <span className="text-xs">Home</span>
+          <span className="text-xs">{t('nav.home')}</span>
         </Link>
         <Link to="/priests" className="flex flex-col items-center gap-1 text-gray-600 hover:text-saffron" data-testid="bottom-nav-priests">
           <Star className="w-5 h-5" />
-          <span className="text-xs">Priests</span>
+          <span className="text-xs">{t('nav.priests')}</span>
         </Link>
         <Link to="/astrology" className="flex flex-col items-center gap-1 text-gray-600 hover:text-saffron" data-testid="bottom-nav-astrology">
           <Sun className="w-5 h-5" />
-          <span className="text-xs">Astrology</span>
+          <span className="text-xs">{t('nav.astrology')}</span>
         </Link>
         <Link to="/marketplace" className="relative flex flex-col items-center gap-1 text-gray-600 hover:text-saffron" data-testid="bottom-nav-marketplace">
           <ShoppingBag className="w-5 h-5" />
-          <span className="text-xs">Shop</span>
+          <span className="text-xs">{t('nav.store')}</span>
           {cartCount > 0 && (
             <span className="absolute -top-1 right-2 bg-saffron text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
               {cartCount}
@@ -165,7 +168,7 @@ export function BottomNav() {
         </Link>
         <Link to={user ? "/dashboard" : "/login"} className="flex flex-col items-center gap-1 text-gray-600 hover:text-saffron" data-testid="bottom-nav-profile">
           <User className="w-5 h-5" />
-          <span className="text-xs">{user ? 'Profile' : 'Login'}</span>
+          <span className="text-xs">{user ? t('nav.profile') : t('auth.login')}</span>
         </Link>
       </div>
     </div>
@@ -173,6 +176,7 @@ export function BottomNav() {
 }
 
 export function Footer() {
+  const { t } = useTranslation();
   return (
     <footer className="bg-maroon text-white py-12 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -183,29 +187,29 @@ export function Footer() {
               <span className="font-cinzel text-xl font-bold">Divine</span>
             </div>
             <p className="text-gray-300 text-sm">
-              Your complete spiritual ecosystem for Hindu rituals, astrology, and sacred services.
+              {t('landing.hero.subtitle')}
             </p>
           </div>
           
           <div>
-            <h4 className="font-cinzel font-semibold mb-4">Services</h4>
+            <h4 className="font-cinzel font-semibold mb-4">{t('priest.profile.services')}</h4>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li><Link to="/priests" className="hover:text-gold transition-colors">Book Priests</Link></li>
-              <li><Link to="/astrology" className="hover:text-gold transition-colors">Horoscope</Link></li>
-              <li><Link to="/marketplace" className="hover:text-gold transition-colors">Pooja Store</Link></li>
+              <li><Link to="/priests" className="hover:text-gold transition-colors">{t('nav.priests')}</Link></li>
+              <li><Link to="/astrology" className="hover:text-gold transition-colors">{t('nav.astrology')}</Link></li>
+              <li><Link to="/marketplace" className="hover:text-gold transition-colors">{t('nav.store')}</Link></li>
             </ul>
           </div>
           
           <div>
-            <h4 className="font-cinzel font-semibold mb-4">Explore</h4>
+            <h4 className="font-cinzel font-semibold mb-4">{t('common.view')}</h4>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li><Link to="/festivals" className="hover:text-gold transition-colors">Festival Calendar</Link></li>
-              <li><Link to="/temples" className="hover:text-gold transition-colors">Temple Directory</Link></li>
+              <li><Link to="/festivals" className="hover:text-gold transition-colors">{t('nav.festivals')}</Link></li>
+              <li><Link to="/temples" className="hover:text-gold transition-colors">{t('nav.temples')}</Link></li>
             </ul>
           </div>
           
           <div>
-            <h4 className="font-cinzel font-semibold mb-4">Contact</h4>
+            <h4 className="font-cinzel font-semibold mb-4">{t('footer.contact')}</h4>
             <p className="text-sm text-gray-300">
               support@divineapp.com<br />
               +91 98765 43210
@@ -214,7 +218,7 @@ export function Footer() {
         </div>
         
         <div className="border-t border-white/20 mt-8 pt-8 text-center text-sm text-gray-400">
-          <p>© 2025 Divine App. All rights reserved.</p>
+          <p>{t('footer.copyright')}</p>
         </div>
       </div>
     </footer>
