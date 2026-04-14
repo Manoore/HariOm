@@ -4,7 +4,7 @@
 Build "Divine App," a digital platform connecting users with Hindu spiritual services.
 
 ## Tech Stack
-- **Frontend**: React + TailwindCSS + Shadcn/UI + Framer Motion
+- **Frontend**: React + TailwindCSS + Shadcn/UI + Framer Motion + react-i18next
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB
 - **Payments**: Razorpay
@@ -13,27 +13,30 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - **Email**: Resend API
 - **Push**: Firebase Cloud Messaging
 - **Chat**: WebSocket (FastAPI native) + REST API fallback
+- **i18n**: react-i18next + i18next-browser-languagedetector (10 Indian languages)
+- **Translation API**: Google Free Translate + MyMemory fallback
 
 ## Core Features
 
+### Multi-Language Support (10 Languages)
+- English, Hindi, Bengali, Marathi, Gujarati, Tamil, Telugu, Kannada, Malayalam, Sanskrit
+- Static UI translations via JSON locale files (i18n)
+- Auto-translate user-generated content via `/api/translate` endpoint
+- `useAutoTranslate` hook for dynamic content translation
+- Language selector in navbar, preference persisted in localStorage
+- Wired pages: LandingPage, AuthScreen, AuthPages, PriestPages
+
 ### WebSocket Real-Time Chat
 - `ws://host/ws/chat/{room_id}?token=JWT` — persistent connection
-- Server handles: new_message (save + broadcast), typing (broadcast), read (mark all read)
-- Auto-reconnect on disconnect (5s delay)
-- Polling fallback (3s) when WebSocket unavailable
-- "Online" / "typing..." status indicators in chat header
-- Messages persist in MongoDB, broadcast to all room participants instantly
+- Auto-reconnect, typing indicators, online status, polling fallback
 
 ### Puja Samagri (Items) List
 - Priest adds items per service (name, qty, optional flag)
-- Priest can upload Samagri PDF or take a photo instead of typing items
-- Items stored on service and copied to booking
-- Devotee sees samagri when selecting service and in booking cards
-- View PDF / View Photo links available for devotees
+- Priest can upload Samagri PDF or take a photo
+- Devotee sees samagri with View PDF / View Photo links
 
 ### Priest Availability & Slot Booking
 - Weekly schedule, slot duration, blocked dates
-- Available slots API filters booked slots
 - Double-booking prevented (409)
 
 ### Priest Booking Flow
@@ -44,35 +47,37 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Multi-role auth, E-commerce, Astrology, Video consultations
 - Admin Dashboard (Payments, Payouts, Refunds)
 - Devotional content (mantras, scriptures, festivals)
-- In-app ConfirmDialog for all actions
 
 ## Session Log
 
 ### Apr 13, 2026
-- [x] WebSocket real-time chat — full implementation
-- [x] Puja Samagri feature (iteration_52: 100% pass)
-- [x] Priest Availability (iteration_51: 100% pass)
-- [x] Bug fixes: reviews, booking confirm, chat rooms (iteration_50: 100% pass)
+- [x] WebSocket real-time chat (iteration_50-52: 100% pass)
+- [x] Puja Samagri + Priest Availability + Bug fixes
 
 ### Apr 14, 2026
 - [x] Puja Samagri PDF/Image Upload — VERIFIED (iteration_53: 100% pass)
-  - Fixed missing samagri_pdf_url, samagri_image_url from GET /api/priests/{id}
-  - Fixed missing samagri fields from GET /api/priests/{id}/services
-  - Fixed missing duration_minutes from all service API responses
-  - Fixed upload URL generation to use request-based base URL instead of hardcoded production URL
-  - Backend: POST /api/upload/document (PDF), POST /api/upload/image, GET /api/uploads/{filename}
-  - Frontend: Upload PDF button, Take Photo button in ServiceModal
-  - Devotee: View PDF/View Photo links when service selected
+- [x] Multi-Language Support — 10 Indian languages (iteration_54: 100% pass)
+  - Added Bengali, Marathi, Gujarati locale files
+  - Updated i18n config for 10 languages
+  - Wired AuthScreen, AuthPages, PriestPages with useTranslation()
+  - Created useAutoTranslate hook for user-generated content
+  - Fixed upload URL generation (request-based)
 
-## P1/P2 Backlog
+## P0/P1/P2 Backlog
+
+### P0 — Done
+- All core features implemented and tested
+
 ### P1 — Upcoming
-1. CI/CD Pipeline Setup (GitHub Actions -> Cloud Run + Firebase)
-2. Play Store TWA Setup
+1. Wire remaining pages with i18n (Dashboard, Marketplace, Astrology, etc.)
+2. Integrate useAutoTranslate hook for priest bios, service descriptions, reviews
+3. CI/CD Pipeline Setup (GitHub Actions -> Cloud Run + Firebase)
+4. Play Store TWA Setup
 
 ### P2 — Future
-3. Automated Payouts via RazorpayX
-4. Phase 2 Live Streams (100ms HLS)
-5. Temple section enhancements
+5. Automated Payouts via RazorpayX
+6. Phase 2 Live Streams (100ms HLS)
+7. Temple section enhancements
 
 ## Test Credentials
 - Devotee: `devotee@divineapp.com` / `devotee123`
@@ -80,36 +85,30 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - Admin: `admin@divine.com` / `admin123`
 
 ## Key API Endpoints
-- `ws://host/ws/chat/{room_id}?token=JWT` — Real-time chat WebSocket
-- `GET /api/chat/rooms` / `POST /api/chat/rooms/{id}/messages` — Chat REST
+- `ws://host/ws/chat/{room_id}?token=JWT`
 - `GET /api/priests/{id}/available-slots?date=YYYY-MM-DD`
-- `POST /api/bookings` (with slot_start, slot_end, saves samagri_list)
+- `POST /api/bookings` (slot_start, slot_end, samagri_list)
 - `POST /api/bookings/{id}/confirm-payment`
-- `GET/POST /api/priest/services` (with samagri_list, samagri_pdf_url, samagri_image_url)
-- `POST /api/upload/document` — PDF upload
-- `POST /api/upload/image` — Image upload
-- `GET /api/uploads/{filename}` — Serve uploaded files
+- `GET/POST /api/priest/services` (samagri_list, samagri_pdf_url, samagri_image_url)
+- `POST /api/upload/document` | `POST /api/upload/image`
+- `POST /api/translate` (text, target_lang)
 
 ## Architecture
 ```
 /app/
 ├── backend/
-│   ├── server.py           # WebSocket /ws/chat/{room_id} endpoint
+│   ├── server.py
 │   ├── routes/
-│   │   ├── chat.py         # ConnectionManager + REST chat APIs
-│   │   ├── bookings_new.py # Availability + Booking + Samagri
-│   │   ├── priest_dashboard.py # Service CRUD with Samagri + Upload fields
-│   │   ├── priests_new.py  # Public priest APIs with Samagri fields
-│   │   └── uploads.py      # File upload (PDF, Image, Video)
+│   │   ├── chat.py, bookings_new.py, priest_dashboard.py
+│   │   ├── priests_new.py, uploads.py, translate.py
 │   └── auth.py
 └── frontend/src/
-    ├── components/
-    │   ├── Chat/ChatTab.js  # WebSocket primary + polling fallback
-    │   ├── Booking/SlotPicker.js
-    │   └── DevoteeDashboard/PriestDetailView.js
+    ├── i18n/
+    │   ├── index.js (10 languages config)
+    │   └── locales/ (en, hi, bn, mr, gu, ta, te, kn, ml, sa .json)
+    ├── hooks/useAutoTranslate.js
+    ├── components/LanguageSelector.js
     └── pages/
-        ├── PriestPages.js
-        └── dashboards/priest/components/
-            ├── ServicesTab.js (samagri editor + PDF/Image upload)
-            └── AvailabilityTab.js
+        ├── AuthScreen.js, PriestPages.js, LandingPage.js (i18n wired)
+        └── dashboards/priest/components/ServicesTab.js
 ```

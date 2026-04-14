@@ -78,14 +78,14 @@ export function PriestsListPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('priest.filters.language')}</label>
               <select
                 value={filters.language}
                 onChange={(e) => setFilters({ ...filters, language: e.target.value })}
                 className="input-field"
                 data-testid="filter-language"
               >
-                <option value="">All Languages</option>
+                <option value="">{t('common.all')} {t('priest.filters.language')}</option>
                 <option value="Hindi">Hindi</option>
                 <option value="Sanskrit">Sanskrit</option>
                 <option value="Tamil">Tamil</option>
