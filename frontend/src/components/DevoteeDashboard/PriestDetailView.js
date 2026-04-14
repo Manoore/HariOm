@@ -201,21 +201,44 @@ function PriestDetailView({ priest, onBack, isDesktop }) {
                 </div>
 
                 {/* Samagri List - show when selected */}
-                {selectedService?.name === service.name && service.samagri_list?.length > 0 && (
+                {selectedService?.name === service.name && (service.samagri_list?.length > 0 || service.samagri_pdf_url || service.samagri_image_url) && (
                   <div className="mt-3 pt-3 border-t border-orange-200">
                     <p className="text-xs font-semibold text-maroon mb-2 flex items-center gap-1">
                       Items needed for this puja:
                     </p>
-                    <div className="space-y-1">
-                      {service.samagri_list.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-xs">
-                          <span className="w-1.5 h-1.5 rounded-full bg-saffron flex-shrink-0" />
-                          <span className="text-gray-700">{item.name}</span>
-                          {item.quantity && <span className="text-gray-400">({item.quantity})</span>}
-                          {item.optional && <span className="text-blue-400 italic">optional</span>}
-                        </div>
-                      ))}
-                    </div>
+
+                    {/* PDF/Photo attachments */}
+                    {(service.samagri_pdf_url || service.samagri_image_url) && (
+                      <div className="flex gap-2 mb-2">
+                        {service.samagri_pdf_url && (
+                          <a href={service.samagri_pdf_url} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1 bg-red-50 text-red-600 px-2 py-1 rounded-lg text-xs hover:bg-red-100">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M4 18h12V6h-4V2H4v16zm8-15.586L14.586 5H12V2.414zM2 0h10l4 4v16H2V0z"/></svg>
+                            View PDF
+                          </a>
+                        )}
+                        {service.samagri_image_url && (
+                          <a href={service.samagri_image_url} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-xs hover:bg-blue-100">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M0 4a2 2 0 012-2h16a2 2 0 012 2v12a2 2 0 01-2 2H2a2 2 0 01-2-2V4zm2 0v8l4-2 4 4 4-4 4 2V4H2z"/></svg>
+                            View Photo
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {service.samagri_list?.length > 0 && (
+                      <div className="space-y-1">
+                        {service.samagri_list.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-saffron flex-shrink-0" />
+                            <span className="text-gray-700">{item.name}</span>
+                            {item.quantity && <span className="text-gray-400">({item.quantity})</span>}
+                            {item.optional && <span className="text-blue-400 italic">optional</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </button>

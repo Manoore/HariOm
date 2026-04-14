@@ -2,7 +2,7 @@
 File Upload Routes
 Handles image and video uploads
 """
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Request
 from fastapi.responses import FileResponse
 from pathlib import Path
 import uuid
@@ -16,8 +16,25 @@ router = APIRouter(prefix="/api", tags=["Uploads"])
 UPLOADS_DIR = Path(__file__).parent.parent / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
+def get_base_url(request: Request) -> str:
+    """Get the base URL from the request, handling proxies and env vars"""
+    # Check forwarded headers first (set by reverse proxies like nginx/ingress)
+    forwarded_proto = request.headers.get("x-forwarded-proto", "")
+    forwarded_host = request.headers.get("x-forwarded-host", "")
+    if forwarded_proto and forwarded_host:
+        return f"{forwarded_proto}://{forwarded_host}"
+    # Fall back to env vars
+    backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
+    if not backend_url:
+        backend_url = os.environ.get("BACKEND_URL", "")
+    if backend_url:
+        return backend_url
+    # Final fallback to request URL
+    return str(request.base_url).rstrip("/")
+
 @router.post("/upload/image")
 async def upload_image(
+    request: Request,
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):
@@ -37,16 +54,44 @@ async def upload_image(
     with open(file_path, "wb") as f:
         f.write(contents)
     
-    backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
-    if not backend_url:
-        backend_url = os.environ.get("BACKEND_URL", "https://divine-backend-149993395431.us-central1.run.app")
-    
-    image_url = f"{backend_url}/api/uploads/{unique_filename}"
+    base_url = get_base_url(request)
+    image_url = f"{base_url}/api/uploads/{unique_filename}"
     
     return {"url": image_url, "filename": unique_filename}
 
+@router.post("/upload/document")
+async def upload_document(
+    request: Request,
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
+    """Upload a document file (PDF, images) and return the URL"""
+    allowed_types = [
+        "application/pdf",
+        "image/jpeg", "image/png", "image/gif", "image/webp"
+    ]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only PDF, JPEG, PNG, GIF, and WebP are allowed.")
+    
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB.")
+    
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'pdf'
+    unique_filename = f"doc_{uuid.uuid4()}.{ext}"
+    file_path = UPLOADS_DIR / unique_filename
+    
+    with open(file_path, "wb") as f:
+        f.write(contents)
+    
+    base_url = get_base_url(request)
+    doc_url = f"{base_url}/api/uploads/{unique_filename}"
+    
+    return {"url": doc_url, "filename": unique_filename, "content_type": file.content_type}
+
 @router.post("/upload/video")
 async def upload_video(
+    request: Request,
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user)
 ):
@@ -66,11 +111,8 @@ async def upload_video(
     with open(file_path, "wb") as f:
         f.write(contents)
     
-    backend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
-    if not backend_url:
-        backend_url = os.environ.get("BACKEND_URL", "https://divine-backend-149993395431.us-central1.run.app")
-    
-    video_url = f"{backend_url}/api/uploads/{unique_filename}"
+    base_url = get_base_url(request)
+    video_url = f"{base_url}/api/uploads/{unique_filename}"
     
     return {"url": video_url, "filename": unique_filename}
 

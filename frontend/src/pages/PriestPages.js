@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Star, Clock, MapPin, Phone, Award, Calendar, ChevronLeft,
-  Languages, CheckCircle, Loader2, ArrowRight
+  Languages, CheckCircle, Loader2, ArrowRight, FileText, Image as ImageIcon
 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -390,19 +390,39 @@ export function PriestDetailPage() {
                     </div>
 
                     {/* Samagri List - show when selected */}
-                    {selectedService?.name === service.name && service.samagri_list?.length > 0 && (
+                    {selectedService?.name === service.name && (service.samagri_list?.length > 0 || service.samagri_pdf_url || service.samagri_image_url) && (
                       <div className="mt-3 pt-3 border-t border-orange-200">
                         <p className="text-sm font-semibold text-maroon mb-2">Items needed for this puja:</p>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          {service.samagri_list.map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-2 text-sm">
-                              <span className="w-1.5 h-1.5 rounded-full bg-saffron flex-shrink-0" />
-                              <span className="text-gray-700">{item.name}</span>
-                              {item.quantity && <span className="text-gray-400 text-xs">({item.quantity})</span>}
-                              {item.optional && <span className="text-blue-400 text-xs italic">optional</span>}
-                            </div>
-                          ))}
-                        </div>
+
+                        {(service.samagri_pdf_url || service.samagri_image_url) && (
+                          <div className="flex gap-2 mb-2">
+                            {service.samagri_pdf_url && (
+                              <a href={service.samagri_pdf_url} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-1 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-100">
+                                <FileText className="w-3 h-3" /> View Samagri PDF
+                              </a>
+                            )}
+                            {service.samagri_image_url && (
+                              <a href={service.samagri_image_url} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-1 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-100">
+                                <ImageIcon className="w-3 h-3" /> View Photo
+                              </a>
+                            )}
+                          </div>
+                        )}
+
+                        {service.samagri_list?.length > 0 && (
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {service.samagri_list.map((item, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-sm">
+                                <span className="w-1.5 h-1.5 rounded-full bg-saffron flex-shrink-0" />
+                                <span className="text-gray-700">{item.name}</span>
+                                {item.quantity && <span className="text-gray-400 text-xs">({item.quantity})</span>}
+                                {item.optional && <span className="text-blue-400 text-xs italic">optional</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

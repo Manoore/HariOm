@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit, Trash2, Loader2, X, Briefcase, IndianRupee, Clock, Save, ShoppingBag } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, X, Briefcase, IndianRupee, Clock, Save, ShoppingBag, Upload, Camera, FileText, Image as ImageIcon } from 'lucide-react';
 import api from '../../../../lib/api';
 import { toast } from 'sonner';
 import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
@@ -99,6 +99,9 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
     name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100, puja_type_id: '', custom_puja_name: '', location_type: 'online', temple_name: ''
   });
   const [samagriList, setSamagriList] = useState([]);
+  const [samagriPdfUrl, setSamagriPdfUrl] = useState('');
+  const [samagriImageUrl, setSamagriImageUrl] = useState('');
+  const [uploadingFile, setUploadingFile] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', quantity: '', optional: false });
   const [saving, setSaving] = useState(false);
   const [pujaTypes, setPujaTypes] = useState([]);
@@ -140,10 +143,14 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
         temple_name: editData.temple_name || ''
       });
       setSamagriList(editData.samagri_list || []);
+      setSamagriPdfUrl(editData.samagri_pdf_url || '');
+      setSamagriImageUrl(editData.samagri_image_url || '');
       setShowCustomInput(isCustom && editData.name);
     } else {
       setForm({ name: '', description: '', category: 'Pooja', duration_minutes: 60, price: 1100, puja_type_id: '', custom_puja_name: '', location_type: 'online', temple_name: '' });
       setSamagriList([]);
+      setSamagriPdfUrl('');
+      setSamagriImageUrl('');
       setShowCustomInput(false);
     }
   }, [editData, isOpen]);
@@ -172,7 +179,9 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
       const submitData = {
         ...form,
         name: serviceName,
-        samagri_list: samagriList
+        samagri_list: samagriList,
+        samagri_pdf_url: samagriPdfUrl,
+        samagri_image_url: samagriImageUrl
       };
       if (editData) {
         await api.put(`/api/priest/services/${editData.id}`, submitData);
@@ -290,8 +299,105 @@ function ServiceModal({ isOpen, onClose, editData, onSuccess }) {
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
               <ShoppingBag className="w-4 h-4 text-saffron" /> Puja Samagri (Items Needed)
             </label>
-            <p className="text-xs text-gray-400 mb-3">Add items the devotee needs to arrange for this puja</p>
+            <p className="text-xs text-gray-400 mb-3">Add items the devotee needs — type them, upload a PDF, or take a photo</p>
             
+            {/* Upload Options */}
+            <div className="flex gap-2 mb-4">
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    setUploadingFile(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      const res = await api.post('/api/upload/document', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                      setSamagriPdfUrl(res.data.url);
+                      toast.success('PDF uploaded!');
+                    } catch (err) {
+                      toast.error('Failed to upload PDF');
+                    } finally {
+                      setUploadingFile(false);
+                      e.target.value = '';
+                    }
+                  }}
+                  data-testid="samagri-pdf-input"
+                />
+                <div className="flex items-center justify-center gap-2 bg-red-50 text-red-600 px-3 py-2.5 rounded-xl text-xs font-medium hover:bg-red-100 transition-colors border border-red-100">
+                  {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                  Upload PDF
+                </div>
+              </label>
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    setUploadingFile(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      const res = await api.post('/api/upload/image', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                      setSamagriImageUrl(res.data.url);
+                      toast.success('Photo uploaded!');
+                    } catch (err) {
+                      toast.error('Failed to upload photo');
+                    } finally {
+                      setUploadingFile(false);
+                      e.target.value = '';
+                    }
+                  }}
+                  data-testid="samagri-photo-input"
+                />
+                <div className="flex items-center justify-center gap-2 bg-blue-50 text-blue-600 px-3 py-2.5 rounded-xl text-xs font-medium hover:bg-blue-100 transition-colors border border-blue-100">
+                  {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                  Take Photo
+                </div>
+              </label>
+            </div>
+
+            {/* Show uploaded PDF */}
+            {samagriPdfUrl && (
+              <div className="flex items-center gap-2 bg-red-50 rounded-xl px-3 py-2 mb-3">
+                <FileText className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <a href={samagriPdfUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-red-600 underline flex-1 truncate">
+                  View Samagri PDF
+                </a>
+                <button type="button" onClick={() => setSamagriPdfUrl('')} className="p-1 hover:bg-red-100 rounded">
+                  <X className="w-3 h-3 text-red-500" />
+                </button>
+              </div>
+            )}
+
+            {/* Show uploaded photo */}
+            {samagriImageUrl && (
+              <div className="relative mb-3 rounded-xl overflow-hidden border border-blue-100">
+                <img src={samagriImageUrl} alt="Samagri" className="w-full max-h-48 object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setSamagriImageUrl('')}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-px bg-gray-200 flex-1" />
+              <span className="text-xs text-gray-400">or add items manually</span>
+              <div className="h-px bg-gray-200 flex-1" />
+            </div>
+
             {/* Existing items */}
             {samagriList.length > 0 && (
               <div className="space-y-2 mb-3">

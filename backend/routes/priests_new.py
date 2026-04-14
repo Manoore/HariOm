@@ -101,7 +101,9 @@ async def get_priests(
                 "price": svc.get("price", 0),
                 "duration": svc.get("duration", ""),
                 "category": svc.get("category", "general"),
-                "samagri_list": svc.get("samagri_list", [])
+                "samagri_list": svc.get("samagri_list", []),
+                "samagri_pdf_url": svc.get("samagri_pdf_url", ""),
+                "samagri_image_url": svc.get("samagri_image_url", "")
             })
         
         # Fallback to embedded services
@@ -151,8 +153,11 @@ async def get_priest(priest_id: str):
             "description": svc.get("description", ""),
             "price": svc.get("price", 0),
             "duration": svc.get("duration", ""),
+            "duration_minutes": svc.get("duration_minutes", 60),
             "category": svc.get("category", "general"),
-            "samagri_list": svc.get("samagri_list", [])
+            "samagri_list": svc.get("samagri_list", []),
+            "samagri_pdf_url": svc.get("samagri_pdf_url", ""),
+            "samagri_image_url": svc.get("samagri_image_url", "")
         })
     
     if not services and priest.get("services"):
@@ -197,7 +202,11 @@ async def get_priest_services_public(priest_id: str):
             "description": svc.get("description", ""),
             "price": svc.get("price", 0),
             "duration": svc.get("duration", ""),
-            "category": svc.get("category", "general")
+            "duration_minutes": svc.get("duration_minutes", 60),
+            "category": svc.get("category", "general"),
+            "samagri_list": svc.get("samagri_list", []),
+            "samagri_pdf_url": svc.get("samagri_pdf_url", ""),
+            "samagri_image_url": svc.get("samagri_image_url", "")
         })
     
     if not services and priest.get("services"):

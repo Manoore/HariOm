@@ -698,10 +698,13 @@ async def get_priest_services(user: dict = Depends(require_role([UserRole.PRIEST
             "description": svc.get("description", ""),
             "price": svc.get("price", 0),
             "duration": svc.get("duration", ""),
+            "duration_minutes": svc.get("duration_minutes", 60),
             "category": svc.get("category", "general"),
             "location_type": svc.get("location_type", "online"),
             "temple_name": svc.get("temple_name", ""),
-            "samagri_list": svc.get("samagri_list", [])
+            "samagri_list": svc.get("samagri_list", []),
+            "samagri_pdf_url": svc.get("samagri_pdf_url", ""),
+            "samagri_image_url": svc.get("samagri_image_url", "")
         })
     return {"services": services}
 
@@ -718,10 +721,13 @@ async def add_priest_service(request: Request, user: dict = Depends(require_role
         "description": data.get("description", ""),
         "price": data.get("price", 0),
         "duration": data.get("duration", "60 minutes"),
+        "duration_minutes": data.get("duration_minutes", 60),
         "category": data.get("category", "general"),
         "location_type": data.get("location_type", "online"),
         "temple_name": data.get("temple_name", ""),
         "samagri_list": data.get("samagri_list", []),
+        "samagri_pdf_url": data.get("samagri_pdf_url", ""),
+        "samagri_image_url": data.get("samagri_image_url", ""),
         "created_at": datetime.now(timezone.utc)
     }
     
@@ -740,7 +746,8 @@ async def update_priest_service(service_id: str, request: Request, user: dict = 
     
     data = await request.json()
     update_data = {k: v for k, v in data.items() if k in [
-        "name", "description", "price", "duration", "category", "location_type", "temple_name", "samagri_list"
+        "name", "description", "price", "duration", "duration_minutes", "category", "location_type", "temple_name", "samagri_list",
+        "samagri_pdf_url", "samagri_image_url"
     ]}
     
     await priest_services_collection.update_one(
