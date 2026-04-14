@@ -9,7 +9,7 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 - **Database**: MongoDB
 - **Payments**: Razorpay
 - **Video**: 100ms SDK
-- **Auth**: JWT
+- **Auth**: JWT + Firebase
 - **Email**: Resend API
 - **Push**: Firebase Cloud Messaging
 - **Chat**: WebSocket (FastAPI native) + REST API fallback
@@ -20,95 +20,69 @@ Build "Divine App," a digital platform connecting users with Hindu spiritual ser
 
 ### Multi-Language Support (10 Languages)
 - English, Hindi, Bengali, Marathi, Gujarati, Tamil, Telugu, Kannada, Malayalam, Sanskrit
-- Static UI translations via JSON locale files (i18n)
-- Auto-translate user-generated content via `/api/translate` endpoint
-- `useAutoTranslate` hook for dynamic content translation
+- Static UI translations via JSON locale files
+- Auto-translate user-generated content (priest bios, reviews) via useAutoTranslate hook
 - Language selector in navbar, preference persisted in localStorage
-- Wired pages: LandingPage, AuthScreen, AuthPages, PriestPages
+- Wired pages: LandingPage, AuthScreen, AuthPages, PriestPages, PriestDetailView, Layout (Navbar/Footer/BottomNav), Navigation (Sidebar/BottomNav), MarketplacePages, ContentPages, AstrologyPage
 
-### WebSocket Real-Time Chat
-- `ws://host/ws/chat/{room_id}?token=JWT` — persistent connection
-- Auto-reconnect, typing indicators, online status, polling fallback
-
-### Puja Samagri (Items) List
-- Priest adds items per service (name, qty, optional flag)
-- Priest can upload Samagri PDF or take a photo
+### Puja Samagri (Items) + PDF/Image Upload
+- Priest uploads Samagri PDF or photo, or types items manually
 - Devotee sees samagri with View PDF / View Photo links
 
-### Priest Availability & Slot Booking
-- Weekly schedule, slot duration, blocked dates
-- Double-booking prevented (409)
+### WebSocket Real-Time Chat
+- ws://host/ws/chat/{room_id}?token=JWT
 
-### Priest Booking Flow
-- Select service (see samagri) -> pick date -> pick time slot
-- Razorpay payment -> confirm-payment -> chat room + notifications
+### Priest Availability & Slot Booking
+- Double-booking prevented (409)
 
 ### All Other Features
 - Multi-role auth, E-commerce, Astrology, Video consultations
-- Admin Dashboard (Payments, Payouts, Refunds)
-- Devotional content (mantras, scriptures, festivals)
+- Admin Dashboard, Devotional content
 
 ## Session Log
 
 ### Apr 13, 2026
-- [x] WebSocket real-time chat (iteration_50-52: 100% pass)
-- [x] Puja Samagri + Priest Availability + Bug fixes
+- [x] WebSocket real-time chat, Samagri, Availability, Bug fixes (iterations 50-52)
 
 ### Apr 14, 2026
-- [x] Puja Samagri PDF/Image Upload — VERIFIED (iteration_53: 100% pass)
-- [x] Multi-Language Support — 10 Indian languages (iteration_54: 100% pass)
-  - Added Bengali, Marathi, Gujarati locale files
-  - Updated i18n config for 10 languages
-  - Wired AuthScreen, AuthPages, PriestPages with useTranslation()
-  - Created useAutoTranslate hook for user-generated content
-  - Fixed upload URL generation (request-based)
+- [x] Puja Samagri PDF/Image Upload (iteration_53: 100%)
+- [x] Multi-Language: 10 languages initial setup (iteration_54: 100%)
+- [x] Multi-Language: Remaining pages wired (iteration_55)
+  - Layout.js (Navbar, BottomNav, Footer) — all translated
+  - Navigation.js (Dashboard Sidebar + BottomNav) — all translated
+  - MarketplacePages.js, ContentPages.js, AstrologyPage.js — translated
+  - PriestDetailView.js — useAutoTranslate for priest bios
 
-## P0/P1/P2 Backlog
-
-### P0 — Done
-- All core features implemented and tested
+## P1/P2 Backlog
 
 ### P1 — Upcoming
-1. Wire remaining pages with i18n (Dashboard, Marketplace, Astrology, etc.)
-2. Integrate useAutoTranslate hook for priest bios, service descriptions, reviews
-3. CI/CD Pipeline Setup (GitHub Actions -> Cloud Run + Firebase)
-4. Play Store TWA Setup
+1. Wire HomeTab quick actions and headings with i18n
+2. CI/CD Pipeline Setup (GitHub Actions -> Cloud Run + Firebase)
+3. Play Store TWA Setup
 
 ### P2 — Future
-5. Automated Payouts via RazorpayX
-6. Phase 2 Live Streams (100ms HLS)
-7. Temple section enhancements
+4. Automated Payouts via RazorpayX
+5. Phase 2 Live Streams (100ms HLS)
+6. Temple section enhancements
 
 ## Test Credentials
 - Devotee: `devotee@divineapp.com` / `devotee123`
 - Priest: `pandit.sharma@divineapp.com` / `priest123`
 - Admin: `admin@divine.com` / `admin123`
 
-## Key API Endpoints
-- `ws://host/ws/chat/{room_id}?token=JWT`
-- `GET /api/priests/{id}/available-slots?date=YYYY-MM-DD`
-- `POST /api/bookings` (slot_start, slot_end, samagri_list)
-- `POST /api/bookings/{id}/confirm-payment`
-- `GET/POST /api/priest/services` (samagri_list, samagri_pdf_url, samagri_image_url)
-- `POST /api/upload/document` | `POST /api/upload/image`
-- `POST /api/translate` (text, target_lang)
-
 ## Architecture
 ```
-/app/
-├── backend/
-│   ├── server.py
-│   ├── routes/
-│   │   ├── chat.py, bookings_new.py, priest_dashboard.py
-│   │   ├── priests_new.py, uploads.py, translate.py
-│   └── auth.py
-└── frontend/src/
-    ├── i18n/
-    │   ├── index.js (10 languages config)
-    │   └── locales/ (en, hi, bn, mr, gu, ta, te, kn, ml, sa .json)
-    ├── hooks/useAutoTranslate.js
-    ├── components/LanguageSelector.js
-    └── pages/
-        ├── AuthScreen.js, PriestPages.js, LandingPage.js (i18n wired)
-        └── dashboards/priest/components/ServicesTab.js
+/app/frontend/src/
+├── i18n/
+│   ├── index.js (10 languages)
+│   └── locales/ (en, hi, bn, mr, gu, ta, te, kn, ml, sa .json)
+├── hooks/useAutoTranslate.js
+├── components/
+│   ├── LanguageSelector.js
+│   ├── Layout.js (Navbar/Footer/BottomNav with i18n)
+│   └── DevoteeDashboard/PriestDetailView.js (useAutoTranslate)
+└── pages/
+    ├── AuthScreen.js, PriestPages.js, LandingPage.js
+    ├── MarketplacePages.js, ContentPages.js, AstrologyPage.js
+    └── dashboards/devotee/components/Navigation.js (Sidebar/BottomNav with i18n)
 ```

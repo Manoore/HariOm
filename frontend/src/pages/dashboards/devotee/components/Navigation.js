@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../../../../contexts/CartContext';
 import { useAuth } from '../../../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { OmIcon } from './shared';
 import NotificationBell from '../../../../components/NotificationBell';
 
@@ -12,23 +13,24 @@ import NotificationBell from '../../../../components/NotificationBell';
 export function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
   const { cartCount } = useCart();
   const { logout } = useAuth();
+  const { t } = useTranslation();
   
   const tabs = [
-    { id: 'home', icon: OmIcon, label: 'Home' },
-    { id: 'activity', icon: ClipboardList, label: 'My Activity' },
-    { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages },
-    { id: 'consultation', icon: Video, label: 'Call Astrologer' },
-    { id: 'classes', icon: BookOpen, label: 'Vedic Classes' },
-    { id: 'live', icon: Play, label: 'Live Events' },
-    { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
-    { id: 'mantras', icon: Music, label: 'Mantras & Shlokas' },
-    { id: 'scriptures', icon: BookOpen, label: 'Sacred Scriptures' },
-    { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
-    { id: 'priests', icon: UserRoundCheck, label: 'Book Priests' },
-    { id: 'temples', icon: Landmark, label: 'Temples' },
-    { id: 'astrology', icon: Sun, label: 'Astrology' },
-    { id: 'shop', icon: ShoppingBag, label: 'Pooja Store' },
-    { id: 'profile', icon: User, label: 'My Account' },
+    { id: 'home', icon: OmIcon, label: t('nav.home') },
+    { id: 'activity', icon: ClipboardList, label: t('nav.bookings') },
+    { id: 'messages', icon: MessageSquare, label: t('nav.notifications'), badge: unreadMessages },
+    { id: 'consultation', icon: Video, label: t('astrology.consultation.title') },
+    { id: 'classes', icon: BookOpen, label: t('nav.classes') },
+    { id: 'live', icon: Play, label: t('nav.home') },
+    { id: 'feed', icon: Rss, label: t('nav.home') },
+    { id: 'mantras', icon: Music, label: t('scriptures.title') },
+    { id: 'scriptures', icon: BookOpen, label: t('scriptures.title') },
+    { id: 'calendar', icon: Calendar, label: t('nav.festivals') },
+    { id: 'priests', icon: UserRoundCheck, label: t('nav.priests') },
+    { id: 'temples', icon: Landmark, label: t('nav.temples') },
+    { id: 'astrology', icon: Sun, label: t('nav.astrology') },
+    { id: 'shop', icon: ShoppingBag, label: t('nav.store') },
+    { id: 'profile', icon: User, label: t('nav.profile') },
   ];
 
   return (
@@ -103,7 +105,7 @@ export function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
           data-testid="sidebar-logout"
         >
           <LogOut className="w-5 h-5" />
-          <span>Logout</span>
+          <span>{t('nav.logout')}</span>
         </button>
       </div>
     </div>
@@ -114,27 +116,28 @@ export function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
 export function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
   const { cartCount } = useCart();
   const [showMore, setShowMore] = useState(false);
+  const { t } = useTranslation();
   
   const mainTabs = [
-    { id: 'home', icon: OmIcon, label: 'Home' },
-    { id: 'activity', icon: ClipboardList, label: 'Activity' },
-    { id: 'priests', icon: UserRoundCheck, label: 'Priests' },
-    { id: 'shop', icon: ShoppingBag, label: 'Shop' },
-    { id: 'more', icon: Menu, label: 'More', isMore: true },
+    { id: 'home', icon: OmIcon, label: t('nav.home') },
+    { id: 'activity', icon: ClipboardList, label: t('nav.bookings') },
+    { id: 'priests', icon: UserRoundCheck, label: t('nav.priests') },
+    { id: 'shop', icon: ShoppingBag, label: t('nav.store') },
+    { id: 'more', icon: Menu, label: t('common.viewAll'), isMore: true },
   ];
 
   const moreTabs = [
-    { id: 'consultation', icon: Video, label: 'Call Astrologer' },
-    { id: 'classes', icon: BookOpen, label: 'Vedic Classes' },
-    { id: 'live', icon: Play, label: 'Live Events' },
-    { id: 'mantras', icon: Music, label: 'Mantras & Shlokas' },
-    { id: 'scriptures', icon: BookOpen, label: 'Scriptures' },
-    { id: 'temples', icon: Landmark, label: 'Temples' },
-    { id: 'astrology', icon: Sun, label: 'Astrology' },
-    { id: 'calendar', icon: Calendar, label: 'Festival Calendar' },
-    { id: 'feed', icon: Rss, label: 'Spiritual Feed' },
-    { id: 'messages', icon: MessageSquare, label: 'Messages', badge: unreadMessages },
-    { id: 'profile', icon: User, label: 'My Account' },
+    { id: 'consultation', icon: Video, label: t('astrology.consultation.title') },
+    { id: 'classes', icon: BookOpen, label: t('nav.classes') },
+    { id: 'live', icon: Play, label: t('nav.home') },
+    { id: 'mantras', icon: Music, label: t('scriptures.title') },
+    { id: 'scriptures', icon: BookOpen, label: t('scriptures.title') },
+    { id: 'temples', icon: Landmark, label: t('nav.temples') },
+    { id: 'astrology', icon: Sun, label: t('nav.astrology') },
+    { id: 'calendar', icon: Calendar, label: t('nav.festivals') },
+    { id: 'feed', icon: Rss, label: t('nav.home') },
+    { id: 'messages', icon: MessageSquare, label: t('nav.notifications'), badge: unreadMessages },
+    { id: 'profile', icon: User, label: t('nav.profile') },
   ];
 
   return (
@@ -144,7 +147,7 @@ export function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
         <div className="fixed inset-0 z-40" onClick={() => setShowMore(false)}>
           <div className="absolute bottom-20 left-4 right-4 bg-white rounded-2xl shadow-2xl border border-orange-100 p-4" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-cinzel font-semibold text-maroon">More Services</h3>
+              <h3 className="font-cinzel font-semibold text-maroon">{t('priest.profile.services')}</h3>
               <button onClick={() => setShowMore(false)} className="p-1">
                 <X className="w-5 h-5 text-gray-400" />
               </button>
