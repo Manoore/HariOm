@@ -1,0 +1,403 @@
+{
+  "common": {
+    "appName": "डिव्हाइन अॅप",
+    "loading": "लोड होत आहे...",
+    "error": "त्रुटी",
+    "success": "यशस्वी",
+    "cancel": "रद्द करा",
+    "save": "जतन करा",
+    "delete": "हटवा",
+    "edit": "संपादित करा",
+    "submit": "सबमिट करा",
+    "back": "मागे",
+    "next": "पुढील",
+    "search": "शोधा",
+    "filter": "फिल्टर",
+    "all": "सर्व",
+    "none": "काहीही नाही",
+    "yes": "हो",
+    "no": "नाही",
+    "ok": "ठीक आहे",
+    "close": "बंद करा",
+    "view": "पहा",
+    "viewAll": "सर्व पहा",
+    "readMore": "अधिक वाचा",
+    "showLess": "कमी दाखवा",
+    "noResults": "कोणतेही परिणाम सापडले नाहीत",
+    "tryAgain": "पुन्हा प्रयत्न करा"
+  },
+  "nav": {
+    "home": "मुख्यपृष्ठ",
+    "priests": "पुजारी",
+    "astrology": "ज्योतिष",
+    "store": "पूजा दुकान",
+    "classes": "वैदिक वर्ग",
+    "temples": "मंदिरे",
+    "festivals": "सण",
+    "panchang": "पंचांग",
+    "kundali": "कुंडली",
+    "profile": "प्रोफाइल",
+    "settings": "सेटिंग्ज",
+    "logout": "लॉगआउट",
+    "login": "लॉगिन",
+    "register": "नोंदणी",
+    "dashboard": "डॅशबोर्ड",
+    "bookings": "माझी बुकिंग",
+    "orders": "माझे ऑर्डर",
+    "wallet": "वॉलेट",
+    "notifications": "सूचना",
+    "help": "मदत",
+    "about": "आमच्याबद्दल"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "register": "नोंदणी",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड पुष्टी करा",
+    "forgotPassword": "पासवर्ड विसरलात?",
+    "resetPassword": "पासवर्ड रीसेट करा",
+    "phone": "फोन नंबर",
+    "otp": "OTP टाका",
+    "sendOtp": "OTP पाठवा",
+    "verifyOtp": "OTP सत्यापित करा",
+    "loginWithGoogle": "Google ने साइन इन करा",
+    "loginWithPhone": "फोनने साइन इन करा",
+    "noAccount": "खाते नाही?",
+    "haveAccount": "आधीच खाते आहे?",
+    "selectRole": "तुमची भूमिका निवडा",
+    "devotee": "भक्त",
+    "priest": "पुजारी",
+    "astrologer": "ज्योतिषी",
+    "shopOwner": "दुकान मालक"
+  },
+  "landing": {
+    "hero": {
+      "title": "तुमचा आध्यात्मिक प्रवास इथे सुरू होतो",
+      "subtitle": "सत्यापित पुजाऱ्यांशी संपर्क साधा, ज्योतिष शोधा आणि पवित्र वस्तू शोधा",
+      "cta": "सुरू करा"
+    },
+    "features": {
+      "priests": {
+        "title": "पुजारी बुक करा",
+        "desc": "पूजा आणि समारंभांसाठी सत्यापित पुजारी शोधा आणि बुक करा"
+      },
+      "astrology": {
+        "title": "ज्योतिष सेवा",
+        "desc": "वैयक्तिक राशिभविष्य वाचन आणि सल्ला मिळवा"
+      },
+      "store": {
+        "title": "पूजा दुकान",
+        "desc": "अस्सल पूजा साहित्य आणि आध्यात्मिक उत्पादने खरेदी करा"
+      },
+      "classes": {
+        "title": "वैदिक वर्ग",
+        "desc": "मंत्र, श्लोक आणि वैदिक परंपरा शिका"
+      }
+    }
+  },
+  "priest": {
+    "title": "पुजारी शोधा",
+    "searchPlaceholder": "नाव, विशेषता अनुसार शोधा...",
+    "filters": {
+      "specialization": "विशेषता",
+      "language": "भाषा",
+      "location": "स्थान",
+      "rating": "रेटिंग",
+      "price": "किंमत श्रेणी",
+      "availability": "उपलब्धता"
+    },
+    "card": {
+      "experience": "{{years}} वर्षांचा अनुभव",
+      "rating": "{{rating}} ({{count}} पुनरावलोकने)",
+      "bookNow": "आता बुक करा",
+      "viewProfile": "प्रोफाइल पहा",
+      "verified": "सत्यापित",
+      "online": "ऑनलाइन उपलब्ध",
+      "offline": "प्रत्यक्ष"
+    },
+    "profile": {
+      "about": "बद्दल",
+      "services": "सेवा",
+      "reviews": "पुनरावलोकने",
+      "portfolio": "पोर्टफोलिओ",
+      "availability": "उपलब्धता"
+    },
+    "booking": {
+      "selectService": "सेवा निवडा",
+      "selectDate": "तारीख निवडा",
+      "selectTime": "वेळ निवडा",
+      "bookingDetails": "बुकिंग तपशील",
+      "confirmBooking": "बुकिंग पुष्टी करा",
+      "totalAmount": "एकूण रक्कम"
+    }
+  },
+  "astrology": {
+    "title": "ज्योतिष सेवा",
+    "kundali": {
+      "title": "कुंडली / जन्म चार्ट",
+      "subtitle": "तुमचा तपशीलवार जन्म चार्ट तयार करा",
+      "form": {
+        "name": "पूर्ण नाव",
+        "dob": "जन्मतारीख",
+        "tob": "जन्मवेळ",
+        "pob": "जन्मस्थान",
+        "gender": "लिंग",
+        "male": "पुरुष",
+        "female": "स्त्री",
+        "generate": "कुंडली तयार करा"
+      },
+      "result": {
+        "birthChart": "जन्म चार्ट",
+        "planets": "ग्रहांची स्थिती",
+        "houses": "भाव विश्लेषण",
+        "dasha": "दशा काळ",
+        "yogas": "योग",
+        "doshas": "दोष"
+      },
+      "matching": "कुंडली मिलान"
+    },
+    "panchang": {
+      "title": "दैनिक पंचांग",
+      "subtitle": "हिंदू दिनदर्शिका आणि शुभ वेळा",
+      "today": "आज",
+      "selectDate": "तारीख निवडा",
+      "tithi": "तिथी",
+      "nakshatra": "नक्षत्र",
+      "yoga": "योग",
+      "karana": "करण",
+      "rahu": "राहू काळ",
+      "sunrise": "सूर्योदय",
+      "sunset": "सूर्यास्त",
+      "moonrise": "चंद्रोदय",
+      "moonset": "चंद्रास्त",
+      "shubhMuhurat": "शुभ मुहूर्त",
+      "ashubhMuhurat": "अशुभ मुहूर्त"
+    },
+    "horoscope": {
+      "title": "दैनिक राशिभविष्य",
+      "selectSign": "तुमची राशी निवडा",
+      "today": "आज",
+      "weekly": "साप्ताहिक",
+      "monthly": "मासिक",
+      "yearly": "वार्षिक",
+      "todaysHoroscope": "आजचे राशिभविष्य",
+      "luckyNumber": "भाग्यांक",
+      "luckyColor": "शुभ रंग",
+      "viewFull": "संपूर्ण राशिभविष्य पहा"
+    },
+    "consultation": {
+      "title": "ज्योतिषाचा सल्ला",
+      "bookNow": "आता सल्ला बुक करा",
+      "chat": "चॅट",
+      "call": "कॉल",
+      "video": "व्हिडिओ कॉल"
+    },
+    "signs": {
+      "aries": "मेष",
+      "taurus": "वृषभ",
+      "gemini": "मिथुन",
+      "cancer": "कर्क",
+      "leo": "सिंह",
+      "virgo": "कन्या",
+      "libra": "तूळ",
+      "scorpio": "वृश्चिक",
+      "sagittarius": "धनु",
+      "capricorn": "मकर",
+      "aquarius": "कुंभ",
+      "pisces": "मीन"
+    }
+  },
+  "panchang": {
+    "title": "पंचांग",
+    "subtitle": "हिंदू वैदिक दिनदर्शिका",
+    "date": "तारीख",
+    "day": "दिवस",
+    "tithi": "तिथी",
+    "nakshatra": "नक्षत्र",
+    "yoga": "योग",
+    "karana": "करण",
+    "paksha": "पक्ष",
+    "masa": "महिना",
+    "ritu": "ऋतू",
+    "samvat": "संवत",
+    "rahuKaal": "राहू काळ",
+    "yamaGanda": "यम गंड",
+    "gulika": "गुलिक काळ",
+    "abhijit": "अभिजित मुहूर्त",
+    "shubh": "शुभ",
+    "ashubh": "अशुभ",
+    "days": {
+      "sunday": "रविवार",
+      "monday": "सोमवार",
+      "tuesday": "मंगळवार",
+      "wednesday": "बुधवार",
+      "thursday": "गुरुवार",
+      "friday": "शुक्रवार",
+      "saturday": "शनिवार"
+    },
+    "months": {
+      "chaitra": "चैत्र",
+      "vaishakha": "वैशाख",
+      "jyeshtha": "ज्येष्ठ",
+      "ashadha": "आषाढ",
+      "shravana": "श्रावण",
+      "bhadrapada": "भाद्रपद",
+      "ashwin": "अश्विन",
+      "kartik": "कार्तिक",
+      "margashirsha": "मार्गशीर्ष",
+      "pausha": "पौष",
+      "magha": "माघ",
+      "phalguna": "फाल्गुन"
+    }
+  },
+  "festivals": {
+    "title": "हिंदू सण",
+    "subtitle": "आगामी सण आणि शुभ दिवस",
+    "upcoming": "आगामी सण",
+    "today": "आजचा सण",
+    "thisMonth": "या महिन्यात",
+    "calendar": "सण दिनदर्शिका",
+    "details": "सणाचे तपशील",
+    "significance": "महत्त्व",
+    "rituals": "विधी",
+    "date": "तारीख"
+  },
+  "store": {
+    "title": "पूजा दुकान",
+    "subtitle": "अस्सल आध्यात्मिक उत्पादने",
+    "categories": "श्रेणी",
+    "products": "उत्पादने",
+    "addToCart": "कार्टमध्ये जोडा",
+    "buyNow": "आता खरेदी करा",
+    "cart": "कार्ट",
+    "checkout": "चेकआउट",
+    "emptyCart": "तुमची कार्ट रिकामी आहे",
+    "total": "एकूण",
+    "subtotal": "उपएकूण",
+    "shipping": "शिपिंग",
+    "tax": "कर",
+    "placeOrder": "ऑर्डर द्या",
+    "continueShopping": "खरेदी सुरू ठेवा"
+  },
+  "classes": {
+    "title": "वैदिक वर्ग",
+    "subtitle": "अनुभवी शिक्षकांकडून शिका",
+    "browse": "वर्ग ब्राउझ करा",
+    "myClasses": "माझे वर्ग",
+    "enrolled": "नोंदणीकृत",
+    "upcoming": "आगामी",
+    "completed": "पूर्ण",
+    "enroll": "आता प्रवेश घ्या",
+    "free": "विनामूल्य",
+    "price": "{{amount}}",
+    "duration": "{{minutes}} मिनिटे",
+    "students": "{{count}} विद्यार्थी",
+    "schedule": "वेळापत्रक",
+    "instructor": "शिक्षक",
+    "category": "श्रेणी",
+    "meetingType": {
+      "title": "बैठकीचा प्रकार",
+      "oneOnOne": "एकावर एक",
+      "group": "गट"
+    },
+    "locationType": {
+      "title": "स्थानाचा प्रकार",
+      "online": "ऑनलाइन",
+      "homeVisit": "घरी भेट",
+      "temple": "मंदिरात"
+    }
+  },
+  "booking": {
+    "title": "माझी बुकिंग",
+    "status": {
+      "pending": "प्रलंबित",
+      "confirmed": "पुष्टी",
+      "completed": "पूर्ण",
+      "cancelled": "रद्द"
+    },
+    "actions": {
+      "cancel": "बुकिंग रद्द करा",
+      "reschedule": "पुनर्नियोजन",
+      "review": "पुनरावलोकन लिहा",
+      "chat": "पुजाऱ्याशी चॅट"
+    },
+    "details": {
+      "service": "सेवा",
+      "date": "तारीख",
+      "time": "वेळ",
+      "location": "स्थान",
+      "amount": "रक्कम",
+      "priest": "पुजारी"
+    }
+  },
+  "dashboard": {
+    "welcome": "स्वागत, {{name}}",
+    "namaste": "नमस्कार",
+    "overview": "आढावा",
+    "quickActions": "जलद कृती",
+    "recentActivity": "अलीकडील कार्यकलाप",
+    "stats": {
+      "bookings": "एकूण बुकिंग",
+      "earnings": "एकूण कमाई",
+      "reviews": "पुनरावलोकने",
+      "classes": "वर्ग",
+      "students": "विद्यार्थी"
+    }
+  },
+  "profile": {
+    "title": "माझे प्रोफाइल",
+    "edit": "प्रोफाइल संपादित करा",
+    "personalInfo": "वैयक्तिक माहिती",
+    "name": "नाव",
+    "email": "ईमेल",
+    "phone": "फोन",
+    "address": "पत्ता",
+    "changePassword": "पासवर्ड बदला",
+    "deleteAccount": "खाते हटवा"
+  },
+  "notifications": {
+    "title": "सूचना",
+    "markAllRead": "सर्व वाचलेले म्हणून चिन्हांकित करा",
+    "empty": "कोणतीही सूचना नाही",
+    "types": {
+      "booking": "बुकिंग अपडेट",
+      "payment": "पेमेंट",
+      "promotion": "प्रमोशन",
+      "system": "सिस्टम"
+    }
+  },
+  "errors": {
+    "generic": "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.",
+    "network": "नेटवर्क त्रुटी. कृपया तुमचे कनेक्शन तपासा.",
+    "notFound": "पृष्ठ सापडले नाही",
+    "unauthorized": "पुढे जाण्यासाठी लॉगिन करा",
+    "forbidden": "तुम्हाला हे ऍक्सेस करण्याची परवानगी नाही"
+  },
+  "footer": {
+    "about": "आमच्याबद्दल",
+    "contact": "संपर्क",
+    "privacy": "गोपनीयता धोरण",
+    "terms": "सेवा अटी",
+    "copyright": "© २०२६ डिव्हाइन अॅप. सर्व हक्क राखीव."
+  },
+  "scriptures": {
+    "title": "पवित्र शास्त्रे",
+    "subtitle": "हिंदू शास्त्रांचे कालातीत ज्ञान शोधा",
+    "searchPlaceholder": "शास्त्रे शोधा...",
+    "all": "सर्व",
+    "vedas": "वेद",
+    "itihasa": "इतिहास",
+    "noResults": "कोणतेही शास्त्र सापडले नाही",
+    "verses": "श्लोक",
+    "viewCommentary": "भाष्य पहा",
+    "viewTranslation": "अनुवाद पहा",
+    "loadMore": "अधिक श्लोक लोड करा",
+    "endOfSection": "विभागाचा शेवट",
+    "verseOfDay": "दिवसाचा श्लोक",
+    "refresh": "रिफ्रेश",
+    "translate": "अनुवाद",
+    "translating": "अनुवाद होत आहे...",
+    "translateNow": "अनुवाद करा"
+  }
+}

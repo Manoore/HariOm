@@ -1,0 +1,403 @@
+{
+  "common": {
+    "appName": "ডিভাইন অ্যাপ",
+    "loading": "লোড হচ্ছে...",
+    "error": "ত্রুটি",
+    "success": "সফল",
+    "cancel": "বাতিল",
+    "save": "সংরক্ষণ",
+    "delete": "মুছুন",
+    "edit": "সম্পাদনা",
+    "submit": "জমা দিন",
+    "back": "পিছনে",
+    "next": "পরবর্তী",
+    "search": "অনুসন্ধান",
+    "filter": "ফিল্টার",
+    "all": "সব",
+    "none": "কোনোটিই নয়",
+    "yes": "হ্যাঁ",
+    "no": "না",
+    "ok": "ঠিক আছে",
+    "close": "বন্ধ করুন",
+    "view": "দেখুন",
+    "viewAll": "সব দেখুন",
+    "readMore": "আরো পড়ুন",
+    "showLess": "কম দেখান",
+    "noResults": "কোনো ফলাফল পাওয়া যায়নি",
+    "tryAgain": "আবার চেষ্টা করুন"
+  },
+  "nav": {
+    "home": "হোম",
+    "priests": "পুরোহিত",
+    "astrology": "জ্যোতিষ",
+    "store": "পূজা দোকান",
+    "classes": "বৈদিক ক্লাস",
+    "temples": "মন্দির",
+    "festivals": "উৎসব",
+    "panchang": "পঞ্চাং",
+    "kundali": "কুণ্ডলী",
+    "profile": "প্রোফাইল",
+    "settings": "সেটিংস",
+    "logout": "লগআউট",
+    "login": "লগইন",
+    "register": "নিবন্ধন",
+    "dashboard": "ড্যাশবোর্ড",
+    "bookings": "আমার বুকিং",
+    "orders": "আমার অর্ডার",
+    "wallet": "ওয়ালেট",
+    "notifications": "বিজ্ঞপ্তি",
+    "help": "সাহায্য",
+    "about": "সম্পর্কে"
+  },
+  "auth": {
+    "login": "লগইন",
+    "register": "নিবন্ধন",
+    "email": "ইমেইল",
+    "password": "পাসওয়ার্ড",
+    "confirmPassword": "পাসওয়ার্ড নিশ্চিত করুন",
+    "forgotPassword": "পাসওয়ার্ড ভুলে গেছেন?",
+    "resetPassword": "পাসওয়ার্ড রিসেট",
+    "phone": "ফোন নম্বর",
+    "otp": "OTP দিন",
+    "sendOtp": "OTP পাঠান",
+    "verifyOtp": "OTP যাচাই করুন",
+    "loginWithGoogle": "Google দিয়ে সাইন ইন",
+    "loginWithPhone": "ফোন দিয়ে সাইন ইন",
+    "noAccount": "অ্যাকাউন্ট নেই?",
+    "haveAccount": "ইতিমধ্যে অ্যাকাউন্ট আছে?",
+    "selectRole": "আপনার ভূমিকা নির্বাচন করুন",
+    "devotee": "ভক্ত",
+    "priest": "পুরোহিত",
+    "astrologer": "জ্যোতিষী",
+    "shopOwner": "দোকান মালিক"
+  },
+  "landing": {
+    "hero": {
+      "title": "আপনার আধ্যাত্মিক যাত্রা এখানে শুরু",
+      "subtitle": "যাচাইকৃত পুরোহিতদের সাথে সংযোগ করুন, জ্যোতিষ অনুসন্ধান করুন এবং পবিত্র সামগ্রী খুঁজুন",
+      "cta": "শুরু করুন"
+    },
+    "features": {
+      "priests": {
+        "title": "পুরোহিত বুক করুন",
+        "desc": "পূজা ও অনুষ্ঠানের জন্য যাচাইকৃত পুরোহিত খুঁজুন এবং বুক করুন"
+      },
+      "astrology": {
+        "title": "জ্যোতিষ সেবা",
+        "desc": "ব্যক্তিগত রাশিফল পাঠ ও পরামর্শ পান"
+      },
+      "store": {
+        "title": "পূজা দোকান",
+        "desc": "আসল পূজার সামগ্রী ও আধ্যাত্মিক পণ্য কিনুন"
+      },
+      "classes": {
+        "title": "বৈদিক ক্লাস",
+        "desc": "মন্ত্র, শ্লোক এবং বৈদিক ঐতিহ্য শিখুন"
+      }
+    }
+  },
+  "priest": {
+    "title": "পুরোহিত খুঁজুন",
+    "searchPlaceholder": "নাম, বিশেষত্ব অনুসারে খুঁজুন...",
+    "filters": {
+      "specialization": "বিশেষত্ব",
+      "language": "ভাষা",
+      "location": "অবস্থান",
+      "rating": "রেটিং",
+      "price": "মূল্য পরিসীমা",
+      "availability": "উপলব্ধতা"
+    },
+    "card": {
+      "experience": "{{years}} বছরের অভিজ্ঞতা",
+      "rating": "{{rating}} ({{count}} পর্যালোচনা)",
+      "bookNow": "এখনই বুক করুন",
+      "viewProfile": "প্রোফাইল দেখুন",
+      "verified": "যাচাইকৃত",
+      "online": "অনলাইনে উপলব্ধ",
+      "offline": "সশরীরে"
+    },
+    "profile": {
+      "about": "সম্পর্কে",
+      "services": "সেবাসমূহ",
+      "reviews": "পর্যালোচনা",
+      "portfolio": "পোর্টফোলিও",
+      "availability": "উপলব্ধতা"
+    },
+    "booking": {
+      "selectService": "সেবা নির্বাচন করুন",
+      "selectDate": "তারিখ নির্বাচন করুন",
+      "selectTime": "সময় নির্বাচন করুন",
+      "bookingDetails": "বুকিং বিবরণ",
+      "confirmBooking": "বুকিং নিশ্চিত করুন",
+      "totalAmount": "মোট পরিমাণ"
+    }
+  },
+  "astrology": {
+    "title": "জ্যোতিষ সেবা",
+    "kundali": {
+      "title": "কুণ্ডলী / জন্ম চার্ট",
+      "subtitle": "আপনার বিস্তারিত জন্ম চার্ট তৈরি করুন",
+      "form": {
+        "name": "পূর্ণ নাম",
+        "dob": "জন্ম তারিখ",
+        "tob": "জন্ম সময়",
+        "pob": "জন্মস্থান",
+        "gender": "লিঙ্গ",
+        "male": "পুরুষ",
+        "female": "মহিলা",
+        "generate": "কুণ্ডলী তৈরি করুন"
+      },
+      "result": {
+        "birthChart": "জন্ম চার্ট",
+        "planets": "গ্রহের অবস্থান",
+        "houses": "ভাব বিশ্লেষণ",
+        "dasha": "দশা কাল",
+        "yogas": "যোগ",
+        "doshas": "দোষ"
+      },
+      "matching": "কুণ্ডলী মিলান"
+    },
+    "panchang": {
+      "title": "দৈনিক পঞ্চাং",
+      "subtitle": "হিন্দু ক্যালেন্ডার ও শুভ সময়",
+      "today": "আজ",
+      "selectDate": "তারিখ নির্বাচন করুন",
+      "tithi": "তিথি",
+      "nakshatra": "নক্ষত্র",
+      "yoga": "যোগ",
+      "karana": "করণ",
+      "rahu": "রাহু কাল",
+      "sunrise": "সূর্যোদয়",
+      "sunset": "সূর্যাস্ত",
+      "moonrise": "চন্দ্রোদয়",
+      "moonset": "চন্দ্রাস্ত",
+      "shubhMuhurat": "শুভ সময়",
+      "ashubhMuhurat": "অশুভ সময়"
+    },
+    "horoscope": {
+      "title": "দৈনিক রাশিফল",
+      "selectSign": "আপনার রাশি নির্বাচন করুন",
+      "today": "আজ",
+      "weekly": "সাপ্তাহিক",
+      "monthly": "মাসিক",
+      "yearly": "বার্ষিক",
+      "todaysHoroscope": "আজকের রাশিফল",
+      "luckyNumber": "শুভ সংখ্যা",
+      "luckyColor": "শুভ রঙ",
+      "viewFull": "সম্পূর্ণ রাশিফল দেখুন"
+    },
+    "consultation": {
+      "title": "জ্যোতিষীর সাথে পরামর্শ",
+      "bookNow": "এখনই পরামর্শ নিন",
+      "chat": "চ্যাট",
+      "call": "কল",
+      "video": "ভিডিও কল"
+    },
+    "signs": {
+      "aries": "মেষ",
+      "taurus": "বৃষ",
+      "gemini": "মিথুন",
+      "cancer": "কর্কট",
+      "leo": "সিংহ",
+      "virgo": "কন্যা",
+      "libra": "তুলা",
+      "scorpio": "বৃশ্চিক",
+      "sagittarius": "ধনু",
+      "capricorn": "মকর",
+      "aquarius": "কুম্ভ",
+      "pisces": "মীন"
+    }
+  },
+  "panchang": {
+    "title": "পঞ্চাং",
+    "subtitle": "হিন্দু বৈদিক ক্যালেন্ডার",
+    "date": "তারিখ",
+    "day": "দিন",
+    "tithi": "তিথি",
+    "nakshatra": "নক্ষত্র",
+    "yoga": "যোগ",
+    "karana": "করণ",
+    "paksha": "পক্ষ",
+    "masa": "মাস",
+    "ritu": "ঋতু",
+    "samvat": "সম্বত",
+    "rahuKaal": "রাহু কাল",
+    "yamaGanda": "যম গণ্ড",
+    "gulika": "গুলিক কাল",
+    "abhijit": "অভিজিৎ মুহূর্ত",
+    "shubh": "শুভ",
+    "ashubh": "অশুভ",
+    "days": {
+      "sunday": "রবিবার",
+      "monday": "সোমবার",
+      "tuesday": "মঙ্গলবার",
+      "wednesday": "বুধবার",
+      "thursday": "বৃহস্পতিবার",
+      "friday": "শুক্রবার",
+      "saturday": "শনিবার"
+    },
+    "months": {
+      "chaitra": "চৈত্র",
+      "vaishakha": "বৈশাখ",
+      "jyeshtha": "জ্যৈষ্ঠ",
+      "ashadha": "আষাঢ়",
+      "shravana": "শ্রাবণ",
+      "bhadrapada": "ভাদ্র",
+      "ashwin": "আশ্বিন",
+      "kartik": "কার্তিক",
+      "margashirsha": "অগ্রহায়ণ",
+      "pausha": "পৌষ",
+      "magha": "মাঘ",
+      "phalguna": "ফাল্গুন"
+    }
+  },
+  "festivals": {
+    "title": "হিন্দু উৎসব",
+    "subtitle": "আসন্ন উৎসব ও শুভ দিন",
+    "upcoming": "আসন্ন উৎসব",
+    "today": "আজকের উৎসব",
+    "thisMonth": "এই মাসে",
+    "calendar": "উৎসব ক্যালেন্ডার",
+    "details": "উৎসবের বিবরণ",
+    "significance": "তাৎপর্য",
+    "rituals": "আচার-অনুষ্ঠান",
+    "date": "তারিখ"
+  },
+  "store": {
+    "title": "পূজা দোকান",
+    "subtitle": "আসল আধ্যাত্মিক পণ্য",
+    "categories": "বিভাগ",
+    "products": "পণ্য",
+    "addToCart": "কার্টে যোগ করুন",
+    "buyNow": "এখনই কিনুন",
+    "cart": "কার্ট",
+    "checkout": "চেকআউট",
+    "emptyCart": "আপনার কার্ট খালি",
+    "total": "মোট",
+    "subtotal": "উপমোট",
+    "shipping": "শিপিং",
+    "tax": "কর",
+    "placeOrder": "অর্ডার দিন",
+    "continueShopping": "কেনাকাটা চালিয়ে যান"
+  },
+  "classes": {
+    "title": "বৈদিক ক্লাস",
+    "subtitle": "অভিজ্ঞ শিক্ষকদের কাছ থেকে শিখুন",
+    "browse": "ক্লাস ব্রাউজ করুন",
+    "myClasses": "আমার ক্লাস",
+    "enrolled": "নথিভুক্ত",
+    "upcoming": "আসন্ন",
+    "completed": "সম্পন্ন",
+    "enroll": "এখনই ভর্তি হন",
+    "free": "বিনামূল্যে",
+    "price": "{{amount}}",
+    "duration": "{{minutes}} মিনিট",
+    "students": "{{count}} শিক্ষার্থী",
+    "schedule": "সময়সূচী",
+    "instructor": "শিক্ষক",
+    "category": "বিভাগ",
+    "meetingType": {
+      "title": "মিটিং ধরণ",
+      "oneOnOne": "একের সাথে এক",
+      "group": "গ্রুপ"
+    },
+    "locationType": {
+      "title": "অবস্থানের ধরণ",
+      "online": "অনলাইন",
+      "homeVisit": "বাড়িতে আসা",
+      "temple": "মন্দিরে"
+    }
+  },
+  "booking": {
+    "title": "আমার বুকিং",
+    "status": {
+      "pending": "অপেক্ষমাণ",
+      "confirmed": "নিশ্চিত",
+      "completed": "সম্পন্ন",
+      "cancelled": "বাতিল"
+    },
+    "actions": {
+      "cancel": "বুকিং বাতিল",
+      "reschedule": "পুনঃনির্ধারণ",
+      "review": "পর্যালোচনা লিখুন",
+      "chat": "পুরোহিতের সাথে চ্যাট"
+    },
+    "details": {
+      "service": "সেবা",
+      "date": "তারিখ",
+      "time": "সময়",
+      "location": "অবস্থান",
+      "amount": "পরিমাণ",
+      "priest": "পুরোহিত"
+    }
+  },
+  "dashboard": {
+    "welcome": "স্বাগতম, {{name}}",
+    "namaste": "নমস্কার",
+    "overview": "সংক্ষিপ্ত বিবরণ",
+    "quickActions": "দ্রুত কাজ",
+    "recentActivity": "সাম্প্রতিক কার্যকলাপ",
+    "stats": {
+      "bookings": "মোট বুকিং",
+      "earnings": "মোট আয়",
+      "reviews": "পর্যালোচনা",
+      "classes": "ক্লাস",
+      "students": "শিক্ষার্থী"
+    }
+  },
+  "profile": {
+    "title": "আমার প্রোফাইল",
+    "edit": "প্রোফাইল সম্পাদনা",
+    "personalInfo": "ব্যক্তিগত তথ্য",
+    "name": "নাম",
+    "email": "ইমেইল",
+    "phone": "ফোন",
+    "address": "ঠিকানা",
+    "changePassword": "পাসওয়ার্ড পরিবর্তন",
+    "deleteAccount": "অ্যাকাউন্ট মুছুন"
+  },
+  "notifications": {
+    "title": "বিজ্ঞপ্তি",
+    "markAllRead": "সব পঠিত হিসেবে চিহ্নিত করুন",
+    "empty": "কোনো বিজ্ঞপ্তি নেই",
+    "types": {
+      "booking": "বুকিং আপডেট",
+      "payment": "পেমেন্ট",
+      "promotion": "প্রচার",
+      "system": "সিস্টেম"
+    }
+  },
+  "errors": {
+    "generic": "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।",
+    "network": "নেটওয়ার্ক ত্রুটি। আপনার সংযোগ পরীক্ষা করুন।",
+    "notFound": "পৃষ্ঠা পাওয়া যায়নি",
+    "unauthorized": "চালিয়ে যেতে লগইন করুন",
+    "forbidden": "এটি অ্যাক্সেস করার অনুমতি নেই"
+  },
+  "footer": {
+    "about": "আমাদের সম্পর্কে",
+    "contact": "যোগাযোগ",
+    "privacy": "গোপনীয়তা নীতি",
+    "terms": "সেবার শর্তাবলী",
+    "copyright": "© ২০২৬ ডিভাইন অ্যাপ। সর্বস্বত্ব সংরক্ষিত।"
+  },
+  "scriptures": {
+    "title": "পবিত্র শাস্ত্র",
+    "subtitle": "হিন্দু শাস্ত্রের চিরন্তন জ্ঞান অনুসন্ধান করুন",
+    "searchPlaceholder": "শাস্ত্র অনুসন্ধান করুন...",
+    "all": "সব",
+    "vedas": "বেদ",
+    "itihasa": "ইতিহাস",
+    "noResults": "কোনো শাস্ত্র পাওয়া যায়নি",
+    "verses": "শ্লোক",
+    "viewCommentary": "ভাষ্য দেখুন",
+    "viewTranslation": "অনুবাদ দেখুন",
+    "loadMore": "আরও শ্লোক লোড করুন",
+    "endOfSection": "বিভাগের শেষ",
+    "verseOfDay": "দিনের শ্লোক",
+    "refresh": "রিফ্রেশ",
+    "translate": "অনুবাদ",
+    "translating": "অনুবাদ হচ্ছে...",
+    "translateNow": "অনুবাদ করুন"
+  }
+}

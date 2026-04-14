@@ -10,6 +10,9 @@ import ta from './locales/ta.json';
 import te from './locales/te.json';
 import kn from './locales/kn.json';
 import ml from './locales/ml.json';
+import bn from './locales/bn.json';
+import mr from './locales/mr.json';
+import gu from './locales/gu.json';
 
 const resources = {
   en: { translation: en },
@@ -18,18 +21,24 @@ const resources = {
   ta: { translation: ta },
   te: { translation: te },
   kn: { translation: kn },
-  ml: { translation: ml }
+  ml: { translation: ml },
+  bn: { translation: bn },
+  mr: { translation: mr },
+  gu: { translation: gu }
 };
 
 // Language metadata for display
 export const languages = [
-  { code: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧' },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
-  { code: 'sa', name: 'Sanskrit', nativeName: 'संस्कृतम्', flag: '🕉️' },
-  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', flag: '🇮🇳' },
-  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', flag: '🇮🇳' },
-  { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ', flag: '🇮🇳' },
-  { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം', flag: '🇮🇳' }
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
+  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
+  { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
+  { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
+  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
+  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
+  { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ' },
+  { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം' },
+  { code: 'sa', name: 'Sanskrit', nativeName: 'संस्कृतम्' }
 ];
 
 i18n

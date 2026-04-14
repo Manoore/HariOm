@@ -8,6 +8,8 @@ import {
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { useAutoTranslate } from '../hooks/useAutoTranslate';
 import AddressAutocomplete from '../components/AddressAutocomplete';
 import SmartPayment from '../components/PaymentComponents';
 import SlotPicker from '../components/Booking/SlotPicker';
@@ -19,6 +21,7 @@ export function PriestsListPage() {
     specialization: '',
     language: ''
   });
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchPriests();
@@ -48,10 +51,10 @@ export function PriestsListPage() {
           className="mb-8"
         >
           <h1 className="font-cinzel text-3xl md:text-4xl font-bold text-maroon mb-2">
-            Book a Priest
+            {t('priest.title')}
           </h1>
           <p className="text-gray-600">
-            Connect with verified pandits for poojas, ceremonies, and spiritual guidance
+            {t('landing.features.priests.desc')}
           </p>
         </motion.div>
 
@@ -59,14 +62,14 @@ export function PriestsListPage() {
         <div className="card p-4 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Specialization</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('priest.filters.specialization')}</label>
               <select
                 value={filters.specialization}
                 onChange={(e) => setFilters({ ...filters, specialization: e.target.value })}
                 className="input-field"
                 data-testid="filter-specialization"
               >
-                <option value="">All Specializations</option>
+                <option value="">{t('common.all')} {t('priest.filters.specialization')}</option>
                 <option value="Vedic Rituals">Vedic Rituals</option>
                 <option value="Satyanarayana">Satyanarayana Pooja</option>
                 <option value="Griha Pravesh">Griha Pravesh</option>
@@ -153,7 +156,7 @@ export function PriestsListPage() {
                   className="btn-primary w-full text-center block"
                   data-testid={`view-priest-${priest.id}`}
                 >
-                  View Services & Book
+                  {t('priest.card.viewProfile')}
                 </Link>
               </motion.div>
             ))}
@@ -162,12 +165,12 @@ export function PriestsListPage() {
 
         {!loading && priests.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-gray-500 mb-4">No priests found matching your criteria</p>
+            <p className="text-gray-500 mb-4">{t('common.noResults')}</p>
             <button 
               onClick={() => setFilters({ specialization: '', language: '' })}
               className="btn-secondary"
             >
-              Clear Filters
+              {t('common.tryAgain')}
             </button>
           </div>
         )}
@@ -180,6 +183,7 @@ export function PriestDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [priest, setPriest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
@@ -290,7 +294,7 @@ export function PriestDetailPage() {
           data-testid="back-to-priests"
         >
           <ChevronLeft className="w-5 h-5" />
-          Back to Priests
+          {t('common.back')}
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -361,7 +365,7 @@ export function PriestDetailPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <h2 className="font-cinzel text-xl font-bold text-maroon mb-4">Services Offered</h2>
+              <h2 className="font-cinzel text-xl font-bold text-maroon mb-4">{t('priest.profile.services')}</h2>
               <div className="space-y-4">
                 {priest.services?.map((service, index) => (
                   <div 
@@ -438,7 +442,7 @@ export function PriestDetailPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <h2 className="font-cinzel text-xl font-bold text-maroon mb-4">Book Service</h2>
+              <h2 className="font-cinzel text-xl font-bold text-maroon mb-4">{t('priest.booking.selectService')}</h2>
               
               {selectedService ? (
                 <div className="bg-orange-50 p-4 rounded-xl mb-4">
@@ -447,7 +451,7 @@ export function PriestDetailPage() {
                   <p className="text-saffron font-bold">₹{selectedService.price}</p>
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm mb-4">Please select a service from the left</p>
+                <p className="text-gray-500 text-sm mb-4">{t('priest.booking.selectService')}</p>
               )}
 
               <div className="space-y-4">
@@ -461,15 +465,15 @@ export function PriestDetailPage() {
                 />
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Booking Type</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('booking.details.location')}</label>
                   <select
                     value={bookingType}
                     onChange={(e) => setBookingType(e.target.value)}
                     className="input-field"
                     data-testid="booking-type"
                   >
-                    <option value="online">Online (Video Call)</option>
-                    <option value="home_visit">Home Visit</option>
+                    <option value="online">{t('classes.locationType.online')}</option>
+                    <option value="home_visit">{t('classes.locationType.homeVisit')}</option>
                   </select>
                 </div>
 
@@ -510,7 +514,7 @@ export function PriestDetailPage() {
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      Confirm Booking <ArrowRight className="w-5 h-5" />
+                      {t('priest.booking.confirmBooking')} <ArrowRight className="w-5 h-5" />
                     </>
                   )}
                 </button>

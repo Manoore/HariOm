@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 
 export function LoginPage() {
@@ -13,16 +14,17 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       await login(email, password);
-      toast.success('Welcome back!');
+      toast.success(t('dashboard.welcome', { name: '' }));
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Invalid credentials');
+      toast.error(error.response?.data?.detail || t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -41,14 +43,14 @@ export function LoginPage() {
             <span className="text-4xl">🙏</span>
             <span className="font-cinzel text-2xl font-bold text-maroon">Divine</span>
           </Link>
-          <h1 className="font-cinzel text-3xl font-bold text-maroon mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to continue your spiritual journey</p>
+          <h1 className="font-cinzel text-3xl font-bold text-maroon mb-2">{t('auth.login')}</h1>
+          <p className="text-gray-600">{t('landing.hero.subtitle')}</p>
         </div>
 
         <div className="card p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.email')}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -64,7 +66,7 @@ export function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.password')}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -104,9 +106,9 @@ export function LoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              Don't have an account?{' '}
+              {t('auth.noAccount')}{' '}
               <Link to="/register" className="text-saffron font-medium hover:underline" data-testid="go-to-register">
-                Sign up
+                {t('auth.register')}
               </Link>
             </p>
           </div>
@@ -141,6 +143,7 @@ export function RegisterPage() {
   });
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Fetch signup settings to determine which roles to show
@@ -198,14 +201,14 @@ export function RegisterPage() {
             <span className="text-4xl">🙏</span>
             <span className="font-cinzel text-2xl font-bold text-maroon">Divine</span>
           </Link>
-          <h1 className="font-cinzel text-3xl font-bold text-maroon mb-2">Create Account</h1>
-          <p className="text-gray-600">Join our spiritual community</p>
+          <h1 className="font-cinzel text-3xl font-bold text-maroon mb-2">{t('auth.register')}</h1>
+          <p className="text-gray-600">{t('landing.hero.subtitle')}</p>
         </div>
 
         <div className="card p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.name')}</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -222,7 +225,7 @@ export function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.email')}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -231,7 +234,7 @@ export function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   className="input-field pl-12"
-                  placeholder="your@email.com"
+                  placeholder={t('auth.email')}
                   required
                   data-testid="register-email"
                 />
@@ -239,7 +242,7 @@ export function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phone (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.phone')}</label>
               <div className="relative">
                 <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -255,7 +258,7 @@ export function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">I want to join as</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.selectRole')}</label>
               <select
                 name="role"
                 value={formData.role}
@@ -263,21 +266,21 @@ export function RegisterPage() {
                 className="input-field"
                 data-testid="register-role"
               >
-                <option value="devotee">Devotee (Book services)</option>
+                <option value="devotee">{t('auth.devotee')}</option>
                 {signupSettings.enable_priest_signup && (
-                  <option value="priest">Priest (Offer services)</option>
+                  <option value="priest">{t('auth.priest')}</option>
                 )}
                 {signupSettings.enable_astrologer_signup && (
-                  <option value="astrologer">Astrologer (Consultations)</option>
+                  <option value="astrologer">{t('auth.astrologer')}</option>
                 )}
                 {signupSettings.enable_shop_owner_signup && (
-                  <option value="shop_owner">Shop Owner (Sell products)</option>
+                  <option value="shop_owner">{t('auth.shopOwner')}</option>
                 )}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.password')}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -302,7 +305,7 @@ export function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.confirmPassword')}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -328,7 +331,7 @@ export function RegisterPage() {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  Create Account <ArrowRight className="w-5 h-5" />
+                  {t('auth.register')} <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </button>
@@ -336,9 +339,9 @@ export function RegisterPage() {
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              Already have an account?{' '}
+              {t('auth.haveAccount')}{' '}
               <Link to="/login" className="text-saffron font-medium hover:underline" data-testid="go-to-login">
-                Sign in
+                {t('auth.login')}
               </Link>
             </p>
           </div>

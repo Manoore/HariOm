@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Loader2, ChevronLeft, Bell, Sparkles, Building2, ShoppingCart, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Toaster, toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { isFirebaseConfigured } from '../lib/firebase';
 import api from '../lib/api';
 
@@ -306,6 +307,7 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { login, register, loginWithGoogle, forgotPassword, initPhoneAuth, sendOTP, verifyOTPAndSignIn } = useAuth();
+  const { t } = useTranslation();
 
   const [loginData, setLoginData] = useState({ email: '', password: '', phone: '' });
   const [registerData, setRegisterData] = useState({
@@ -1193,7 +1195,7 @@ export default function AuthScreen({ initialMode = 'welcome', onBack, showBackBu
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-2xl p-6 max-w-sm w-full"
           >
-            <h2 className="font-cinzel text-xl font-bold text-maroon mb-2">Reset Password</h2>
+            <h2 className="font-cinzel text-xl font-bold text-maroon mb-2">{t('auth.resetPassword')}</h2>
             <p className="text-sm text-gray-500 mb-4">Enter your email and we'll send you a link to reset your password.</p>
             
             <form onSubmit={handleForgotPassword}>
@@ -1382,6 +1384,7 @@ function LoginScreen({
   selectedCountry, setSelectedCountry, showCountryDropdown, setShowCountryDropdown,
   setShowForgotPassword
 }) {
+  const { t } = useTranslation();
   return (
     <motion.div
       className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-sm md:rounded-2xl md:shadow-xl md:border md:border-orange-100 min-h-screen md:min-h-0 md:my-8 flex flex-col"
@@ -1405,7 +1408,7 @@ function LoginScreen({
           />
           <div>
             <h1 className="font-cinzel text-2xl font-bold text-maroon">Welcome Back</h1>
-            <p className="text-gray-600 text-sm">Sign in to continue your spiritual journey</p>
+            <p className="text-gray-600 text-sm">{t('landing.hero.subtitle')}</p>
           </div>
         </motion.div>
 
@@ -1469,7 +1472,7 @@ function LoginScreen({
         {authMethod === 'email' ? (
           <form onSubmit={onSubmit} className="space-y-5">
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.email')}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -1477,7 +1480,7 @@ function LoginScreen({
                   value={data.email}
                   onChange={(e) => setData({ ...data, email: e.target.value })}
                   className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                  placeholder="your@email.com"
+                  placeholder={t('auth.email')}
                   required
                   data-testid="login-email"
                 />
@@ -1485,7 +1488,7 @@ function LoginScreen({
             </motion.div>
 
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.password')}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -1493,7 +1496,7 @@ function LoginScreen({
                   value={data.password}
                   onChange={(e) => setData({ ...data, password: e.target.value })}
                   className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-12 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                  placeholder="Enter your password"
+                  placeholder={t('auth.password')}
                   required
                   data-testid="login-password"
                 />
@@ -1511,7 +1514,7 @@ function LoginScreen({
                 className="text-sm text-saffron hover:text-orange-600 mt-2 text-right block w-full"
                 data-testid="forgot-password-link"
               >
-                Forgot Password?
+                {t('auth.forgotPassword')}
               </button>
             </motion.div>
 
@@ -1524,7 +1527,7 @@ function LoginScreen({
               transition={{ delay: 0.25 }}
               data-testid="login-submit"
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Sign In <ArrowRight className="w-5 h-5" /></>}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{t('auth.login')} <ArrowRight className="w-5 h-5" /></>}
             </motion.button>
           </form>
         ) : (
@@ -1666,6 +1669,7 @@ function RegisterScreen({
   signupSettings
 }) {
   const [showRoleSelect, setShowRoleSelect] = useState(false);
+  const { t } = useTranslation();
   
   const handleGoogleClick = () => {
     setShowRoleSelect(true);
@@ -1750,7 +1754,7 @@ function RegisterScreen({
             className="w-14 h-14 rounded-lg object-cover"
           />
           <div>
-            <h1 className="font-cinzel text-2xl font-bold text-maroon">Create Account</h1>
+            <h1 className="font-cinzel text-2xl font-bold text-maroon">{t('auth.register')}</h1>
             <p className="text-gray-600 text-sm">Join our spiritual community</p>
           </div>
         </motion.div>
@@ -1815,7 +1819,7 @@ function RegisterScreen({
         {authMethod === 'email' ? (
           <form onSubmit={onSubmit} className="space-y-4">
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.name')}</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -1823,7 +1827,7 @@ function RegisterScreen({
                   value={data.name}
                   onChange={(e) => setData({ ...data, name: e.target.value })}
                   className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                  placeholder="Your full name"
+                  placeholder={t('profile.name')}
                   required
                   data-testid="register-name"
                 />
@@ -1831,7 +1835,7 @@ function RegisterScreen({
             </motion.div>
 
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.email')}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -1839,7 +1843,7 @@ function RegisterScreen({
                   value={data.email}
                   onChange={(e) => setData({ ...data, email: e.target.value })}
                   className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                  placeholder="your@email.com"
+                  placeholder={t('auth.email')}
                   required
                   data-testid="register-email"
                 />
@@ -1847,28 +1851,28 @@ function RegisterScreen({
             </motion.div>
 
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.25 }}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">I want to join as</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.selectRole')}</label>
               <select
                 value={data.role}
                 onChange={(e) => setData({ ...data, role: e.target.value })}
                 className="w-full bg-white border border-orange-200 rounded-xl px-4 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
                 data-testid="register-role"
               >
-                <option value="devotee">Devotee (Book services)</option>
+                <option value="devotee">{t('auth.devotee')}</option>
                 {signupSettings.enable_priest_signup && (
-                  <option value="priest">Priest (Offer services)</option>
+                  <option value="priest">{t('auth.priest')}</option>
                 )}
                 {signupSettings.enable_astrologer_signup && (
-                  <option value="astrologer">Astrologer (Consultations)</option>
+                  <option value="astrologer">{t('auth.astrologer')}</option>
                 )}
                 {signupSettings.enable_shop_owner_signup && (
-                  <option value="shop_owner">Shop Owner (Sell products)</option>
+                  <option value="shop_owner">{t('auth.shopOwner')}</option>
                 )}
               </select>
             </motion.div>
 
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('auth.password')}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -1876,7 +1880,7 @@ function RegisterScreen({
                   value={data.password}
                   onChange={(e) => setData({ ...data, password: e.target.value })}
                   className="w-full bg-white border border-orange-200 rounded-xl pl-12 pr-12 py-4 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all"
-                  placeholder="Create a password"
+                  placeholder={t('auth.password')}
                   required
                   minLength={6}
                   data-testid="register-password"
@@ -1900,7 +1904,7 @@ function RegisterScreen({
               transition={{ delay: 0.35 }}
               data-testid="register-submit"
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Create Account <ArrowRight className="w-5 h-5" /></>}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{t('auth.register')} <ArrowRight className="w-5 h-5" /></>}
             </motion.button>
           </form>
         ) : (
