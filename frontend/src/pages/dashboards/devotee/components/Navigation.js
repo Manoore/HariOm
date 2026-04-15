@@ -17,20 +17,20 @@ export function Sidebar({ activeTab, setActiveTab, user, unreadMessages }) {
   
   const tabs = [
     { id: 'home', icon: OmIcon, label: t('nav.home') },
-    { id: 'activity', icon: ClipboardList, label: t('nav.bookings') },
-    { id: 'messages', icon: MessageSquare, label: t('nav.notifications'), badge: unreadMessages },
+    { id: 'activity', icon: ClipboardList, label: t('sidebar.myActivity') },
+    { id: 'messages', icon: MessageSquare, label: t('sidebar.messages'), badge: unreadMessages },
     { id: 'consultation', icon: Video, label: t('astrology.consultation.title') },
     { id: 'classes', icon: BookOpen, label: t('nav.classes') },
-    { id: 'live', icon: Play, label: t('nav.home') },
-    { id: 'feed', icon: Rss, label: t('nav.home') },
-    { id: 'mantras', icon: Music, label: t('scriptures.title') },
+    { id: 'live', icon: Play, label: t('sidebar.liveEvents') },
+    { id: 'feed', icon: Rss, label: t('sidebar.spiritualFeed') },
+    { id: 'mantras', icon: Music, label: t('sidebar.mantras') },
     { id: 'scriptures', icon: BookOpen, label: t('scriptures.title') },
     { id: 'calendar', icon: Calendar, label: t('nav.festivals') },
     { id: 'priests', icon: UserRoundCheck, label: t('nav.priests') },
     { id: 'temples', icon: Landmark, label: t('nav.temples') },
     { id: 'astrology', icon: Sun, label: t('nav.astrology') },
     { id: 'shop', icon: ShoppingBag, label: t('nav.store') },
-    { id: 'profile', icon: User, label: t('nav.profile') },
+    { id: 'profile', icon: User, label: t('sidebar.myAccount') },
   ];
 
   return (
@@ -120,24 +120,24 @@ export function BottomNav({ activeTab, setActiveTab, unreadMessages }) {
   
   const mainTabs = [
     { id: 'home', icon: OmIcon, label: t('nav.home') },
-    { id: 'activity', icon: ClipboardList, label: t('nav.bookings') },
+    { id: 'activity', icon: ClipboardList, label: t('sidebar.myActivity') },
     { id: 'priests', icon: UserRoundCheck, label: t('nav.priests') },
     { id: 'shop', icon: ShoppingBag, label: t('nav.store') },
-    { id: 'more', icon: Menu, label: t('common.viewAll'), isMore: true },
+    { id: 'more', icon: Menu, label: t('sidebar.more'), isMore: true },
   ];
 
   const moreTabs = [
     { id: 'consultation', icon: Video, label: t('astrology.consultation.title') },
     { id: 'classes', icon: BookOpen, label: t('nav.classes') },
-    { id: 'live', icon: Play, label: t('nav.home') },
-    { id: 'mantras', icon: Music, label: t('scriptures.title') },
+    { id: 'live', icon: Play, label: t('sidebar.liveEvents') },
+    { id: 'mantras', icon: Music, label: t('sidebar.mantras') },
     { id: 'scriptures', icon: BookOpen, label: t('scriptures.title') },
     { id: 'temples', icon: Landmark, label: t('nav.temples') },
     { id: 'astrology', icon: Sun, label: t('nav.astrology') },
     { id: 'calendar', icon: Calendar, label: t('nav.festivals') },
-    { id: 'feed', icon: Rss, label: t('nav.home') },
-    { id: 'messages', icon: MessageSquare, label: t('nav.notifications'), badge: unreadMessages },
-    { id: 'profile', icon: User, label: t('nav.profile') },
+    { id: 'feed', icon: Rss, label: t('sidebar.spiritualFeed') },
+    { id: 'messages', icon: MessageSquare, label: t('sidebar.messages'), badge: unreadMessages },
+    { id: 'profile', icon: User, label: t('sidebar.myAccount') },
   ];
 
   return (

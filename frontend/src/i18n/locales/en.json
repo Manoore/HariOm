@@ -399,5 +399,14 @@
     "translate": "Translate",
     "translating": "Translating...",
     "translateNow": "Translate"
+  },
+  "sidebar": {
+    "liveEvents": "Live Events",
+    "spiritualFeed": "Spiritual Feed",
+    "mantras": "Mantras & Shlokas",
+    "myActivity": "My Activity",
+    "messages": "Messages",
+    "myAccount": "My Account",
+    "more": "More"
   }
 }

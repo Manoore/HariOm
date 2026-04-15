@@ -399,5 +399,14 @@
     "translate": "अनुवाद",
     "translating": "अनुवाद होत आहे...",
     "translateNow": "अनुवाद करा"
+  },
+  "sidebar": {
+    "liveEvents": "लाइव्ह इव्हेंट्स",
+    "spiritualFeed": "आध्यात्मिक फीड",
+    "mantras": "मंत्र आणि श्लोक",
+    "myActivity": "माझी कार्यवाही",
+    "messages": "संदेश",
+    "myAccount": "माझे खाते",
+    "more": "अधिक"
   }
 }

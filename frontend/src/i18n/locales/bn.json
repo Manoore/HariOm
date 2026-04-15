@@ -399,5 +399,14 @@
     "translate": "অনুবাদ",
     "translating": "অনুবাদ হচ্ছে...",
     "translateNow": "অনুবাদ করুন"
+  },
+  "sidebar": {
+    "liveEvents": "লাইভ ইভেন্ট",
+    "spiritualFeed": "আধ্যাত্মিক ফিড",
+    "mantras": "মন্ত্র ও শ্লোক",
+    "myActivity": "আমার কার্যকলাপ",
+    "messages": "বার্তা",
+    "myAccount": "আমার অ্যাকাউন্ট",
+    "more": "আরো"
   }
 }

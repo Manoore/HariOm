@@ -360,5 +360,33 @@
     "privacy": "ಗೌಪ್ಯತಾ ನೀತಿ",
     "terms": "ಸೇವಾ ನಿಯಮಗಳು",
     "copyright": "© 2026 ದಿವ್ಯ ಆ್ಯಪ್. ಎಲ್ಲಾ ಹಕ್ಕುಗಳನ್ನು ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ."
+  },
+  "scriptures": {
+    "title": "ಪವಿತ್ರ ಗ್ರಂಥಗಳು",
+    "subtitle": "ಹಿಂದೂ ಗ್ರಂಥಗಳ ಶಾಶ್ವತ ಜ್ಞಾನವನ್ನು ಅನ್ವೇಷಿಸಿ",
+    "searchPlaceholder": "ಗ್ರಂಥಗಳನ್ನು ಹುಡುಕಿ...",
+    "all": "ಎಲ್ಲಾ",
+    "vedas": "ವೇದಗಳು",
+    "itihasa": "ಇತಿಹಾಸ",
+    "noResults": "ಗ್ರಂಥಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
+    "verses": "ಶ್ಲೋಕಗಳು",
+    "viewCommentary": "ವ್ಯಾಖ್ಯಾನ ನೋಡಿ",
+    "viewTranslation": "ಅನುವಾದ ನೋಡಿ",
+    "loadMore": "ಹೆಚ್ಚಿನ ಶ್ಲೋಕಗಳನ್ನು ಲೋಡ್ ಮಾಡಿ",
+    "endOfSection": "ವಿಭಾಗದ ಅಂತ್ಯ",
+    "verseOfDay": "ದಿನದ ಶ್ಲೋಕ",
+    "refresh": "ರಿಫ್ರೆಶ್",
+    "translate": "ಅನುವಾದ",
+    "translating": "ಅನುವಾದಿಸಲಾಗುತ್ತಿದೆ...",
+    "translateNow": "ಅನುವಾದಿಸಿ"
+  },
+  "sidebar": {
+    "liveEvents": "ಲೈವ್ ಈವೆಂಟ್ಸ್",
+    "spiritualFeed": "ಆಧ್ಯಾತ್ಮಿಕ ಫೀಡ್",
+    "mantras": "ಮಂತ್ರಗಳು & ಶ್ಲೋಕಗಳು",
+    "myActivity": "ನನ್ನ ಚಟುವಟಿಕೆ",
+    "messages": "ಸಂದೇಶಗಳು",
+    "myAccount": "ನನ್ನ ಖಾತೆ",
+    "more": "ಇನ್ನಷ್ಟು"
   }
 }
