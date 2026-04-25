@@ -1,5 +1,5 @@
 {
-  "appId": "com.divineapp.app",
+  "appId": "com.divineapp.hariom",
   "appName": "Divine App",
   "webDir": "build",
   "server": {
@@ -10,17 +10,25 @@
     "SplashScreen": {
       "launchShowDuration": 2000,
       "backgroundColor": "#FFF8E1",
-      "showSpinner": false
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
     },
     "StatusBar": {
       "style": "Dark",
       "backgroundColor": "#8B2500"
+    },
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true
     }
   },
   "android": {
-    "allowMixedContent": true
+    "allowMixedContent": true,
+    "backgroundColor": "#FFF8E1"
   },
   "ios": {
-    "contentInset": "always"
+    "contentInset": "always",
+    "backgroundColor": "#FFF8E1",
+    "preferredContentMode": "mobile"
   }
 }

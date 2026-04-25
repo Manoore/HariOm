@@ -1,4 +1,4 @@
-package com.divineapp.app;
+package com.divineapp.hariom;
 
 import com.getcapacitor.BridgeActivity;
 
