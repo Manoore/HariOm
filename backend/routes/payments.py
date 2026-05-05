@@ -170,6 +170,7 @@ async def create_razorpay_order(data: RazorpayOrderRequest, user: dict = Depends
         order_data = {
             "amount": data.amount,
             "currency": data.currency,
+            "payment_capture": 1,
             "notes": {
                 "user_id": str(user["_id"]),
                 **(data.metadata or {})

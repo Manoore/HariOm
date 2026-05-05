@@ -449,6 +449,7 @@ async def create_recharge_intent(request: Request, user: dict = Depends(get_curr
             order = rz_client.order.create(data={
                 "amount": amount_paise,
                 "currency": "INR",
+                "payment_capture": 1,
                 "notes": {"user_id": user_id, "type": "wallet_recharge"}
             })
             result["razorpay_order_id"] = order["id"]
@@ -499,7 +500,13 @@ async def recharge_wallet(request: Request, user: dict = Depends(get_current_use
             rz_creds = await get_razorpay_credentials()
             rz_client = razorpay.Client(auth=(rz_creds["key_id"], rz_creds["key_secret"]))
             payment = rz_client.payment.fetch(payment_id)
-            if payment.get("status") == "captured":
+            if payment.get("status") in ("captured", "authorized"):
+                # Auto-capture if only authorized
+                if payment.get("status") == "authorized":
+                    try:
+                        rz_client.payment.capture(payment_id, payment.get("amount"))
+                    except Exception:
+                        pass
                 verified = True
         except Exception as e:
             print(f"Razorpay verification failed: {e}")

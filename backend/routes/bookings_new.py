@@ -317,6 +317,7 @@ async def create_booking(data: BookingCreate, user: dict = Depends(get_current_u
             rz_order = rz_client.order.create(data={
                 "amount": int(total_amount * 100),
                 "currency": "INR",
+                "payment_capture": 1,
                 "notes": {"type": "puja_booking", "booking_id": booking_id, "user_id": str(user["_id"])}
             })
             
@@ -375,8 +376,14 @@ async def confirm_booking_payment(booking_id: str, request: Request, user: dict 
         rz_creds = await get_razorpay_credentials()
         rz_client = razorpay.Client(auth=(rz_creds["key_id"], rz_creds["key_secret"]))
         payment = rz_client.payment.fetch(payment_id)
-        if payment.get("status") != "captured":
+        if payment.get("status") not in ("captured", "authorized"):
             raise HTTPException(status_code=400, detail="Payment not verified")
+        # Auto-capture if only authorized
+        if payment.get("status") == "authorized":
+            try:
+                rz_client.payment.capture(payment_id, payment.get("amount"))
+            except Exception:
+                pass
     except HTTPException:
         raise
     except Exception as e:
