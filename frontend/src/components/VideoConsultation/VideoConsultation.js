@@ -194,6 +194,25 @@ function VideoCallContent({ callData, onEndCall, astrologerInfo }) {
     };
   }, [callData.call_id, token, onEndCall]);
 
+  // Prevent accidental navigation during call
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = 'You are in an active call. Leaving will end the call.';
+      return e.returnValue;
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Cleanup: end call if component unmounts unexpectedly
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Try to end the call on unmount
+      if (callData?.call_id) {
+        api.post(`/api/consultation/${callData.call_id}/end`, { reason: 'disconnected' }).catch(() => {});
+      }
+    };
+  }, [callData?.call_id]);
+
   // Duration timer
   useEffect(() => {
     timerRef.current = setInterval(() => {
@@ -335,43 +354,39 @@ function VideoCallContent({ callData, onEndCall, astrologerInfo }) {
       />
 
       {/* Header with call info */}
-      <div className="bg-gray-800/80 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center">
+      <div className="bg-gray-800/80 backdrop-blur-sm px-3 py-2 md:px-4 md:py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
             {astrologerInfo?.profile_photo ? (
               <img src={astrologerInfo.profile_photo} alt="" className="w-full h-full rounded-full object-cover" />
             ) : (
-              <span className="text-white font-semibold">{astrologerInfo?.name?.charAt(0) || 'A'}</span>
+              <span className="text-white font-semibold text-sm">{astrologerInfo?.name?.charAt(0) || 'A'}</span>
             )}
           </div>
-          <div>
-            <h3 className="text-white font-semibold">{astrologerInfo?.name || 'Astrologer'}</h3>
-            <div className="flex items-center gap-2 text-gray-400 text-sm">
-              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-              <span>{astrologerInfo?.avg_rating || '4.8'}</span>
-              <span>•</span>
+          <div className="min-w-0">
+            <h3 className="text-white font-semibold text-sm md:text-base truncate">{astrologerInfo?.name || 'Astrologer'}</h3>
+            <div className="flex items-center gap-1 md:gap-2 text-gray-400 text-xs">
               <span>₹{callData.rate_per_minute}/min</span>
-              {isConnected && <span className="text-green-400">• Connected</span>}
+              {isConnected && <span className="text-green-400">• Live</span>}
             </div>
           </div>
         </div>
 
         {/* Duration & Balance */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
           <div className="text-center">
             <div className="flex items-center gap-1 text-white">
-              <Clock className="w-4 h-4" />
-              <span className="font-mono text-lg">{formatDuration(callState.duration)}</span>
+              <Clock className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="font-mono text-sm md:text-lg">{formatDuration(callState.duration)}</span>
             </div>
-            <p className="text-gray-400 text-xs">Duration</p>
           </div>
           
-          <div className="text-center">
+          <div className="text-center hidden sm:block">
             <div className="flex items-center gap-1 text-white">
-              <Wallet className="w-4 h-4" />
-              <span className="font-mono text-lg">
+              <Wallet className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="font-mono text-sm md:text-lg">
                 {callState.freeMinutes > 0 ? (
-                  <span className="text-green-400">{callState.freeMinutes}m free</span>
+                  <span className="text-green-400">{callState.freeMinutes}m</span>
                 ) : (
                   <span className={callState.balance < 50 ? 'text-yellow-400' : ''}>
                     ₹{callState.balance}
@@ -379,16 +394,16 @@ function VideoCallContent({ callData, onEndCall, astrologerInfo }) {
                 )}
               </span>
             </div>
-            <p className="text-gray-400 text-xs">
-              ~{callState.minutesLeft} min{callState.minutesLeft !== 1 ? 's' : ''} left
+            <p className="text-gray-400 text-[10px]">
+              ~{callState.minutesLeft} min left
             </p>
           </div>
 
           <button
             onClick={() => setShowRechargeModal(true)}
-            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+            className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 md:px-3 md:py-1.5 rounded-full text-xs md:text-sm font-medium transition-colors"
           >
-            + Add Money
+            + Add
           </button>
         </div>
       </div>
@@ -407,7 +422,7 @@ function VideoCallContent({ callData, onEndCall, astrologerInfo }) {
         ) : (
           <>
             {/* Remote Video (Astrologer) - Full screen */}
-            <div className="absolute inset-4 bottom-52 md:bottom-4 md:right-56">
+            <div className="absolute inset-2 md:inset-4">
               {remotePeers.length > 0 ? (
                 <VideoTile peer={remotePeers[0]} />
               ) : (
@@ -429,34 +444,34 @@ function VideoCallContent({ callData, onEndCall, astrologerInfo }) {
       </div>
 
       {/* Controls */}
-      <div className="bg-gray-800/80 backdrop-blur-sm px-4 py-4">
-        <div className="flex items-center justify-center gap-4">
+      <div className="bg-gray-800/80 backdrop-blur-sm px-3 py-3 md:px-4 md:py-4 safe-area-bottom">
+        <div className="flex items-center justify-center gap-3 md:gap-4">
           {/* Mic Toggle */}
           <button
             onClick={toggleAudio}
-            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+            className={`w-11 h-11 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-colors ${
               isLocalAudioEnabled ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'
             }`}
             data-testid="toggle-mic"
           >
-            {isLocalAudioEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+            {isLocalAudioEnabled ? <Mic className="w-5 h-5 md:w-6 md:h-6" /> : <MicOff className="w-5 h-5 md:w-6 md:h-6" />}
           </button>
 
           {/* Video Toggle */}
           <button
             onClick={toggleVideo}
-            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+            className={`w-11 h-11 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-colors ${
               isLocalVideoEnabled ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'
             }`}
             data-testid="toggle-video"
           >
-            {isLocalVideoEnabled ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+            {isLocalVideoEnabled ? <Video className="w-5 h-5 md:w-6 md:h-6" /> : <VideoOff className="w-5 h-5 md:w-6 md:h-6" />}
           </button>
 
-          {/* Screen Share Toggle */}
+          {/* Screen Share Toggle - hidden on mobile */}
           <button
             onClick={handleToggleScreenShare}
-            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+            className={`hidden md:flex w-14 h-14 rounded-full items-center justify-center transition-colors ${
               isLocalScreenShared ? 'bg-blue-500 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'
             }`}
             data-testid="toggle-screen-share"
@@ -467,27 +482,37 @@ function VideoCallContent({ callData, onEndCall, astrologerInfo }) {
           {/* End Call */}
           <button
             onClick={handleEndCall}
-            className="w-16 h-16 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-colors"
+            className="w-13 h-13 md:w-16 md:h-16 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-colors"
             data-testid="end-call"
           >
-            <PhoneOff className="w-7 h-7" />
+            <PhoneOff className="w-6 h-6 md:w-7 md:h-7" />
           </button>
 
           {/* Chat Toggle */}
           <button
             onClick={() => setShowChat(!showChat)}
-            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors relative ${
+            className={`w-11 h-11 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-colors relative ${
               showChat ? 'bg-purple-500 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'
             }`}
             data-testid="toggle-chat"
           >
-            <MessageSquare className="w-6 h-6" />
+            <MessageSquare className="w-5 h-5 md:w-6 md:h-6" />
             {chatMessages.length > 0 && !showChat && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-red-500 rounded-full text-[9px] md:text-[10px] text-white flex items-center justify-center">
                 {chatMessages.length}
               </span>
             )}
           </button>
+        </div>
+
+        {/* Mobile balance indicator */}
+        <div className="flex sm:hidden items-center justify-center mt-2 gap-3 text-xs text-gray-400">
+          <span className="flex items-center gap-1">
+            <Wallet className="w-3 h-3" />
+            {callState.freeMinutes > 0 ? `${callState.freeMinutes}m free` : `₹${callState.balance}`}
+          </span>
+          <span>•</span>
+          <span>~{callState.minutesLeft} min left</span>
         </div>
       </div>
 
